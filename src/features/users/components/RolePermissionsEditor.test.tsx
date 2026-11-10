@@ -4,6 +4,7 @@ import userEvent from "@testing-library/user-event"
 import { expect, it } from "vitest"
 
 import { RolePermissionsEditor } from "./RolePermissionsEditor"
+import i18n from "@/lib/i18n"
 
 const CATALOG = [
   { key: "catalog.zzitems.read", name: "Ver produtos", moduleKey: "catalog", resource: "products" },
@@ -20,6 +21,22 @@ function Harness({ initial = [] as string[] }) {
     </>
   )
 }
+
+it("labels rental asset write as editing rental resources", async () => {
+  const user = userEvent.setup()
+  render(
+    <RolePermissionsEditor
+      catalog={[{ key: "rentals.assets.write", name: "Edit schedule policy", moduleKey: "rentals", resource: "assets" }]}
+      activeModules={["rentals"]}
+      selectedKeys={[]}
+      onChange={() => {}}
+    />,
+  )
+  await user.type(screen.getByLabelText("Buscar permissão"), "assets.write")
+  expect(screen.getByText(i18n.t("peopleAccess.catalog.rentals.assets.write"))).toBeVisible()
+  expect(screen.queryByText("Edit schedule policy")).not.toBeInTheDocument()
+  expect(i18n.t("peopleAccess.catalog.rentals.assets.write", { lng: "pt-BR" })).toBe("Editar recursos de aluguel")
+})
 
 it("selects a whole module, shows partial state and the x de y counter", async () => {
   const user = userEvent.setup()

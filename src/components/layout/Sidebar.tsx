@@ -186,12 +186,12 @@ function NavigationLink({
               className={cn("flex min-w-0 flex-1 items-center gap-2.5 rounded-lg px-3 py-1.5 outline-none hover:text-sidebar-accent-foreground focus-visible:ring-2 focus-visible:ring-sidebar-ring", touchTargets ? "min-h-11" : "min-h-9", isSectionActive && !isIntroActive && "text-foreground")}
             >
               <Icon className={NAV_ICON_CLASS} strokeWidth={ICON_STROKE_WIDTH} aria-hidden="true" />
-              <span className="truncate">{label}</span>
+              <span className="min-w-0 whitespace-normal break-words">{label}</span>
             </Link>
           ) : (
             <span title={tooltip} className="flex min-h-9 min-w-0 flex-1 items-center gap-2.5 px-3 py-1.5">
               <Icon className={NAV_ICON_CLASS} strokeWidth={ICON_STROKE_WIDTH} aria-hidden="true" />
-              <span className="truncate">{label}</span>
+              <span className="min-w-0 whitespace-normal break-words">{label}</span>
             </span>
           )}
           <button
@@ -224,7 +224,7 @@ function NavigationLink({
               }
             >
               <ActiveIndicator show={match?.child === child} />
-              <span className="truncate">{t(child.labelKey)}</span>
+              <span className="min-w-0 whitespace-normal break-words">{t(child.labelKey)}</span>
             </Link>
           ))}
         </div>
@@ -242,7 +242,7 @@ function NavigationLink({
     >
       <ActiveIndicator show={isActive} />
       <Icon className={NAV_ICON_CLASS} strokeWidth={ICON_STROKE_WIDTH} aria-hidden="true" />
-      <span className="truncate">{label}</span>
+      <span className="min-w-0 whitespace-normal break-words">{label}</span>
     </Link>
   )
 }
@@ -275,7 +275,7 @@ function NavigationSection({
             onClick={onNavigate}
             className={cn("flex min-w-0 items-center rounded-lg outline-none hover:text-sidebar-accent-foreground focus-visible:ring-2 focus-visible:ring-sidebar-ring", collapsed ? "size-10 justify-center" : "flex-1 px-3 text-[0.6875rem] font-semibold uppercase tracking-wider", !collapsed && (touchTargets ? "min-h-11" : "min-h-9"), isIntroActive && "bg-primary/10")}
           >
-            {collapsed ? <Info className="size-4" strokeWidth={ICON_STROKE_WIDTH} aria-hidden="true" /> : <span className="truncate">{label}</span>}
+            {collapsed ? <Info className="size-4" strokeWidth={ICON_STROKE_WIDTH} aria-hidden="true" /> : <span className="min-w-0 whitespace-normal break-words">{label}</span>}
           </Link>
         ) : !collapsed && <p className="flex-1 px-3 text-[0.6875rem] font-semibold uppercase tracking-wider">{label}</p>}
         {!collapsed && (

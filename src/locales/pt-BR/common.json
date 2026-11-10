@@ -3904,7 +3904,7 @@
       "rentals.booking_policy.read": "Ver regras de reserva",
       "rentals.booking_policy.write": "Editar regras de reserva",
       "rentals.assets.read": "Ver recursos de aluguel",
-      "rentals.assets.write": "Editar política de escala",
+      "rentals.assets.write": "Editar recursos de aluguel",
       "rentals.pricing.read": "Ver preços",
       "rentals.pricing.write": "Editar preços",
       "rentals.pricing.bulk_write": "Editar preços em lote",
