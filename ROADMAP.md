@@ -337,6 +337,7 @@ PR 1 (fundação): tokens de design e primitivas, sem restyling de telas/shell (
 
 ## Histórico
 
+| 2026-11-10 | **Assistente do produto em seis passos (WEB):** `/catalogo/produtos/:id/passos` salva a oferta, o recurso, quem compra e o menu. A fila e o recurso usado são leitura, com link para os passos do recurso. O assistente antigo continua. |
 | 2026-11-10 | **Assistente do recurso em seis passos (WEB):** `/configuracoes/recursos/:id/passos` edita nome, agenda, fila, durações, cancelamento, preço e menu. Quem pode reservar aparece só como leitura, com link para o produto. Antecedência mínima e sinal percentual ficam de fora. O assistente antigo continua. |
 | 2026-11-10 | **Um status para recurso e produto (WEB):** Publicado, Rascunho ou Falta N passos sai dos dados que já existem: nome, agenda, fila, duração e cancelamento, preço, e o menu do portal. O mesmo selo aparece na lista e no assistente. As telas antigas continuam. |
 | 2026-11-10 | **Lista do dia no zoom (WEB):** a grade do dia usa a lista quando a janela tem menos de 640px, já na primeira pintura, sem esperar a medida da coluna. O zoom do navegador entra nessa conta. |

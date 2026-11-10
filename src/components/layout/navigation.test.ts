@@ -470,6 +470,9 @@ describe("getPageTitleKey", () => {
     expect(getPageTitleKey("/configuracoes/recursos/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa/assistente")).toBe(
       "nav.rentalsResourceWizard",
     )
+    expect(getPageTitleKey("/catalogo/produtos/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa/passos")).toBe(
+      "nav.catalogProductWizard",
+    )
     expect(getPageTitleKey("/catalogo/produtos/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa/assistente")).toBe(
       "nav.catalogProductWizard",
     )

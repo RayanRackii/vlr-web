@@ -46,6 +46,7 @@ import {
 } from "@/features/catalog/schemas/catalogSchemas"
 import { catalogMenuIsActive } from "@/features/catalog/components/productWizard/sellableChecklist"
 import { productWizardPath } from "@/features/catalog/components/productWizard/wizardSteps"
+import { productAssistantPath } from "@/features/assistant/paths"
 import { ItemStatusBadge } from "@/features/assistant/ItemStatusBadge"
 import { productItemStatus } from "@/features/assistant/itemStatus"
 import { CatalogColumnFilter, CatalogEmptyState, CatalogHeading, CatalogSearch, CatalogTabs } from "@/features/catalog/components/StaffCatalogChrome"
@@ -519,6 +520,9 @@ function CatalogProductNameCell({ row, table }: CellContext<CatalogProduct, unkn
       <small className="staff-catalog-mobile-code">{product.code ?? "—"}</small>
       <Link className="staff-catalog-assistant-inline" to={productWizardPath(product.id)}>
         {t("catalog.productWizard.open")}
+      </Link>
+      <Link className="staff-catalog-assistant-inline" to={productAssistantPath(product.id)}>
+        {t("assistant.open")}
       </Link>
     </span>
   </>

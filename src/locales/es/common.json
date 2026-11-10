@@ -92,6 +92,12 @@
     "audienceRestricted": "Restringido",
     "open": "Pasos",
     "editAudience": "Editar en el producto",
+    "openProduct": "Abrir producto",
+    "openResource": "Abrir recurso",
+    "resourceTitle": "Recurso usado",
+    "followsQueue": "La fila sigue al recurso.",
+    "queueOffSummary": "Fila apagada",
+    "queueOnSummary": "Fila encendida",
     "productsTitle": "Productos que usan este recurso",
     "publication": {
       "published": "Los clientes ya encuentran este ítem en el portal.",

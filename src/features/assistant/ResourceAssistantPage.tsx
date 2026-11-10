@@ -11,6 +11,7 @@ import { resourceItemStatus, type SetupStepId } from "@/features/assistant/itemS
 import { getCatalogProductResourceRequirements, listCatalogProducts } from "@/features/catalog/services/catalogService"
 import type { CatalogProduct } from "@/features/catalog/schemas/catalogSchemas"
 import { productWizardPath } from "@/features/catalog/components/productWizard/wizardSteps"
+import { productAssistantPath } from "@/features/assistant/paths"
 import { menuCoversAsset } from "@/features/rentals/components/resourceWizard/bookableChecklist"
 import { ResourceWizardPricesStep } from "@/features/rentals/components/resourceWizard/ResourceWizardPricesStep"
 import { ResourceWizardRulesStep } from "@/features/rentals/components/resourceWizard/ResourceWizardRulesStep"
@@ -197,6 +198,7 @@ export function ResourceAssistantPage() {
                             <p className="text-sm font-medium">{product.name}</p>
                             <p className="text-sm text-muted-foreground">{product.visibility === "Restricted" ? t("assistant.audienceRestricted") : t("assistant.audiencePublic")}</p>
                           </div>
+                          <Link className="inline-flex min-h-11 items-center text-sm font-medium text-primary underline-offset-4 hover:underline" to={productAssistantPath(product.id)}>{t("assistant.openProduct")}</Link>
                           <Link className="inline-flex min-h-11 items-center text-sm font-medium text-primary underline-offset-4 hover:underline" to={productWizardPath(product.id, "access")}>{t("assistant.editAudience")}</Link>
                         </div>
                       ))}
