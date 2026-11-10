@@ -456,10 +456,22 @@ export async function fetchAdminScheduleDay(
     },
   )
   const parsed = dayScheduleSchema.safeParse(response.data)
-  if (!parsed.success) {
+  if (parsed.success) return parsed.data
+  const envelope = z.object({
+    date: z.string(),
+    slots: z.array(z.unknown()),
+  }).safeParse(response.data)
+  if (!envelope.success) {
     throw new Error(i18n.t("apiErrors.invalidPayload"))
   }
-  return parsed.data
+  const slots = envelope.data.slots.flatMap((slot) => {
+    const one = scheduleSlotSchema.safeParse(slot)
+    return one.success ? [one.data] : []
+  })
+  if (envelope.data.slots.length > 0 && slots.length === 0) {
+    throw new Error(i18n.t("apiErrors.invalidPayload"))
+  }
+  return { date: envelope.data.date, slots }
 }
 
 export async function applyDailyOccurrence(body: {

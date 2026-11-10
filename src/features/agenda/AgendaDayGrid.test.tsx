@@ -7,6 +7,7 @@ import { usePermissions } from "@/features/users/permissions/PermissionContext"
 import { listAdminRentalAssets, fetchAdminScheduleDay, listOccupancyKinds } from "@/features/rentals/services/scheduleService"
 import { listAdminReservations, type AdminReservation } from "@/features/rentals/services/reservationsService"
 import { listCatalogOrders, listCatalogResourceAgenda } from "@/features/catalog/services/catalogService"
+import { catalogOrderSchema } from "@/features/catalog/schemas/catalogSchemas"
 import { AgendaPage } from "./AgendaPage"
 import { asset, order, slot } from "./agendaFixtures"
 
@@ -128,7 +129,7 @@ it("keeps the other sources when reservations return 400", async () => {
   setup()
   expect(await screen.findByRole("button", { name: /Pedido.*09:00.*12:00.*Podcast/ })).toBeInTheDocument()
   expect(screen.queryByText("Recursos não entrou nesta grade.")).not.toBeInTheDocument()
-  expect(screen.getByText("Reservas não entrou nesta grade.")).toHaveClass("text-muted-foreground")
+  expect(screen.getByText("Não foi possível carregar as reservas; o restante da agenda está atualizado.")).toHaveClass("text-muted-foreground")
   expect(screen.queryByRole("alert")).not.toBeInTheDocument()
   expect(screen.getByRole("region", { name: "Grade do dia" })).toBeInTheDocument()
   expect(listAdminReservations).toHaveBeenCalledWith({ from: "2026-11-10", to: "2026-11-10" })
@@ -144,6 +145,9 @@ it("opens the clicked week day and keeps the chips", async () => {
     to: "2026-11-16T03:00:00.000Z",
   })
   expect(listAdminReservations).toHaveBeenCalledWith({ from: "2026-11-09", to: "2026-11-15" })
+  for (const date of ["2026-11-09", "2026-11-10", "2026-11-11", "2026-11-12", "2026-11-13", "2026-11-14", "2026-11-15"]) {
+    expect(fetchAdminScheduleDay).toHaveBeenCalledWith(date)
+  }
   await user.click(screen.getByRole("button", { name: /Estúdio A 2026-11-10 1 Pedido/ }))
   const params = new URLSearchParams(screen.getByTestId("search").textContent ?? "")
   expect(params.get("visao")).toBe("dia")
@@ -206,4 +210,87 @@ it("links an order that has no display number by its short id", async () => {
   setup()
   await user.click(await screen.findByRole("button", { name: /Pedido.*Podcast/ }))
   expect(screen.getByRole("link", { name: order.orderId.slice(0, 8) })).toHaveAttribute("href", `/catalogo/pedidos/${order.orderId}`)
+})
+
+it("uses the order list number and the customer when the grid block has neither", async () => {
+  const user = userEvent.setup()
+  vi.mocked(listCatalogOrders).mockResolvedValue([catalogOrderSchema.parse({
+    id: order.orderId,
+    displayNumber: "#22",
+    orderNumber: 22,
+    status: "Requested",
+    customerId: "11111111-1111-4111-8111-111111111115",
+    customerName: "Marina",
+    customerEmail: null,
+    customerPhone: null,
+    customerNote: null,
+    totalAmount: null,
+    currency: "BRL",
+    rejectedReason: null,
+    cancelledReason: null,
+    createdAt: "2026-11-10T12:00:00Z",
+    items: [],
+    history: [],
+  })])
+  vi.mocked(listCatalogResourceAgenda).mockResolvedValue({ resources: [], items: [] })
+  vi.mocked(fetchAdminScheduleDay).mockResolvedValue({
+    date: "2026-11-10",
+    slots: [slot({ isInternalUseOrigin: true, owningCatalogOrderId: order.orderId, occupancyKindKey: "open", occupancyKindLabel: "Open", label: "Open", customerName: null })],
+  })
+  setup()
+  const block = await screen.findByRole("button", { name: /Pedido #22/ })
+  expect(block).toHaveTextContent("Pedido #22 · Marina")
+  expect(block).not.toHaveTextContent(order.orderId.slice(0, 8))
+  await user.click(block)
+  const detail = screen.getByRole("region", { name: "Detalhes do bloco selecionado" })
+  expect(within(detail).getByRole("link", { name: "#22" })).toHaveAttribute("href", `/catalogo/pedidos/${order.orderId}`)
+  expect(within(detail).getByText("Marina")).toBeInTheDocument()
+})
+
+it("uses the day list when the agenda column is 512px on a wide viewport", async () => {
+  vi.stubGlobal("matchMedia", () => ({
+    matches: false,
+    media: "",
+    addEventListener: () => {},
+    removeEventListener: () => {},
+    onchange: null,
+    addListener: () => {},
+    removeListener: () => {},
+    dispatchEvent: () => false,
+  }))
+  vi.stubGlobal("ResizeObserver", class {
+    private readonly callback: ResizeObserverCallback
+    constructor(callback: ResizeObserverCallback) { this.callback = callback }
+    observe(target: Element) {
+      this.callback([{ contentRect: { width: 512 } } as ResizeObserverEntry], this)
+      void target
+    }
+    unobserve() {}
+    disconnect() {}
+  })
+  setup()
+  await waitFor(() => expect(screen.getByRole("region", { name: "Grade do dia" }).className).not.toContain("overflow-x-auto"))
+  const grid = screen.getByRole("region", { name: "Grade do dia" })
+  expect(within(grid).queryByText("06:00")).not.toBeInTheDocument()
+  const links = within(screen.getByRole("region", { name: "Estúdio B" })).getByRole("link", { name: "Bloquear período" }).parentElement
+  expect(links?.className).toContain("flex-wrap")
+})
+
+it("keeps the week when one schedule day fails and does not blame occupancy types", async () => {
+  vi.mocked(fetchAdminScheduleDay).mockImplementation(async (date: string) => {
+    if (date === "2026-11-12") throw new Error("500")
+    return { date, slots: [] }
+  })
+  setup("visao=semana&date=2026-11-10")
+  expect(await screen.findByRole("button", { name: /Estúdio A 2026-11-10 1 Pedido/ })).toBeInTheDocument()
+  expect(screen.getByText("Não foi possível carregar horários; o restante da agenda está atualizado.")).toBeInTheDocument()
+  expect(screen.queryByText("Não foi possível carregar os tipos de ocupação; o restante da agenda está atualizado.")).not.toBeInTheDocument()
+})
+
+it("names occupancy types when that list fails and still shows the week", async () => {
+  vi.mocked(listOccupancyKinds).mockRejectedValue(new Error("400"))
+  setup("visao=semana&date=2026-11-10")
+  expect(await screen.findByRole("button", { name: /Estúdio A 2026-11-10 1 Pedido/ })).toBeInTheDocument()
+  expect(screen.getByText("Não foi possível carregar os tipos de ocupação; o restante da agenda está atualizado.")).toBeInTheDocument()
+  expect(screen.queryByText("Não foi possível carregar horários; o restante da agenda está atualizado.")).not.toBeInTheDocument()
 })

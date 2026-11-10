@@ -22,12 +22,12 @@
     "grid": "Day grid",
     "gridLoading": "Loading the day grid…",
     "gridError": "The day grid could not be loaded.",
-    "sourceWarning": "{{source}} did not load into this grid.",
-    "sources": {
-      "assets": "Resources",
-      "orders": "Orders",
-      "reservations": "Reservations",
-      "schedule": "Schedule"
+    "sourceWarning": {
+      "assets": "Resources could not be loaded; the rest of the agenda is up to date.",
+      "orders": "Orders could not be loaded; the rest of the agenda is up to date.",
+      "reservations": "Reservations could not be loaded; the rest of the agenda is up to date.",
+      "schedule": "Schedules could not be loaded; the rest of the agenda is up to date.",
+      "kinds": "Occupancy types could not be loaded; the rest of the agenda is up to date."
     },
     "weekGrid": "Week grid",
     "weekLoading": "Loading the week…",
@@ -43,6 +43,7 @@
     "timeRange": "{{start}} – {{end}}",
     "status": "Status",
     "orderHeading": "Order {{number}}",
+    "orderWithCustomer": "Order {{number}} · {{customer}}",
     "customer": "Customer",
     "types": {
       "reserva": "Reservation",

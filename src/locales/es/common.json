@@ -22,12 +22,12 @@
     "grid": "Cuadrícula del día",
     "gridLoading": "Cargando la cuadrícula del día…",
     "gridError": "No se pudo cargar la cuadrícula.",
-    "sourceWarning": "{{source}} no entró en esta cuadrícula.",
-    "sources": {
-      "assets": "Recursos",
-      "orders": "Pedidos",
-      "reservations": "Reservas",
-      "schedule": "Horarios"
+    "sourceWarning": {
+      "assets": "No se pudieron cargar los recursos; el resto de la agenda está actualizado.",
+      "orders": "No se pudieron cargar los pedidos; el resto de la agenda está actualizado.",
+      "reservations": "No se pudieron cargar las reservas; el resto de la agenda está actualizado.",
+      "schedule": "No se pudieron cargar los horarios; el resto de la agenda está actualizado.",
+      "kinds": "No se pudieron cargar los tipos de ocupación; el resto de la agenda está actualizado."
     },
     "weekGrid": "Cuadrícula de la semana",
     "weekLoading": "Cargando la semana…",
@@ -43,6 +43,7 @@
     "timeRange": "{{start}} – {{end}}",
     "status": "Estado",
     "orderHeading": "Pedido {{number}}",
+    "orderWithCustomer": "Pedido {{number}} · {{customer}}",
     "customer": "Cliente",
     "types": {
       "reserva": "Reserva",
