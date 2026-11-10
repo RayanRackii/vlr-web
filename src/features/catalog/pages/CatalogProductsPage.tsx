@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react"
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react"
 import {
   flexRender,
   getCoreRowModel,
@@ -44,21 +44,37 @@ import {
   type CatalogProduct,
   type ProductRequest,
 } from "@/features/catalog/schemas/catalogSchemas"
+import { catalogMenuIsActive } from "@/features/catalog/components/productWizard/sellableChecklist"
 import { productWizardPath } from "@/features/catalog/components/productWizard/wizardSteps"
+import { ItemStatusBadge } from "@/features/assistant/ItemStatusBadge"
+import { productItemStatus } from "@/features/assistant/itemStatus"
 import { CatalogColumnFilter, CatalogEmptyState, CatalogHeading, CatalogSearch, CatalogTabs } from "@/features/catalog/components/StaffCatalogChrome"
 import {
   activateCatalogProduct,
   deactivateCatalogProduct,
+  getCatalogProductResourceRequirements,
   listCatalogProducts,
   listProductRequests,
 } from "@/features/catalog/services/catalogService"
+import { listTenantModuleMenuItems } from "@/features/tenantPortal/services/tenantPortalService"
 import { taxonomyQueryFromSearch, setTaxonomySearchParams } from "@/features/taxonomy/lib/taxonomyQuery"
 import type { TaxonomyOptions } from "@/features/taxonomy/schemas/taxonomySchemas"
 import { getCatalogTaxonomyOptions } from "@/features/taxonomy/services/taxonomyService"
 
+const ProductSetupContext = createContext<{
+  menuPublished: boolean | null
+  linked: Readonly<Record<string, boolean>>
+  rentals: boolean
+}>({ menuPublished: null, linked: {}, rentals: false })
+
 export function CatalogProductsPage({ view = "products" }: { view?: "products" | "requests" }) {
   const { t, i18n } = useTranslation()
   const navigate = useNavigate()
+  const { can, activeModules } = usePermissions()
+  const rentals = activeModules.includes("rentals")
+  const canReadMenu = can("core.module_menu.read")
+  const [catalogMenu, setCatalogMenu] = useState<boolean | null>(null)
+  const [linked, setLinked] = useState<Record<string, boolean>>({})
 
   const [products, setProducts] = useState<CatalogProduct[]>([])
   const [requests, setRequests] = useState<ProductRequest[]>([])
@@ -107,6 +123,24 @@ export function CatalogProductsPage({ view = "products" }: { view?: "products" |
       setProducts(nextProducts)
       setRequests(nextRequests)
       setLoadError(null)
+      const menu = canReadMenu
+        ? await listTenantModuleMenuItems().catch(() => null)
+        : null
+      const links = rentals
+        ? await Promise.all(nextProducts.map(async (product) => {
+          try {
+            const data = await getCatalogProductResourceRequirements(product.id)
+            return [product.id, data.requirements.some((row) => (row.rentalAssetId?.trim().length ?? 0) > 0)] as const
+          } catch {
+            return [product.id, false] as const
+          }
+        }))
+        : []
+      if (controller.signal.aborted || generation !== loadGenerationRef.current) {
+        return
+      }
+      setCatalogMenu(menu === null ? null : catalogMenuIsActive(menu))
+      setLinked(Object.fromEntries(links))
     } catch (error) {
       if (controller.signal.aborted || generation !== loadGenerationRef.current) {
         return
@@ -119,7 +153,7 @@ export function CatalogProductsPage({ view = "products" }: { view?: "products" |
         setLoading(false)
       }
     }
-  }, [t, taxonomyFilter.categoryId, taxonomyFilter.tagIds])
+  }, [canReadMenu, rentals, t, taxonomyFilter.categoryId, taxonomyFilter.tagIds])
 
   useEffect(() => {
     void reload()
@@ -352,6 +386,7 @@ export function CatalogProductsPage({ view = "products" }: { view?: "products" |
   }
 
   return (
+    <ProductSetupContext.Provider value={{ menuPublished: catalogMenu, linked, rentals }}>
     <div className="staff-catalog">
       <CatalogHeading
         title={t("catalog.products.title")}
@@ -447,6 +482,7 @@ export function CatalogProductsPage({ view = "products" }: { view?: "products" |
         </DialogContent>
       </Dialog>
     </div>
+    </ProductSetupContext.Provider>
   )
 }
 
@@ -460,7 +496,16 @@ function CatalogProductNameCell({ row, table }: CellContext<CatalogProduct, unkn
   const { t } = useTranslation()
   const { can } = usePermissions()
   const product = row.original
+  const setup = useContext(ProductSetupContext)
   const { onEdit } = table.options.meta as CatalogProductsTableMeta
+  const setupStatus = productItemStatus({
+    name: product.name,
+    isActive: product.isActive,
+    price: product.price,
+    audienceReady: product.visibility !== "Restricted",
+    agendaReady: !setup.rentals || setup.linked[product.id] === true,
+    menuPublished: setup.menuPublished,
+  })
   const name = <>
     <span className="staff-catalog-product-icon"><Package size={20} aria-hidden="true" /></span>
     <span className="min-w-0">
@@ -469,6 +514,7 @@ function CatalogProductNameCell({ row, table }: CellContext<CatalogProduct, unkn
           <strong>{product.name}</strong>
         </button>
       ) : <strong>{product.name}</strong>}
+      <ItemStatusBadge status={setupStatus} />
       {product.description ? <small className="staff-catalog-product-description">{product.description}</small> : null}
       <small className="staff-catalog-mobile-code">{product.code ?? "—"}</small>
       <Link className="staff-catalog-assistant-inline" to={productWizardPath(product.id)}>

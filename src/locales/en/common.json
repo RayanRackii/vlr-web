@@ -52,6 +52,14 @@
       "bloqueio": "Block"
     }
   },
+  "assistant": {
+    "status": {
+      "published": "Published",
+      "draft": "Draft",
+      "missing_one": "{{count}} step left",
+      "missing_other": "{{count}} steps left"
+    }
+  },
   "app": {
     "name": "Rolvix",
     "authenticatedArea": "Authenticated area"

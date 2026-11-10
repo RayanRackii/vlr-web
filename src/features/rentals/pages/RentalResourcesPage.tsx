@@ -10,13 +10,20 @@ import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { ICON_STROKE_WIDTH } from "@/lib/icon"
 import { RentalResourceDetails } from "@/features/rentals/components/RentalResourceDetails"
+import { menuCoversAsset } from "@/features/rentals/components/resourceWizard/bookableChecklist"
 import { resourceWizardPath } from "@/features/rentals/components/resourceWizard/wizardSteps"
+import { ItemStatusBadge } from "@/features/assistant/ItemStatusBadge"
+import { resourceItemStatus } from "@/features/assistant/itemStatus"
 import { ScheduleEmptyState } from "@/features/rentals/components/schedule/ScheduleEmptyState"
 import { getAssetPricings, type RentalPricing } from "@/features/assets/services/rentalPricingService"
 import {
   listAdminRentalAssets,
+  listScheduleTemplates,
   type AdminRentalAsset,
+  type ScheduleTemplate,
 } from "@/features/rentals/services/scheduleService"
+import { listTenantModuleMenuItems } from "@/features/tenantPortal/services/tenantPortalService"
+import type { ModuleMenuItem } from "@/features/tenantPortal/schemas/tenantPortalSchemas"
 import { useTrialStatus } from "@/features/users/hooks/useTrialStatus"
 import { Can } from "@/features/users/permissions/Can"
 import { usePermissions } from "@/features/users/permissions/PermissionContext"
@@ -31,19 +38,29 @@ export function RentalResourcesPage() {
   const { isTrialReadOnly } = useTrialStatus()
 
   const [assets, setAssets] = useState<AdminRentalAsset[]>([])
+  const [templates, setTemplates] = useState<ScheduleTemplate[] | null>(null)
+  const [menuItems, setMenuItems] = useState<ModuleMenuItem[] | null>(null)
   const [priceByAssetId, setPriceByAssetId] = useState<Record<string, ResourcePrice>>({})
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState<string | null>(null)
   const canWrite = can("rentals.assets.write") && !isTrialReadOnly
   const canReadPricing = can("rentals.pricing.read")
+  const canReadSchedule = can("rentals.schedule.read")
+  const canReadMenu = can("core.module_menu.read")
   const spaceCount = assets.filter((asset) => asset.type === "Location").length
 
   const load = useCallback(async () => {
     setLoading(true)
     setLoadError(null)
     try {
-      const assetList = await listAdminRentalAssets()
+      const [assetList, templateList, menuList] = await Promise.all([
+        listAdminRentalAssets(),
+        canReadSchedule ? listScheduleTemplates().catch(() => null) : Promise.resolve(null),
+        canReadMenu ? listTenantModuleMenuItems().catch(() => null) : Promise.resolve(null),
+      ])
       setAssets(assetList)
+      setTemplates(templateList)
+      setMenuItems(menuList)
       if (canReadPricing) {
         const prices = await Promise.all(assetList.map(async (asset) => {
           try {
@@ -73,7 +90,7 @@ export function RentalResourcesPage() {
     } finally {
       setLoading(false)
     }
-  }, [canReadPricing, t])
+  }, [canReadMenu, canReadPricing, canReadSchedule, t])
 
   useEffect(() => {
     let current = true
@@ -165,6 +182,21 @@ export function RentalResourcesPage() {
                 <div className="resource-info">
                   <div className="resource-title">
                     <p>{asset.name}</p>
+                    <ItemStatusBadge status={resourceItemStatus({
+                      name: asset.name,
+                      isActive: asset.isActive,
+                      type: asset.type,
+                      schedulePolicy: asset.schedulePolicy,
+                      openTime: asset.openTime,
+                      closeTime: asset.closeTime,
+                      queueEnabled: asset.queueEnabled,
+                      queueOpeningTime: asset.queueOpeningTime,
+                      allowedDurationMinutes: asset.allowedDurationMinutes,
+                      cancelCutoffHours: asset.cancelCutoffHours,
+                      menuPublished: menuItems === null ? null : menuItems.some((item) => menuCoversAsset(item, asset.id)),
+                      hasActiveTemplate: (templates ?? []).some((template) => template.rentalAssetId === asset.id && template.isActive),
+                      hasPrice: priceByAssetId[asset.assetId] != null,
+                    })} />
                     {asset.scheduledDeletionAt ? (
                       <Badge variant="destructive" className="resource-deletion-badge">
                         {t("assets.deletion.pendingBadge")}

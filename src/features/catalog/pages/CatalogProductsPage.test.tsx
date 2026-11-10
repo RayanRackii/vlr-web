@@ -28,6 +28,11 @@ vi.mock("@/features/catalog/services/catalogService", () => ({
   getCatalogProductAccessHistory: vi.fn().mockResolvedValue([]),
   listCustomerGroups: vi.fn().mockResolvedValue([]),
   putCatalogProductAccess: vi.fn(),
+  getCatalogProductResourceRequirements: vi.fn().mockResolvedValue({ expectedVersion: 0, requirements: [] }),
+}))
+
+vi.mock("@/features/tenantPortal/services/tenantPortalService", () => ({
+  listTenantModuleMenuItems: vi.fn().mockResolvedValue([]),
 }))
 
 vi.mock("@/features/users/services/usersService", () => ({
