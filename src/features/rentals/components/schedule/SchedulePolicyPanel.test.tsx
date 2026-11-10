@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react"
+import { fireEvent, render, screen, waitFor } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { describe, expect, it, vi } from "vitest"
 
@@ -59,6 +59,29 @@ function renderSlotGridPanel(allowedDurationMinutes: string | null = null) {
 }
 
 describe("SchedulePolicyPanel", () => {
+  it("treats a duration edit and a mode change as dirty", async () => {
+    const onDirtyChange = vi.fn()
+    const user = userEvent.setup()
+    render(
+      <SchedulePolicyPanel
+        assets={[{ ...asset, schedulePolicy: "SlotGrid", openTime: null, closeTime: null, allowedDurationMinutes: "60" }]}
+        busy={false}
+        busyAction={null}
+        readOnly={false}
+        onSave={vi.fn()}
+        onSeedSlotGrid={vi.fn()}
+        onDirtyChange={onDirtyChange}
+      />,
+    )
+    const duration = screen.getByLabelText(i18n.t("rentals.schedule.policy.durationMinutes"))
+    fireEvent.change(duration, { target: { value: "60,90" } })
+    await waitFor(() => expect(onDirtyChange).toHaveBeenCalledWith(true))
+    fireEvent.change(duration, { target: { value: "60" } })
+    await waitFor(() => expect(onDirtyChange).toHaveBeenLastCalledWith(false))
+    await user.click(screen.getByRole("button", { name: new RegExp(`^${i18n.t("rentals.schedule.policy.openHours")}`) }))
+    await waitFor(() => expect(onDirtyChange).toHaveBeenCalledWith(true))
+  })
+
   it("derives standard hours from the saved weekly grid and does not offer reseeding", async () => {
     const user = userEvent.setup()
     render(

@@ -58,6 +58,16 @@ function tabButton(label: string) {
   return button
 }
 
+async function openHoursPanel(user: ReturnType<typeof userEvent.setup>) {
+  await user.click(screen.getByText(i18n.t("rentals.schedule.tabs.templates")))
+  const openHours = await screen.findByRole("button", { name: i18n.t("rentals.schedule.weekly.configureHours") })
+  await waitFor(() => expect(openHours).toBeEnabled())
+  await user.click(openHours)
+  const panel = screen.getByRole("region", { name: i18n.t("rentals.schedule.policy.title") })
+  expect(screen.queryByRole("dialog")).not.toBeInTheDocument()
+  return panel
+}
+
 async function openWeeklyRule(user: ReturnType<typeof userEvent.setup>) {
   await user.click(screen.getByText(i18n.t("rentals.schedule.tabs.templates")))
   const apply = await screen.findByRole("button", { name: i18n.t("rentals.schedule.weeklyRule.apply") })
@@ -196,6 +206,54 @@ describe("weekly rule leave guard", () => {
     } finally {
       confirm.mockRestore()
       window.history.pushState({}, "", "/")
+    }
+  })
+
+  it("asks before Agenda do dia leaves an unsaved hours duration or mode", async () => {
+    const confirm = vi.spyOn(window, "confirm")
+    const user = userEvent.setup()
+    try {
+      renderAgenda()
+      const panel = await openHoursPanel(user)
+      const duration = within(panel).getByLabelText(i18n.t("rentals.schedule.policy.durationMinutes"))
+      fireEvent.change(duration, { target: { value: "60,90" } })
+      await user.click(screen.getByText(i18n.t("rentals.schedule.tabs.daily")))
+      expect(confirm).not.toHaveBeenCalled()
+      await refuseLeave(user)
+      expect(tabButton(i18n.t("rentals.schedule.tabs.templates"))).toHaveAttribute("aria-pressed", "true")
+      expect(duration).toHaveValue("60,90")
+      fireEvent.change(duration, { target: { value: "60" } })
+      await user.click(within(panel).getByRole("button", { name: new RegExp(`^${i18n.t("rentals.schedule.policy.openHours")}`) }))
+      await user.click(screen.getByText(i18n.t("rentals.schedule.tabs.daily")))
+      await acceptLeave(user)
+      expect(tabButton(i18n.t("rentals.schedule.tabs.daily"))).toHaveAttribute("aria-pressed", "true")
+      expect(screen.queryByLabelText(i18n.t("rentals.schedule.policy.durationMinutes"))).not.toBeInTheDocument()
+    } finally {
+      confirm.mockRestore()
+    }
+  })
+
+  it("asks before a nav link or browser back leaves an unsaved hours draft", async () => {
+    const confirm = vi.spyOn(window, "confirm")
+    const user = userEvent.setup()
+    const { router } = renderAgenda()
+    try {
+      const panel = await openHoursPanel(user)
+      const duration = within(panel).getByLabelText(i18n.t("rentals.schedule.policy.durationMinutes"))
+      fireEvent.change(duration, { target: { value: "60,90" } })
+      await user.click(screen.getByRole("link", { name: "Painel" }))
+      expect(confirm).not.toHaveBeenCalled()
+      await refuseLeave(user)
+      expect(router.state.location.pathname).toBe("/configuracoes/agenda")
+      expect(duration).toHaveValue("60,90")
+      await act(async () => { await router.navigate(-1) })
+      await refuseLeave(user)
+      expect(router.state.location.pathname).toBe("/configuracoes/agenda")
+      await user.click(screen.getByRole("link", { name: "Painel" }))
+      await acceptLeave(user)
+      expect(await screen.findByRole("heading", { name: "Painel" })).toBeInTheDocument()
+    } finally {
+      confirm.mockRestore()
     }
   })
 })

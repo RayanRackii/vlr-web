@@ -37,7 +37,7 @@ function WeeklyHarness() {
 describe("weekly schedule modules", () => {
   beforeEach(async () => { await i18n.changeLanguage("pt-BR") })
 
-  it("changes weekday with toolbar chips, opens both editors below the grid, and keeps policy in its dialog", async () => {
+  it("changes weekday with toolbar chips, opens both editors below the grid, and keeps hours inline", async () => {
     const { container } = render(<MemoryRouter><WeeklyHarness /></MemoryRouter>)
     const user = userEvent.setup()
     const tuesday = screen.getByRole("button", { name: i18n.t("rentals.schedule.days.Tuesday") })
@@ -56,6 +56,8 @@ describe("weekly schedule modules", () => {
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument()
     expect(container.querySelector('.lucide-chevron-down, .lucide-chevron-up, [role="combobox"]')).toBeNull()
     await user.click(screen.getByRole("button", { name: i18n.t("rentals.schedule.weekly.configureHours") }))
-    expect(screen.getByRole("dialog", { name: i18n.t("rentals.schedule.policy.title") })).toBeInTheDocument()
+    const hours = screen.getByRole("region", { name: i18n.t("rentals.schedule.policy.title") })
+    expect(within(hours).getByRole("button", { name: new RegExp(`^${i18n.t("rentals.schedule.policy.slotGrid")}`) })).toHaveAttribute("aria-pressed", "true")
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument()
   })
 })

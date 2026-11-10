@@ -11,13 +11,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover"
 import { scheduleChipClassName } from "./scheduleChipClassName"
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet"
+import { InlineScheduleModule } from "./InlineScheduleModule"
 import type { ScheduleBusyAction } from "@/features/rentals/components/schedule/DailyAgendaTab"
 import { DayResourceGrid } from "@/features/rentals/components/schedule/DayResourceGrid"
 import { RentableMultiSelect } from "@/features/rentals/components/schedule/RentableMultiSelect"
@@ -80,6 +74,10 @@ type WeeklyTemplatesTabProps = {
   onRuleOpenChange?: (open: boolean) => void
   onRuleDirtyChange?: (dirty: boolean) => void
   onRuleRequestClose?: () => void
+  policyOpen?: boolean
+  onPolicyOpenChange?: (open: boolean) => void
+  onPolicyDirtyChange?: (dirty: boolean) => void
+  onPolicyRequestClose?: () => void
 }
 
 export function WeeklyTemplatesTab({
@@ -108,10 +106,23 @@ export function WeeklyTemplatesTab({
   onRuleOpenChange,
   onRuleDirtyChange,
   onRuleRequestClose,
+  policyOpen: policyOpenProp,
+  onPolicyOpenChange,
+  onPolicyDirtyChange,
+  onPolicyRequestClose,
 }: WeeklyTemplatesTabProps) {
   const { t } = useTranslation()
   const navigate = useNavigate()
-  const [policyOpen, setPolicyOpen] = useState(false)
+  const [uncontrolledPolicyOpen, setUncontrolledPolicyOpen] = useState(false)
+  const policyOpen = policyOpenProp ?? uncontrolledPolicyOpen
+  function setPolicyOpen(open: boolean) {
+    if (onPolicyOpenChange) onPolicyOpenChange(open)
+    else setUncontrolledPolicyOpen(open)
+  }
+  function closePolicy() {
+    if (onPolicyRequestClose) onPolicyRequestClose()
+    else setPolicyOpen(false)
+  }
   const [uncontrolledRuleOpen, setUncontrolledRuleOpen] = useState(false)
   const ruleOpen = ruleOpenProp ?? uncontrolledRuleOpen
   function setRuleOpen(open: boolean) {
@@ -234,7 +245,10 @@ export function WeeklyTemplatesTab({
             type="button"
             size="sm"
             variant="outline"
-            onClick={() => setPolicyOpen(true)}
+            onClick={() => {
+              if (policyOpen) closePolicy()
+              else setPolicyOpen(true)
+            }}
           >
             <Settings2 aria-hidden />
             {t("rentals.schedule.weekly.configureHours")}
@@ -339,38 +353,32 @@ export function WeeklyTemplatesTab({
         {templateEditor}
       </div>
 
-      <Sheet open={policyOpen} onOpenChange={setPolicyOpen}>
-        <SheetContent side="right" className="w-full sm:max-w-md">
-          <SheetHeader>
-            <div className="flex items-start gap-3">
-              <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                <Settings2 className="size-4" aria-hidden />
-              </span>
-              <div className="space-y-0.5">
-                <SheetTitle>{t("rentals.schedule.policy.title")}</SheetTitle>
-                <SheetDescription>
-                  {t("rentals.schedule.policy.description")}
-                </SheetDescription>
-              </div>
-            </div>
-          </SheetHeader>
-          <div className="overflow-y-auto px-4 pb-4">
-            {selectedAssets.length > 0 ? (
-              <SchedulePolicyPanel
-                assets={selectedAssets}
-                templates={scheduleTemplates}
-                loadingTemplates={loadingScheduleTemplates}
-                busy={busy}
-                busyAction={busyAction}
-                readOnly={readOnly}
-                embedded
-                onSave={onSavePolicy}
-                onSeedSlotGrid={onSeedSelected}
-              />
-            ) : null}
-          </div>
-        </SheetContent>
-      </Sheet>
+      <InlineScheduleModule
+        title={t("rentals.schedule.policy.title")}
+        description={t("rentals.schedule.policy.description")}
+        icon={Settings2}
+        open={policyOpen}
+        disabled={busy}
+        onOpenChange={(next) => {
+          if (next) setPolicyOpen(true)
+          else closePolicy()
+        }}
+      >
+        {selectedAssets.length > 0 ? (
+          <SchedulePolicyPanel
+            assets={selectedAssets}
+            templates={scheduleTemplates}
+            loadingTemplates={loadingScheduleTemplates}
+            busy={busy}
+            busyAction={busyAction}
+            readOnly={readOnly}
+            embedded
+            onSave={onSavePolicy}
+            onSeedSlotGrid={onSeedSelected}
+            onDirtyChange={onPolicyDirtyChange}
+          />
+        ) : null}
+      </InlineScheduleModule>
 
 
     </div>
