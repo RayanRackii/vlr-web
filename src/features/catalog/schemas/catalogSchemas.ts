@@ -333,6 +333,17 @@ export const productRequestFormSchema = z.object({
 
 export type ProductRequestFormValues = z.infer<typeof productRequestFormSchema>
 
+export const catalogNotificationAttemptSchema = z.object({
+  attemptNumber: z.number().int(),
+  startedAt: z.string().optional(),
+  finishedAt: z.string().nullish(),
+  createdAt: z.string().optional(),
+  outcome: z.union([z.string(), z.number()]).optional(),
+  errorMessage: z.string().nullish(),
+})
+
+export type CatalogNotificationAttempt = z.infer<typeof catalogNotificationAttemptSchema>
+
 export const catalogNotificationDeliverySchema = z.object({
   id: z.string().uuid(),
   notificationId: z.string().uuid(),
@@ -345,6 +356,17 @@ export const catalogNotificationDeliverySchema = z.object({
   attemptCount: z.number(),
   errorMessage: z.string().nullable(),
   createdAt: z.string(),
+  /** Missing until the API ships it. Absent or null means the row may still be resent. */
+  canResend: z.boolean().nullish(),
+  attempts: z.preprocess((value) => {
+    if (value == null) {
+      return undefined
+    }
+    if (!Array.isArray(value)) {
+      return []
+    }
+    return value.filter((item) => catalogNotificationAttemptSchema.safeParse(item).success)
+  }, z.array(catalogNotificationAttemptSchema).optional()),
 })
 
 export type CatalogNotificationDelivery = z.infer<

@@ -1243,6 +1243,16 @@
       "empty": "No deliveries.",
       "resend": "Resend",
       "toastResent": "Resend queued.",
+      "toastResentSent": "Notification resent.",
+      "toastResendFailed": "The resend failed.",
+      "attempts": "Attempts",
+      "attemptsTitle": "Attempts",
+      "attemptsEmpty": "No attempts recorded.",
+      "attemptColumns": {
+        "number": "Attempt",
+        "date": "Date",
+        "error": "Error"
+      },
       "toastChannelSaved": "Channel updated.",
       "toggleChannel": "Enable {{channel}} for {{event}}",
       "columns": {

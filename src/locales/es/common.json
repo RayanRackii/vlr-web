@@ -1243,6 +1243,16 @@
       "empty": "Ninguna entrega.",
       "resend": "Reenviar",
       "toastResent": "Reenvío en cola.",
+      "toastResentSent": "Notificación reenviada.",
+      "toastResendFailed": "El reenvío falló.",
+      "attempts": "Intentos",
+      "attemptsTitle": "Intentos",
+      "attemptsEmpty": "Ningún intento registrado.",
+      "attemptColumns": {
+        "number": "Intento",
+        "date": "Fecha",
+        "error": "Error"
+      },
       "toastChannelSaved": "Canal actualizado.",
       "toggleChannel": "Activar {{channel}} para {{event}}",
       "columns": {
