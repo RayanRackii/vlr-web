@@ -22,7 +22,7 @@ function isNarrowViewport() {
 export function Breadcrumb() {
   const { t } = useTranslation()
   const { pathname } = useLocation()
-  const { sections } = useAppNavigationSections()
+  const { sections } = useAppNavigationSections("module-intros")
   const { title } = useContext(BreadcrumbTitleContext)
   const narrow = useSyncExternalStore(subscribeToViewport, isNarrowViewport, () => false)
   const match = matchNavigationPath(sections.flatMap((section) => section.items), pathname)

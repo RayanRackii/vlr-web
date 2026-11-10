@@ -29,6 +29,14 @@ type SidebarProps = {
   className?: string
 }
 
+const SIDEBAR_LABEL_KEYS: Partial<Record<AppNavigationItem["labelKey"], string>> = {
+  "nav.peopleAccess": "nav.sidebar.people",
+  "nav.catalogCustomerGroups": "nav.sidebar.groups",
+  "nav.layout": "nav.sidebar.map",
+  "nav.catalogSettings": "nav.sidebar.sales",
+  "nav.notifications": "nav.sidebar.notifications",
+}
+
 const NAV_ICON_CLASS = "size-5 shrink-0"
 
 /** Soft-tinted active fill + rested/hover treatment, shared by leaf and child rows. */
@@ -77,7 +85,7 @@ function NavigationLink({
   const Icon = item.icon
   const children = item.children
   const hasChildren = children !== undefined && children.length > 0
-  const label = t(item.labelKey)
+  const label = t(SIDEBAR_LABEL_KEYS[item.labelKey] ?? item.labelKey)
   const tooltip = item.labelKey === "nav.pmoc" ? t("nav.pmocTooltip") || label : label
   const isIntroActive = item.introKey !== undefined && activeIntroKey === item.introKey
   const isActive = match?.item === item || isIntroActive
@@ -258,7 +266,7 @@ function NavigationSection({
   activeIntroKey?: ModuleIntroKey
 }) {
   const { t } = useTranslation()
-  const [expanded, setExpanded] = useState(true)
+  const [expanded, setExpanded] = useState(!section.defaultCollapsed)
   const itemsId = useId()
   const label = t(section.titleKey)
   const isIntroActive = section.introKey !== undefined && section.introKey === activeIntroKey
@@ -266,7 +274,7 @@ function NavigationSection({
 
   return (
     <div className={cn("flex w-full flex-col gap-0.5", collapsed && "items-center gap-1")}>
-      <div className={cn("flex items-center", collapsed && "justify-center", isGroupActive ? "text-primary" : "text-muted-foreground/80")}>
+      {!section.standalone && <div className={cn("flex items-center", collapsed && "justify-center", isGroupActive ? "text-primary" : "text-muted-foreground/80")}>
         {section.introKey ? (
           <Link
             to={moduleIntroPath(section.introKey)}
@@ -290,7 +298,7 @@ function NavigationSection({
             {expanded ? <Minus className="size-3.5" aria-hidden="true" /> : <Plus className="size-3.5" aria-hidden="true" />}
           </button>
         )}
-      </div>
+      </div>}
       <div id={itemsId} hidden={!collapsed && !expanded} className={cn("space-y-0.5", collapsed && "flex flex-col items-center gap-1")}>
         {section.items.map((item) => (
           <NavigationLink key={item.to} item={item} match={match} activeIntroKey={activeIntroKey} onNavigate={onNavigate} collapsed={collapsed} touchTargets={touchTargets} />

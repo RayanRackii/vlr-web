@@ -101,9 +101,16 @@ export type AppNavigationSectionTitleKey =
   | "nav.sections.maintenance"
   | "nav.sections.sales"
   | "nav.sections.platform"
+  | "nav.sections.operations"
+  | "nav.sections.registration"
+  | "nav.sections.customers"
+  | "nav.sections.portal"
+  | "nav.sections.settings"
 
 export type AppNavigationSection = {
   introKey?: ModuleIntroKey
+  defaultCollapsed?: boolean
+  standalone?: boolean
   titleKey: AppNavigationSectionTitleKey
   items: readonly AppNavigationItem[]
 }
@@ -148,12 +155,34 @@ export const appNavigationItems: readonly AppNavigationItem[] = [
   ...peoplePortalItems,
 ]
 
-const productNavigationSections: readonly AppNavigationSection[] = [
+const legacyNavigationSections: readonly AppNavigationSection[] = [
   { introKey: "overview", titleKey: "nav.sections.overview", items: [overviewItem] },
   { introKey: "bookings", titleKey: "nav.sections.bookings", items: bookingsItems },
   { introKey: "maintenance", titleKey: "nav.sections.maintenance", items: maintenanceItems },
   { introKey: "sales", titleKey: "nav.sections.sales", items: salesItems },
   { introKey: "peoplePortal", titleKey: "nav.sections.peoplePortal", items: peoplePortalItems },
+]
+
+// Reuse manifest entries so module, permission and internal-tab access stay intact.
+function navigationItemsAt(...paths: string[]): AppNavigationItem[] {
+  return paths.flatMap((path) => appNavigationItems.filter((item) => item.to === path))
+}
+
+const productNavigationSections: readonly AppNavigationSection[] = [
+  { titleKey: "nav.sections.overview", standalone: true, items: [overviewItem] },
+  { titleKey: "nav.sections.operations", items: navigationItemsAt(
+    "/catalogo/agenda-recursos", "/catalogo/agenda-produto", "/catalogo/pedidos",
+    "/catalogo/solicitacoes", "/configuracoes/reservas", "/os", "/pmoc",
+  ) },
+  { titleKey: "nav.sections.registration", items: navigationItemsAt(
+    "/configuracoes/recursos", "/catalogo/produtos", "/configuracoes/categorias-tags",
+    "/ativos", "/configuracoes/cadastro",
+  ) },
+  { titleKey: "nav.sections.customers", items: navigationItemsAt("/pessoas-e-acesso", "/catalogo/grupos") },
+  { titleKey: "nav.sections.portal", items: navigationItemsAt("/configuracoes/menu", "/configuracoes/layout") },
+  { titleKey: "nav.sections.settings", defaultCollapsed: true, items: navigationItemsAt(
+    "/configuracoes/agenda", "/catalogo/configuracoes", "/configuracoes/notificacoes",
+  ) },
 ]
 
 const platformNavigationSection: AppNavigationSection = {
@@ -257,22 +286,30 @@ export function filterNavigationItemsByAccess(
   })
 }
 
-export function buildProductSections(
+function sectionsFrom(
+  source: readonly AppNavigationSection[],
   activeModules: readonly string[],
   permissions: readonly string[],
 ): AppNavigationSection[] {
-  return productNavigationSections.flatMap((section) => {
+  return source.flatMap((section) => {
     const items = filterNavigationItemsByAccess(section.items, activeModules, permissions)
     return items.length ? [{ ...section, items }] : []
   })
 }
 
-/** First sidebar route the user may open, in product-nav order. */
+export function buildProductSections(
+  activeModules: readonly string[],
+  permissions: readonly string[],
+): AppNavigationSection[] {
+  return sectionsFrom(productNavigationSections, activeModules, permissions)
+}
+
+/** First route the user may open after a dashboard deny, in the previous landing order. */
 export function firstPermittedProductPath(
   activeModules: readonly string[],
   permissions: readonly string[],
 ): string | null {
-  for (const section of buildProductSections(activeModules, permissions)) {
+  for (const section of sectionsFrom(legacyNavigationSections, activeModules, permissions)) {
     for (const item of section.items) {
       const childPath = item.children?.[0]?.to
       if (childPath) {
@@ -286,7 +323,7 @@ export function firstPermittedProductPath(
   return null
 }
 
-export function useAppNavigationSections(): AppNavigationState {
+export function useAppNavigationSections(mode: "shell" | "module-intros" = "shell"): AppNavigationState {
   const { isPlatformAdmin, isInTenantEnvironment } = usePlatformTenantSession()
   const { activeModules, permissions, isLoading } = usePermissions()
 
@@ -296,7 +333,8 @@ export function useAppNavigationSections(): AppNavigationState {
     if (isPlatformAdmin && !isInTenantEnvironment) {
       return [
         {
-          introKey: "overview",
+          standalone: mode === "shell",
+          introKey: mode === "module-intros" ? "overview" : undefined,
           titleKey: "nav.sections.overview",
           items: [overviewItem],
         },
@@ -313,8 +351,15 @@ export function useAppNavigationSections(): AppNavigationState {
       ]
     }
 
+    if (mode === "module-intros") {
+      return legacyNavigationSections.flatMap((section) => {
+        const items = filterNavigationItemsByAccess(section.items, activeModules, permissions)
+        return items.length ? [{ ...section, items }] : []
+      })
+    }
     return buildProductSections(activeModules, permissions)
   }, [
+    mode,
     activeModules,
     isInTenantEnvironment,
     isLoading,
@@ -341,7 +386,7 @@ export function getPageTitleKey(
   | "nav.rentalsResourceWizard"
   | "nav.catalogProductWizard"
   | "app.name" {
-  const intro = matchModuleIntro([...productNavigationSections, platformNavigationSection], pathname)
+  const intro = matchModuleIntro([...legacyNavigationSections, platformNavigationSection], pathname)
   if (intro) return intro.titleKey
 
   if (pathname === "/perfil") {

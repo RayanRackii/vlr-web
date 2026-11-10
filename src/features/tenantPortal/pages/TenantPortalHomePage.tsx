@@ -6,7 +6,7 @@ import { useTranslation } from "react-i18next"
 
 import type { CustomerAppOutletContext } from "@/features/tenantPortal/components/CustomerAppLayout"
 import type { CustomerNavItem } from "@/features/tenantPortal/components/CustomerSidebar"
-import { buildCustomerShellNavItems } from "@/features/catalog/customerNav"
+import { buildCustomerHomeNavItems } from "@/features/catalog/customerNav"
 import { customerDisplayName } from "@/features/tenantPortal/lib/customerDisplayName"
 import { useCustomerLabel } from "@/features/tenantPortal/hooks/useCustomerLabel"
 
@@ -40,7 +40,7 @@ export function TenantPortalHomePage() {
     useOutletContext<CustomerAppOutletContext>()
 
   const name = customerDisplayName(useCustomerLabel()).split(/\s+/)[0]
-  const navItems = buildCustomerShellNavItems(subdomain, menu, t)
+  const navItems = buildCustomerHomeNavItems(subdomain, menu, t)
   const tiles = navItems
     .map((item) => ({ item, descriptionKey: tileDescriptionKey(item) }))
     .filter(

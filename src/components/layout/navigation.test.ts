@@ -538,35 +538,31 @@ describe("staff sidebar groups", () => {
     "catalog.products.read", "catalog.orders.read", "catalog.products.manage", "catalog.notifications.read",
   ]
 
-  it("composes the five groups in the approved order", () => {
+  it("places every existing destination once in the approved groups", () => {
     const sections = buildProductSections(modules, permissions)
     expect(sections.map((section) => section.titleKey)).toEqual([
-      "nav.sections.overview", "nav.sections.bookings", "nav.sections.maintenance",
-      "nav.sections.sales", "nav.sections.peoplePortal",
+      "nav.sections.overview", "nav.sections.operations", "nav.sections.registration",
+      "nav.sections.customers", "nav.sections.portal", "nav.sections.settings",
     ])
-    expect(sections[1]?.items.map((item) => item.labelKey)).toEqual([
-      "nav.rentalsResources", "nav.layout", "nav.schedule", "nav.reservations",
+    expect(sections.slice(1).map((section) => section.items.map((item) => item.to))).toEqual([
+      ["/catalogo/agenda-recursos", "/catalogo/agenda-produto", "/catalogo/pedidos", "/catalogo/solicitacoes", "/configuracoes/reservas", "/os", "/pmoc"],
+      ["/configuracoes/recursos", "/catalogo/produtos", "/configuracoes/categorias-tags", "/ativos"],
+      ["/pessoas-e-acesso", "/catalogo/grupos"],
+      ["/configuracoes/menu", "/configuracoes/layout"],
+      ["/configuracoes/agenda", "/catalogo/configuracoes", "/configuracoes/notificacoes"],
     ])
-    expect(sections[2]?.items.map((item) => item.labelKey)).toEqual([
-      "nav.assets", "nav.pmoc", "nav.workOrders",
-    ])
-    expect(sections[3]?.items.map((item) => item.labelKey)).toEqual([
-      "nav.catalogProducts", "nav.catalogCustomerGroups", "nav.catalogOrders", "nav.catalogProductAgenda", "nav.catalogResourceAgenda", "nav.catalogRequests", "nav.catalogSettings",
-    ])
-    expect(sections[4]?.items.map((item) => item.labelKey)).toEqual([
-      "nav.peopleAccess", "nav.moduleMenu", "nav.taxonomy", "nav.notifications",
-    ])
-    const sidebarLabels = sections.flatMap((section) => section.items.flatMap((item) =>
-      [item.labelKey, ...(item.children?.map((child) => child.labelKey) ?? [])],
+    const destinations = sections.flatMap((section) => section.items.flatMap((item) =>
+      item.children ? item.children.map((child) => child.to) : [item.to],
     ))
-    for (const hidden of ["nav.registrationFields", "nav.bookingPolicy", "nav.assetsCategories", "nav.pmocLibrary"]) {
-      expect(sidebarLabels).not.toContain(hidden)
-    }
+    expect(new Set(destinations).size).toBe(destinations.length)
+    const oldDestinations = filterNavigationItemsByAccess(appNavigationItems, modules, permissions)
+      .flatMap((item) => item.children ? item.children.map((child) => child.to) : [item.to])
+    expect(destinations.sort()).toEqual(oldDestinations.sort())
   })
 
   it("hides empty groups and disabled modules even with stale grants", () => {
     expect(buildProductSections([], permissions).map((section) => section.titleKey))
-      .toEqual(["nav.sections.overview", "nav.sections.peoplePortal"])
+      .toEqual(["nav.sections.overview", "nav.sections.registration", "nav.sections.customers"])
     expect(buildProductSections(modules, [])).toEqual([])
   })
 
