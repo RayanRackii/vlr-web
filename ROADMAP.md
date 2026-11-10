@@ -337,6 +337,8 @@ PR 1 (fundação): tokens de design e primitivas, sem restyling de telas/shell (
 
 ## Histórico
 
+| 2026-11-10 | **Rótulos que cabem (WEB):** Planos de manutenção quebra linha na sidebar. Regras de reserva quebra linha no título do celular. `rentals.assets.write` passa a dizer Editar recursos de aluguel. |
+
 | 2026-11-10 | **Escolhas sem seta de menu (WEB):** horizonte e corte da reserva, o limite de cancelamento de vendas e unidade, categoria e situação do plano de manutenção viram botões. A lista longa deixa de abrir um menu. |
 
 | 2026-11-10 | **Exclusão e desativação no diálogo do produto (WEB):** excluir categoria ou tag, e desativar um produto no editor, pedem confirmação no diálogo da aplicação. Cancelar mantém o item. |

@@ -3904,7 +3904,7 @@
       "rentals.booking_policy.read": "View booking rules",
       "rentals.booking_policy.write": "Edit booking rules",
       "rentals.assets.read": "View rental resources",
-      "rentals.assets.write": "Edit schedule policy",
+      "rentals.assets.write": "Edit rental resources",
       "rentals.pricing.read": "View pricing",
       "rentals.pricing.write": "Edit pricing",
       "rentals.pricing.bulk_write": "Bulk-edit pricing",
