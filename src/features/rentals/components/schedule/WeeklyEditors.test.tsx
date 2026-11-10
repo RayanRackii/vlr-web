@@ -1,4 +1,4 @@
-import { render, screen, within } from "@testing-library/react"
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 
@@ -55,6 +55,24 @@ describe("weekly inline editors", () => {
       expect(within(editor).getByRole("button", { name: "Manutenção" })).toBeDisabled()
       expect(within(editor.querySelector("footer")!).getAllByRole("button").at(-1)).toBeDisabled()
     }
+  })
+
+  it("counts a duration edit as dirty, asks before collapsing, and lets Cancel discard", async () => {
+    const onDirtyChange = vi.fn()
+    const onOpenChange = vi.fn()
+    const onRequestClose = vi.fn()
+    render(<WeeklyRuleSheet {...shared} onOpenChange={onOpenChange} onDirtyChange={onDirtyChange} onRequestClose={onRequestClose} selectedRentalAssetIds={["room"]} weekday="Monday" onApply={vi.fn()} />)
+    const duration = screen.getByLabelText(i18n.t("rentals.schedule.policy.slotMinutes"))
+    expect(duration).toHaveValue(60)
+    fireEvent.change(duration, { target: { value: "90" } })
+    await waitFor(() => expect(onDirtyChange).toHaveBeenCalledWith(true))
+    const user = userEvent.setup()
+    await user.click(screen.getByRole("button", { name: i18n.t("rentals.schedule.weeklyRule.title") }))
+    expect(onRequestClose).toHaveBeenCalledOnce()
+    expect(onOpenChange).not.toHaveBeenCalled()
+    await user.click(screen.getByRole("button", { name: i18n.t("common.cancel") }))
+    expect(onOpenChange).toHaveBeenCalledWith(false)
+    expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument()
   })
 
   it("keeps rule validation, cancel, and collapse available", async () => {

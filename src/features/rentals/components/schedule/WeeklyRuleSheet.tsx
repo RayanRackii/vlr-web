@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { Repeat } from "lucide-react"
 
@@ -26,6 +26,39 @@ export type WeeklyRuleDraft = {
   occupancyKindId: string
 }
 
+type WeeklyRuleBaseline = {
+  days: readonly string[]
+  openTime: string
+  closeTime: string
+  slotMinutes: number
+  occupancyKindId: string
+}
+
+const RULE_OPEN_TIME = "08:00"
+const RULE_CLOSE_TIME = "22:00"
+const RULE_SLOT_MINUTES = 60
+
+function weeklyRuleBaseline(weekday: string, kindId: string): WeeklyRuleBaseline {
+  return {
+    days: [weekday],
+    openTime: RULE_OPEN_TIME,
+    closeTime: RULE_CLOSE_TIME,
+    slotMinutes: RULE_SLOT_MINUTES,
+    occupancyKindId: kindId,
+  }
+}
+
+function weeklyRuleIsDirty(current: WeeklyRuleBaseline, baseline: WeeklyRuleBaseline): boolean {
+  if (current.slotMinutes !== baseline.slotMinutes) return true
+  if (current.openTime !== baseline.openTime) return true
+  if (current.closeTime !== baseline.closeTime) return true
+  if (current.occupancyKindId !== baseline.occupancyKindId) return true
+  if (current.days.length !== baseline.days.length) return true
+  const left = [...current.days].sort()
+  const right = [...baseline.days].sort()
+  return left.some((day, index) => day !== right[index])
+}
+
 type WeeklyRuleSheetProps = {
   open: boolean
   onOpenChange: (open: boolean) => void
@@ -37,6 +70,9 @@ type WeeklyRuleSheetProps = {
   busyAction: ScheduleBusyAction
   readOnly: boolean
   onApply: (draft: WeeklyRuleDraft) => Promise<boolean>
+  onDirtyChange?: (dirty: boolean) => void
+  /** Collapse and other non-Cancel closes. Cancel discards without asking. */
+  onRequestClose?: () => void
 }
 
 export function WeeklyRuleSheet({
@@ -50,24 +86,61 @@ export function WeeklyRuleSheet({
   busyAction,
   readOnly,
   onApply,
+  onDirtyChange,
+  onRequestClose,
 }: WeeklyRuleSheetProps) {
   const { t } = useTranslation()
   const [days, setDays] = useState<string[]>([weekday])
-  const [openTime, setOpenTime] = useState("08:00")
-  const [closeTime, setCloseTime] = useState("22:00")
-  const [slotMinutes, setSlotMinutes] = useState(60)
+  const [openTime, setOpenTime] = useState(RULE_OPEN_TIME)
+  const [closeTime, setCloseTime] = useState(RULE_CLOSE_TIME)
+  const [slotMinutes, setSlotMinutes] = useState(RULE_SLOT_MINUTES)
   const [occupancyKindId, setOccupancyKindId] = useState(defaultKindId)
-  const ruleKindId = occupancyKindId || defaultKindId
+  const [baseline, setBaseline] = useState<WeeklyRuleBaseline>(() => weeklyRuleBaseline(weekday, defaultKindId))
   const hasValidTimes = HH_MM.test(openTime) && HH_MM.test(closeTime)
 
+  let currentDays = days
+  let currentOpen = openTime
+  let currentClose = closeTime
+  let currentSlot = slotMinutes
+  let currentKind = occupancyKindId
+  let currentBaseline = baseline
   const [wasOpen, setWasOpen] = useState(open)
   if (wasOpen !== open) {
     setWasOpen(open)
     if (open) {
-      setDays([weekday])
-      setOccupancyKindId(defaultKindId)
+      const next = weeklyRuleBaseline(weekday, defaultKindId)
+      currentDays = [...next.days]
+      currentOpen = next.openTime
+      currentClose = next.closeTime
+      currentSlot = next.slotMinutes
+      currentKind = next.occupancyKindId
+      currentBaseline = next
+      setDays(currentDays)
+      setOpenTime(currentOpen)
+      setCloseTime(currentClose)
+      setSlotMinutes(currentSlot)
+      setOccupancyKindId(currentKind)
+      setBaseline(next)
     }
   }
+  const ruleKindId = currentKind || defaultKindId
+  const dirty = open && weeklyRuleIsDirty(
+    {
+      days: currentDays,
+      openTime: currentOpen,
+      closeTime: currentClose,
+      slotMinutes: currentSlot,
+      occupancyKindId: ruleKindId,
+    },
+    {
+      ...currentBaseline,
+      occupancyKindId: currentBaseline.occupancyKindId || defaultKindId,
+    },
+  )
+  useEffect(() => {
+    onDirtyChange?.(dirty)
+  }, [dirty, onDirtyChange])
+  useEffect(() => () => onDirtyChange?.(false), [onDirtyChange])
 
   return (
     <InlineScheduleModule
@@ -76,7 +149,13 @@ export function WeeklyRuleSheet({
       icon={Repeat}
       open={open}
       disabled={busy}
-      onOpenChange={onOpenChange}
+      onOpenChange={(next) => {
+        if (!next && onRequestClose) {
+          onRequestClose()
+          return
+        }
+        onOpenChange(next)
+      }}
     >
       <div className="flex flex-col gap-4">
         <fieldset>

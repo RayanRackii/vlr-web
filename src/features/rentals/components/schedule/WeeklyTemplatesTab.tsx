@@ -76,6 +76,10 @@ type WeeklyTemplatesTabProps = {
   onSavePolicy: (input: UpdateSchedulePolicyInput) => Promise<void>
   templateEditor?: ReactNode
   onApplyWeeklyRule: (draft: WeeklyRuleDraft) => Promise<boolean>
+  ruleOpen?: boolean
+  onRuleOpenChange?: (open: boolean) => void
+  onRuleDirtyChange?: (dirty: boolean) => void
+  onRuleRequestClose?: () => void
 }
 
 export function WeeklyTemplatesTab({
@@ -100,11 +104,20 @@ export function WeeklyTemplatesTab({
   onSavePolicy,
   onApplyWeeklyRule,
   templateEditor,
+  ruleOpen: ruleOpenProp,
+  onRuleOpenChange,
+  onRuleDirtyChange,
+  onRuleRequestClose,
 }: WeeklyTemplatesTabProps) {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const [policyOpen, setPolicyOpen] = useState(false)
-  const [ruleOpen, setRuleOpen] = useState(false)
+  const [uncontrolledRuleOpen, setUncontrolledRuleOpen] = useState(false)
+  const ruleOpen = ruleOpenProp ?? uncontrolledRuleOpen
+  function setRuleOpen(open: boolean) {
+    if (onRuleOpenChange) onRuleOpenChange(open)
+    else setUncontrolledRuleOpen(open)
+  }
 
   const selectedAssets = useMemo(
     () =>
@@ -312,6 +325,8 @@ export function WeeklyTemplatesTab({
         <WeeklyRuleSheet
           open={ruleOpen}
           onOpenChange={setRuleOpen}
+          onDirtyChange={onRuleDirtyChange}
+          onRequestClose={onRuleRequestClose}
           selectedRentalAssetIds={selectedRentalAssetIds}
           weekday={weekday}
           kinds={kinds}
