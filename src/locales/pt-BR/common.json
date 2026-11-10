@@ -1253,7 +1253,13 @@
       "attemptColumns": {
         "number": "Tentativa",
         "date": "Data",
+        "outcome": "Resultado",
         "error": "Erro"
+      },
+      "attemptOutcome": {
+        "Success": "Sucesso",
+        "TransientFailure": "Falha temporária",
+        "PermanentFailure": "Falha permanente"
       },
       "toastChannelSaved": "Canal atualizado.",
       "toggleChannel": "Ativar {{channel}} para {{event}}",

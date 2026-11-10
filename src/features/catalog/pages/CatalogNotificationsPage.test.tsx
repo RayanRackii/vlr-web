@@ -222,14 +222,24 @@ describe("CatalogNotificationsPage", () => {
 
   it("renders the API attempt list and, without it, only the count", async () => {
     const user = userEvent.setup()
-    const timestamp = "2026-10-20T18:40:00.000Z"
+    const startedAt = "2026-10-20T17:40:00.000Z"
+    const finishedAt = "2026-10-20T18:40:00.000Z"
     const { unmount } = renderPage(readAndResend, [{
       ...failedDelivery,
       attempts: [{
-        number: 2,
-        timestamp,
-        error: "WhatsApp recipient is missing.",
+        attemptNumber: 2,
+        startedAt,
+        finishedAt,
+        outcome: "PermanentFailure",
+        errorMessage: "WhatsApp recipient is missing.",
         channel: "WhatsApp",
+      }, {
+        attemptNumber: 1,
+        startedAt,
+        finishedAt: null,
+        outcome: "TransientFailure",
+        errorMessage: null,
+        channel: "Email",
       }],
     }])
 
@@ -241,8 +251,13 @@ describe("CatalogNotificationsPage", () => {
     expect(within(history).getByText("2")).toBeInTheDocument()
     expect(within(history).getByText("WhatsApp recipient is missing.")).toBeInTheDocument()
     expect(within(history).getByText(i18n.t("catalog.channels.WhatsApp"))).toBeInTheDocument()
+    expect(within(history).getByText(i18n.t("catalog.notifications.attemptOutcome.PermanentFailure"))).toBeInTheDocument()
+    expect(within(history).getByText(i18n.t("catalog.notifications.attemptOutcome.TransientFailure"))).toBeInTheDocument()
     expect(
-      within(history).getByText(formatCatalogDate(timestamp, i18n.language, "America/Sao_Paulo")),
+      within(history).getByText(formatCatalogDate(finishedAt, i18n.language, "America/Sao_Paulo")),
+    ).toBeInTheDocument()
+    expect(
+      within(history).getByText(formatCatalogDate(startedAt, i18n.language, "America/Sao_Paulo")),
     ).toBeInTheDocument()
     expect(
       within(history).queryByText(formatCatalogDate(failedDelivery.createdAt, i18n.language, "America/Sao_Paulo")),
@@ -294,26 +309,27 @@ describe("catalog notification delivery schema", () => {
     expect(parsed.map((row) => row.status)).toEqual(["Sending", "Failed"])
   })
 
-  it("keeps valid attempts and drops a row the page cannot show", () => {
-    const parsed = catalogNotificationDeliverySchema.parse({
+  it("keeps an attempt in the API shape and rejects one that does not match", () => {
+    const attempt = {
+      attemptNumber: 1,
+      startedAt: "2026-10-20T17:06:00.000Z",
+      finishedAt: "2026-10-20T18:40:00.000Z",
+      outcome: "PermanentFailure" as const,
+      errorMessage: "missing",
+      channel: "WhatsApp" as const,
+    }
+    expect(catalogNotificationDeliverySchema.parse({
+      ...payload,
+      attempts: [attempt],
+    }).attempts).toEqual([attempt])
+
+    const parsed = catalogNotificationDeliverySchema.safeParse({
       ...payload,
       attempts: [
-        {
-          number: 1,
-          timestamp: payload.createdAt,
-          error: "missing",
-          channel: "WhatsApp",
-        },
-        { note: "not an attempt" },
+        attempt,
+        { number: 2, timestamp: attempt.startedAt, error: "missing", channel: "WhatsApp" },
       ],
     })
-    expect(parsed.attempts).toEqual([
-      {
-        number: 1,
-        timestamp: payload.createdAt,
-        error: "missing",
-        channel: "WhatsApp",
-      },
-    ])
+    expect(parsed.success).toBe(false)
   })
 })

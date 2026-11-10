@@ -43,7 +43,7 @@ function DeliveryAttemptHistory({
 }) {
   const { t, i18n } = useTranslation()
   const timeZoneId = useTenantTimeZone()
-  const attempts = [...(delivery.attempts ?? [])].sort((left, right) => left.number - right.number)
+  const attempts = [...(delivery.attempts ?? [])].sort((left, right) => left.attemptNumber - right.attemptNumber)
 
   return (
     <section
@@ -56,18 +56,20 @@ function DeliveryAttemptHistory({
           {t("catalog.notifications.attemptCount", { count: delivery.attemptCount })}
         </p>
       ) : (
-        <div className="grid grid-cols-[minmax(5rem,auto)_minmax(8rem,auto)_minmax(6rem,auto)_1fr] gap-x-4 gap-y-1 text-sm">
+        <div className="grid grid-cols-[minmax(4.5rem,auto)_minmax(8rem,auto)_minmax(6rem,auto)_minmax(7rem,auto)_1fr] gap-x-4 gap-y-1 text-sm">
           <span className="font-medium">{t("catalog.notifications.attemptColumns.number")}</span>
           <span className="font-medium">{t("catalog.notifications.attemptColumns.date")}</span>
           <span className="font-medium">{t("catalog.notifications.columns.channel")}</span>
+          <span className="font-medium">{t("catalog.notifications.attemptColumns.outcome")}</span>
           <span className="font-medium">{t("catalog.notifications.attemptColumns.error")}</span>
           {attempts.map((attempt) => (
-            <Fragment key={attempt.number}>
-              <span>{attempt.number}</span>
-              <span>{formatCatalogDate(attempt.timestamp, i18n.language, timeZoneId)}</span>
+            <Fragment key={attempt.attemptNumber}>
+              <span>{attempt.attemptNumber}</span>
+              <span>{formatCatalogDate(attempt.finishedAt ?? attempt.startedAt, i18n.language, timeZoneId)}</span>
               <span>{t(`catalog.channels.${attempt.channel}`, { defaultValue: attempt.channel })}</span>
+              <span>{t(`catalog.notifications.attemptOutcome.${attempt.outcome}`)}</span>
               <span className="break-words text-muted-foreground">
-                {attempt.error?.trim() || "—"}
+                {attempt.errorMessage?.trim() || "—"}
               </span>
             </Fragment>
           ))}

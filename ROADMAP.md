@@ -337,6 +337,7 @@ PR 1 (fundação): tokens de design e primitivas, sem restyling de telas/shell (
 
 ## Histórico
 
+| 2026-11-10 | **Tentativas usam o contrato da API (WEB):** cada tentativa mostra o número, a data de término ou início, o canal, o resultado e a mensagem. Um item fora desse formato invalida a leitura em vez de sumir. |
 | 2026-11-10 | **Entrega em envio permanece na lista (WEB):** o status Enviando entra no histórico e no rótulo. Reenviar fica oculto enquanto envia e quando a entrega não pode ser reenviada. Um reenvio ainda em andamento não vira erro. As tentativas usam a data da API; sem essa lista, aparece só a contagem. |
 | 2026-11-10 | **Reenvio mostra o resultado (WEB):** Reenviar só confirma quando a resposta vem enviada, entregue ou na fila. Se continua falha, o aviso traz a mensagem de erro. O botão da linha trava durante o pedido e some quando a entrega não pode ser reenviada. As tentativas abrem na própria tabela. |
 | 2026-11-10 | **Criar no campo sem loop de render (WEB):** o callback de rascunho é guardado num efeito, não durante o render. O ratchet do ESLint passa. |
