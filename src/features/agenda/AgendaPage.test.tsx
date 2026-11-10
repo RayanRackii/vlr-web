@@ -11,7 +11,19 @@ import { AgendaPage } from "./AgendaPage"
 
 vi.mock("@/features/users/permissions/PermissionContext", () => ({ usePermissions: vi.fn() }))
 vi.mock("@/features/rentals/services/rentalResourcesService", () => ({ listRentalAssetCategories: vi.fn() }))
-vi.mock("@/features/catalog/services/catalogService", () => ({ listCatalogProducts: vi.fn(), listCatalogOrders: vi.fn() }))
+vi.mock("@/features/catalog/services/catalogService", () => ({
+  listCatalogProducts: vi.fn(),
+  listCatalogOrders: vi.fn(),
+  listCatalogResourceAgenda: vi.fn().mockResolvedValue({ resources: [], items: [] }),
+}))
+vi.mock("@/features/rentals/services/scheduleService", () => ({
+  listAdminRentalAssets: vi.fn().mockResolvedValue([]),
+  fetchAdminScheduleDay: vi.fn().mockResolvedValue({ date: "2026-11-10", slots: [] }),
+  listOccupancyKinds: vi.fn().mockResolvedValue([]),
+}))
+vi.mock("@/features/rentals/services/reservationsService", () => ({
+  listAdminReservations: vi.fn().mockResolvedValue([]),
+}))
 const categoryId = "11111111-1111-4111-8111-111111111111"
 const productId = "22222222-2222-4222-8222-222222222222"
 const orderId = "33333333-3333-4333-8333-333333333333"
