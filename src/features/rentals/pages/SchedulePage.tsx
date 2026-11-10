@@ -157,6 +157,7 @@ function AdminSchedulePage() {
   const templatesCacheRef = useRef(new Map<string, ScheduleTemplate[]>())
 
   const [kindSheetOpen, setKindSheetOpen] = useState(false)
+  const [kindDirty, setKindDirty] = useState(false)
   const [editingKind, setEditingKind] = useState<OccupancyKind | null>(null)
   const [templateSheetOpen, setTemplateSheetOpen] = useState(false)
   const [templateDirty, setTemplateDirty] = useState(false)
@@ -175,7 +176,7 @@ function AdminSchedulePage() {
   const [editingCell, setEditingCell] =
     useState<DayResourceGridCellPayload | null>(null)
   const hasDataRouter = useContext(DataRouterContext) != null
-  const draftDirty = (templateSheetOpen && templateDirty) || (ruleOpen && ruleDirty) || (policyOpen && policyDirty) || (slotSheetOpen && slotDirty)
+  const draftDirty = (templateSheetOpen && templateDirty) || (ruleOpen && ruleDirty) || (policyOpen && policyDirty) || (slotSheetOpen && slotDirty) || (kindSheetOpen && kindDirty)
 
   useEffect(() => {
     if (!draftDirty) return
@@ -238,12 +239,43 @@ function AdminSchedulePage() {
     clearSlotDraft()
   }
 
+  function clearKindDraft() {
+    setKindSheetOpen(false)
+    setKindDirty(false)
+    setEditingKind(null)
+  }
+
+  function requestCloseKind() {
+    if (kindSheetOpen && kindDirty) {
+      setPendingLeave(() => clearKindDraft)
+      return
+    }
+    clearKindDraft()
+  }
+
+  function openKind(kind: OccupancyKind | null) {
+    const open = () => {
+      setEditingKind(kind)
+      setKindDirty(false)
+      setKindSheetOpen(true)
+    }
+    if (kindSheetOpen && kindDirty && (kind?.id ?? null) !== (editingKind?.id ?? null)) {
+      setPendingLeave(() => open)
+      return
+    }
+    if (kindSheetOpen && kindDirty && kind?.id === editingKind?.id) {
+      return
+    }
+    open()
+  }
+
   function runOrAsk(action: () => void) {
     const proceed = () => {
       clearTemplateDraft()
       if (ruleDirty) closeWeeklyRule()
       if (policyDirty) closePolicy()
       clearSlotDraft()
+      clearKindDraft()
       action()
     }
     if (draftDirty) {
@@ -1026,38 +1058,34 @@ function AdminSchedulePage() {
         ) : null}
 
         {tab === "kinds" ? (
+          <>
           <OccupancyKindsTab
             kinds={kinds}
             loading={loadingKinds}
             busy={busy}
             readOnly={isTrialReadOnly}
-            onAdd={() => {
-              setEditingKind(null)
-              setKindSheetOpen(true)
-            }}
-            onEdit={(kind) => {
-              setEditingKind(kind)
-              setKindSheetOpen(true)
-            }}
+            onAdd={() => openKind(null)}
+            onEdit={(kind) => openKind(kind)}
           />
+          {kindSheetOpen ? (
+          <OccupancyKindSheet
+            key={editingKind?.id ?? "new"}
+            open
+            onOpenChange={(open) => {
+              if (!open) clearKindDraft()
+            }}
+            onDirtyChange={setKindDirty}
+            onRequestClose={requestCloseKind}
+            editing={editingKind}
+            busy={busy}
+            readOnly={isTrialReadOnly}
+            onSubmit={handleSaveKind}
+          />
+          ) : null}
+          </>
         ) : null}
       </CardContent>
       </Card>
-
-      <OccupancyKindSheet
-        open={kindSheetOpen}
-        onOpenChange={(open) => {
-          setKindSheetOpen(open)
-          if (!open) {
-            setEditingKind(null)
-          }
-        }}
-        editing={editingKind}
-        busy={busy}
-        readOnly={isTrialReadOnly}
-        onSubmit={handleSaveKind}
-      />
-
 
       {hasDataRouter ? <ScheduleLeaveGuard dirty={draftDirty} /> : null}
       <LeaveConfirmDialog
