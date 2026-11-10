@@ -337,6 +337,7 @@ PR 1 (fundação): tokens de design e primitivas, sem restyling de telas/shell (
 
 ## Histórico
 
+| 2026-11-10 | **Novo tipo abre em branco (WEB):** Cancelar descarta o formulário. O próximo Novo não restaura o texto. |
 | 2026-11-10 | **Tipo de ocupação fica na página (WEB):** criar ou editar um tipo abre uma seção na aba, não um painel lateral. Alterar o formulário pede confirmação antes de recolher ou trocar de aba. Cancelar descarta. |
 | 2026-11-10 | **Sair descarta o mesmo horário (WEB):** clicar de novo no horário aberto e escolher Sair joga fora o rascunho. O formulário volta aos valores do horário. |
 | 2026-11-10 | **Horário do dia fica na página (WEB):** editar um horário abre uma seção na agenda, não um painel lateral. Mudar o rótulo, o tipo ou o alcance pede confirmação antes de recolher ou trocar de aba. Cancelar descarta. |

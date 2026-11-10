@@ -1067,9 +1067,10 @@ function AdminSchedulePage() {
             onAdd={() => openKind(null)}
             onEdit={(kind) => openKind(kind)}
           />
+          {kindSheetOpen ? (
           <OccupancyKindSheet
             key={editingKind?.id ?? "new"}
-            open={kindSheetOpen}
+            open
             onOpenChange={(open) => {
               if (!open) clearKindDraft()
             }}
@@ -1080,6 +1081,7 @@ function AdminSchedulePage() {
             readOnly={isTrialReadOnly}
             onSubmit={handleSaveKind}
           />
+          ) : null}
           </>
         ) : null}
       </CardContent>
