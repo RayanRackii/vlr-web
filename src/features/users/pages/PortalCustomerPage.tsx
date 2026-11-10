@@ -187,7 +187,7 @@ export function PortalCustomerPage() {
         )}
       </section>
       )}
-      {denied.products ? null : (
+      {denied.products || denied.groups ? null : (
       <section className="space-y-2" aria-labelledby="customer-products">
         <h2 id="customer-products" className="text-lg font-semibold">{t("peopleAccess.customerPage.products")}</h2>
         {products.length === 0 ? <p className="text-sm text-muted-foreground">{t("peopleAccess.customerPage.noProducts")}</p> : (

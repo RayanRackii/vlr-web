@@ -200,6 +200,24 @@ describe("PortalCustomerPage", () => {
     expect(screen.queryByText(i18n.t("peopleAccess.customerPage.noProducts"))).not.toBeInTheDocument()
   })
 
+  it("does not show an empty exclusive-product list when groups are forbidden", async () => {
+    vi.mocked(listCustomerGroups).mockRejectedValue(new CatalogForbiddenError("forbidden"))
+
+    render(
+      <MemoryRouter initialEntries={[`/pessoas-e-acesso/clientes/${CUSTOMER_ID}`]}>
+        <Routes>
+          <Route path="/pessoas-e-acesso/clientes/:id" element={<PortalCustomerPage />} />
+        </Routes>
+      </MemoryRouter>,
+    )
+
+    expect(await screen.findByRole("heading", { name: "Ana Souza" })).toBeInTheDocument()
+    expect(screen.getByRole("alert")).toHaveTextContent(i18n.t("peopleAccess.customerPage.catalogDenied"))
+    expect(screen.getByRole("link", { name: /PED-9/ })).toBeInTheDocument()
+    expect(screen.queryByText(i18n.t("peopleAccess.customerPage.noProducts"))).not.toBeInTheDocument()
+    expect(screen.queryByRole("link", { name: "Camisa" })).not.toBeInTheDocument()
+  })
+
   it("does not call the page a missing translation", async () => {
     expect(i18n.t("peopleAccess.customerPage.products")).toBe("Produtos exclusivos")
   })
