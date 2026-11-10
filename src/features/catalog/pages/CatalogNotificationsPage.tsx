@@ -3,15 +3,12 @@ import { Fragment, useCallback, useEffect, useMemo, useRef, useState, useSyncExt
 import {
   flexRender,
   getCoreRowModel,
-  getFilteredRowModel,
   useReactTable,
   type ColumnDef,
-  type ColumnFiltersState,
 } from "@tanstack/react-table"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 
-import { DataTableColumnFilterHeader } from "@/components/data-table/data-table-column-filter-header"
 import { TableRowsSkeleton } from "@/components/loading/PageContentSkeleton"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -24,18 +21,26 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import { Can } from "@/features/users/permissions/Can"
 import { usePermissions } from "@/features/users/permissions/PermissionContext"
 import {
-  catalogEventI18nKey,
   formatCatalogDate,
-  type CatalogNotificationDelivery,
+  type NotificationChannel,
+  type NotificationDeliveryStatus,
 } from "@/features/catalog/schemas/catalogSchemas"
 import { deliveryErrorText } from "@/features/catalog/lib/deliveryErrorMessage"
+import { DeliveryLogControls } from "@/features/notifications/components/DeliveryLogControls"
+import { deliveryEventLabel } from "@/features/notifications/lib/deliveryEventLabel"
+import type { NotificationDelivery } from "@/features/notifications/schemas/notificationDeliverySchemas"
 import {
-  listCatalogNotifications,
-  resendCatalogNotification,
-} from "@/features/catalog/services/catalogService"
+  listNotificationDeliveries,
+  resendNotificationDelivery,
+} from "@/features/notifications/services/notificationDeliveryService"
+
+function dayBound(value: string, end: boolean): string | undefined {
+  if (!value) return undefined
+  const date = new Date(`${value}T${end ? "23:59:59.999" : "00:00:00"}`)
+  return Number.isNaN(date.getTime()) ? undefined : date.toISOString()
+}
 
 const NARROW_DELIVERY_QUERY = "(max-width: 767px)"
 
@@ -56,7 +61,7 @@ function DeliveryAttemptHistory({
   delivery,
   compact = false,
 }: {
-  delivery: CatalogNotificationDelivery
+  delivery: NotificationDelivery
   compact?: boolean
 }) {
   const { t, i18n } = useTranslation()
@@ -121,40 +126,56 @@ export function CatalogNotificationsPage({ embedded = false }: { embedded?: bool
   const { t, i18n } = useTranslation()
   const timeZoneId = useTenantTimeZone()
   const { can } = usePermissions()
-  const canResend = can("catalog.notifications.resend")
+  const canRead = can("core.notifications.read") || can("catalog.notifications.read")
+  const canResend = can("core.notifications.resend") || can("catalog.notifications.resend")
   const narrow = useNarrowDeliveryList()
 
-  const [deliveries, setDeliveries] = useState<CatalogNotificationDelivery[]>(
-    [],
-  )
+  const [deliveries, setDeliveries] = useState<NotificationDelivery[]>([])
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState<string | null>(null)
-  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
+  const [page, setPage] = useState(1)
+  const [pageSize, setPageSize] = useState<20 | 50>(20)
+  const [totalCount, setTotalCount] = useState(0)
+  const [status, setStatus] = useState<NotificationDeliveryStatus | "">("")
+  const [channel, setChannel] = useState<NotificationChannel | "">("")
+  const [event, setEvent] = useState("")
+  const [from, setFrom] = useState("")
+  const [to, setTo] = useState("")
   const [resendBusyIds, setResendBusyIds] = useState<ReadonlySet<string>>(() => new Set())
   const [openHistoryId, setOpenHistoryId] = useState<string | null>(null)
   const inFlightIds = useRef(new Set<string>())
 
-  async function reload() {
-    setLoading(true)
-    try {
-      const nextDeliveries = await listCatalogNotifications()
-      setDeliveries(nextDeliveries)
-      setLoadError(null)
-    } catch (error) {
-      setLoadError(
-        error instanceof Error
-          ? error.message
-          : t("apiErrors.loadCatalogNotifications"),
-      )
-    } finally {
-      setLoading(false)
-    }
-  }
-
   useEffect(() => {
-    void reload()
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- load once
-  }, [])
+    if (!canRead) {
+      setLoading(false)
+      setDeliveries([])
+      return
+    }
+    let cancelled = false
+    setLoading(true)
+    void listNotificationDeliveries({
+      page,
+      pageSize,
+      status: status || undefined,
+      channel: channel || undefined,
+      event: event || undefined,
+      from: dayBound(from, false),
+      to: dayBound(to, true),
+    }).then((result) => {
+      if (cancelled) return
+      setDeliveries(result.items)
+      setTotalCount(result.totalCount)
+      setLoadError(null)
+    }).catch((error: unknown) => {
+      if (cancelled) return
+      setLoadError(error instanceof Error ? error.message : t("apiErrors.loadCatalogNotifications"))
+    }).finally(() => {
+      if (!cancelled) setLoading(false)
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [canRead, channel, event, from, page, pageSize, status, t, to])
 
   const onResend = useCallback(async (id: string) => {
     if (inFlightIds.current.has(id)) {
@@ -163,7 +184,7 @@ export function CatalogNotificationsPage({ embedded = false }: { embedded?: bool
     inFlightIds.current.add(id)
     setResendBusyIds(new Set(inFlightIds.current))
     try {
-      const updated = await resendCatalogNotification(id)
+      const updated = await resendNotificationDelivery(id)
       setDeliveries((current) =>
         current.map((item) => (item.id === id ? updated : item)),
       )
@@ -194,51 +215,28 @@ export function CatalogNotificationsPage({ embedded = false }: { embedded?: bool
     }
   }, [t])
 
-  const columns = useMemo<ColumnDef<CatalogNotificationDelivery>[]>(
+  const columns = useMemo<ColumnDef<NotificationDelivery>[]>(
     () => [
       {
-        accessorKey: "eventType",
-        header: ({ column }) => (
-          <DataTableColumnFilterHeader
-            column={column}
-            title={t("catalog.notifications.columns.event")}
-          />
-        ),
-        cell: ({ row }) =>
-          t(catalogEventI18nKey(row.original.eventType), {
-            defaultValue: row.original.eventType,
-          }),
+        accessorKey: "eventKey",
+        header: t("catalog.notifications.columns.event"),
+        cell: ({ row }) => deliveryEventLabel(row.original.eventKey, t),
       },
       {
         accessorKey: "channel",
-        header: ({ column }) => (
-          <DataTableColumnFilterHeader
-            column={column}
-            title={t("catalog.notifications.columns.channel")}
-          />
-        ),
+        header: t("catalog.notifications.columns.channel"),
         cell: ({ row }) => t(`catalog.channels.${row.original.channel}`),
       },
       {
         accessorKey: "recipientName",
-        header: ({ column }) => (
-          <DataTableColumnFilterHeader
-            column={column}
-            title={t("catalog.notifications.columns.recipient")}
-          />
-        ),
+        header: t("catalog.notifications.columns.recipient"),
         cell: ({ row }) =>
           row.original.recipientName ??
           t(`catalog.recipient.${row.original.recipientKind}`),
       },
       {
         accessorKey: "status",
-        header: ({ column }) => (
-          <DataTableColumnFilterHeader
-            column={column}
-            title={t("catalog.notifications.columns.status")}
-          />
-        ),
+        header: t("catalog.notifications.columns.status"),
         cell: ({ row }) => (
           <Badge
             variant={
@@ -315,11 +313,10 @@ export function CatalogNotificationsPage({ embedded = false }: { embedded?: bool
   const table = useReactTable({
     data: deliveries,
     columns,
-    state: { columnFilters },
-    onColumnFiltersChange: setColumnFilters,
     getCoreRowModel: getCoreRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
   })
+
+  const pageCount = Math.max(1, Math.ceil(totalCount / pageSize))
 
   return (
     <div
@@ -343,8 +340,23 @@ export function CatalogNotificationsPage({ embedded = false }: { embedded?: bool
         <p className="text-sm text-destructive">{loadError}</p>
       ) : null}
 
-      <Can permission="catalog.notifications.read">
-        {narrow ? (
+      {canRead ? (
+      <>
+      <DeliveryLogControls
+        status={status}
+        channel={channel}
+        event={event}
+        from={from}
+        to={to}
+        pageSize={pageSize}
+        onStatus={(value) => { setStatus(value); setPage(1) }}
+        onChannel={(value) => { setChannel(value); setPage(1) }}
+        onEvent={(value) => { setEvent(value); setPage(1) }}
+        onFrom={(value) => { setFrom(value); setPage(1) }}
+        onTo={(value) => { setTo(value); setPage(1) }}
+        onPageSize={(value) => { setPageSize(value); setPage(1) }}
+      />
+      {narrow ? (
           <div className="min-w-0 space-y-3">
             {loading ? (
               <div className="h-24 animate-pulse rounded-xl border border-border bg-muted/40" />
@@ -369,7 +381,7 @@ export function CatalogNotificationsPage({ embedded = false }: { embedded?: bool
                     <div className="flex min-w-0 items-start justify-between gap-3">
                       <div className="min-w-0 space-y-1">
                         <h3 id={`delivery-card-${delivery.id}`} className="break-words text-sm font-medium">
-                          {t(catalogEventI18nKey(delivery.eventType), { defaultValue: delivery.eventType })}
+                          {deliveryEventLabel(delivery.eventKey, t)}
                         </h3>
                         <p className="break-words text-sm text-muted-foreground">
                           {t(`catalog.channels.${delivery.channel}`)}
@@ -475,8 +487,38 @@ export function CatalogNotificationsPage({ embedded = false }: { embedded?: bool
             </TableBody>
           </Table>
         </div>
-        )}
-      </Can>
+      )}
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <p className="text-sm text-muted-foreground">
+          {t("peopleAccess.pagination.summary", {
+            from: totalCount === 0 ? 0 : (page - 1) * pageSize + 1,
+            to: Math.min(page * pageSize, totalCount),
+            total: totalCount,
+          })}
+        </p>
+        <div className="flex flex-wrap gap-2">
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            disabled={page <= 1}
+            onClick={() => setPage((current) => current - 1)}
+          >
+            {t("peopleAccess.pagination.previous")}
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            disabled={page >= pageCount}
+            onClick={() => setPage((current) => current + 1)}
+          >
+            {t("peopleAccess.pagination.next")}
+          </Button>
+        </div>
+      </div>
+      </>
+      ) : null}
     </div>
   )
 }
