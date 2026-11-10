@@ -28,7 +28,7 @@ function setup(search = "visao=dia&date=2026-11-10") {
 }
 function stubNarrow() {
   vi.stubGlobal("matchMedia", (query: string) => ({
-    matches: query === "(max-width: 899px)",
+    matches: query === "(max-width: 899px)" || query === "(max-width: 639px)",
     media: query,
     addEventListener: () => {},
     removeEventListener: () => {},
@@ -162,7 +162,9 @@ it("lists the day by resource on a narrow screen and keeps the detail below that
   const grid = await screen.findByRole("region", { name: "Grade do dia" })
   expect(grid.className).not.toContain("overflow-x-auto")
   expect(within(grid).queryByText("06:00")).not.toBeInTheDocument()
-  expect(screen.getByRole("group", { name: "Tipo" }).querySelector(".flex-wrap")).toBeTruthy()
+  await user.click(screen.getByRole("button", { name: "Filtros" }))
+  expect(screen.getByRole("group", { name: "Tipo" })).toHaveClass("flex-wrap")
+  expect(screen.queryByRole("dialog")).not.toBeInTheDocument()
   const resource = screen.getByRole("region", { name: "Estúdio A" })
   await user.click(within(resource).getByRole("button", { name: /Pedido.*09:00.*12:00.*Podcast/ }))
   const detail = screen.getByRole("region", { name: "Detalhes do bloco selecionado" })
