@@ -13,7 +13,9 @@ import {
   buildResourceAgendaRows,
   civilToday,
   columnsToRange,
+  formatDayLabel,
   formatZonedTime,
+  zonedDayAndMinutes,
   startOfCivilWeek,
   addCivilDays,
   type AgendaResourceBlock,
@@ -128,6 +130,29 @@ export function CatalogResourceAgendaPage() {
         }).format(new Date(`${anchor}T00:00:00Z`))
 
   const step = view === "week" ? 7 : 1
+
+  const renderStackBlock = (block: AgendaResourceBlock) => {
+    const label = occupantLabel(block.item, t("catalog.resourceAgenda.reserved"))
+    const zone = block.item.timeZoneId
+    const work = block.item.workStart && block.item.workEnd
+      ? `${formatZonedTime(block.item.workStart, i18n.language, zone)}–${formatZonedTime(block.item.workEnd, i18n.language, zone)}`
+      : t("catalog.agenda.unscheduled")
+    return (
+      <button
+        key={block.key}
+        type="button"
+        className="agenda-stack-group"
+        aria-pressed={block.item.orderId === selectedId}
+        onClick={() => setSelectedId(block.item.orderId)}
+      >
+        <span className="agenda-stack-title">{label}</span>
+        <span className="agenda-stack-row">
+          <span>{t("catalog.resourceAgenda.panel.work")}</span>
+          <time>{work}</time>
+        </span>
+      </button>
+    )
+  }
 
   const renderBlock = (block: AgendaResourceBlock) => {
     const label = occupantLabel(block.item, t("catalog.resourceAgenda.reserved"))
@@ -257,6 +282,7 @@ export function CatalogResourceAgendaPage() {
           ) : visibleResources.length === 0 ? (
             <p className="text-sm text-muted-foreground">{t("catalog.resourceAgenda.noResources")}</p>
           ) : (
+            <>
             <div className="resource-agenda-scroll">
               <div className="resource-agenda">
                 <div className="resource-agenda-head">
@@ -285,6 +311,30 @@ export function CatalogResourceAgendaPage() {
                 ))}
               </div>
             </div>
+            <div className="resource-agenda-stack" data-testid="resource-agenda-stack">
+              {rows.map((row) => (
+                <section key={row.resource.id} aria-label={row.resource.name}>
+                  <h3>{row.resource.name}</h3>
+                  {row.resource.category ? <p className="text-xs text-muted-foreground">{row.resource.category}</p> : null}
+                  {row.blocks.length === 0 ? (
+                    <p className="agenda-empty-day">{t("catalog.agenda.free")}</p>
+                  ) : columns.length > 1 ? columns.map((day) => {
+                    const dayBlocks = row.blocks.filter((block) => {
+                      if (!block.item.occupiedStart) return false
+                      return zonedDayAndMinutes(block.item.occupiedStart, block.item.timeZoneId)?.dayKey === day
+                    })
+                    if (dayBlocks.length === 0) return null
+                    return (
+                      <div key={day}>
+                        <h4 className="text-xs font-medium text-muted-foreground">{formatDayLabel(day, i18n.language)}</h4>
+                        {dayBlocks.map(renderStackBlock)}
+                      </div>
+                    )
+                  }) : row.blocks.map(renderStackBlock)}
+                </section>
+              ))}
+            </div>
+            </>
           )}
         </div>
 
