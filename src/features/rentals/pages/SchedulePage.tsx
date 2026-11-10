@@ -162,6 +162,8 @@ function AdminSchedulePage() {
   const [templateDirty, setTemplateDirty] = useState(false)
   const [ruleOpen, setRuleOpen] = useState(false)
   const [ruleDirty, setRuleDirty] = useState(false)
+  const [policyOpen, setPolicyOpen] = useState(false)
+  const [policyDirty, setPolicyDirty] = useState(false)
   const [editingTemplate, setEditingTemplate] =
     useState<ScheduleTemplate | null>(null)
   const [weeklyTarget, setWeeklyTarget] =
@@ -171,7 +173,7 @@ function AdminSchedulePage() {
   const [editingCell, setEditingCell] =
     useState<DayResourceGridCellPayload | null>(null)
   const hasDataRouter = useContext(DataRouterContext) != null
-  const draftDirty = (templateSheetOpen && templateDirty) || (ruleOpen && ruleDirty)
+  const draftDirty = (templateSheetOpen && templateDirty) || (ruleOpen && ruleDirty) || (policyOpen && policyDirty)
 
   useEffect(() => {
     if (!draftDirty) return
@@ -215,10 +217,16 @@ function AdminSchedulePage() {
     setRuleDirty(false)
   }
 
+  function closePolicy() {
+    setPolicyOpen(false)
+    setPolicyDirty(false)
+  }
+
   function runOrAsk(action: () => void) {
     const proceed = () => {
       clearTemplateDraft()
       if (ruleDirty) closeWeeklyRule()
+      if (policyDirty) closePolicy()
       action()
     }
     if (draftDirty) {
@@ -236,6 +244,14 @@ function AdminSchedulePage() {
     setRuleOpen(false)
   }
 
+  function requestClosePolicy() {
+    if (policyOpen && policyDirty) {
+      setPendingLeave(() => closePolicy)
+      return
+    }
+    setPolicyOpen(false)
+  }
+
   function discardTemplateDraft() {
     if (!draftDirty) {
       clearTemplateDraft()
@@ -246,6 +262,7 @@ function AdminSchedulePage() {
     setPendingLeave(() => () => {
       clearTemplateDraft()
       closeWeeklyRule()
+      closePolicy()
       if (href) navigate(href)
     })
     return false
@@ -807,7 +824,10 @@ function AdminSchedulePage() {
                 onClick={() => {
                   if (item.id === tab) return
                   runOrAsk(() => {
-                    if (item.id !== "templates") closeWeeklyRule()
+                    if (item.id !== "templates") {
+                      closeWeeklyRule()
+                      closePolicy()
+                    }
                     setTab(item.id)
                   })
                 }}
@@ -941,6 +961,10 @@ function AdminSchedulePage() {
             onRuleOpenChange={setRuleOpen}
             onRuleDirtyChange={setRuleDirty}
             onRuleRequestClose={requestCloseRule}
+            policyOpen={policyOpen}
+            onPolicyOpenChange={setPolicyOpen}
+            onPolicyDirtyChange={setPolicyDirty}
+            onPolicyRequestClose={requestClosePolicy}
           />
         ) : null}
 
