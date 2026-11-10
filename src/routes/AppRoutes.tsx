@@ -7,6 +7,7 @@ import { ModuleIntroPage } from "@/components/layout/ModuleIntroPage"
 import { PermissionRoute } from "@/components/layout/PermissionRoute"
 import { PlatformAdminRoute } from "@/components/layout/PlatformAdminRoute"
 import { ProtectedRoute } from "@/components/layout/ProtectedRoute"
+import { agendaManifest } from "@/features/agenda/manifest"
 import { adminManifest } from "@/features/admin/manifest"
 import { authManifest } from "@/features/auth/manifest"
 import { catalogManifest } from "@/features/catalog/manifest"
@@ -169,6 +170,11 @@ export function AppRoutes() {
         </Route>
 
         <Route element={<MainLayout />}>
+          {agendaManifest.routes.staff.map((route) => (
+            <Route key={route.path} element={<PermissionRoute anyOf={route.anyOf} modules={route.modules} />}>
+              <Route path={route.path} element={route.element} />
+            </Route>
+          ))}
           <Route path="/modulos/:moduleKey" element={<ModuleIntroPage />} />
           <Route element={<DashboardHomeRoute />}>
             {dashboardManifest.routes.staff.map((route) => (

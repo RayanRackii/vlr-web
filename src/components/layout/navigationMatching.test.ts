@@ -5,6 +5,7 @@ import { matchNavigationPath } from "./navigationMatching"
 
 describe("navigation route matching", () => {
   it.each([
+    ["/agenda", "nav.agenda", undefined, undefined, false],
     ["/pmoc", "nav.pmoc", "nav.pmocPlans", undefined, false],
     ["/pmoc/plan-1", "nav.pmoc", "nav.pmocPlans", undefined, true],
     ["/pmoc/plan-1/tasks", "nav.pmoc", "nav.pmocPlans", undefined, true],

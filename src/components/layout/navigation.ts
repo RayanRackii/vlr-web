@@ -8,6 +8,7 @@ import { filterNavigationTabs, type NavigationTab } from "@/components/layout/na
 import { matchModuleIntro, type ModuleIntro, type ModuleIntroKey } from "./navigationIntros"
 import { matchNavigationPath } from "./navigationMatching"
 import { usePlatformTenantSession } from "@/features/admin/hooks/usePlatformTenantSession"
+import { agendaManifest } from "@/features/agenda/manifest"
 import { adminManifest } from "@/features/admin/manifest"
 import { assetsManifest } from "@/features/assets/manifest"
 import { catalogManifest } from "@/features/catalog/manifest"
@@ -58,6 +59,7 @@ export type AppNavigationChildItem = {
 export type AppNavigationItem = {
   introKey?: ModuleIntroKey
   labelKey:
+    | "nav.agenda"
     | "nav.dashboard"
     | "nav.peopleAccess"
     | "nav.assets"
@@ -149,6 +151,7 @@ const salesItems: readonly AppNavigationItem[] = catalogManifest.navigationItems
 
 /** Flat catalog used for title resolution and module filtering helpers. */
 export const appNavigationItems: readonly AppNavigationItem[] = [
+  ...agendaManifest.navigationItems,
   overviewItem,
   ...bookingsItems,
   ...maintenanceItems,
@@ -172,7 +175,7 @@ function navigationItemsAt(...paths: string[]): AppNavigationItem[] {
 const productNavigationSections: readonly AppNavigationSection[] = [
   { titleKey: "nav.sections.overview", standalone: true, items: [overviewItem] },
   { titleKey: "nav.sections.operations", items: navigationItemsAt(
-    "/catalogo/agenda-recursos", "/catalogo/agenda-produto", "/catalogo/pedidos",
+    "/agenda", "/catalogo/agenda-recursos", "/catalogo/agenda-produto", "/catalogo/pedidos",
     "/catalogo/solicitacoes", "/configuracoes/reservas", "/os", "/pmoc",
   ) },
   { titleKey: "nav.sections.registration", items: navigationItemsAt(
