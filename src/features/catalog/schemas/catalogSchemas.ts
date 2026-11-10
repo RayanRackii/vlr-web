@@ -43,6 +43,7 @@ export const notificationRecipientKindSchema = z.enum(["Customer", "B2BUser"])
 
 export const notificationDeliveryStatusSchema = z.enum([
   "Queued",
+  "Sending",
   "Sent",
   "Delivered",
   "Failed",
@@ -334,12 +335,10 @@ export const productRequestFormSchema = z.object({
 export type ProductRequestFormValues = z.infer<typeof productRequestFormSchema>
 
 export const catalogNotificationAttemptSchema = z.object({
-  attemptNumber: z.number().int(),
-  startedAt: z.string().optional(),
-  finishedAt: z.string().nullish(),
-  createdAt: z.string().optional(),
-  outcome: z.union([z.string(), z.number()]).optional(),
-  errorMessage: z.string().nullish(),
+  number: z.number().int(),
+  timestamp: z.string(),
+  error: z.string().nullish(),
+  channel: z.string(),
 })
 
 export type CatalogNotificationAttempt = z.infer<typeof catalogNotificationAttemptSchema>

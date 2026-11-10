@@ -5,6 +5,7 @@ import { toast } from "sonner"
 
 import { CatalogNotificationsPage } from "@/features/catalog/pages/CatalogNotificationsPage"
 import {
+  catalogNotificationDeliveryListSchema,
   catalogNotificationDeliverySchema,
   formatCatalogDate,
   type CatalogNotificationDelivery,
@@ -25,6 +26,7 @@ vi.mock("sonner", () => ({
   toast: {
     success: vi.fn(),
     error: vi.fn(),
+    message: vi.fn(),
   },
 }))
 
@@ -32,6 +34,7 @@ const listMock = vi.mocked(listCatalogNotifications)
 const resendMock = vi.mocked(resendCatalogNotification)
 const toastSuccess = vi.mocked(toast.success)
 const toastError = vi.mocked(toast.error)
+const toastMessage = vi.mocked(toast.message)
 
 const failedDelivery: CatalogNotificationDelivery = {
   id: "11111111-1111-4111-8111-111111111111",
@@ -67,6 +70,7 @@ describe("CatalogNotificationsPage", () => {
     resendMock.mockReset()
     toastSuccess.mockReset()
     toastError.mockReset()
+    toastMessage.mockReset()
     listMock.mockResolvedValue([])
   })
 
@@ -111,18 +115,45 @@ describe("CatalogNotificationsPage", () => {
     expect(resendButtons).toHaveLength(1)
   })
 
-  it("hides Reenviar when the row says canResend is false and shows it when the field is missing", async () => {
-    const { unmount } = renderPage(readAndResend, [{ ...failedDelivery, canResend: false }])
-    expect(await screen.findByText("Equipe")).toBeInTheDocument()
+  it("hides Reenviar for Sending and for canResend false", async () => {
+    renderPage(readAndResend, [
+      { ...failedDelivery, status: "Sending", errorMessage: null },
+      {
+        ...failedDelivery,
+        id: "33333333-3333-4333-8333-333333333333",
+        canResend: false,
+      },
+    ])
+
+    expect(await screen.findByText(i18n.t("catalog.deliveryStatus.Sending"))).toBeInTheDocument()
     expect(
       screen.queryByRole("button", { name: i18n.t("catalog.notifications.resend") }),
     ).not.toBeInTheDocument()
-    unmount()
+  })
 
+  it("shows Reenviar when canResend is missing", async () => {
     renderPage(readAndResend, [failedDelivery])
     expect(
       await screen.findByRole("button", { name: i18n.t("catalog.notifications.resend") }),
     ).toBeInTheDocument()
+  })
+
+  it("does not toast an error when the resend is still sending", async () => {
+    const user = userEvent.setup()
+    resendMock.mockResolvedValue({
+      ...failedDelivery,
+      status: "Sending",
+      errorMessage: "still working",
+    })
+    renderPage(readAndResend, [failedDelivery])
+
+    await user.click(await screen.findByRole("button", { name: i18n.t("catalog.notifications.resend") }))
+
+    await waitFor(() => {
+      expect(toastMessage).toHaveBeenCalledWith(i18n.t("catalog.notifications.toastResendSending"))
+    })
+    expect(toastError).not.toHaveBeenCalled()
+    expect(toastSuccess).not.toHaveBeenCalled()
   })
 
   it("toasts the returned error when the resend is still failed", async () => {
@@ -189,17 +220,16 @@ describe("CatalogNotificationsPage", () => {
     })
   })
 
-  it("opens attempt history inline with the attempt, date, and error", async () => {
+  it("renders the API attempt list and, without it, only the count", async () => {
     const user = userEvent.setup()
-    const startedAt = "2026-10-20T17:06:00.000Z"
-    renderPage(readAndResend, [{
+    const timestamp = "2026-10-20T18:40:00.000Z"
+    const { unmount } = renderPage(readAndResend, [{
       ...failedDelivery,
       attempts: [{
-        attemptNumber: 2,
-        startedAt,
-        finishedAt: startedAt,
-        outcome: "PermanentFailure",
-        errorMessage: "WhatsApp recipient is missing.",
+        number: 2,
+        timestamp,
+        error: "WhatsApp recipient is missing.",
+        channel: "WhatsApp",
       }],
     }])
 
@@ -210,10 +240,24 @@ describe("CatalogNotificationsPage", () => {
     const history = screen.getByRole("region", { name: i18n.t("catalog.notifications.attemptsTitle") })
     expect(within(history).getByText("2")).toBeInTheDocument()
     expect(within(history).getByText("WhatsApp recipient is missing.")).toBeInTheDocument()
+    expect(within(history).getByText(i18n.t("catalog.channels.WhatsApp"))).toBeInTheDocument()
     expect(
-      within(history).getByText(formatCatalogDate(startedAt, i18n.language, "America/Sao_Paulo")),
+      within(history).getByText(formatCatalogDate(timestamp, i18n.language, "America/Sao_Paulo")),
     ).toBeInTheDocument()
+    expect(
+      within(history).queryByText(formatCatalogDate(failedDelivery.createdAt, i18n.language, "America/Sao_Paulo")),
+    ).not.toBeInTheDocument()
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument()
+    unmount()
+
+    renderPage(readAndResend, [failedDelivery])
+    await user.click(await screen.findByRole("button", { name: i18n.t("catalog.notifications.attempts") }))
+    const countOnly = screen.getByRole("region", { name: i18n.t("catalog.notifications.attemptsTitle") })
+    expect(within(countOnly).getByText(i18n.t("catalog.notifications.attemptCount", { count: failedDelivery.attemptCount }))).toBeInTheDocument()
+    expect(
+      within(countOnly).queryByText(formatCatalogDate(failedDelivery.createdAt, i18n.language, "America/Sao_Paulo")),
+    ).not.toBeInTheDocument()
+    expect(within(countOnly).queryByText("WhatsApp recipient is missing.")).not.toBeInTheDocument()
   })
 })
 
@@ -242,19 +286,33 @@ describe("catalog notification delivery schema", () => {
     ).toBeNull()
   })
 
+  it("parses a Sending row inside the delivery list", () => {
+    const parsed = catalogNotificationDeliveryListSchema.parse([
+      { ...payload, status: "Sending", errorMessage: null },
+      payload,
+    ])
+    expect(parsed.map((row) => row.status)).toEqual(["Sending", "Failed"])
+  })
+
   it("keeps valid attempts and drops a row the page cannot show", () => {
     const parsed = catalogNotificationDeliverySchema.parse({
       ...payload,
       attempts: [
-        { attemptNumber: 1, startedAt: payload.createdAt, errorMessage: "missing" },
+        {
+          number: 1,
+          timestamp: payload.createdAt,
+          error: "missing",
+          channel: "WhatsApp",
+        },
         { note: "not an attempt" },
       ],
     })
     expect(parsed.attempts).toEqual([
       {
-        attemptNumber: 1,
-        startedAt: payload.createdAt,
-        errorMessage: "missing",
+        number: 1,
+        timestamp: payload.createdAt,
+        error: "missing",
+        channel: "WhatsApp",
       },
     ])
   })

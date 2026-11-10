@@ -902,6 +902,7 @@
     },
     "deliveryStatus": {
       "Queued": "En cola",
+      "Sending": "Enviando",
       "Sent": "Enviado",
       "Delivered": "Entregado",
       "Failed": "Falló"
@@ -1245,9 +1246,10 @@
       "toastResent": "Reenvío en cola.",
       "toastResentSent": "Notificación reenviada.",
       "toastResendFailed": "El reenvío falló.",
+      "toastResendSending": "Reenvío en curso.",
       "attempts": "Intentos",
       "attemptsTitle": "Intentos",
-      "attemptsEmpty": "Ningún intento registrado.",
+      "attemptCount": "{{count}}",
       "attemptColumns": {
         "number": "Intento",
         "date": "Fecha",

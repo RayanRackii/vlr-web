@@ -902,6 +902,7 @@
     },
     "deliveryStatus": {
       "Queued": "Queued",
+      "Sending": "Sending",
       "Sent": "Sent",
       "Delivered": "Delivered",
       "Failed": "Failed"
@@ -1245,9 +1246,10 @@
       "toastResent": "Resend queued.",
       "toastResentSent": "Notification resent.",
       "toastResendFailed": "The resend failed.",
+      "toastResendSending": "Resend in progress.",
       "attempts": "Attempts",
       "attemptsTitle": "Attempts",
-      "attemptsEmpty": "No attempts recorded.",
+      "attemptCount": "{{count}}",
       "attemptColumns": {
         "number": "Attempt",
         "date": "Date",

@@ -36,36 +36,6 @@ import {
   resendCatalogNotification,
 } from "@/features/catalog/services/catalogService"
 
-function attemptRows(delivery: CatalogNotificationDelivery): Array<{
-  key: string
-  attemptNumber: number
-  at: string | null
-  errorMessage: string | null
-}> {
-  const recorded = delivery.attempts ?? []
-  if (recorded.length > 0) {
-    return [...recorded]
-      .sort((left, right) => left.attemptNumber - right.attemptNumber)
-      .map((attempt) => ({
-        key: String(attempt.attemptNumber),
-        attemptNumber: attempt.attemptNumber,
-        at: attempt.finishedAt ?? attempt.startedAt ?? attempt.createdAt ?? null,
-        errorMessage: attempt.errorMessage ?? null,
-      }))
-  }
-
-  if (delivery.attemptCount > 0 || delivery.errorMessage) {
-    return [{
-      key: "latest",
-      attemptNumber: delivery.attemptCount,
-      at: delivery.createdAt,
-      errorMessage: delivery.errorMessage,
-    }]
-  }
-
-  return []
-}
-
 function DeliveryAttemptHistory({
   delivery,
 }: {
@@ -73,7 +43,7 @@ function DeliveryAttemptHistory({
 }) {
   const { t, i18n } = useTranslation()
   const timeZoneId = useTenantTimeZone()
-  const rows = attemptRows(delivery)
+  const attempts = [...(delivery.attempts ?? [])].sort((left, right) => left.number - right.number)
 
   return (
     <section
@@ -81,23 +51,23 @@ function DeliveryAttemptHistory({
       aria-label={t("catalog.notifications.attemptsTitle")}
       className="space-y-2 py-1"
     >
-      {rows.length === 0 ? (
-        <p className="text-sm text-muted-foreground">{t("catalog.notifications.attemptsEmpty")}</p>
+      {attempts.length === 0 ? (
+        <p className="text-sm text-muted-foreground">
+          {t("catalog.notifications.attemptCount", { count: delivery.attemptCount })}
+        </p>
       ) : (
-        <div className="grid grid-cols-[minmax(5rem,auto)_minmax(8rem,auto)_1fr] gap-x-4 gap-y-1 text-sm">
+        <div className="grid grid-cols-[minmax(5rem,auto)_minmax(8rem,auto)_minmax(6rem,auto)_1fr] gap-x-4 gap-y-1 text-sm">
           <span className="font-medium">{t("catalog.notifications.attemptColumns.number")}</span>
           <span className="font-medium">{t("catalog.notifications.attemptColumns.date")}</span>
+          <span className="font-medium">{t("catalog.notifications.columns.channel")}</span>
           <span className="font-medium">{t("catalog.notifications.attemptColumns.error")}</span>
-          {rows.map((attempt) => (
-            <Fragment key={attempt.key}>
-              <span>{attempt.attemptNumber}</span>
-              <span>
-                {attempt.at
-                  ? formatCatalogDate(attempt.at, i18n.language, timeZoneId)
-                  : "—"}
-              </span>
+          {attempts.map((attempt) => (
+            <Fragment key={attempt.number}>
+              <span>{attempt.number}</span>
+              <span>{formatCatalogDate(attempt.timestamp, i18n.language, timeZoneId)}</span>
+              <span>{t(`catalog.channels.${attempt.channel}`, { defaultValue: attempt.channel })}</span>
               <span className="break-words text-muted-foreground">
-                {attempt.errorMessage?.trim() || "—"}
+                {attempt.error?.trim() || "—"}
               </span>
             </Fragment>
           ))}
@@ -156,6 +126,10 @@ export function CatalogNotificationsPage({ embedded = false }: { embedded?: bool
       setDeliveries((current) =>
         current.map((item) => (item.id === id ? updated : item)),
       )
+      if (updated.status === "Sending") {
+        toast.message(t("catalog.notifications.toastResendSending"))
+        return
+      }
       if (updated.status === "Queued") {
         toast.success(t("catalog.notifications.toastResent"))
         return
