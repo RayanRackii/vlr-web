@@ -1,5 +1,5 @@
 import { useTenantTimeZone } from "@/contexts/TenantTimeZoneContext"
-import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react"
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react"
 import {
   flexRender,
   getCoreRowModel,
@@ -31,15 +31,33 @@ import {
   formatCatalogDate,
   type CatalogNotificationDelivery,
 } from "@/features/catalog/schemas/catalogSchemas"
+import { deliveryErrorText } from "@/features/catalog/lib/deliveryErrorMessage"
 import {
   listCatalogNotifications,
   resendCatalogNotification,
 } from "@/features/catalog/services/catalogService"
 
+const NARROW_DELIVERY_QUERY = "(max-width: 767px)"
+
+function useNarrowDeliveryList(): boolean {
+  const subscribe = useCallback((onChange: () => void) => {
+    const media = window.matchMedia?.(NARROW_DELIVERY_QUERY)
+    media?.addEventListener("change", onChange)
+    return () => media?.removeEventListener("change", onChange)
+  }, [])
+  return useSyncExternalStore(
+    subscribe,
+    () => window.matchMedia?.(NARROW_DELIVERY_QUERY).matches ?? false,
+    () => false,
+  )
+}
+
 function DeliveryAttemptHistory({
   delivery,
+  compact = false,
 }: {
   delivery: CatalogNotificationDelivery
+  compact?: boolean
 }) {
   const { t, i18n } = useTranslation()
   const timeZoneId = useTenantTimeZone()
@@ -55,6 +73,26 @@ function DeliveryAttemptHistory({
         <p className="text-sm text-muted-foreground">
           {t("catalog.notifications.attemptCount", { count: delivery.attemptCount })}
         </p>
+      ) : compact ? (
+        <ul className="space-y-3">
+          {attempts.map((attempt) => (
+            <li key={attempt.attemptNumber} className="min-w-0 space-y-0.5 break-words text-sm">
+              <p>
+                {t("catalog.notifications.attemptColumns.number")} {attempt.attemptNumber}
+                {" · "}
+                {formatCatalogDate(attempt.finishedAt ?? attempt.startedAt, i18n.language, timeZoneId)}
+              </p>
+              <p>
+                {t(`catalog.channels.${attempt.channel}`, { defaultValue: attempt.channel })}
+                {" · "}
+                {t(`catalog.notifications.attemptOutcome.${attempt.outcome}`)}
+              </p>
+              <p className="text-muted-foreground">
+                {deliveryErrorText(attempt.errorMessage, t) ?? "—"}
+              </p>
+            </li>
+          ))}
+        </ul>
       ) : (
         <div className="grid grid-cols-[minmax(4.5rem,auto)_minmax(8rem,auto)_minmax(6rem,auto)_minmax(7rem,auto)_1fr] gap-x-4 gap-y-1 text-sm">
           <span className="font-medium">{t("catalog.notifications.attemptColumns.number")}</span>
@@ -69,7 +107,7 @@ function DeliveryAttemptHistory({
               <span>{t(`catalog.channels.${attempt.channel}`, { defaultValue: attempt.channel })}</span>
               <span>{t(`catalog.notifications.attemptOutcome.${attempt.outcome}`)}</span>
               <span className="break-words text-muted-foreground">
-                {attempt.errorMessage?.trim() || "—"}
+                {deliveryErrorText(attempt.errorMessage, t) ?? "—"}
               </span>
             </Fragment>
           ))}
@@ -84,6 +122,7 @@ export function CatalogNotificationsPage({ embedded = false }: { embedded?: bool
   const timeZoneId = useTenantTimeZone()
   const { can } = usePermissions()
   const canResend = can("catalog.notifications.resend")
+  const narrow = useNarrowDeliveryList()
 
   const [deliveries, setDeliveries] = useState<CatalogNotificationDelivery[]>(
     [],
@@ -140,9 +179,9 @@ export function CatalogNotificationsPage({ embedded = false }: { embedded?: bool
         toast.success(t("catalog.notifications.toastResentSent"))
         return
       }
-      toast.error(
-        updated.errorMessage?.trim() || t("catalog.notifications.toastResendFailed"),
-      )
+        toast.error(
+          deliveryErrorText(updated.errorMessage, t) || t("catalog.notifications.toastResendFailed"),
+        )
     } catch (error) {
       toast.error(
         error instanceof Error
@@ -215,9 +254,12 @@ export function CatalogNotificationsPage({ embedded = false }: { embedded?: bool
         accessorFn: (row) => row.errorMessage ?? "",
         header: t("catalog.notifications.columns.error"),
         enableColumnFilter: false,
-        cell: ({ row }) => row.original.errorMessage?.trim()
-          ? <span className="block max-w-xs break-words text-sm text-muted-foreground">{row.original.errorMessage}</span>
-          : "—",
+        cell: ({ row }) => {
+          const error = deliveryErrorText(row.original.errorMessage, t)
+          return error
+            ? <span className="block max-w-xs break-words text-sm text-muted-foreground">{error}</span>
+            : "—"
+        },
       },
       {
         accessorKey: "createdAt",
@@ -302,6 +344,84 @@ export function CatalogNotificationsPage({ embedded = false }: { embedded?: bool
       ) : null}
 
       <Can permission="catalog.notifications.read">
+        {narrow ? (
+          <div className="min-w-0 space-y-3">
+            {loading ? (
+              <div className="h-24 animate-pulse rounded-xl border border-border bg-muted/40" />
+            ) : table.getRowModel().rows.length === 0 ? (
+              <p className="rounded-xl border border-border px-3 py-8 text-center text-sm text-muted-foreground">
+                {t("catalog.notifications.empty")}
+              </p>
+            ) : (
+              table.getRowModel().rows.map((row) => {
+                const delivery = row.original
+                const showResend = delivery.status === "Failed"
+                  && canResend
+                  && delivery.canResend !== false
+                const historyOpen = openHistoryId === delivery.id
+                const error = deliveryErrorText(delivery.errorMessage, t)
+                return (
+                  <article
+                    key={delivery.id}
+                    aria-labelledby={`delivery-card-${delivery.id}`}
+                    className="min-w-0 space-y-3 rounded-xl border border-border p-3"
+                  >
+                    <div className="flex min-w-0 items-start justify-between gap-3">
+                      <div className="min-w-0 space-y-1">
+                        <h3 id={`delivery-card-${delivery.id}`} className="break-words text-sm font-medium">
+                          {t(catalogEventI18nKey(delivery.eventType), { defaultValue: delivery.eventType })}
+                        </h3>
+                        <p className="break-words text-sm text-muted-foreground">
+                          {t(`catalog.channels.${delivery.channel}`)}
+                          {" · "}
+                          {delivery.recipientName ?? t(`catalog.recipient.${delivery.recipientKind}`)}
+                        </p>
+                      </div>
+                      <Badge variant={delivery.status === "Failed" ? "destructive" : "outline"}>
+                        {t(`catalog.deliveryStatus.${delivery.status}`)}
+                      </Badge>
+                    </div>
+                    <p className="break-words text-sm text-muted-foreground">
+                      <span className="font-medium text-foreground">{t("catalog.notifications.columns.error")}: </span>
+                      {error ?? "—"}
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      {formatCatalogDate(delivery.createdAt, i18n.language, timeZoneId)}
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        aria-expanded={historyOpen}
+                        aria-controls={`delivery-attempts-${delivery.id}`}
+                        onClick={() => {
+                          setOpenHistoryId((current) => current === delivery.id ? null : delivery.id)
+                        }}
+                      >
+                        {t("catalog.notifications.attempts")}
+                      </Button>
+                      {showResend ? (
+                        <LoadingButton
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          loading={resendBusyIds.has(delivery.id)}
+                          onClick={() => {
+                            void onResend(delivery.id)
+                          }}
+                        >
+                          {t("catalog.notifications.resend")}
+                        </LoadingButton>
+                      ) : null}
+                    </div>
+                    {historyOpen ? <DeliveryAttemptHistory delivery={delivery} compact /> : null}
+                  </article>
+                )
+              })
+            )}
+          </div>
+        ) : (
         <div className="rounded-xl border border-border">
           <Table>
             <TableHeader>
@@ -355,6 +475,7 @@ export function CatalogNotificationsPage({ embedded = false }: { embedded?: bool
             </TableBody>
           </Table>
         </div>
+        )}
       </Can>
     </div>
   )

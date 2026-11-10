@@ -1261,6 +1261,13 @@
         "TransientFailure": "Fallo temporal",
         "PermanentFailure": "Fallo permanente"
       },
+      "errors": {
+        "whatsappMissing": "Destinatario sin WhatsApp registrado.",
+        "emailMissing": "Destinatario sin correo registrado.",
+        "smsUnavailable": "El canal SMS no está disponible.",
+        "noProvider": "Este canal no tiene envío externo.",
+        "unsupportedChannel": "El canal {{channel}} no es compatible."
+      },
       "toastChannelSaved": "Canal actualizado.",
       "toggleChannel": "Activar {{channel}} para {{event}}",
       "columns": {

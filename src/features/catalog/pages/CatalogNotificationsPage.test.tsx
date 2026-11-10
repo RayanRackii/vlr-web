@@ -1,6 +1,6 @@
 import { render, screen, waitFor, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
-import { beforeEach, describe, expect, it, vi } from "vitest"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { toast } from "sonner"
 
 import { CatalogNotificationsPage } from "@/features/catalog/pages/CatalogNotificationsPage"
@@ -66,12 +66,17 @@ function renderPage(
 
 describe("CatalogNotificationsPage", () => {
   beforeEach(() => {
+    vi.unstubAllGlobals()
     listMock.mockReset()
     resendMock.mockReset()
     toastSuccess.mockReset()
     toastError.mockReset()
     toastMessage.mockReset()
     listMock.mockResolvedValue([])
+  })
+
+  afterEach(() => {
+    vi.unstubAllGlobals()
   })
 
   it("is history-only and does not render the channel matrix", async () => {
@@ -95,6 +100,7 @@ describe("CatalogNotificationsPage", () => {
     expect(
       screen.queryByText(i18n.t("catalog.notifications.smsUnavailable")),
     ).not.toBeInTheDocument()
+    expect(screen.getByRole("table")).toBeInTheDocument()
   })
 
   it("shows Reenviar only with catalog.notifications.resend on a failed row", async () => {
@@ -168,7 +174,7 @@ describe("CatalogNotificationsPage", () => {
     await user.click(await screen.findByRole("button", { name: i18n.t("catalog.notifications.resend") }))
 
     await waitFor(() => {
-      expect(toastError).toHaveBeenCalledWith("WhatsApp recipient is missing.")
+      expect(toastError).toHaveBeenCalledWith(i18n.t("catalog.notifications.errors.whatsappMissing"))
     })
     expect(toastSuccess).not.toHaveBeenCalled()
   })
@@ -249,7 +255,7 @@ describe("CatalogNotificationsPage", () => {
 
     const history = screen.getByRole("region", { name: i18n.t("catalog.notifications.attemptsTitle") })
     expect(within(history).getByText("2")).toBeInTheDocument()
-    expect(within(history).getByText("WhatsApp recipient is missing.")).toBeInTheDocument()
+    expect(within(history).getByText(i18n.t("catalog.notifications.errors.whatsappMissing"))).toBeInTheDocument()
     expect(within(history).getByText(i18n.t("catalog.channels.WhatsApp"))).toBeInTheDocument()
     expect(within(history).getByText(i18n.t("catalog.notifications.attemptOutcome.PermanentFailure"))).toBeInTheDocument()
     expect(within(history).getByText(i18n.t("catalog.notifications.attemptOutcome.TransientFailure"))).toBeInTheDocument()
@@ -273,6 +279,45 @@ describe("CatalogNotificationsPage", () => {
       within(countOnly).queryByText(formatCatalogDate(failedDelivery.createdAt, i18n.language, "America/Sao_Paulo")),
     ).not.toBeInTheDocument()
     expect(within(countOnly).queryByText("WhatsApp recipient is missing.")).not.toBeInTheDocument()
+  })
+
+  it("shows each delivery as a card below the md breakpoint", async () => {
+    const user = userEvent.setup()
+    vi.stubGlobal("matchMedia", (query: string) => ({
+      matches: query === "(max-width: 767px)",
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+    }))
+    const startedAt = "2026-10-20T17:40:00.000Z"
+    const finishedAt = "2026-10-20T18:40:00.000Z"
+    renderPage(readAndResend, [{
+      ...failedDelivery,
+      attempts: [{
+        attemptNumber: 1,
+        startedAt,
+        finishedAt,
+        outcome: "PermanentFailure",
+        errorMessage: "WhatsApp recipient is missing.",
+        channel: "WhatsApp",
+      }],
+    }])
+
+    expect(screen.queryByRole("table")).not.toBeInTheDocument()
+    const card = await screen.findByRole("article", { name: i18n.t("catalog.events.orderCreated") })
+    expect(card).not.toHaveClass("overflow-x-auto")
+    expect(card).toHaveTextContent(i18n.t("catalog.channels.WhatsApp"))
+    expect(card).toHaveTextContent("Equipe")
+    expect(within(card).getByText(i18n.t("catalog.deliveryStatus.Failed"))).toBeInTheDocument()
+    expect(within(card).getByText(i18n.t("catalog.notifications.errors.whatsappMissing"))).toBeInTheDocument()
+    expect(within(card).getByText(formatCatalogDate(failedDelivery.createdAt, i18n.language, "America/Sao_Paulo"))).toBeInTheDocument()
+    const attempts = within(card).getByRole("button", { name: i18n.t("catalog.notifications.attempts") })
+    expect(attempts.querySelector("svg")).toBeNull()
+    expect(within(card).getByRole("button", { name: i18n.t("catalog.notifications.resend") })).toBeInTheDocument()
+
+    await user.click(attempts)
+    const history = within(card).getByRole("region", { name: i18n.t("catalog.notifications.attemptsTitle") })
+    expect(within(history).getByText(i18n.t("catalog.notifications.errors.whatsappMissing"))).toBeInTheDocument()
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument()
   })
 })
 
@@ -350,7 +395,7 @@ describe("catalog notification delivery schema", () => {
     await user.click(screen.getAllByRole("button", { name: i18n.t("catalog.notifications.attempts") })[0])
 
     const history = screen.getByRole("region", { name: i18n.t("catalog.notifications.attemptsTitle") })
-    expect(within(history).getByText("WhatsApp recipient is missing.")).toBeInTheDocument()
+    expect(within(history).getByText(i18n.t("catalog.notifications.errors.whatsappMissing"))).toBeInTheDocument()
     expect(within(history).getByText(i18n.t("catalog.notifications.attemptOutcome.PermanentFailure"))).toBeInTheDocument()
     expect(within(history).queryByText("dropped")).not.toBeInTheDocument()
   })

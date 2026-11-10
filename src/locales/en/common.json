@@ -1261,6 +1261,13 @@
         "TransientFailure": "Temporary failure",
         "PermanentFailure": "Permanent failure"
       },
+      "errors": {
+        "whatsappMissing": "No WhatsApp number on file.",
+        "emailMissing": "No email address on file.",
+        "smsUnavailable": "The SMS channel is not available.",
+        "noProvider": "This channel has no external provider.",
+        "unsupportedChannel": "Channel {{channel}} is not supported."
+      },
       "toastChannelSaved": "Channel updated.",
       "toggleChannel": "Enable {{channel}} for {{event}}",
       "columns": {
