@@ -1,5 +1,6 @@
 import { useTranslation } from "react-i18next"
 import { useSearchParams } from "react-router-dom"
+import { Skeleton } from "@/components/ui/skeleton"
 import { Button } from "@/components/ui/button"
 import { useTenantTimeZone } from "@/contexts/TenantTimeZoneContext"
 import { addCivilDays, civilToday, formatDayLabel, startOfCivilWeek } from "@/features/catalog/components/agenda/agendaLayout"
@@ -34,7 +35,7 @@ function LoadedChipRow({ load, ...props }: Omit<ChipRowProps, "options"> & { loa
   return (
     <div>
       <ChipRow {...props} options={options} />
-      {loading && <p role="status" className="text-sm text-muted-foreground">{t("staffAgenda.loading", { label: props.label })}</p>}
+      {loading && <div role="status" aria-label={t("staffAgenda.loading", { label: props.label })} className="flex gap-2 pb-3"><Skeleton variant="shimmer" className="h-11 w-24 rounded-full" /><Skeleton variant="shimmer" className="h-11 w-32 rounded-full" /></div>}
       {error && <p role="alert" className="text-sm text-destructive">{t("staffAgenda.loadError", { label: props.label })}</p>}
     </div>
   )

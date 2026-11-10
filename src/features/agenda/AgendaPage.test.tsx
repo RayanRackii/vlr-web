@@ -116,3 +116,11 @@ describe("staff agenda controls", () => {
     expect(await screen.findByRole("button", { name: "Podcast" })).toBeInTheDocument()
   })
 })
+
+// Low — `src/features/agenda/AgendaPage.tsx:37`: carregamento inicial usa texto; `CONTEXT.md` §6 exige Skeleton com shimmer. Preserve o status acessível.
+it("uses shimmer Skeletons with an accessible status while chips load", () => {
+  vi.mocked(listRentalAssetCategories).mockReturnValue(new Promise(() => {}))
+  setup("?visao=semana&date=2026-11-10")
+  const loading = screen.getByRole("status", { name: "Carregando opções de Recurso…" })
+  expect(loading.querySelector('[data-slot="skeleton"][data-variant="shimmer"]')).toBeInTheDocument()
+})
