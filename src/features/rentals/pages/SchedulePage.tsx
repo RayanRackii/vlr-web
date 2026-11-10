@@ -1,6 +1,7 @@
 import { LeaveConfirmDialog } from "@/components/LeaveConfirmDialog"
 import { PageHeader } from "@/components/layout/PageHeader"
 import { StaffReturnLink } from "@/features/rentals/components/resourceWizard/StaffReturnLink"
+import { safeStaffReturnTo } from "@/features/rentals/components/resourceWizard/staffReturnTo"
 import {
   scheduleAssetIdFromSearch,
   scheduleTabFromSearch,
@@ -9,6 +10,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { CalendarDays, CalendarRange, Tag } from "lucide-react"
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { useTranslation } from "react-i18next"
+import { useNavigate } from "react-router-dom"
 import { formatTenantTimeZoneLabel } from "@/features/tenantPortal/lib/tenantTimeZoneLabel"
 import { toast } from "sonner"
 
@@ -97,6 +99,7 @@ export function SchedulePage() {
 
 function AdminSchedulePage() {
   const { t, i18n } = useTranslation()
+  const navigate = useNavigate()
   const { isTrialReadOnly } = useTrialStatus()
   const timeZoneId = useTenantTimeZone()
 
@@ -183,23 +186,28 @@ function AdminSchedulePage() {
   }
 
   function runOrAsk(action: () => void) {
+    const proceed = () => {
+      clearTemplateDraft()
+      action()
+    }
     if (templateSheetOpen && templateDirty) {
-      setPendingLeave(() => () => {
-        clearTemplateDraft()
-        action()
-      })
+      setPendingLeave(() => proceed)
       return
     }
-    action()
+    proceed()
   }
 
   function discardTemplateDraft() {
+    const href = safeStaffReturnTo(new URLSearchParams(window.location.search).get("returnTo"))
+    const leave = () => {
+      clearTemplateDraft()
+      if (href) navigate(href)
+    }
     if (templateSheetOpen && templateDirty) {
-      setPendingLeave(() => () => {
-        clearTemplateDraft()
-      })
+      setPendingLeave(() => leave)
       return false
     }
+    clearTemplateDraft()
     return true
   }
 

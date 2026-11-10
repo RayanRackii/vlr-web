@@ -2,7 +2,7 @@ import type { ComponentProps } from "react"
 import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { expect, it, vi } from "vitest"
-import { createMemoryRouter, RouterProvider } from "react-router-dom"
+import { createMemoryRouter, MemoryRouter, RouterProvider } from "react-router-dom"
 import { SchedulePage } from "./SchedulePage"
 import type { WeeklyTemplatesTab } from "../components/schedule/WeeklyTemplatesTab"
 import i18n from "@/lib/i18n"
@@ -57,7 +57,7 @@ it("keeps a dirty draft when weekday navigation is cancelled and discards it whe
   const confirm = vi.spyOn(window, "confirm")
   const user = userEvent.setup()
   try {
-    render(<SchedulePage />)
+    render(<MemoryRouter><SchedulePage /></MemoryRouter>)
     await user.click(screen.getByText(i18n.t("rentals.schedule.tabs.templates")))
     await user.click(screen.getByRole("button", { name: "Grade Monday" }))
     await user.click(screen.getByRole("button", { name: "08:00" }))
@@ -85,7 +85,7 @@ it("keeps a dirty draft when weekday navigation is cancelled and discards it whe
 it("preserves dirty weekly edits when switching is cancelled and discards only on confirmation or explicit Cancel", async () => {
   const confirm = vi.spyOn(window, "confirm")
   const user = userEvent.setup()
-  render(<SchedulePage />)
+  render(<MemoryRouter><SchedulePage /></MemoryRouter>)
   await user.click(screen.getByText(i18n.t("rentals.schedule.tabs.templates")))
   await user.click(screen.getByRole("button", { name: "08:00" }))
   const label = () => screen.getByRole("textbox", { name: i18n.t("rentals.schedule.templates.label") })
@@ -115,7 +115,7 @@ it("keeps a dirty draft when leaving the weekly tab is cancelled and discards it
   const confirm = vi.spyOn(window, "confirm")
   const user = userEvent.setup()
   try {
-    render(<SchedulePage />)
+    render(<MemoryRouter><SchedulePage /></MemoryRouter>)
     await user.click(screen.getByText(i18n.t("rentals.schedule.tabs.templates")))
     await user.click(screen.getByRole("button", { name: "08:00" }))
     const label = () => screen.getByRole("textbox", { name: i18n.t("rentals.schedule.templates.label") })
@@ -145,7 +145,7 @@ it("resets same-time weekly drafts only after confirming a different resource an
   const confirm = vi.spyOn(window, "confirm")
   const user = userEvent.setup()
   try {
-    render(<SchedulePage />)
+    render(<MemoryRouter><SchedulePage /></MemoryRouter>)
     await user.click(screen.getByText(i18n.t("rentals.schedule.tabs.templates")))
     await user.click(screen.getByRole("button", { name: "08:00" }))
     const label = () => screen.getByRole("textbox", { name: i18n.t("rentals.schedule.templates.label") })
@@ -180,6 +180,19 @@ it("resets same-time weekly drafts only after confirming a different resource an
   }
 })
 
+it("closes a clean template editor when the day changes", async () => {
+  const user = userEvent.setup()
+  render(<MemoryRouter><SchedulePage /></MemoryRouter>)
+  await user.click(screen.getByText(i18n.t("rentals.schedule.tabs.templates")))
+  await user.click(screen.getByRole("button", { name: "Grade Monday" }))
+  await user.click(screen.getByRole("button", { name: "08:00" }))
+  expect(screen.getByRole("textbox", { name: i18n.t("rentals.schedule.templates.label") })).toBeInTheDocument()
+  await user.click(screen.getByRole("button", { name: "Grade Tuesday" }))
+  expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument()
+  expect(screen.queryByRole("textbox", { name: i18n.t("rentals.schedule.templates.label") })).not.toBeInTheDocument()
+  expect(screen.getByRole("button", { name: "Grade Tuesday" })).toHaveAttribute("aria-pressed", "true")
+})
+
 it("requests the browser reload warning only while a weekly draft is dirty and removes it on discard or unmount", async () => {
   const user = userEvent.setup()
   const reload = () => {
@@ -187,7 +200,7 @@ it("requests the browser reload warning only while a weekly draft is dirty and r
     window.dispatchEvent(event)
     return event.defaultPrevented
   }
-  const { unmount } = render(<SchedulePage />)
+  const { unmount } = render(<MemoryRouter><SchedulePage /></MemoryRouter>)
   expect(reload()).toBe(false)
   await user.click(screen.getByText(i18n.t("rentals.schedule.tabs.templates")))
   await user.click(screen.getByRole("button", { name: "08:00" }))
@@ -213,7 +226,7 @@ it("requests the browser reload warning only while a weekly draft is dirty and r
 it("shows an inline occupancy-kind load error next to the weekly editor when the request fails", async () => {
   vi.mocked(listOccupancyKinds).mockRejectedValueOnce(new Error("Unavailable"))
   const user = userEvent.setup()
-  render(<SchedulePage />)
+  render(<MemoryRouter><SchedulePage /></MemoryRouter>)
   await user.click(screen.getByText(i18n.t("rentals.schedule.tabs.templates")))
   await user.click(screen.getByRole("button", { name: "08:00" }))
   expect(await screen.findByRole("alert")).toHaveTextContent("Não foi possível carregar os tipos de ocupação.")
@@ -231,7 +244,7 @@ it("shows an inline occupancy-kind load error next to the weekly editor when the
 
 it("does not report a load error for a successfully loaded empty occupancy-kind list", async () => {
   const user = userEvent.setup()
-  render(<SchedulePage />)
+  render(<MemoryRouter><SchedulePage /></MemoryRouter>)
   await user.click(screen.getByText(i18n.t("rentals.schedule.tabs.templates")))
   await user.click(screen.getByRole("button", { name: "08:00" }))
   expect(screen.queryByRole("alert")).not.toBeInTheDocument()
@@ -242,7 +255,7 @@ it("guards a dirty template when the resource filter changes, keeping it on canc
   const confirm = vi.spyOn(window, "confirm")
   const user = userEvent.setup()
   try {
-    render(<SchedulePage />)
+    render(<MemoryRouter><SchedulePage /></MemoryRouter>)
     await user.click(screen.getByText(i18n.t("rentals.schedule.tabs.templates")))
     await user.click(screen.getByRole("button", { name: "08:00" }))
     const label = () => screen.getByRole("textbox", { name: i18n.t("rentals.schedule.templates.label") })
@@ -285,7 +298,6 @@ it("confirms a dirty template before the wizard return link leaves the page", as
     expect(router.state.location.pathname).toBe("/configuracoes/agenda")
     await user.click(screen.getByRole("link", { name: i18n.t("rentals.resourceWizard.returnToWizard") }))
     await acceptLeave(user)
-    await user.click(screen.getByRole("link", { name: i18n.t("rentals.resourceWizard.returnToWizard") }))
     expect(router.state.location.pathname).toBe("/configuracoes/recursos/abc/assistente")
   } finally {
     confirm.mockRestore()
@@ -339,7 +351,7 @@ it("keeps weekly templates visible while applying a rule and revisiting the grid
   let finishRefresh!: (templates: ScheduleTemplate[]) => void
   const pending = new Promise<ScheduleTemplate[]>((resolve) => { finishRefresh = resolve })
   try {
-    render(<SchedulePage />)
+    render(<MemoryRouter><SchedulePage /></MemoryRouter>)
     await user.click(screen.getByText(i18n.t("rentals.schedule.tabs.templates")))
     await user.click(screen.getByRole("button", { name: "Grade Monday" }))
     await waitFor(() => expect(screen.getByLabelText("Weekly templates")).toHaveTextContent("Horário existente"))
