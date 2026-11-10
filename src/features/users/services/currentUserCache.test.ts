@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest"
 
 import {
   currentUserSessionFingerprint,
+  staffSessionFingerprint,
   invalidateCurrentUserCache,
   peekCurrentUserCacheForTests,
   readCurrentUser,
@@ -53,6 +54,16 @@ describe("currentUserSessionFingerprint", () => {
         app_metadata: { tenant_id: "tenant-1" },
       }),
     ).toBe("user-b|tenant-1")
+  })
+
+  it("hides the JWT tenant while that user is locally exited", () => {
+    const user = {
+      id: "user-a",
+      app_metadata: { tenant_id: "tenant-1" },
+    }
+    expect(staffSessionFingerprint(user, "user-a")).toBe("user-a|")
+    expect(staffSessionFingerprint(user, "user-b")).toBe("user-a|tenant-1")
+    expect(staffSessionFingerprint(user, null)).toBe("user-a|tenant-1")
   })
 })
 

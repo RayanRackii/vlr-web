@@ -20,6 +20,23 @@ export function currentUserSessionFingerprint(user: AuthUserLike): string {
   return `${id}|${tenantId}`
 }
 
+/**
+ * Session key for `/me`. A local platform exit hides the JWT tenant until
+ * enter clears it, so the same claim still needs a new profile.
+ */
+export function staffSessionFingerprint(
+  user: AuthUserLike,
+  exitedUserId: string | null | undefined,
+): string {
+  const id = user?.id?.trim() ?? ""
+  const exited = exitedUserId?.trim() ?? ""
+  if (id.length > 0 && exited === id) {
+    return `${id}|`
+  }
+
+  return currentUserSessionFingerprint(user)
+}
+
 export function invalidateCurrentUserCache(): void {
   generation += 1
   cached = null
