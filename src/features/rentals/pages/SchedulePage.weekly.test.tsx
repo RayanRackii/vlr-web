@@ -1,5 +1,5 @@
 import type { ComponentProps } from "react"
-import { act, fireEvent, render, screen, waitFor } from "@testing-library/react"
+import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { expect, it, vi } from "vitest"
 import { createMemoryRouter, RouterProvider } from "react-router-dom"
@@ -42,8 +42,19 @@ vi.mock("@/features/rentals/components/schedule/WeeklyTemplatesTab", () => ({
   </>,
 }))
 
+async function refuseLeave(user: ReturnType<typeof userEvent.setup>) {
+  const dialog = await screen.findByRole("alertdialog")
+  expect(dialog).toHaveTextContent(i18n.t("fullPage.leaveConfirm"))
+  await user.click(within(dialog).getByRole("button", { name: i18n.t("common.cancel") }))
+}
+
+async function acceptLeave(user: ReturnType<typeof userEvent.setup>) {
+  const dialog = await screen.findByRole("alertdialog")
+  await user.click(within(dialog).getByRole("button", { name: i18n.t("fullPage.leave") }))
+}
+
 it("keeps a dirty draft when weekday navigation is cancelled and discards it when confirmed", async () => {
-  const confirm = vi.spyOn(window, "confirm").mockReturnValue(false)
+  const confirm = vi.spyOn(window, "confirm")
   const user = userEvent.setup()
   try {
     render(<SchedulePage />)
@@ -55,12 +66,12 @@ it("keeps a dirty draft when weekday navigation is cancelled and discards it whe
     await user.click(screen.getByRole("button", { name: "Grade Monday" }))
     expect(confirm).not.toHaveBeenCalled()
     await user.click(screen.getByRole("button", { name: "Grade Tuesday" }))
-    expect(confirm).toHaveBeenCalledWith(i18n.t("fullPage.leaveConfirm"))
+    await refuseLeave(user)
     expect(screen.getByRole("button", { name: "Grade Monday" })).toHaveAttribute("aria-pressed", "true")
     expect(label()).toHaveValue("Rascunho de segunda")
     expect(window.dispatchEvent(new Event("beforeunload", { cancelable: true }))).toBe(false)
-    confirm.mockReturnValue(true)
     await user.click(screen.getByRole("button", { name: "Grade Tuesday" }))
+    await acceptLeave(user)
     expect(screen.getByRole("button", { name: "Grade Tuesday" })).toHaveAttribute("aria-pressed", "true")
     expect(window.dispatchEvent(new Event("beforeunload", { cancelable: true }))).toBe(true)
     expect(screen.queryByRole("textbox", { name: i18n.t("rentals.schedule.templates.label") })).not.toBeInTheDocument()
@@ -72,7 +83,7 @@ it("keeps a dirty draft when weekday navigation is cancelled and discards it whe
 })
 
 it("preserves dirty weekly edits when switching is cancelled and discards only on confirmation or explicit Cancel", async () => {
-  const confirm = vi.spyOn(window, "confirm").mockReturnValue(false)
+  const confirm = vi.spyOn(window, "confirm")
   const user = userEvent.setup()
   render(<SchedulePage />)
   await user.click(screen.getByText(i18n.t("rentals.schedule.tabs.templates")))
@@ -83,11 +94,11 @@ it("preserves dirty weekly edits when switching is cancelled and discards only o
   expect(label()).toHaveValue("Rascunho")
   expect(confirm).not.toHaveBeenCalled()
   await user.click(screen.getByRole("button", { name: "10:00" }))
-  expect(confirm).toHaveBeenCalledWith(i18n.t("fullPage.leaveConfirm"))
+  await refuseLeave(user)
   expect(label()).toHaveValue("Rascunho")
   expect(screen.getByRole("textbox", { name: i18n.t("rentals.schedule.templates.start") })).toHaveValue("08:00")
-  confirm.mockReturnValue(true)
   await user.click(screen.getByRole("button", { name: "10:00" }))
+  await acceptLeave(user)
   expect(label()).toHaveValue("")
   expect(screen.getByRole("textbox", { name: i18n.t("rentals.schedule.templates.start") })).toHaveValue("10:00")
   await user.type(label(), "Descartar")
@@ -101,7 +112,7 @@ it("preserves dirty weekly edits when switching is cancelled and discards only o
 })
 
 it("keeps a dirty draft when leaving the weekly tab is cancelled and discards it when confirmed", async () => {
-  const confirm = vi.spyOn(window, "confirm").mockReturnValue(false)
+  const confirm = vi.spyOn(window, "confirm")
   const user = userEvent.setup()
   try {
     render(<SchedulePage />)
@@ -112,11 +123,11 @@ it("keeps a dirty draft when leaving the weekly tab is cancelled and discards it
     await user.click(screen.getByText(i18n.t("rentals.schedule.tabs.templates")))
     expect(confirm).not.toHaveBeenCalled()
     await user.click(screen.getByText(i18n.t("rentals.schedule.tabs.daily")))
-    expect(confirm).toHaveBeenCalledWith(i18n.t("fullPage.leaveConfirm"))
+    await refuseLeave(user)
     expect(label()).toHaveValue("Rascunho semanal")
     expect(window.dispatchEvent(new Event("beforeunload", { cancelable: true }))).toBe(false)
-    confirm.mockReturnValue(true)
     await user.click(screen.getByText(i18n.t("rentals.schedule.tabs.daily")))
+    await acceptLeave(user)
     expect(window.dispatchEvent(new Event("beforeunload", { cancelable: true }))).toBe(true)
     expect(screen.queryByRole("textbox", { name: i18n.t("rentals.schedule.templates.label") })).not.toBeInTheDocument()
     confirm.mockClear()
@@ -131,7 +142,7 @@ it("keeps a dirty draft when leaving the weekly tab is cancelled and discards it
 })
 
 it("resets same-time weekly drafts only after confirming a different resource and discards on explicit Cancel", async () => {
-  const confirm = vi.spyOn(window, "confirm").mockReturnValue(false)
+  const confirm = vi.spyOn(window, "confirm")
   const user = userEvent.setup()
   try {
     render(<SchedulePage />)
@@ -140,12 +151,12 @@ it("resets same-time weekly drafts only after confirming a different resource an
     const label = () => screen.getByRole("textbox", { name: i18n.t("rentals.schedule.templates.label") })
     await user.type(label(), "Rascunho da sala")
     await user.click(screen.getByRole("button", { name: "Outra sala 08:00" }))
-    expect(confirm).toHaveBeenCalledWith(i18n.t("fullPage.leaveConfirm"))
+    await refuseLeave(user)
     expect(label()).toHaveValue("Rascunho da sala")
     expect(screen.getByText("Sala", { exact: true })).toBeInTheDocument()
 
-    confirm.mockReturnValue(true)
     await user.click(screen.getByRole("button", { name: "Outra sala 08:00" }))
+    await acceptLeave(user)
     expect(screen.getByText("Outra sala", { exact: true })).toBeInTheDocument()
     expect(label()).toHaveValue("")
     expect(screen.getByRole("textbox", { name: i18n.t("rentals.schedule.templates.start") })).toHaveValue("08:00")
@@ -228,7 +239,7 @@ it("does not report a load error for a successfully loaded empty occupancy-kind 
 
 
 it("guards a dirty template when the resource filter changes, keeping it on cancel and closing on discard", async () => {
-  const confirm = vi.spyOn(window, "confirm").mockReturnValue(false)
+  const confirm = vi.spyOn(window, "confirm")
   const user = userEvent.setup()
   try {
     render(<SchedulePage />)
@@ -239,11 +250,11 @@ it("guards a dirty template when the resource filter changes, keeping it on canc
     await user.click(screen.getByRole("button", { name: "Same filter" }))
     expect(confirm).not.toHaveBeenCalled()
     await user.click(screen.getByRole("button", { name: "Filter other resource" }))
-    expect(confirm).toHaveBeenCalledWith(i18n.t("fullPage.leaveConfirm"))
+    await refuseLeave(user)
     expect(screen.getByLabelText("Selected resources")).toHaveTextContent(/^$/)
     expect(label()).toHaveValue("Rascunho do recurso")
-    confirm.mockReturnValue(true)
     await user.click(screen.getByRole("button", { name: "Filter other resource" }))
+    await acceptLeave(user)
     expect(screen.getByLabelText("Selected resources")).toHaveTextContent("other-room")
     expect(screen.queryByRole("textbox", { name: i18n.t("rentals.schedule.templates.label") })).not.toBeInTheDocument()
     await user.click(screen.getByRole("button", { name: "08:00" }))
@@ -255,7 +266,7 @@ it("guards a dirty template when the resource filter changes, keeping it on canc
 
 it("confirms a dirty template before the wizard return link leaves the page", async () => {
   window.history.pushState({}, "", "/configuracoes/agenda?returnTo=%2Fconfiguracoes%2Frecursos%2Fabc%2Fassistente")
-  const confirm = vi.spyOn(window, "confirm").mockReturnValue(false)
+  const confirm = vi.spyOn(window, "confirm")
   const user = userEvent.setup()
   const router = createMemoryRouter([
     { path: "/configuracoes/agenda", element: <SchedulePage /> },
@@ -268,10 +279,12 @@ it("confirms a dirty template before the wizard return link leaves the page", as
     const label = () => screen.getByRole("textbox", { name: i18n.t("rentals.schedule.templates.label") })
     await user.type(label(), "Rascunho")
     await user.click(screen.getByRole("link", { name: i18n.t("rentals.resourceWizard.returnToWizard") }))
-    expect(confirm).toHaveBeenCalledWith(i18n.t("fullPage.leaveConfirm"))
+    await refuseLeave(user)
+    expect(confirm).not.toHaveBeenCalled()
     expect(label()).toHaveValue("Rascunho")
     expect(router.state.location.pathname).toBe("/configuracoes/agenda")
-    confirm.mockReturnValue(true)
+    await user.click(screen.getByRole("link", { name: i18n.t("rentals.resourceWizard.returnToWizard") }))
+    await acceptLeave(user)
     await user.click(screen.getByRole("link", { name: i18n.t("rentals.resourceWizard.returnToWizard") }))
     expect(router.state.location.pathname).toBe("/configuracoes/recursos/abc/assistente")
   } finally {
@@ -282,7 +295,7 @@ it("confirms a dirty template before the wizard return link leaves the page", as
 
 it("leaves a dirty template in place when the wizard return link is opened in a new tab", async () => {
   window.history.pushState({}, "", "/configuracoes/agenda?returnTo=%2Fconfiguracoes%2Frecursos%2Fabc%2Fassistente")
-  const confirm = vi.spyOn(window, "confirm").mockReturnValue(true)
+  const confirm = vi.spyOn(window, "confirm")
   const user = userEvent.setup()
   const router = createMemoryRouter([
     { path: "/configuracoes/agenda", element: <SchedulePage /> },
