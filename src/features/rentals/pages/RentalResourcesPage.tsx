@@ -11,6 +11,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { ICON_STROKE_WIDTH } from "@/lib/icon"
 import { RentalResourceDetails } from "@/features/rentals/components/RentalResourceDetails"
 import { menuCoversAsset } from "@/features/rentals/components/resourceWizard/bookableChecklist"
+import { resourceAssistantPath } from "@/features/assistant/paths"
 import { resourceWizardPath } from "@/features/rentals/components/resourceWizard/wizardSteps"
 import { ItemStatusBadge } from "@/features/assistant/ItemStatusBadge"
 import { resourceItemStatus } from "@/features/assistant/itemStatus"
@@ -235,6 +236,9 @@ export function RentalResourcesPage() {
               </button>
               <Link className="resource-wizard-link" to={resourceWizardPath(asset.id)}>
                 {t("rentals.resourceWizard.open")}
+              </Link>
+              <Link className="resource-wizard-link" to={resourceAssistantPath(asset.id)}>
+                {t("assistant.open")}
               </Link>
               </div>
             </li>

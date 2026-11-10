@@ -57,7 +57,7 @@ export function useResourceWizard(rentalAssetId: string) {
   const [model, setModel] = useState<WizardModel | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [busyAction, setBusyAction] = useState<ScheduleBusyAction | "menu" | "kind" | "price" | "queue" | null>(null)
+  const [busyAction, setBusyAction] = useState<ScheduleBusyAction | "menu" | "kind" | "price" | "queue" | "details" | null>(null)
   const wizardPath = resourceWizardPath(rentalAssetId)
   const readOnlyTrial = isTrialReadOnly
   const active = useRef(true)
@@ -284,6 +284,24 @@ export function useResourceWizard(rentalAssetId: string) {
     })
   }
 
+  function saveFields(patch: Partial<ReturnType<typeof buildRentalResourceFormValues>>) {
+    const asset = model?.asset
+    if (!asset) {
+      return Promise.resolve()
+    }
+    return run("details", async () => {
+      const values = { ...buildRentalResourceFormValues(asset, [], [], []), ...patch }
+      const body = toCreateRentableRequest(values, {
+        creating: false,
+        stored: asset.maxAdvanceBookingDays,
+        storedVisualTemplateRevisionId: asset.visualTemplateRevisionId,
+        storedCapacityPeople: asset.capacityPeople,
+      })
+      await updateRentalAsset(asset.id, body)
+      toast.success(t("assistant.saved"))
+    })
+  }
+
   function saveQueue(enabled: boolean, openingTime: string) {
     const asset = model?.asset
     if (!asset) {
@@ -323,6 +341,7 @@ export function useResourceWizard(rentalAssetId: string) {
     seedTemplates,
     savePrices,
     saveQueue,
+    saveFields,
   }
 }
 

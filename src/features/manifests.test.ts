@@ -196,6 +196,7 @@ describe("feature manifests", () => {
       "/configuracoes/recursos/novo",
       "/configuracoes/recursos/:id",
       "/configuracoes/recursos/:id/assistente",
+      "/configuracoes/recursos/:id/passos",
       "/configuracoes/agenda",
       "/configuracoes/layout",
       "/configuracoes/reservas",
