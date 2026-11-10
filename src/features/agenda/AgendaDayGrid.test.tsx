@@ -1,7 +1,7 @@
 import { render, screen, within, waitFor } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
-import { MemoryRouter } from "react-router-dom"
-import { beforeEach, expect, it, vi } from "vitest"
+import { MemoryRouter, useLocation } from "react-router-dom"
+import { afterEach, beforeEach, expect, it, vi } from "vitest"
 import { TenantTimeZoneContext } from "@/contexts/TenantTimeZoneContext"
 import { usePermissions } from "@/features/users/permissions/PermissionContext"
 import { listAdminRentalAssets, fetchAdminScheduleDay, listOccupancyKinds } from "@/features/rentals/services/scheduleService"
@@ -19,9 +19,27 @@ const grants = ["rentals.assets.read", "rentals.schedule.read", "rentals.reserva
 function access(permissions = grants, modules = ["rentals", "catalog"]) {
   vi.mocked(usePermissions).mockReturnValue({ activeModules: modules, permissions, can: (p) => permissions.includes(p), isLoading: false, currentUser: null, error: null, refresh: vi.fn() })
 }
-function setup(search = "visao=dia&date=2026-11-10") {
-  return render(<TenantTimeZoneContext.Provider value="America/Sao_Paulo"><MemoryRouter initialEntries={[`/agenda?${search}`]}><AgendaPage /></MemoryRouter></TenantTimeZoneContext.Provider>)
+function Search() {
+  return <output data-testid="search">{useLocation().search}</output>
 }
+function setup(search = "visao=dia&date=2026-11-10") {
+  return render(<TenantTimeZoneContext.Provider value="America/Sao_Paulo"><MemoryRouter initialEntries={[`/agenda?${search}`]}><AgendaPage /><Search /></MemoryRouter></TenantTimeZoneContext.Provider>)
+}
+function stubNarrow() {
+  vi.stubGlobal("matchMedia", (query: string) => ({
+    matches: query === "(max-width: 639px)",
+    media: query,
+    addEventListener: () => {},
+    removeEventListener: () => {},
+    onchange: null,
+    addListener: () => {},
+    removeListener: () => {},
+    dispatchEvent: () => false,
+  }))
+}
+afterEach(() => {
+  vi.unstubAllGlobals()
+})
 beforeEach(() => {
   vi.clearAllMocks()
   access()
@@ -40,7 +58,7 @@ it("renders resource hours, an empty row and selection detail below the entire g
   expect(within(grid).getByText("23:00")).toBeInTheDocument()
   const empty = screen.getByRole("region", { name: "Estúdio B" })
   expect(within(empty).getByText("Sem atividades neste dia")).toBeInTheDocument()
-  expect(within(empty).getByRole("link", { name: "Criar reserva nesta sala" })).toHaveAttribute("href", "/configuracoes/reservas")
+  expect(within(empty).getByRole("link", { name: "Criar reserva neste recurso" })).toHaveAttribute("href", "/configuracoes/reservas")
   expect(within(empty).getByRole("link", { name: "Bloquear período" })).toHaveAttribute("href", "/configuracoes/agenda")
   const block = within(grid).getByRole("button", { name: /Pedido.*09:00.*12:00.*Podcast/ })
   await user.click(block)
@@ -106,4 +124,44 @@ it("keeps the day grid when one source fails", async () => {
   setup()
   expect(await screen.findByRole("alert")).toHaveTextContent("Não foi possível carregar a grade.")
   expect(screen.getByRole("region", { name: "Grade do dia" })).toBeInTheDocument()
+})
+
+it("opens the clicked week day and keeps the chips", async () => {
+  const user = userEvent.setup()
+  setup("visao=semana&date=2026-11-10&tipo=pedido")
+  const week = await screen.findByRole("region", { name: "Grade da semana" })
+  expect(within(week).getAllByText("Livre").length).toBeGreaterThan(0)
+  expect(listCatalogResourceAgenda).toHaveBeenCalledWith({
+    from: "2026-11-09T03:00:00.000Z",
+    to: "2026-11-16T03:00:00.000Z",
+  })
+  await user.click(screen.getByRole("button", { name: /Estúdio A 2026-11-10 1 Pedido/ }))
+  const params = new URLSearchParams(screen.getByTestId("search").textContent ?? "")
+  expect(params.get("visao")).toBe("dia")
+  expect(params.get("date")).toBe("2026-11-10")
+  expect(params.get("tipo")).toBe("pedido")
+})
+
+it("lists the day by resource on a narrow screen and keeps the detail below that resource", async () => {
+  const user = userEvent.setup()
+  stubNarrow()
+  setup()
+  const grid = await screen.findByRole("region", { name: "Grade do dia" })
+  expect(grid.className).not.toContain("overflow-x-auto")
+  expect(within(grid).queryByText("06:00")).not.toBeInTheDocument()
+  expect(screen.getByRole("group", { name: "Tipo" }).querySelector(".flex-wrap")).toBeTruthy()
+  const resource = screen.getByRole("region", { name: "Estúdio A" })
+  await user.click(within(resource).getByRole("button", { name: /Pedido.*09:00.*12:00.*Podcast/ }))
+  const detail = screen.getByRole("region", { name: "Detalhes do bloco selecionado" })
+  expect(resource.compareDocumentPosition(detail) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+  expect(grid.contains(detail)).toBe(true)
+})
+
+it("links an order that has no display number by its short id", async () => {
+  const user = userEvent.setup()
+  vi.mocked(listCatalogResourceAgenda).mockResolvedValue({ resources: [], items: [{ ...order, displayNumber: null }] })
+  vi.mocked(fetchAdminScheduleDay).mockResolvedValue({ date: "2026-11-10", slots: [] })
+  setup()
+  await user.click(await screen.findByRole("button", { name: /Pedido.*Podcast/ }))
+  expect(screen.getByRole("link", { name: order.orderId.slice(0, 8) })).toHaveAttribute("href", `/catalogo/pedidos/${order.orderId}`)
 })

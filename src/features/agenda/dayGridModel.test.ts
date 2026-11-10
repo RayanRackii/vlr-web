@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest"
-import { buildAgendaDay } from "./dayGridModel"
+import { buildAgendaDay, buildAgendaWeek } from "./dayGridModel"
 import { parseAgendaState } from "./urlState"
 import { asset, order, slot, sources } from "./agendaFixtures"
 
@@ -34,4 +34,13 @@ it("clips overnight instants in the tenant timezone and derives hours from slots
   expect(day.rows[0].blocks[0]).toMatchObject({ start: 1320, end: 1440 })
   expect(day.start).toBe(300)
   expect(day.end).toBe(1440)
+})
+
+it("counts each kind on the civil days of the week that contains the date", () => {
+  const week = buildAgendaWeek(sources({ catalog: { resources: [], items: [order] } }), state("visao=semana&date=2026-11-10"), "America/Sao_Paulo")
+  expect(week.days).toEqual(["2026-11-09", "2026-11-10", "2026-11-11", "2026-11-12", "2026-11-13", "2026-11-14", "2026-11-15"])
+  const tuesday = week.rows[0].cells.find((cell) => cell.date === "2026-11-10")
+  const monday = week.rows[0].cells.find((cell) => cell.date === "2026-11-09")
+  expect(tuesday?.counts.pedido).toBe(1)
+  expect(monday?.counts).toEqual({ reserva: 0, pedido: 0, manutencao: 0, bloqueio: 0 })
 })

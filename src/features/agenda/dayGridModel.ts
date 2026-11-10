@@ -1,7 +1,7 @@
 import type { CatalogResourceAgendaResponse } from "@/features/catalog/schemas/catalogSchemas"
 import type { AdminDaySlot, AdminRentalAsset, OccupancyKind } from "@/features/rentals/services/scheduleService"
 import type { AdminReservation } from "@/features/rentals/services/reservationsService"
-import { zonedDayAndMinutes } from "@/features/catalog/components/agenda/agendaLayout"
+import { addCivilDays, startOfCivilWeek, zonedDayAndMinutes } from "@/features/catalog/components/agenda/agendaLayout"
 import type { AgendaState } from "./urlState"
 
 export type AgendaDaySources = {
@@ -130,4 +130,46 @@ export function buildAgendaDay(data: AgendaDaySources, state: AgendaState, zone:
     start: hours.length ? Math.floor(Math.min(...hours) / 60) * 60 : null,
     end: hours.length ? Math.ceil(Math.max(...hours) / 60) * 60 : null,
   }
+}
+
+export type AgendaWeekCell = {
+  date: string
+  counts: Record<AgendaBlock["kind"], number>
+}
+
+export type AgendaWeekRow = {
+  id: string
+  name: string
+  categoryName?: string | null
+  cells: AgendaWeekCell[]
+}
+
+/** Seven civil days starting Monday, with a count of each occupancy kind. */
+export function buildAgendaWeek(data: AgendaDaySources, state: AgendaState, zone: string) {
+  const days = Array.from({ length: 7 }, (_, index) => addCivilDays(startOfCivilWeek(state.date), index))
+  const byDay = days.map((date) => buildAgendaDay(data, { ...state, visao: "dia", date }, zone))
+  const rows = new Map<string, AgendaWeekRow>()
+  for (const day of byDay) {
+    for (const row of day.rows) {
+      if (!rows.has(row.id)) {
+        rows.set(row.id, {
+          id: row.id,
+          name: row.name,
+          categoryName: row.categoryName,
+          cells: days.map((date) => ({
+            date,
+            counts: { reserva: 0, pedido: 0, manutencao: 0, bloqueio: 0 },
+          })),
+        })
+      }
+    }
+  }
+  byDay.forEach((day, index) => {
+    for (const row of day.rows) {
+      const cell = rows.get(row.id)?.cells[index]
+      if (!cell) continue
+      for (const block of row.blocks) cell.counts[block.kind] += 1
+    }
+  })
+  return { days, rows: [...rows.values()] }
 }

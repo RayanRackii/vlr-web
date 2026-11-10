@@ -1,14 +1,15 @@
 import { useEffect, useState } from "react"
-import { addCivilDays } from "@/features/catalog/components/agenda/agendaLayout"
+import { addCivilDays, startOfCivilWeek } from "@/features/catalog/components/agenda/agendaLayout"
 import { listCatalogResourceAgenda } from "@/features/catalog/services/catalogService"
 import { listAdminReservations } from "@/features/rentals/services/reservationsService"
 import {
   fetchAdminScheduleDay,
   listAdminRentalAssets,
   listOccupancyKinds,
+  type AdminDaySlot,
 } from "@/features/rentals/services/scheduleService"
 import { tenantCivilInstant } from "@/lib/tenantTimeZone"
-import { buildAgendaDay, type AgendaDaySources } from "./dayGridModel"
+import { buildAgendaDay, buildAgendaWeek, type AgendaDaySources } from "./dayGridModel"
 import type { AgendaState } from "./urlState"
 
 const emptySources = (): AgendaDaySources => ({
@@ -35,8 +36,12 @@ export function useAgendaDay(state: AgendaState, zone: string, access: AgendaAcc
   const [error, setError] = useState(false)
   const [loadedKey, setLoadedKey] = useState<string | null>(null)
   const canLoad = enabled && (access.assets || access.schedule || access.reservations || access.orders)
+  const rangeStart = state.visao === "semana" ? startOfCivilWeek(state.date) : state.date
+  const rangeDays = state.visao === "semana" ? 7 : 1
   const requestKey = [
-    state.date,
+    state.visao,
+    rangeStart,
+    rangeDays,
     zone,
     tenantId ?? "",
     access.assets,
@@ -48,25 +53,33 @@ export function useAgendaDay(state: AgendaState, zone: string, access: AgendaAcc
   useEffect(() => {
     if (!canLoad) return
     let active = true
-    const from = tenantCivilInstant(state.date, "00:00:00", zone).toISOString()
-    const to = tenantCivilInstant(addCivilDays(state.date, 1), "00:00:00", zone).toISOString()
+    const dates = Array.from({ length: rangeDays }, (_, index) => addCivilDays(rangeStart, index))
+    const from = tenantCivilInstant(rangeStart, "00:00:00", zone).toISOString()
+    const to = tenantCivilInstant(addCivilDays(rangeStart, rangeDays), "00:00:00", zone).toISOString()
+    const schedulePromise: Promise<{ slots: AdminDaySlot[]; failed: boolean }> = access.schedule
+      ? Promise.allSettled(dates.map((date) => fetchAdminScheduleDay(date))).then((results) => ({
+          failed: results.some((result) => result.status === "rejected"),
+          slots: results.flatMap((result) => result.status === "fulfilled" ? result.value.slots : []),
+        }))
+      : Promise.resolve({ slots: [], failed: false })
     const pending = [
       access.assets ? listAdminRentalAssets() : Promise.resolve([]),
       access.orders ? listCatalogResourceAgenda({ from, to }) : Promise.resolve({ resources: [], items: [] }),
       access.reservations ? listAdminReservations({ from, to }) : Promise.resolve([]),
-      access.schedule ? fetchAdminScheduleDay(state.date) : Promise.resolve({ date: state.date, slots: [] }),
+      schedulePromise,
       access.schedule ? listOccupancyKinds() : Promise.resolve([]),
     ] as const
 
     void Promise.allSettled(pending).then((results) => {
       if (!active) return
       const [assets, catalog, reservations, schedule, kinds] = results
-      setError(results.some((result) => result.status === "rejected"))
+      const scheduleValue = schedule.status === "fulfilled" ? schedule.value : { slots: [], failed: true }
+      setError(results.some((result) => result.status === "rejected") || scheduleValue.failed)
       setSources({
         assets: assets.status === "fulfilled" ? assets.value : [],
         catalog: catalog.status === "fulfilled" ? catalog.value : { resources: [], items: [] },
         reservations: reservations.status === "fulfilled" ? reservations.value : [],
-        slots: schedule.status === "fulfilled" ? schedule.value.slots : [],
+        slots: scheduleValue.slots,
         kinds: kinds.status === "fulfilled" ? kinds.value : [],
       })
       setLoadedKey(requestKey)
@@ -75,15 +88,13 @@ export function useAgendaDay(state: AgendaState, zone: string, access: AgendaAcc
     return () => {
       active = false
     }
-  }, [access.assets, access.orders, access.reservations, access.schedule, canLoad, requestKey, state.date, zone])
+  }, [access.assets, access.orders, access.reservations, access.schedule, canLoad, rangeDays, rangeStart, requestKey, zone])
 
-  if (!canLoad) {
-    return { loading: false, error: false, day: buildAgendaDay(emptySources(), state, zone) }
-  }
-
+  const ready = canLoad && loadedKey === requestKey ? sources : emptySources()
   return {
-    loading: loadedKey !== requestKey,
-    error: loadedKey === requestKey && error,
-    day: buildAgendaDay(loadedKey === requestKey ? sources : emptySources(), state, zone),
+    loading: canLoad && loadedKey !== requestKey,
+    error: canLoad && loadedKey === requestKey && error,
+    day: buildAgendaDay(ready, state, zone),
+    week: buildAgendaWeek(ready, state, zone),
   }
 }

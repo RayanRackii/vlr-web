@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, useSyncExternalStore } from "react"
 import { useTranslation } from "react-i18next"
 import { Link } from "react-router-dom"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -26,6 +26,29 @@ function hourMarks(start: number | null, end: number | null): number[] {
   const first = Math.floor((start ?? DEFAULT_START_MINUTES) / 60)
   const last = Math.max(first + 1, Math.ceil((end ?? DEFAULT_END_MINUTES) / 60))
   return Array.from({ length: last - first + 1 }, (_, index) => first + index)
+}
+
+const NARROW_AGENDA = "(max-width: 639px)"
+
+function subscribeNarrowAgenda(onChange: () => void) {
+  if (typeof window.matchMedia !== "function") return () => {}
+  const media = window.matchMedia(NARROW_AGENDA)
+  media.addEventListener("change", onChange)
+  return () => media.removeEventListener("change", onChange)
+}
+
+function narrowAgendaSnapshot() {
+  return typeof window.matchMedia === "function" && window.matchMedia(NARROW_AGENDA).matches
+}
+
+function useNarrowAgenda() {
+  return useSyncExternalStore(subscribeNarrowAgenda, narrowAgendaSnapshot, () => false)
+}
+
+function orderLinkText(block: AgendaBlock): string | null {
+  if (!block.orderId) return null
+  const number = block.displayNumber?.trim()
+  return number ? number : block.orderId.slice(0, 8)
 }
 
 function blockTitle(block: AgendaBlock, kindLabel: string): string {
@@ -60,6 +83,7 @@ export function AgendaDayGrid({ loading, error, rows, start, end, canReserve, ca
   const marks = hourMarks(start, end)
   const origin = marks[0] * 60
   const span = Math.max((marks[marks.length - 1] - marks[0]) * 60, 1)
+  const phone = useNarrowAgenda()
   const selected = selectedKey
     ? rows.flatMap((row) => row.blocks.map((block) => ({ block, row }))).find((item) => item.block.key === selectedKey) ?? null
     : null
@@ -77,9 +101,9 @@ export function AgendaDayGrid({ loading, error, rows, start, end, canReserve, ca
   return (
     <div className="space-y-4">
       {error && <p role="alert" className="text-sm text-destructive">{t("staffAgenda.gridError")}</p>}
-      <section aria-label={t("staffAgenda.grid")} className="overflow-x-auto rounded-xl border bg-card text-card-foreground">
-        <div className="min-w-[48rem]">
-          <div className="flex border-b">
+      <section aria-label={t("staffAgenda.grid")} className={phone ? "rounded-xl border bg-card text-card-foreground" : "overflow-x-auto rounded-xl border bg-card text-card-foreground"}>
+        <div className={phone ? "" : "min-w-[48rem]"}>
+          {!phone && <div className="flex border-b">
             <span className="w-44 shrink-0 px-3 py-2 text-xs font-medium text-muted-foreground">{t("staffAgenda.recurso")}</span>
             <div className="relative h-8 min-w-0 flex-1">
               {marks.map((hour, index) => {
@@ -91,49 +115,83 @@ export function AgendaDayGrid({ loading, error, rows, start, end, canReserve, ca
                 )
               })}
             </div>
-          </div>
+          </div>}
           {rows.map((row) => {
             const placed = lanes(row.blocks)
             const laneCount = Math.max(1, placed.reduce((max, item) => Math.max(max, item.lane + 1), 0))
+            const ordered = [...row.blocks].sort((a, b) => a.start - b.start || a.end - b.end)
             return (
-              <section key={row.id} aria-label={row.name} className="border-b last:border-b-0">
-                <div className="flex">
-                  <h2 className="w-44 shrink-0 px-3 py-3 text-sm font-medium">{row.name}</h2>
-                  <div className="relative min-w-0 flex-1 border-l" style={{ minHeight: `${laneCount * 2.75}rem` }}>
-                    {placed.map(({ block, lane }) => {
-                      const left = Math.max(0, ((block.start - origin) / span) * 100)
-                      const width = Math.max(1.5, ((Math.min(block.end, origin + span) - Math.max(block.start, origin)) / span) * 100)
-                      const kindLabel = t(`staffAgenda.types.${block.kind}`)
-                      return (
-                        <button
-                          key={block.key}
-                          type="button"
-                          aria-pressed={selectedKey === block.key}
-                          className={`absolute truncate rounded-md border px-2 text-left text-xs font-medium ${kindClass[block.kind]}`}
-                          style={{ left: `${left}%`, width: `${Math.min(width, 100 - left)}%`, top: `${lane * 2.5 + 0.35}rem`, height: "2.15rem" }}
-                          onClick={() => setSelectedKey(block.key)}
-                        >
-                          {blockTitle(block, kindLabel)}
-                        </button>
-                      )
-                    })}
-                  </div>
-                </div>
-                {row.blocks.length === 0 && (
-                  <div className="flex flex-wrap items-center justify-between gap-3 px-3 py-3">
-                    <p className="text-sm text-muted-foreground">{t("staffAgenda.emptyDay")}</p>
-                    <div className="flex flex-wrap gap-3">
-                      {canReserve && <Link className="inline-flex min-h-11 items-center text-sm font-medium text-primary underline-offset-4 hover:underline" to="/configuracoes/reservas">{t("staffAgenda.createReservation")}</Link>}
-                      {canBlock && <Link className="inline-flex min-h-11 items-center text-sm font-medium text-primary underline-offset-4 hover:underline" to="/configuracoes/agenda">{t("staffAgenda.blockPeriod")}</Link>}
+              <div key={row.id}>
+                <section aria-label={row.name} className="border-b last:border-b-0">
+                  {phone ? (
+                    <div className="space-y-2 px-3 py-3">
+                      <h2 className="text-sm font-medium">{row.name}</h2>
+                      {ordered.map((block) => {
+                        const kindLabel = t(`staffAgenda.types.${block.kind}`)
+                        return (
+                          <button
+                            key={block.key}
+                            type="button"
+                            aria-pressed={selectedKey === block.key}
+                            className={`block w-full rounded-md border px-3 py-2 text-left text-sm font-medium ${kindClass[block.kind]}`}
+                            onClick={() => setSelectedKey(block.key)}
+                          >
+                            {blockTitle(block, kindLabel)}
+                          </button>
+                        )
+                      })}
+                      {row.blocks.length === 0 && <EmptyRow canReserve={canReserve} canBlock={canBlock} />}
                     </div>
-                  </div>
+                  ) : (
+                    <>
+                      <div className="flex">
+                        <h2 className="w-44 shrink-0 px-3 py-3 text-sm font-medium">{row.name}</h2>
+                        <div className="relative min-w-0 flex-1 border-l" style={{ minHeight: `${laneCount * 2.75}rem` }}>
+                          {placed.map(({ block, lane }) => {
+                            const left = Math.max(0, ((block.start - origin) / span) * 100)
+                            const width = Math.max(1.5, ((Math.min(block.end, origin + span) - Math.max(block.start, origin)) / span) * 100)
+                            const kindLabel = t(`staffAgenda.types.${block.kind}`)
+                            return (
+                              <button
+                                key={block.key}
+                                type="button"
+                                aria-pressed={selectedKey === block.key}
+                                className={`absolute truncate rounded-md border px-2 text-left text-xs font-medium ${kindClass[block.kind]}`}
+                                style={{ left: `${left}%`, width: `${Math.min(width, 100 - left)}%`, top: `${lane * 2.5 + 0.35}rem`, height: "2.15rem" }}
+                                onClick={() => setSelectedKey(block.key)}
+                              >
+                                {blockTitle(block, kindLabel)}
+                              </button>
+                            )
+                          })}
+                        </div>
+                      </div>
+                      {row.blocks.length === 0 && <EmptyRow canReserve={canReserve} canBlock={canBlock} />}
+                    </>
+                  )}
+                </section>
+                {phone && selected?.row.id === row.id && (
+                  <BlockDetail block={selected.block} resourceName={selected.row.name} onClose={() => setSelectedKey(null)} />
                 )}
-              </section>
+              </div>
             )
           })}
         </div>
       </section>
-      {selected && <BlockDetail block={selected.block} resourceName={selected.row.name} onClose={() => setSelectedKey(null)} />}
+      {!phone && selected && <BlockDetail block={selected.block} resourceName={selected.row.name} onClose={() => setSelectedKey(null)} />}
+    </div>
+  )
+}
+
+function EmptyRow({ canReserve, canBlock }: { canReserve: boolean; canBlock: boolean }) {
+  const { t } = useTranslation()
+  return (
+    <div className="flex flex-wrap items-center justify-between gap-3 px-3 py-3">
+      <p className="text-sm text-muted-foreground">{t("staffAgenda.emptyDay")}</p>
+      <div className="flex flex-wrap gap-3">
+        {canReserve && <Link className="inline-flex min-h-11 items-center text-sm font-medium text-primary underline-offset-4 hover:underline" to="/configuracoes/reservas">{t("staffAgenda.createReservation")}</Link>}
+        {canBlock && <Link className="inline-flex min-h-11 items-center text-sm font-medium text-primary underline-offset-4 hover:underline" to="/configuracoes/agenda">{t("staffAgenda.blockPeriod")}</Link>}
+      </div>
     </div>
   )
 }
@@ -166,10 +224,10 @@ function BlockDetail({ block, resourceName, onClose }: { block: AgendaBlock; res
             <dd><Link className="font-medium text-primary underline-offset-4 hover:underline" to={`/catalogo/produtos/${block.productId}`}>{block.productName}</Link></dd>
           </div>
         )}
-        {block.orderId && block.displayNumber && (
+        {orderLinkText(block) && (
           <div>
             <dt className="text-muted-foreground">{t("staffAgenda.pedido")}</dt>
-            <dd><Link className="font-medium text-primary underline-offset-4 hover:underline" to={`/catalogo/pedidos/${block.orderId}`}>{block.displayNumber}</Link></dd>
+            <dd><Link className="font-medium text-primary underline-offset-4 hover:underline" to={`/catalogo/pedidos/${block.orderId}`}>{orderLinkText(block)}</Link></dd>
           </div>
         )}
         {block.kind === "reserva" && (

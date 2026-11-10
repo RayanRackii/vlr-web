@@ -6,6 +6,7 @@ import { useTenantTimeZone } from "@/contexts/TenantTimeZoneContext"
 import { addCivilDays, civilToday, formatDayLabel, startOfCivilWeek } from "@/features/catalog/components/agenda/agendaLayout"
 import { usePermissions } from "@/features/users/permissions/PermissionContext"
 import { AgendaDayGrid } from "./AgendaDayGrid"
+import { AgendaWeek } from "./AgendaWeek"
 import { useAgendaDay } from "./useAgendaDay"
 import { agendaFilterKeys, agendaTypes, parseAgendaState, serializeAgendaState, type AgendaState } from "./urlState"
 import { agendaOptionLoaders, useAgendaOptions, type AgendaOption } from "./useAgendaOptions"
@@ -20,13 +21,15 @@ type ChipRowProps = {
 function ChipRow({ label, value, options, onSelect }: ChipRowProps) {
   const { t } = useTranslation()
   return (
-    <div role="group" aria-label={label} className="flex flex-wrap items-center gap-2 py-3">
-      <span className="w-24 text-sm font-medium text-muted-foreground">{label}</span>
+    <div role="group" aria-label={label} className="flex flex-col gap-2 py-3 sm:flex-row sm:flex-wrap sm:items-center">
+      <span className="text-sm font-medium text-muted-foreground sm:w-24">{label}</span>
+      <div className="flex min-w-0 flex-wrap gap-2">
       {[{ id: null, label: t("staffAgenda.all") }, ...options].map((option) => (
         <Button key={option.id ?? "all"} type="button" className="min-h-11 rounded-full" variant={value === option.id ? "default" : "outline"} aria-pressed={value === option.id} onClick={() => onSelect(option.id)}>
           {option.label}
         </Button>
       ))}
+      </div>
     </div>
   )
 }
@@ -72,15 +75,15 @@ export function AgendaPage() {
       orders: orderFilters,
     },
     currentUser?.tenantId ?? null,
-    state.visao === "dia" && !isLoading,
+    !isLoading,
   )
 
   return (
     <div className="space-y-4">
       <header className="flex flex-wrap items-center justify-between gap-4">
         <h1 className="text-2xl font-semibold tracking-tight">{t("nav.agenda")}</h1>
-        <div role="group" aria-label={t("staffAgenda.view")} className="flex gap-2">
-          {(["dia", "semana"] as const).map((visao) => <Button key={visao} type="button" variant={state.visao === visao ? "default" : "outline"} aria-pressed={state.visao === visao} onClick={() => update({ visao })}>{t(`staffAgenda.${visao}`)}</Button>)}
+        <div role="group" aria-label={t("staffAgenda.view")} className="flex w-full flex-wrap gap-2 sm:w-auto">
+          {(["dia", "semana"] as const).map((visao) => <Button key={visao} type="button" className="min-h-11 flex-1 sm:flex-none" variant={state.visao === visao ? "default" : "outline"} aria-pressed={state.visao === visao} onClick={() => update({ visao })}>{t(`staffAgenda.${visao}`)}</Button>)}
         </div>
         <div role="group" aria-label={t("staffAgenda.dateNavigation")} className="flex flex-wrap items-center gap-2">
           <Button type="button" variant="outline" onClick={() => update({ date: addCivilDays(state.date, state.visao === "dia" ? -1 : -7) })}>{t("staffAgenda.previous")}</Button>
@@ -110,7 +113,14 @@ export function AgendaPage() {
           canBlock={rentals && can("rentals.schedule.read") && can("rentals.assets.read")}
         />
       ) : (
-        <div className="rounded-xl border border-dashed bg-muted/30 p-10 text-center text-sm text-muted-foreground">{t("staffAgenda.placeholder")}</div>
+        <AgendaWeek
+          loading={isLoading || day.loading}
+          error={day.error}
+          days={day.week.days}
+          rows={day.week.rows}
+          today={today}
+          onOpenDay={(date) => update({ visao: "dia", date })}
+        />
       )}
     </div>
   )
