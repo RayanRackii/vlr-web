@@ -397,7 +397,7 @@ export function getPageTitleKey(
     return "account.profile"
   }
 
-  if (/^\/configuracoes\/recursos\/[^/]+\/assistente\/?$/.test(pathname)) {
+  if (/^\/configuracoes\/recursos\/[^/]+\/(assistente|passos)\/?$/.test(pathname)) {
     return "nav.rentalsResourceWizard"
   }
 
