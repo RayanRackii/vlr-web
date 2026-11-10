@@ -309,7 +309,53 @@ describe("catalog notification delivery schema", () => {
     expect(parsed.map((row) => row.status)).toEqual(["Sending", "Failed"])
   })
 
-  it("keeps an attempt in the API shape and rejects one that does not match", () => {
+  it("keeps the other deliveries when one attempt cannot be read", async () => {
+    const user = userEvent.setup()
+    const startedAt = "2026-10-20T17:40:00.000Z"
+    const finishedAt = "2026-10-20T18:40:00.000Z"
+    const goodAttempt = {
+      attemptNumber: 2,
+      startedAt,
+      finishedAt,
+      outcome: "PermanentFailure" as const,
+      errorMessage: "WhatsApp recipient is missing.",
+      channel: "WhatsApp" as const,
+    }
+    const parsed = catalogNotificationDeliveryListSchema.parse([
+      {
+        ...payload,
+        attempts: [
+          goodAttempt,
+          { number: 9, timestamp: startedAt, error: "dropped", channel: "WhatsApp" },
+        ],
+      },
+      {
+        ...payload,
+        id: "44444444-4444-4444-8444-444444444444",
+        notificationId: "55555555-5555-4555-8555-555555555555",
+        recipientName: "Outra entrega",
+        status: "Sent",
+        errorMessage: null,
+        attempts: [],
+      },
+    ])
+
+    expect(parsed).toHaveLength(2)
+    expect(parsed[0].attempts).toEqual([goodAttempt])
+    expect(parsed[1].recipientName).toBe("Outra entrega")
+
+    renderPage(readAndResend, parsed)
+    expect(await screen.findByText("Outra entrega")).toBeInTheDocument()
+    expect(screen.getByText("Equipe")).toBeInTheDocument()
+    await user.click(screen.getAllByRole("button", { name: i18n.t("catalog.notifications.attempts") })[0])
+
+    const history = screen.getByRole("region", { name: i18n.t("catalog.notifications.attemptsTitle") })
+    expect(within(history).getByText("WhatsApp recipient is missing.")).toBeInTheDocument()
+    expect(within(history).getByText(i18n.t("catalog.notifications.attemptOutcome.PermanentFailure"))).toBeInTheDocument()
+    expect(within(history).queryByText("dropped")).not.toBeInTheDocument()
+  })
+
+  it("keeps an attempt that matches the API record", () => {
     const attempt = {
       attemptNumber: 1,
       startedAt: "2026-10-20T17:06:00.000Z",
@@ -320,16 +366,10 @@ describe("catalog notification delivery schema", () => {
     }
     expect(catalogNotificationDeliverySchema.parse({
       ...payload,
-      attempts: [attempt],
-    }).attempts).toEqual([attempt])
-
-    const parsed = catalogNotificationDeliverySchema.safeParse({
-      ...payload,
       attempts: [
         attempt,
         { number: 2, timestamp: attempt.startedAt, error: "missing", channel: "WhatsApp" },
       ],
-    })
-    expect(parsed.success).toBe(false)
+    }).attempts).toEqual([attempt])
   })
 })

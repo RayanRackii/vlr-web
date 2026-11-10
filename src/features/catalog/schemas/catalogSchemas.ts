@@ -364,7 +364,18 @@ export const catalogNotificationDeliverySchema = z.object({
   errorMessage: z.string().nullable(),
   createdAt: z.string(),
   canResend: z.boolean().nullish(),
-  attempts: z.array(catalogNotificationAttemptSchema).optional(),
+  attempts: z.preprocess((value) => {
+    if (value == null) {
+      return undefined
+    }
+    if (!Array.isArray(value)) {
+      return []
+    }
+    return value.flatMap((item) => {
+      const parsed = catalogNotificationAttemptSchema.safeParse(item)
+      return parsed.success ? [parsed.data] : []
+    })
+  }, z.array(catalogNotificationAttemptSchema).optional()),
 })
 
 export type CatalogNotificationDelivery = z.infer<
