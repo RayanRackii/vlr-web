@@ -337,6 +337,7 @@ PR 1 (fundação): tokens de design e primitivas, sem restyling de telas/shell (
 
 ## Histórico
 
+| 2026-11-10 | **Erro desconhecido fica como veio (WEB):** a tradução só consulta as mensagens cadastradas. constructor, toString e __proto__ continuam o texto da API. Texto em branco segue vazio. |
 | 2026-11-10 | **Entregas no celular e erro traduzido (WEB):** abaixo de 768px cada entrega vira um cartão com status, erro e Reenviar visíveis, sem rolagem lateral. As tentativas abrem dentro do cartão. Mensagens conhecidas da API ganham texto no idioma da tela; o restante continua como veio. |
 | 2026-11-10 | **Uma tentativa ilegível não esvazia a lista (WEB):** cada item de attempts é lido sozinho. O item ruim sai; a entrega e as outras linhas continuam, com as tentativas válidas. |
 | 2026-11-10 | **Tentativas usam o contrato da API (WEB):** cada tentativa mostra o número, a data de término ou início, o canal, o resultado e a mensagem. Um item fora desse formato invalida a leitura em vez de sumir. |

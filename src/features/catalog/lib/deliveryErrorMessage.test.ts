@@ -9,7 +9,7 @@ function translate(lng: string) {
 
 describe("deliveryErrorText", () => {
   it.each([
-    ["pt-BR", "Destinatário sem WhatsApp cadastrado"],
+    ["pt-BR", "Destinatário sem WhatsApp cadastrado."],
     ["en", "No WhatsApp number on file."],
     ["es", "Destinatario sin WhatsApp registrado."],
   ])("translates a missing WhatsApp recipient in %s", (lng, expected) => {
@@ -24,8 +24,17 @@ describe("deliveryErrorText", () => {
     expect(deliveryErrorText("Unsupported channel Push.", t)).toBe("Canal Push não é suportado.")
   })
 
-  it("keeps an unknown message as the API sent it", () => {
-    expect(deliveryErrorText("Provider timed out.", translate("pt-BR"))).toBe("Provider timed out.")
+  it("keeps an unknown message exactly as the API sent it", () => {
+    expect(deliveryErrorText("  Provider timed out.  ", translate("pt-BR"))).toBe("  Provider timed out.  ")
     expect(deliveryErrorText("  ", translate("en"))).toBeNull()
+    expect(deliveryErrorText("", translate("en"))).toBeNull()
+    expect(deliveryErrorText(null, translate("en"))).toBeNull()
   })
+
+  it.each(["constructor", "toString", "__proto__"])(
+    "does not treat %s as a translation key",
+    (message) => {
+      expect(deliveryErrorText(message, translate("pt-BR"))).toBe(message)
+    },
+  )
 })

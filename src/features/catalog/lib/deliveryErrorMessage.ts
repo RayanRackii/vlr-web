@@ -1,9 +1,9 @@
-const MESSAGE_KEYS: Record<string, string> = {
-  "WhatsApp recipient is missing.": "catalog.notifications.errors.whatsappMissing",
-  "Email recipient is missing.": "catalog.notifications.errors.emailMissing",
-  "SMS channel is not available.": "catalog.notifications.errors.smsUnavailable",
-  "Channel has no external provider.": "catalog.notifications.errors.noProvider",
-}
+const MESSAGE_KEYS = new Map<string, string>([
+  ["WhatsApp recipient is missing.", "catalog.notifications.errors.whatsappMissing"],
+  ["Email recipient is missing.", "catalog.notifications.errors.emailMissing"],
+  ["SMS channel is not available.", "catalog.notifications.errors.smsUnavailable"],
+  ["Channel has no external provider.", "catalog.notifications.errors.noProvider"],
+])
 
 const UNSUPPORTED_CHANNEL = /^Unsupported channel (.+)\.$/
 
@@ -14,18 +14,17 @@ export function deliveryErrorText(
   message: string | null | undefined,
   translate: Translate,
 ): string | null {
-  const text = message?.trim()
-  if (!text) {
+  if (message == null || message.trim() === "") {
     return null
   }
 
-  const unsupported = UNSUPPORTED_CHANNEL.exec(text)
+  const unsupported = UNSUPPORTED_CHANNEL.exec(message)
   if (unsupported?.[1]) {
     return translate("catalog.notifications.errors.unsupportedChannel", {
       channel: unsupported[1],
     })
   }
 
-  const key = MESSAGE_KEYS[text]
-  return key ? translate(key) : text
+  const key = MESSAGE_KEYS.get(message)
+  return key ? translate(key) : message
 }
