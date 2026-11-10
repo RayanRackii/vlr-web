@@ -137,19 +137,15 @@ describe("module introductions", () => {
     expect(within(related).getByRole("link", { name: "Manutenção" })).toHaveAttribute("href", "/modulos/maintenance")
   })
 
-  it("navigates from a section title independently of its toggle", async () => {
+  it("collapses the registration group without changing the route", async () => {
     const user = userEvent.setup()
     renderIntro("/configuracoes/recursos", { sidebar: true })
     const nav = screen.getByRole("navigation", { name: "Menu de navegação" })
-    const toggle = within(nav).getByRole("button", { name: "Recolher Reservas" })
-    expect(toggle).toHaveAttribute("aria-expanded", "true")
+    const toggle = within(nav).getByRole("button", { name: "Recolher Cadastro" })
     await user.click(toggle)
     expect(screen.getByTestId("location")).toHaveTextContent("/configuracoes/recursos")
     expect(within(nav).queryByRole("link", { name: "Recursos" })).not.toBeInTheDocument()
-    await user.click(within(nav).getByRole("link", { name: "Sobre Reservas" }))
-    expect(screen.getByRole("heading", { level: 1, name: "Reservas" })).toBeInTheDocument()
-    expect(within(nav).getByRole("link", { name: "Sobre Reservas" })).toHaveAttribute("aria-current", "page")
-    await user.click(within(nav).getByRole("button", { name: "Expandir Reservas" }))
+    await user.click(toggle)
     expect(within(nav).getByRole("link", { name: "Recursos" })).toBeVisible()
   })
 
@@ -166,11 +162,12 @@ describe("module introductions", () => {
     expect(within(nav).getByRole("link", { name: "Meus planos" })).toBeVisible()
   })
 
-  it("keeps section intros reachable in the collapsed rail", async () => {
+  it("keeps nested module intros reachable in the collapsed rail", async () => {
     renderIntro("/pmoc", { sidebar: true, collapsed: true })
     const nav = screen.getByRole("navigation", { name: "Menu de navegação" })
-    await userEvent.click(within(nav).getByRole("link", { name: "Sobre Reservas" }))
-    expect(screen.getByRole("heading", { level: 1, name: "Reservas" })).toBeInTheDocument()
+    await userEvent.click(within(nav).getByRole("button", { name: "Expandir Planos de manutenção" }))
+    await userEvent.click(screen.getByRole("link", { name: "Sobre Planos de manutenção" }))
+    expect(screen.getByRole("heading", { level: 1, name: "Planos de manutenção" })).toBeInTheDocument()
   })
 
   it.each(["pt-BR", "en", "es"])("has complete intro and control translations in %s", async (locale) => {
@@ -188,6 +185,6 @@ describe("module introductions", () => {
     }
     renderIntro("/modulos/bookings", { sidebar: true })
     expect(screen.getByRole("heading", { level: 1, name: i18n.t("nav.sections.bookings") })).toBeInTheDocument()
-    expect(screen.getByRole("button", { name: i18n.t("moduleIntro.collapse", { module: i18n.t("nav.sections.bookings") }) })).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: i18n.t("moduleIntro.collapse", { module: i18n.t("nav.sections.operations") }) })).toBeInTheDocument()
   })
 })

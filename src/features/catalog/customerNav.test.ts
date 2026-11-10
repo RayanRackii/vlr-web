@@ -7,6 +7,7 @@ import { isCustomerNavItemActive } from "@/features/catalog/customerNavActive"
 
 import {
   buildCustomerNavItems,
+  buildCustomerHomeNavItems,
   buildCustomerShellNavItems,
   CUSTOMER_MY_RESERVATIONS_HASH,
   customerNavHref,
@@ -185,90 +186,37 @@ describe("customerNavHref", () => {
 })
 
 describe("buildCustomerShellNavItems", () => {
-  it("lists book, my reservations, and profile for a signed-in rentals menu", () => {
-    const stock = { ...RENTALS_B, label: "Reservar horário" }
-    const nav = buildCustomerShellNavItems("clube", [stock], i18n.t)
-
-    expect(nav.map((item) => item.label)).toEqual([
-      i18n.t("admin.moduleMenu.suggestedLabelRentals"),
-      i18n.t("tenantPortal.agenda.myReservations"),
-      i18n.t("account.profile"),
+  it("uses five existing destinations when rentals and catalog are available", () => {
+    const nav = buildCustomerShellNavItems("clube", [RENTALS_B, RENTALS_A, CATALOG, CATALOGO_ALIAS], i18n.t)
+    expect(nav.map((item) => item.to)).toEqual([
+      "/t/clube/app", `/t/clube/agenda/${RENTALS_B.id}`, "/t/clube/catalogo",
+      "/t/clube/catalogo/carrinho", "/t/clube/pedidos",
     ])
-    expect(nav[0]?.to).toBe(`/t/clube/agenda/${stock.id}`)
-    expect(nav[1]?.to).toBe(
-      `/t/clube/agenda/${stock.id}${CUSTOMER_MY_RESERVATIONS_HASH}`,
-    )
-    expect(nav[2]?.to).toBe("/t/clube/app/perfil")
+    expect(nav.map((item) => item.label)).toEqual(["Início", "Reservar", "Catálogo", "Carrinho", "Minhas atividades"])
   })
 
-  it("keeps catalog links and skips my reservations when rentals is absent", () => {
-    const nav = buildCustomerShellNavItems("clube", [CATALOG], i18n.t)
-
-    expect(nav.map((item) => item.label)).toEqual([
-      i18n.t("tenantPortal.catalog.navCatalog"),
-      i18n.t("tenantPortal.catalog.navOrders"),
-      i18n.t("tenantPortal.catalog.navRequests"),
-      i18n.t("account.profile"),
+  it("hides catalog and cart without catalog and uses the reservations hash for activities", () => {
+    const nav = buildCustomerShellNavItems("clube", [RENTALS_B], i18n.t)
+    expect(nav.map((item) => item.to)).toEqual([
+      "/t/clube/app", `/t/clube/agenda/${RENTALS_B.id}`,
+      `/t/clube/agenda/${RENTALS_B.id}${CUSTOMER_MY_RESERVATIONS_HASH}`,
     ])
-    expect(nav.some((item) => item.to.includes("agenda"))).toBe(false)
+    expect(isCustomerNavItemActive(nav[1]!, nav, nav[1]!.to, "")).toBe(true)
+    expect(isCustomerNavItemActive(nav[2]!, nav, nav[1]!.to, CUSTOMER_MY_RESERVATIONS_HASH)).toBe(true)
+    expect(isCustomerNavItemActive(nav[1]!, nav, nav[1]!.to, CUSTOMER_MY_RESERVATIONS_HASH)).toBe(false)
   })
 
-  it("highlights my requests on the list and detail, and keeps catalog on the catalog path", () => {
+  it("hides booking without rentals and keeps home alone without available modules", () => {
+    expect(buildCustomerShellNavItems("clube", [CATALOG], i18n.t).map((item) => item.to)).toEqual([
+      "/t/clube/app", "/t/clube/catalogo", "/t/clube/catalogo/carrinho", "/t/clube/pedidos",
+    ])
+    expect(buildCustomerShellNavItems("clube", [INACTIVE_RENTALS, INVENTORY], i18n.t).map((item) => item.to)).toEqual(["/t/clube/app"])
+  })
+
+  it("marks only the cart destination current inside the catalog", () => {
     const nav = buildCustomerShellNavItems("clube", [CATALOG], i18n.t)
-    const catalog = nav.find((item) => item.to.endsWith("/catalogo"))
-    const requests = nav.find((item) =>
-      item.to.endsWith("/catalogo/solicitacoes"),
-    )
-    if (!catalog || !requests) {
-      throw new Error("Catalog nav items were not built.")
-    }
-
-    const listPath = "/t/clube/catalogo/solicitacoes"
-    const detailPath =
-      "/t/clube/catalogo/solicitacoes/3fa85f64-5717-4562-b3fc-2c963f66afa6"
-
-    expect(isCustomerNavItemActive(requests, nav, listPath, "")).toBe(true)
-    expect(isCustomerNavItemActive(catalog, nav, listPath, "")).toBe(false)
-    expect(isCustomerNavItemActive(requests, nav, detailPath, "")).toBe(true)
-    expect(isCustomerNavItemActive(catalog, nav, detailPath, "")).toBe(false)
-    expect(isCustomerNavItemActive(catalog, nav, "/t/clube/catalogo", "")).toBe(
-      true,
-    )
-    expect(
-      isCustomerNavItemActive(requests, nav, "/t/clube/catalogo", ""),
-    ).toBe(false)
-    expect(
-      isCustomerNavItemActive(catalog, nav, "/t/clube/catalogo/carrinho", ""),
-    ).toBe(true)
-  })
-
-  it("highlights my reservations only when the agenda hash is present", () => {
-    const stock = { ...RENTALS_B, label: "Reservar horário" }
-    const nav = buildCustomerShellNavItems("clube", [stock], i18n.t)
-    const agendaPath = `/t/clube/agenda/${stock.id}`
-
-    expect(
-      isCustomerNavItemActive(nav[0]!, nav, agendaPath, ""),
-    ).toBe(true)
-    expect(
-      isCustomerNavItemActive(nav[1]!, nav, agendaPath, ""),
-    ).toBe(false)
-    expect(
-      isCustomerNavItemActive(
-        nav[1]!,
-        nav,
-        agendaPath,
-        CUSTOMER_MY_RESERVATIONS_HASH,
-      ),
-    ).toBe(true)
-    expect(
-      isCustomerNavItemActive(
-        nav[0]!,
-        nav,
-        agendaPath,
-        CUSTOMER_MY_RESERVATIONS_HASH,
-      ),
-    ).toBe(false)
+    expect(nav.filter((item) => isCustomerNavItemActive(item, nav, "/t/clube/catalogo/carrinho", "")).map((item) => item.to))
+      .toEqual(["/t/clube/catalogo/carrinho"])
   })
 })
 
@@ -340,5 +288,18 @@ describe("suggestPortalMenuLabel", () => {
         t: i18n.t,
       }),
     ).toBe(i18n.t("tenantPortal.catalog.navCatalog"))
+  })
+})
+
+describe("buildCustomerHomeNavItems", () => {
+  it("keeps existing catalog, orders, requests and reservations destinations", () => {
+    const nav = buildCustomerHomeNavItems("clube", [RENTALS_A, CATALOG], i18n.t)
+    const ids = nav.map((item) => item.id)
+    expect(ids.some((id) => id.endsWith("-catalog"))).toBe(true)
+    expect(ids.some((id) => id.endsWith("-orders"))).toBe(true)
+    expect(ids.some((id) => id.endsWith("-requests"))).toBe(true)
+    expect(ids).toContain("customer-my-reservations")
+    expect(ids).toContain("customer-profile")
+    expect(nav.find((item) => item.id.endsWith("-orders"))?.to).toBe("/t/clube/pedidos")
   })
 })

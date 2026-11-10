@@ -1917,6 +1917,16 @@
     }
   },
   "nav": {
+    "sidebar": {
+      "people": "Pessoas",
+      "groups": "Grupos",
+      "map": "Mapa",
+      "sales": "Vendas",
+      "notifications": "Notificações"
+    },
+    "customerHome": "Início",
+    "customerBook": "Reservar",
+    "customerActivities": "Minhas atividades",
     "breadcrumbLabel": "Caminho de navegação",
     "details": "Detalhes",
     "backTo": "Voltar para {{page}}",
@@ -1957,6 +1967,10 @@
     "collapseMenu": "Recolher menu",
     "expandMenu": "Expandir menu",
     "sections": {
+      "settings": "Configurações",
+      "portal": "Portal",
+      "customers": "Clientes",
+      "registration": "Cadastro",
       "overview": "Início",
       "peoplePortal": "Pessoas e portal",
       "operations": "Operação",

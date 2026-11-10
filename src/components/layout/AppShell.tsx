@@ -40,7 +40,7 @@ export type SidebarRenderOptions = {
 }
 
 export type AppShellProps = {
-  /** Portal uses a persistent sidebar that becomes bottom navigation on mobile. */
+  /** Portal uses top navigation that becomes bottom navigation on mobile. */
   variant?: "staff" | "portal"
   sidebar: (opts: SidebarRenderOptions) => ReactNode
   pageTitle: string
@@ -141,7 +141,7 @@ export function AppShell({
 
   return (
     <div data-shell-part="root" data-shell-variant={variant} className="flex min-h-screen bg-background text-foreground">
-      <aside
+      {variant === "staff" && <aside
         data-shell-part="sidebar"
         className={cn(
           "hidden shrink-0 border-r border-sidebar-border bg-sidebar text-sidebar-foreground lg:block",
@@ -153,9 +153,9 @@ export function AppShell({
           collapsed,
           onToggleCollapsed: collapsible ? toggleCollapsed : undefined,
         })}
-      </aside>
+      </aside>}
 
-      <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
+      {variant === "staff" && <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
         <SheetContent side="left" className="w-72 p-0 sm:max-w-72">
           <SheetHeader className="sr-only">
             <SheetTitle>{t("nav.menu")}</SheetTitle>
@@ -167,7 +167,7 @@ export function AppShell({
             },
           })}
         </SheetContent>
-      </Sheet>
+      </Sheet>}
 
       <div data-shell-part="body" className="flex min-w-0 flex-1 flex-col">
         <header data-shell-part="header" className="sticky top-0 z-20 flex h-14 items-center justify-between gap-2 border-b border-border bg-background/80 px-4 backdrop-blur-md supports-[backdrop-filter]:bg-background/65">
@@ -200,6 +200,8 @@ export function AppShell({
               </p>
             </div>
           </div>
+
+          {variant === "portal" && sidebar({})}
 
           <div className="flex shrink-0 items-center gap-0.5">
             <LanguageSwitcher

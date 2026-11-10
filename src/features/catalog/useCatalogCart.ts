@@ -26,7 +26,13 @@ export function useCatalogCart(tenantSubdomain: string, customerId: string | nul
       setItems([])
       return
     }
-    setItems(loadCatalogCart(window.sessionStorage, storageKey))
+    const refresh = () => setItems(loadCatalogCart(window.sessionStorage, storageKey))
+    refresh()
+    const onCartChange = (event: Event) => {
+      if (event instanceof CustomEvent && event.detail === storageKey) refresh()
+    }
+    window.addEventListener("rolvix:catalog-cart-changed", onCartChange)
+    return () => window.removeEventListener("rolvix:catalog-cart-changed", onCartChange)
   }, [storageKey])
 
   const persist = useCallback(
@@ -34,6 +40,7 @@ export function useCatalogCart(tenantSubdomain: string, customerId: string | nul
       setItems(next)
       if (storageKey) {
         saveCatalogCart(window.sessionStorage, storageKey, next)
+        window.dispatchEvent(new CustomEvent("rolvix:catalog-cart-changed", { detail: storageKey }))
       }
     },
     [storageKey],

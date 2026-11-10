@@ -1917,6 +1917,16 @@
     }
   },
   "nav": {
+    "sidebar": {
+      "people": "People",
+      "groups": "Groups",
+      "map": "Map",
+      "sales": "Sales",
+      "notifications": "Notifications"
+    },
+    "customerHome": "Home",
+    "customerBook": "Book",
+    "customerActivities": "My activities",
     "breadcrumbLabel": "Breadcrumb",
     "details": "Details",
     "backTo": "Back to {{page}}",
@@ -1957,6 +1967,10 @@
     "collapseMenu": "Collapse menu",
     "expandMenu": "Expand menu",
     "sections": {
+      "settings": "Settings",
+      "portal": "Portal",
+      "customers": "Customers",
+      "registration": "Registration",
       "overview": "Home",
       "peoplePortal": "People & portal",
       "operations": "Operations",

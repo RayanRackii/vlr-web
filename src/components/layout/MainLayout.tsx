@@ -50,7 +50,7 @@ function MainLayoutShell({ children }: { children?: ReactNode }) {
   const { isPlatformAdmin, isInTenantEnvironment, activeTenantLabel } =
     usePlatformTenantSession()
   const { can, currentUser, isLoading: permissionsLoading } = usePermissions()
-  const { sections } = useAppNavigationSections()
+  const { sections } = useAppNavigationSections("module-intros")
   const introKeys = availableModuleIntros(sections).map((intro) => intro.key)
   const [isExiting, setIsExiting] = useState(false)
   const [hostBranding, setHostBranding] = useState<TenantBranding | null>(null)
