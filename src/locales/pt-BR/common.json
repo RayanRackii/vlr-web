@@ -3975,7 +3975,8 @@
       "products": "Produtos exclusivos",
       "noOrders": "Nenhum pedido deste cliente.",
       "noGroups": "Não está em nenhum grupo.",
-      "noProducts": "Nenhum produto exclusivo."
+      "noProducts": "Nenhum produto exclusivo.",
+      "catalogDenied": "Pedidos, grupos ou produtos exclusivos precisam de acesso ao catálogo."
     },
     "pagination": {
       "summary": "{{from}}–{{to}} de {{total}}",

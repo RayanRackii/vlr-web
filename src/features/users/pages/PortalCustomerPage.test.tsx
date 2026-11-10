@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest"
 import { MemoryRouter, Route, Routes } from "react-router-dom"
 
 import {
+  CatalogForbiddenError,
   getCatalogProductAccess,
   listCatalogOrders,
   listCatalogProducts,
@@ -12,12 +13,16 @@ import { PortalCustomerPage } from "@/features/users/pages/PortalCustomerPage"
 import { listTenantCustomers } from "@/features/users/services/usersService"
 import i18n from "@/lib/i18n"
 
-vi.mock("@/features/catalog/services/catalogService", () => ({
-  getCatalogProductAccess: vi.fn(),
-  listCatalogOrders: vi.fn(),
-  listCatalogProducts: vi.fn(),
-  listCustomerGroups: vi.fn(),
-}))
+vi.mock("@/features/catalog/services/catalogService", () => {
+  class CatalogForbiddenError extends Error {}
+  return {
+    CatalogForbiddenError,
+    getCatalogProductAccess: vi.fn(),
+    listCatalogOrders: vi.fn(),
+    listCatalogProducts: vi.fn(),
+    listCustomerGroups: vi.fn(),
+  }
+})
 
 vi.mock("@/features/users/services/usersService", () => ({
   listTenantCustomers: vi.fn(),
@@ -173,6 +178,44 @@ describe("PortalCustomerPage", () => {
     expect(screen.queryByText(i18n.t("peopleAccess.customerPage.noOrders"))).not.toBeInTheDocument()
     expect(screen.queryByText(i18n.t("peopleAccess.customerPage.noGroups"))).not.toBeInTheDocument()
     expect(screen.queryByText(i18n.t("peopleAccess.customerPage.noProducts"))).not.toBeInTheDocument()
+  })
+
+  it("keeps the customer when catalog reads are forbidden", async () => {
+    vi.mocked(listCatalogOrders).mockRejectedValue(new CatalogForbiddenError("forbidden"))
+    vi.mocked(listCustomerGroups).mockRejectedValue(new CatalogForbiddenError("forbidden"))
+    vi.mocked(listCatalogProducts).mockRejectedValue(new CatalogForbiddenError("forbidden"))
+
+    render(
+      <MemoryRouter initialEntries={[`/pessoas-e-acesso/clientes/${CUSTOMER_ID}`]}>
+        <Routes>
+          <Route path="/pessoas-e-acesso/clientes/:id" element={<PortalCustomerPage />} />
+        </Routes>
+      </MemoryRouter>,
+    )
+
+    expect(await screen.findByRole("heading", { name: "Ana Souza" })).toBeInTheDocument()
+    expect(screen.getByRole("alert")).toHaveTextContent(i18n.t("peopleAccess.customerPage.catalogDenied"))
+    expect(screen.queryByText(i18n.t("peopleAccess.customerPage.noOrders"))).not.toBeInTheDocument()
+    expect(screen.queryByText(i18n.t("peopleAccess.customerPage.noGroups"))).not.toBeInTheDocument()
+    expect(screen.queryByText(i18n.t("peopleAccess.customerPage.noProducts"))).not.toBeInTheDocument()
+  })
+
+  it("does not show an empty exclusive-product list when groups are forbidden", async () => {
+    vi.mocked(listCustomerGroups).mockRejectedValue(new CatalogForbiddenError("forbidden"))
+
+    render(
+      <MemoryRouter initialEntries={[`/pessoas-e-acesso/clientes/${CUSTOMER_ID}`]}>
+        <Routes>
+          <Route path="/pessoas-e-acesso/clientes/:id" element={<PortalCustomerPage />} />
+        </Routes>
+      </MemoryRouter>,
+    )
+
+    expect(await screen.findByRole("heading", { name: "Ana Souza" })).toBeInTheDocument()
+    expect(screen.getByRole("alert")).toHaveTextContent(i18n.t("peopleAccess.customerPage.catalogDenied"))
+    expect(screen.getByRole("link", { name: /PED-9/ })).toBeInTheDocument()
+    expect(screen.queryByText(i18n.t("peopleAccess.customerPage.noProducts"))).not.toBeInTheDocument()
+    expect(screen.queryByRole("link", { name: "Camisa" })).not.toBeInTheDocument()
   })
 
   it("does not call the page a missing translation", async () => {

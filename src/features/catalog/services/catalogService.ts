@@ -63,6 +63,9 @@ export type CatalogProductWriteRequest = {
   status?: "Active" | "Inactive"
 }
 
+/** Thrown on HTTP 403 so callers can show a friendly permission message instead of a raw code. */
+export class CatalogForbiddenError extends Error {}
+
 function throwCatalogError(error: unknown, fallbackKey: string): never {
   const message = localizeCatalogApiError(
     getAxiosErrorPayload(error),
@@ -71,14 +74,14 @@ function throwCatalogError(error: unknown, fallbackKey: string): never {
   if (isRetryableCatalogError(error)) {
     throw new CatalogRetryableError(message, { cause: error })
   }
+  if (isForbidden(error)) {
+    throw new CatalogForbiddenError(message, { cause: error })
+  }
   throw new Error(message)
 }
 
 /** Thrown on 409 planning_version_conflict so callers can reload instead of just toasting. */
 export class CatalogPlanningVersionConflictError extends Error {}
-
-/** Thrown on HTTP 403 so callers can show a friendly permission message instead of a raw code. */
-export class CatalogForbiddenError extends Error {}
 
 /**
  * Network failures and 5xx responses are transient: callers should surface the
