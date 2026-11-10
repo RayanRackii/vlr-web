@@ -1,9 +1,12 @@
 import { useTranslation } from "react-i18next"
 import { useSearchParams } from "react-router-dom"
+import { Skeleton } from "@/components/ui/skeleton"
 import { Button } from "@/components/ui/button"
 import { useTenantTimeZone } from "@/contexts/TenantTimeZoneContext"
 import { addCivilDays, civilToday, formatDayLabel, startOfCivilWeek } from "@/features/catalog/components/agenda/agendaLayout"
 import { usePermissions } from "@/features/users/permissions/PermissionContext"
+import { AgendaDayGrid } from "./AgendaDayGrid"
+import { useAgendaDay } from "./useAgendaDay"
 import { agendaFilterKeys, agendaTypes, parseAgendaState, serializeAgendaState, type AgendaState } from "./urlState"
 import { agendaOptionLoaders, useAgendaOptions, type AgendaOption } from "./useAgendaOptions"
 
@@ -34,7 +37,7 @@ function LoadedChipRow({ load, ...props }: Omit<ChipRowProps, "options"> & { loa
   return (
     <div>
       <ChipRow {...props} options={options} />
-      {loading && <p role="status" className="text-sm text-muted-foreground">{t("staffAgenda.loading", { label: props.label })}</p>}
+      {loading && <div role="status" aria-label={t("staffAgenda.loading", { label: props.label })} className="flex gap-2 pb-3"><Skeleton variant="shimmer" className="h-11 w-24 rounded-full" /><Skeleton variant="shimmer" className="h-11 w-32 rounded-full" /></div>}
       {error && <p role="alert" className="text-sm text-destructive">{t("staffAgenda.loadError", { label: props.label })}</p>}
     </div>
   )
@@ -53,10 +56,24 @@ export function AgendaPage() {
   const weekStart = startOfCivilWeek(state.date)
   const dateLabel = state.visao === "dia" ? formatDayLabel(state.date, locale)
     : `${formatDayLabel(weekStart, locale)} – ${formatDayLabel(addCivilDays(weekStart, 6), locale)}`
-  const rentalFilters = !isLoading && activeModules.includes("rentals") && (can("rentals.assets.read") || can("rentals.schedule.read"))
-  const productFilters = !isLoading && activeModules.includes("catalog") && can("catalog.products.read")
-  const orderFilters = !isLoading && activeModules.includes("catalog") && can("catalog.orders.read")
+  const rentals = !isLoading && activeModules.includes("rentals")
+  const catalog = !isLoading && activeModules.includes("catalog")
+  const rentalFilters = rentals && (can("rentals.assets.read") || can("rentals.schedule.read"))
+  const productFilters = catalog && can("catalog.products.read")
+  const orderFilters = catalog && can("catalog.orders.read")
   const tenantKey = currentUser?.tenantId ?? "current"
+  const day = useAgendaDay(
+    state,
+    timeZone,
+    {
+      assets: rentals && can("rentals.assets.read"),
+      schedule: rentals && can("rentals.schedule.read"),
+      reservations: rentals && can("rentals.reservations.read"),
+      orders: orderFilters,
+    },
+    currentUser?.tenantId ?? null,
+    state.visao === "dia" && !isLoading,
+  )
 
   return (
     <div className="space-y-4">
@@ -82,8 +99,19 @@ export function AgendaPage() {
           <Button type="button" variant="ghost" onClick={() => update({ recurso: null, produto: null, pedido: null, tipo: null })}>{t("staffAgenda.clear")}</Button>
         </div>
       </section>
-      {/* Fila de hoje requires a staff queue list API that does not exist yet. */}
-      <div className="rounded-xl border border-dashed bg-muted/30 p-10 text-center text-sm text-muted-foreground">{t("staffAgenda.placeholder")}</div>
+      {state.visao === "dia" ? (
+        <AgendaDayGrid
+          loading={isLoading || day.loading}
+          error={day.error}
+          rows={day.day.rows}
+          start={day.day.start}
+          end={day.day.end}
+          canReserve={rentals && can("rentals.reservations.read")}
+          canBlock={rentals && can("rentals.schedule.read") && can("rentals.assets.read")}
+        />
+      ) : (
+        <div className="rounded-xl border border-dashed bg-muted/30 p-10 text-center text-sm text-muted-foreground">{t("staffAgenda.placeholder")}</div>
+      )}
     </div>
   )
 }
