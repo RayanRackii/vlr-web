@@ -41,6 +41,13 @@ describe("filterNavigationItemsByAccess", () => {
     expect(visible.map((item) => item.to)).toEqual(["/pessoas-e-acesso"])
   })
 
+  it("shows Pessoas e acesso when the reader can only open the customer directory", () => {
+    const visible = filterNavigationItemsByAccess(appNavigationItems, [], ["core.customers.read"])
+    const people = visible.find((item) => item.labelKey === "nav.peopleAccess")
+    expect(people).toMatchObject({ to: "/pessoas-e-acesso" })
+    expect(filterNavigationItemsByAccess(appNavigationItems, [], ["core.users.read"]).some((item) => item.labelKey === "nav.peopleAccess")).toBe(true)
+  })
+
   it("shows the shared notifications page when the reader can only see deliveries", () => {
     const sections = buildProductSections(["catalog"], ["catalog.notifications.read"])
     const labels = sections.flatMap((section) => section.items.map((item) => item.labelKey))

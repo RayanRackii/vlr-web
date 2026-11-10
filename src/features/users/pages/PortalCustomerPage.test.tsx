@@ -96,6 +96,83 @@ describe("PortalCustomerPage", () => {
     expect(screen.getByRole("link", { name: "Camisa" })).toBeInTheDocument()
     expect(screen.queryByRole("link", { name: "Suco" })).not.toBeInTheDocument()
     expect(listCatalogOrders).toHaveBeenCalledWith({ customerId: CUSTOMER_ID })
+    expect(listTenantCustomers).toHaveBeenCalledWith({ page: 1, pageSize: 50 })
+  })
+
+  it("pages the directory in batches of 50 until the customer is found", async () => {
+    const other = {
+      id: "66666666-6666-4666-8666-666666666666",
+      name: "Outra Pessoa",
+      email: "outra@example.com",
+      emailVerified: true,
+      createdAt: "2026-11-01T00:00:00.000Z",
+    }
+    vi.mocked(listTenantCustomers).mockImplementation(async (query) => {
+      if (query?.page === 2) {
+        return {
+          items: [{
+            id: CUSTOMER_ID,
+            name: "Ana Souza",
+            email: "ana@example.com",
+            emailVerified: true,
+            createdAt: "2026-11-01T00:00:00.000Z",
+          }],
+          total: 51,
+          page: 2,
+          pageSize: 50,
+        }
+      }
+      return {
+        items: Array.from({ length: 50 }, (_, index) => ({ ...other, id: `00000000-0000-4000-8000-${String(index).padStart(12, "0")}` })),
+        total: 51,
+        page: 1,
+        pageSize: 50,
+      }
+    })
+
+    render(
+      <MemoryRouter initialEntries={[`/pessoas-e-acesso/clientes/${CUSTOMER_ID}`]}>
+        <Routes>
+          <Route path="/pessoas-e-acesso/clientes/:id" element={<PortalCustomerPage />} />
+        </Routes>
+      </MemoryRouter>,
+    )
+
+    expect(await screen.findByRole("heading", { name: "Ana Souza" })).toBeInTheDocument()
+    expect(listTenantCustomers).toHaveBeenCalledWith({ page: 1, pageSize: 50 })
+    expect(listTenantCustomers).toHaveBeenCalledWith({ page: 2, pageSize: 50 })
+  })
+
+  it("shows a directory failure instead of empty sections", async () => {
+    vi.mocked(listTenantCustomers).mockRejectedValue(new Error("Page size must be between 1 and 50."))
+
+    render(
+      <MemoryRouter initialEntries={[`/pessoas-e-acesso/clientes/${CUSTOMER_ID}`]}>
+        <Routes>
+          <Route path="/pessoas-e-acesso/clientes/:id" element={<PortalCustomerPage />} />
+        </Routes>
+      </MemoryRouter>,
+    )
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("Page size must be between 1 and 50.")
+    expect(screen.queryByText(i18n.t("peopleAccess.customerPage.noOrders"))).not.toBeInTheDocument()
+  })
+
+  it("shows a load error instead of empty sections", async () => {
+    vi.mocked(listCatalogOrders).mockRejectedValue(new Error("Não foi possível carregar os pedidos."))
+
+    render(
+      <MemoryRouter initialEntries={[`/pessoas-e-acesso/clientes/${CUSTOMER_ID}`]}>
+        <Routes>
+          <Route path="/pessoas-e-acesso/clientes/:id" element={<PortalCustomerPage />} />
+        </Routes>
+      </MemoryRouter>,
+    )
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("Não foi possível carregar os pedidos.")
+    expect(screen.queryByText(i18n.t("peopleAccess.customerPage.noOrders"))).not.toBeInTheDocument()
+    expect(screen.queryByText(i18n.t("peopleAccess.customerPage.noGroups"))).not.toBeInTheDocument()
+    expect(screen.queryByText(i18n.t("peopleAccess.customerPage.noProducts"))).not.toBeInTheDocument()
   })
 
   it("does not call the page a missing translation", async () => {

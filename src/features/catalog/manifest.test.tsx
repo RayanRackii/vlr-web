@@ -26,7 +26,7 @@ describe("staff sales navigation", () => {
       { path: "/catalogo/agenda-produto", permission: "catalog.orders.read" },
       { path: "/catalogo/agenda-recursos", permission: "rentals.schedule.read" },
       { path: "/catalogo/pedidos/:orderId", permission: "catalog.orders.read" },
-      { path: "/catalogo/notificacoes", permission: "catalog.notifications.read" },
+      { path: "/catalogo/notificacoes", permission: undefined },
     ])
   })
 
@@ -41,6 +41,7 @@ describe("staff sales navigation", () => {
       </MemoryRouter>,
     )
     expect(screen.getByRole("heading", { name: "Notificações" })).toBeInTheDocument()
+    expect(route?.permission).toBeUndefined()
     const labels: string[] = (catalogManifest.navigationItems[0]?.children ?? []).map((item) => item.labelKey)
     expect(labels).not.toContain("nav.catalogNotifications")
   })

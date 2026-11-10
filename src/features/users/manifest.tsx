@@ -12,6 +12,7 @@ type FeatureRoute = {
   path: string
   element: ReactElement
   permission?: string
+  anyOf?: readonly string[]
 }
 
 export const usersManifest = {
@@ -36,6 +37,7 @@ export const usersManifest = {
         path: "/pessoas-e-acesso",
         element: <PeopleAccessPage />,
         permission: "core.users.read",
+        anyOf: ["core.customers.read"],
       },
       {
         path: "/pessoas-e-acesso/funcoes/:id",

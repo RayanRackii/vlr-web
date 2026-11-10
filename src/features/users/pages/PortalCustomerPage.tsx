@@ -11,10 +11,30 @@ import {
   listCatalogProducts,
   listCustomerGroups,
 } from "@/features/catalog/services/catalogService"
-import type { CatalogOrder, CatalogProduct, CustomerGroup } from "@/features/catalog/schemas/catalogSchemas"
+import type { CatalogOrder, CustomerGroup } from "@/features/catalog/schemas/catalogSchemas"
 import { exclusiveProductsForCustomer, type ExclusiveProduct } from "@/features/users/lib/exclusiveProducts"
 import type { TenantCustomer } from "@/features/users/schemas/userSchemas"
 import { listTenantCustomers } from "@/features/users/services/usersService"
+
+const CUSTOMER_DIRECTORY_PAGE_SIZE = 50
+
+async function findTenantCustomer(id: string): Promise<TenantCustomer | null> {
+  let page = 1
+  let covered = 0
+  while (page <= 100) {
+    const directory = await listTenantCustomers({ page, pageSize: CUSTOMER_DIRECTORY_PAGE_SIZE })
+    const found = directory.items.find((item) => item.id === id)
+    if (found) {
+      return found
+    }
+    covered += directory.items.length
+    if (directory.items.length < CUSTOMER_DIRECTORY_PAGE_SIZE || covered >= directory.total) {
+      return null
+    }
+    page += 1
+  }
+  return null
+}
 
 export function PortalCustomerPage() {
   const { id = "" } = useParams()
@@ -31,13 +51,12 @@ export function PortalCustomerPage() {
     void (async () => {
       setLoading(true)
       try {
-        const [directory, orderList, groupList, productList] = await Promise.all([
-          listTenantCustomers({ page: 1, pageSize: 100 }),
-          listCatalogOrders({ customerId: id }).catch(() => [] as CatalogOrder[]),
-          listCustomerGroups().catch(() => [] as CustomerGroup[]),
-          listCatalogProducts().catch(() => [] as CatalogProduct[]),
+        const [found, orderList, groupList, productList] = await Promise.all([
+          findTenantCustomer(id),
+          listCatalogOrders({ customerId: id }),
+          listCustomerGroups(),
+          listCatalogProducts(),
         ])
-        const found = directory.items.find((item) => item.id === id) ?? null
         const memberGroups = groupList.filter((group) => group.memberCustomerIds.includes(id))
         const restricted = productList.filter((product) => product.visibility === "Restricted")
         const accessEntries = await Promise.all(restricted.map(async (product) => {
@@ -85,10 +104,11 @@ export function PortalCustomerPage() {
       <Link className="inline-flex min-h-11 items-center text-sm text-primary underline-offset-4 hover:underline" to="/pessoas-e-acesso?tab=customers">
         {t("peopleAccess.tabs.customers")}
       </Link>
-      <PageHeader title={name} description={customer?.email ?? undefined} />
       {error ? (
         <Alert variant="destructive"><AlertDescription>{error}</AlertDescription></Alert>
-      ) : null}
+      ) : (
+      <>
+      <PageHeader title={name} description={customer?.email ?? undefined} />
       <section className="space-y-2" aria-labelledby="customer-orders">
         <h2 id="customer-orders" className="text-lg font-semibold">{t("peopleAccess.customerPage.orders")}</h2>
         {orders.length === 0 ? <p className="text-sm text-muted-foreground">{t("peopleAccess.customerPage.noOrders")}</p> : (
@@ -132,6 +152,8 @@ export function PortalCustomerPage() {
           </ul>
         )}
       </section>
+      </>
+      )}
     </div>
   )
 }

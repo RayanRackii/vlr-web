@@ -211,16 +211,20 @@ export function AppRoutes() {
             </Route>
           ))}
           {catalogManifest.routes.staff.map((route) => (
-            <Route
-              key={route.path}
-              element={<PermissionRoute permission={route.permission} modules={route.modules} />}
-            >
-              <Route path={route.path} element={route.element} />
-            </Route>
+            route.permission ? (
+              <Route
+                key={route.path}
+                element={<PermissionRoute permission={route.permission} modules={route.modules} />}
+              >
+                <Route path={route.path} element={route.element} />
+              </Route>
+            ) : (
+              <Route key={route.path} path={route.path} element={route.element} />
+            )
           ))}
           {usersManifest.routes.staff.map((route) =>
             route.permission ? (
-              <Route key={route.path} element={<PermissionRoute permission={route.permission} />}>
+              <Route key={route.path} element={<PermissionRoute permission={route.permission} anyOf={route.anyOf} />}>
                 <Route path={route.path} element={route.element} />
               </Route>
             ) : (

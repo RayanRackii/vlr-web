@@ -337,6 +337,8 @@ PR 1 (fundação): tokens de design e primitivas, sem restyling de telas/shell (
 
 ## Histórico
 
+| 2026-11-10 | **Diretório do cliente e aviso de cancelamento (WEB):** a ficha do cliente pagina o diretório de 50 em 50 e mostra erro quando uma lista falha. Pessoas e acesso abre para quem só tem `core.customers.read`; a aba Clientes depende só dessa chave. O Admin de sistema continua sem ela de propósito (grant explícito, fora do wildcard). `/catalogo/notificacoes` redireciona sem permissão própria. O evento `catalog.order.cancelled_by_customer` ganha tradução. |
+
 | 2026-11-09 | **Uma página de notificações e prontidão do portal (WEB):** Avisos de vendas abre a mesma página de Avisos gerais, com canais e entregas. Quem só lê entregas também entra. A prontidão do início ganha o menu do cliente e o grupo sem clientes, mesmo quando os aluguéis já estão prontos. |
 
 | 2026-11-09 | **Página do cliente do portal (WEB):** `/pessoas-e-acesso/clientes/:id` junta pedidos, grupos e produtos exclusivos. O nome na lista abre essa página. Sem API nova. |
