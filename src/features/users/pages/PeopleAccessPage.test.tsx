@@ -871,37 +871,16 @@ describe("People users and roles validity gate", () => {
     ).toBeInTheDocument()
   }
 
-  it("keeps the create role sheet's Salvar disabled until the name passes the schema", async () => {
+  it("links create role to the full page", async () => {
     const user = userEvent.setup()
     renderPage(MANAGE_ROLES)
     await openRolesTab(user)
 
-    await user.click(
-      screen.getByRole("button", { name: i18n.t("peopleAccess.roles.create") }),
+    expect(screen.getByRole("link", { name: i18n.t("peopleAccess.roles.create") })).toHaveAttribute(
+      "href",
+      "/pessoas-e-acesso/funcoes/nova",
     )
-    const dialog = await screen.findByRole("dialog")
-    const submit = within(dialog).getByRole("button", {
-      name: i18n.t("peopleAccess.roleEditor.createContinue"),
-    })
-    const cancel = within(dialog).getByRole("button", {
-      name: i18n.t("common.cancel"),
-    })
-    expect(submit).toBeDisabled()
-    expect(cancel).toBeEnabled()
-
-    const name = within(dialog).getByLabelText(i18n.t("peopleAccess.role"))
-    await user.type(name, "A")
-    expect(submit).toBeDisabled()
-    expect(createRoleMock).not.toHaveBeenCalled()
-
-    await user.type(name, "b")
-    expect(name).toHaveValue("Ab")
-    expect(submit).toBeEnabled()
-
-    await user.clear(name)
-    expect(submit).toBeDisabled()
-    expect(cancel).toBeEnabled()
-    expect(createRoleMock).not.toHaveBeenCalled()
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument()
   })
 
   it("navigates from the roles tab to the full-page editor for an existing role", async () => {
@@ -918,73 +897,6 @@ describe("People users and roles validity gate", () => {
     ).toBeInTheDocument()
     expect(getRoleMock).toHaveBeenCalledWith(CUSTOM_ROLE_ID)
     expect(screen.getByLabelText(i18n.t("peopleAccess.role"))).toHaveValue("Recepção")
-  })
-
-  it("re-enables the create sheet's Salvar after a server error and keeps the entered values", async () => {
-    const user = userEvent.setup()
-    let rejectCreate: (reason: Error) => void = () => {
-      throw new Error("missing reject")
-    }
-    createRoleMock.mockImplementation(
-      () =>
-        new Promise((_resolve, reject) => {
-          rejectCreate = reject
-        }),
-    )
-    renderPage(MANAGE_ROLES)
-    await openRolesTab(user)
-    await user.click(
-      screen.getByRole("button", { name: i18n.t("peopleAccess.roles.create") }),
-    )
-    const dialog = await screen.findByRole("dialog")
-    const name = within(dialog).getByLabelText(i18n.t("peopleAccess.role"))
-    const description = within(dialog).getByLabelText(
-      i18n.t("peopleAccess.roles.descriptionLabel"),
-    )
-    await user.type(name, "Portaria")
-    await user.type(description, "Entrada")
-
-    const submit = within(dialog).getByRole("button", {
-      name: i18n.t("peopleAccess.roleEditor.createContinue"),
-    })
-    expect(submit).toBeEnabled()
-    await user.click(submit)
-
-    await waitFor(() => {
-      expect(submit).toBeDisabled()
-    })
-
-    rejectCreate(new Error("Nome já cadastrado."))
-
-    await waitFor(() => {
-      expect(
-        within(dialog).getByRole("button", {
-          name: i18n.t("peopleAccess.roleEditor.createContinue"),
-        }),
-      ).toBeEnabled()
-    })
-    expect(toastError).toHaveBeenCalledWith("Nome já cadastrado.")
-    expect(name).toHaveValue("Portaria")
-    expect(description).toHaveValue("Entrada")
-    expect(toastSuccess).not.toHaveBeenCalled()
-    expect(createRoleMock).toHaveBeenCalledTimes(1)
-
-    createRoleMock.mockResolvedValueOnce(CREATED_ROLE)
-    await user.click(
-      within(dialog).getByRole("button", {
-        name: i18n.t("peopleAccess.roleEditor.createContinue"),
-      }),
-    )
-    await waitFor(() => {
-      expect(toastSuccess).toHaveBeenCalledWith(
-        i18n.t("peopleAccess.toasts.roleCreated"),
-      )
-    })
-    expect(createRoleMock).toHaveBeenLastCalledWith({
-      name: "Portaria",
-      description: "Entrada",
-      permissionKeys: [],
-    })
   })
 
   it("leaves role deletion ungated", async () => {

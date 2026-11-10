@@ -94,7 +94,9 @@ describe("MainLayout header identity", () => {
     await i18n.changeLanguage(locale)
     apiGet.mockImplementation(async (url: string) => {
       if (String(url).includes("/api/users/me")) {
-        return { data: { ...basePayload, fullName: "Ana Professora", permissions: ["rentals.schedule.read"] } }
+        // Horários needs asset read as well as schedule read. Schedule read alone
+        // hides the bookings item, so this intro would have no heading.
+        return { data: { ...basePayload, fullName: "Ana Professora", permissions: ["rentals.schedule.read", "rentals.assets.read"] } }
       }
       return { data: [] }
     })

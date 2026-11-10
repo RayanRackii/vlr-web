@@ -30,6 +30,15 @@ export const RENTAL_RESOURCES_PERMISSIONS = [
   "core.units.read",
 ] as const
 
+/**
+ * Agenda lists rentable assets (`GET /api/rental-assets`, `rentals.assets.read`)
+ * and the day (`rentals.schedule.read`). Either key alone cannot open the page.
+ */
+export const SCHEDULE_PAGE_PERMISSIONS = [
+  "rentals.schedule.read",
+  "rentals.assets.read",
+] as const
+
 export const rentalsManifest = {
   modules: ["rentals"],
   permissions: [
@@ -60,7 +69,7 @@ export const rentalsManifest = {
       to: "/configuracoes/agenda",
       icon: CalendarClock,
       modules: ["rentals"],
-      permission: "rentals.schedule.read",
+      permissions: SCHEDULE_PAGE_PERMISSIONS,
     },
     {
       labelKey: "nav.reservations",
@@ -96,7 +105,7 @@ export const rentalsManifest = {
       {
         path: "/configuracoes/agenda",
         element: <SchedulePage />,
-        permissions: ["rentals.schedule.read"],
+        permissions: SCHEDULE_PAGE_PERMISSIONS,
       },
       {
         path: "/configuracoes/layout",

@@ -68,6 +68,12 @@ describe("Sidebar access by role permissions", () => {
     expect(screen.queryByRole("link", { name: "Horários" })).not.toBeInTheDocument()
   })
 
+  it("hides the agenda when the reader cannot list rental assets", () => {
+    renderSidebar(["rentals.schedule.read"])
+
+    expect(screen.queryByRole("link", { name: "Horários" })).not.toBeInTheDocument()
+  })
+
   it("shows Recursos and the agenda to a club admin", () => {
     renderSidebar([
       "core.dashboard.read",
