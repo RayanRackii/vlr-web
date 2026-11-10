@@ -5,6 +5,7 @@ import type { AppNavigationItem } from "@/components/layout/navigation"
 import { peopleAccessTabs } from "@/features/users/navigationTabs"
 import { PeopleAccessPage } from "@/features/users/pages/PeopleAccessPage"
 import { PortalCustomerPage } from "@/features/users/pages/PortalCustomerPage"
+import { RoleCreatePage } from "@/features/users/pages/RoleCreatePage"
 import { RoleEditorPage } from "@/features/users/pages/RoleEditorPage"
 import { StaffProfilePage } from "@/features/users/pages/StaffProfilePage"
 
@@ -38,6 +39,11 @@ export const usersManifest = {
         element: <PeopleAccessPage />,
         permission: "core.users.read",
         anyOf: ["core.customers.read"],
+      },
+      {
+        path: "/pessoas-e-acesso/funcoes/nova",
+        element: <RoleCreatePage />,
+        permission: "core.roles.manage",
       },
       {
         path: "/pessoas-e-acesso/funcoes/:id",

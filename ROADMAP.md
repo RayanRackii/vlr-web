@@ -337,6 +337,7 @@ PR 1 (fundação): tokens de design e primitivas, sem restyling de telas/shell (
 
 ## Histórico
 
+| 2026-11-10 | **Nova função é página (WEB):** criar uma função abre `/pessoas-e-acesso/funcoes/nova`. Nome ou descrição preenchidos pedem confirmação antes de sair. Cancelar no diálogo fica. |
 | 2026-11-10 | **Grupos ilegíveis não esvaziam produtos exclusivos (WEB):** se a lista de grupos responde 403, a ficha mostra o aviso de acesso ao catálogo em vez de "Nenhum produto exclusivo". Os pedidos que a pessoa pode ler continuam na página. |
 | 2026-11-10 | **Ficha do cliente sem catálogo (WEB):** quem só lê clientes continua vendo a pessoa. Pedidos, grupos e produtos exclusivos que respondem 403 viram um aviso, sem esvaziar a ficha nem trocar a página por erro. |
 | 2026-11-10 | **Intro de Reservas no teste de cabeçalho (WEB):** o teste da intro usa `rentals.schedule.read` e `rentals.assets.read`, o par que Horários exige. Quem só tem a agenda não é um papel real e não abre essa intro. |
