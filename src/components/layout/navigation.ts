@@ -286,22 +286,30 @@ export function filterNavigationItemsByAccess(
   })
 }
 
-export function buildProductSections(
+function sectionsFrom(
+  source: readonly AppNavigationSection[],
   activeModules: readonly string[],
   permissions: readonly string[],
 ): AppNavigationSection[] {
-  return productNavigationSections.flatMap((section) => {
+  return source.flatMap((section) => {
     const items = filterNavigationItemsByAccess(section.items, activeModules, permissions)
     return items.length ? [{ ...section, items }] : []
   })
 }
 
-/** First sidebar route the user may open, in product-nav order. */
+export function buildProductSections(
+  activeModules: readonly string[],
+  permissions: readonly string[],
+): AppNavigationSection[] {
+  return sectionsFrom(productNavigationSections, activeModules, permissions)
+}
+
+/** First route the user may open after a dashboard deny, in the previous landing order. */
 export function firstPermittedProductPath(
   activeModules: readonly string[],
   permissions: readonly string[],
 ): string | null {
-  for (const section of buildProductSections(activeModules, permissions)) {
+  for (const section of sectionsFrom(legacyNavigationSections, activeModules, permissions)) {
     for (const item of section.items) {
       const childPath = item.children?.[0]?.to
       if (childPath) {

@@ -350,7 +350,7 @@ describe("staff menu permissions by role", () => {
     expect(visible.map((item) => item.to)).toContain("/configuracoes/agenda")
     expect(
       firstPermittedProductPath(["rentals"], professorPermissions),
-    ).toBe("/catalogo/agenda-recursos")
+    ).toBe("/configuracoes/agenda")
   })
 
   it("shows Recursos to a resource manager who can read assets and units", () => {
@@ -407,7 +407,7 @@ describe("firstPermittedProductPath", () => {
         ["rentals"],
         ["rentals.schedule.read", "rentals.assets.read", "core.users.read"],
       ),
-    ).toBe("/catalogo/agenda-recursos")
+    ).toBe("/configuracoes/agenda")
   })
 
   it("does not open the staff agenda without asset read", () => {
