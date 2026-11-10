@@ -87,6 +87,11 @@ function parseDurations(value: string): string | null {
   return values.join(",")
 }
 
+/** Saved durations drop spaces ("60, 90" → "60,90"). Compare that form. */
+function normalizeDurations(value: string): string {
+  return parseDurations(value) ?? value.trim()
+}
+
 function isMixedPolicy(assets: readonly AdminRentalAsset[]): boolean {
   if (assets.length <= 1) {
     return false
@@ -110,16 +115,15 @@ export function SchedulePolicyPanel({
   onDirtyChange,
 }: SchedulePolicyPanelProps) {
   const mixed = useMemo(() => isMixedPolicy(assets), [assets])
+  // Templates are omitted: applying a weekly rule refreshes them and must not
+  // remount a dirty hours draft. Saved policy fields still reset the form.
   const selectionKey = assets
     .map(
       (asset) =>
         `${asset.id}:${asset.schedulePolicy ?? "SlotGrid"}:${asset.openTime ?? ""}:${asset.closeTime ?? ""}:${asset.allowedDurationMinutes ?? ""}`,
     )
     .sort()
-    .join("|") +
-    `${loadingTemplates}|${templates.map((template) => (
-      `${template.id}:${template.isActive}:${template.startTime}:${template.endTime}`
-    )).sort().join("|")}`
+    .join("|") + `|${loadingTemplates ? "loading" : "ready"}`
 
   if (assets.length === 0) {
     return null
@@ -174,8 +178,8 @@ function SchedulePolicyPanelForm({
   const dirty = policy !== initialPolicy
     || openTime !== initialOpenTime
     || closeTime !== initialCloseTime
-    || durationMinutes !== initialDurationMinutes
-    || slotGridDurations !== initialSlotGridDurations
+    || normalizeDurations(durationMinutes) !== normalizeDurations(initialDurationMinutes)
+    || normalizeDurations(slotGridDurations) !== normalizeDurations(initialSlotGridDurations)
   useEffect(() => {
     onDirtyChange?.(dirty)
   }, [dirty, onDirtyChange])

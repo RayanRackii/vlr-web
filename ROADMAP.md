@@ -339,6 +339,7 @@ PR 1 (fundação): tokens de design e primitivas, sem restyling de telas/shell (
 
 | 2026-11-10 | **Regra semanal pede saída (WEB):** mudar a duração marca o rascunho. Abas, links, o voltar do assistente e o voltar do navegador abrem o diálogo Cancelar/Sair. Cancelar no formulário descarta. Recolher o formulário sujo pergunta. Fechar a aba continua com o aviso nativo. |
 
+| 2026-11-10 | **Rascunho de horários sobrevive ao salvar e à grade (WEB):** "60, 90" e "60,90" são a mesma duração, então salvar não deixa o rascunho sujo. Aplicar a grade semanal atualiza os modelos sem remontar um rascunho de horários ainda aberto. |
 | 2026-11-10 | **Horários na própria página (WEB):** Configuração dos horários deixa o painel lateral e fica na Configuração semanal. Duração ou modo sujo pede Cancelar/Sair antes de aba, link ou voltar do navegador. |
 
 | 2026-11-10 | **Horários pede saída no diálogo do produto (WEB):** um rascunho sujo da grade semanal abre o diálogo Cancelar/Sair. Fechar a aba continua com o aviso nativo. |

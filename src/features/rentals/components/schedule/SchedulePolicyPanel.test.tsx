@@ -82,6 +82,63 @@ describe("SchedulePolicyPanel", () => {
     await waitFor(() => expect(onDirtyChange).toHaveBeenCalledWith(true))
   })
 
+  it("does not stay dirty when a saved duration only differs by spaces", async () => {
+    const onDirtyChange = vi.fn()
+    render(
+      <SchedulePolicyPanel
+        assets={[{ ...asset, schedulePolicy: "SlotGrid", openTime: null, closeTime: null, allowedDurationMinutes: "60,90" }]}
+        busy={false}
+        busyAction={null}
+        readOnly={false}
+        onSave={vi.fn()}
+        onSeedSlotGrid={vi.fn()}
+        onDirtyChange={onDirtyChange}
+      />,
+    )
+    fireEvent.change(screen.getByLabelText(i18n.t("rentals.schedule.policy.durationMinutes")), {
+      target: { value: "60, 90" },
+    })
+    await waitFor(() => expect(onDirtyChange).toHaveBeenCalled())
+    expect(onDirtyChange).not.toHaveBeenCalledWith(true)
+  })
+
+  it("keeps a dirty duration when the weekly templates refresh", async () => {
+    const onDirtyChange = vi.fn()
+    const props = {
+      assets: [{ ...asset, schedulePolicy: "SlotGrid" as const, openTime: null, closeTime: null, allowedDurationMinutes: "60" }],
+      busy: false,
+      busyAction: null,
+      readOnly: false,
+      onSave: vi.fn(),
+      onSeedSlotGrid: vi.fn(),
+      onDirtyChange,
+      templates: [{
+        id: "11111111-1111-4111-8111-111111111111",
+        rentalAssetId: asset.id,
+        assetName: asset.name,
+        dayOfWeek: "Monday",
+        startTime: "08:00:00",
+        endTime: "09:00:00",
+        occupancyKindId: "22222222-2222-4222-8222-222222222222",
+        occupancyKindLabel: "Aula",
+        label: null,
+        isActive: true,
+      }],
+    }
+    const view = render(<SchedulePolicyPanel {...props} />)
+    const duration = screen.getByLabelText(i18n.t("rentals.schedule.policy.durationMinutes"))
+    fireEvent.change(duration, { target: { value: "90" } })
+    await waitFor(() => expect(onDirtyChange).toHaveBeenCalledWith(true))
+    view.rerender(
+      <SchedulePolicyPanel
+        {...props}
+        templates={[{ ...props.templates[0], id: "33333333-3333-4333-8333-333333333333", endTime: "10:00:00" }]}
+      />,
+    )
+    expect(screen.getByLabelText(i18n.t("rentals.schedule.policy.durationMinutes"))).toHaveValue("90")
+    expect(onDirtyChange).toHaveBeenLastCalledWith(true)
+  })
+
   it("derives standard hours from the saved weekly grid and does not offer reseeding", async () => {
     const user = userEvent.setup()
     render(
