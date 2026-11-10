@@ -52,6 +52,14 @@
       "bloqueio": "Bloqueo"
     }
   },
+  "assistant": {
+    "status": {
+      "published": "Publicado",
+      "draft": "Borrador",
+      "missing_one": "Falta {{count}} paso",
+      "missing_other": "Faltan {{count}} pasos"
+    }
+  },
   "app": {
     "name": "Rolvix",
     "authenticatedArea": "Zona autenticada"
