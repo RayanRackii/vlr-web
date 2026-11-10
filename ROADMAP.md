@@ -337,6 +337,7 @@ PR 1 (fundação): tokens de design e primitivas, sem restyling de telas/shell (
 
 ## Histórico
 
+| 2026-11-10 | **Reservas na grade usam a data civil (WEB):** a lista de reservas recebe `yyyy-MM-dd`, que é o que a API aceita. Um pedido que falha avisa só essa fonte; as outras continuam na grade. As opções de Pedido seguem sem intervalo de data. |
 | 2026-11-10 | **Grade do dia legível (WEB):** os horários da régua não se sobrepõem e 24:00 não é desenhado. O bloco e o detalhe usam o produto ou “Pedido #…” e a situação traduzida. O intervalo no detalhe fica em cor de texto, e o rótulo do bloco cabe numa linha com a dica completa. |
 | 2026-11-10 | **Semana e telefone na Agenda (WEB):** a visão semana resume cada recurso por dia, com a contagem de pedido, reserva, manutenção e bloqueio. Escolher o dia abre a grade daquele dia e mantém os filtros. Abaixo de 640px o dia vira uma lista, sem rolagem lateral, e o detalhe continua na página. |
 | 2026-11-10 | **Grade do dia na Agenda (WEB):** em visão dia, `/agenda` mostra cada recurso no horário em que abre e fecha. Pedido, reserva, manutenção e bloqueio abrem o detalhe na própria página, com links para as telas que já existem. Ordem de serviço não vira bloco: a lista não traz o recurso de reserva nem o começo e o fim. |

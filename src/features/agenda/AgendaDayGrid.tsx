@@ -4,6 +4,7 @@ import { Link } from "react-router-dom"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Button } from "@/components/ui/button"
 import type { AgendaBlock, AgendaRow } from "./dayGridModel"
+import type { AgendaSourceId } from "./useAgendaDay"
 import { visibleHourLabels } from "./hourLabels"
 
 const DEFAULT_START_MINUTES = 6 * 60
@@ -86,7 +87,7 @@ function lanes(blocks: AgendaBlock[]): { block: AgendaBlock; lane: number }[] {
 
 type AgendaDayGridProps = {
   loading: boolean
-  error: boolean
+  failedSources: AgendaSourceId[]
   rows: AgendaRow[]
   start: number | null
   end: number | null
@@ -111,7 +112,7 @@ function useTrackWidth() {
   return { ref, width }
 }
 
-export function AgendaDayGrid({ loading, error, rows, start, end, canReserve, canBlock }: AgendaDayGridProps) {
+export function AgendaDayGrid({ loading, failedSources, rows, start, end, canReserve, canBlock }: AgendaDayGridProps) {
   const { t } = useTranslation()
   const [selectedKey, setSelectedKey] = useState<string | null>(null)
   const { axisStart, axisEnd } = axisBounds(start, end)
@@ -135,7 +136,11 @@ export function AgendaDayGrid({ loading, error, rows, start, end, canReserve, ca
 
   return (
     <div className="space-y-4">
-      {error && <p role="alert" className="text-sm text-destructive">{t("staffAgenda.gridError")}</p>}
+      {failedSources.map((source) => (
+        <p key={source} role="status" className="text-sm text-muted-foreground">
+          {t("staffAgenda.sourceWarning", { source: t(`staffAgenda.sources.${source}`) })}
+        </p>
+      ))}
       <section aria-label={t("staffAgenda.grid")} className={phone ? "rounded-xl border bg-card text-card-foreground" : "overflow-x-auto rounded-xl border bg-card text-card-foreground"}>
         <div className={phone ? "" : "min-w-[48rem]"}>
           {!phone && <div className="flex border-b">
