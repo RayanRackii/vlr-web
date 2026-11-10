@@ -337,6 +337,7 @@ PR 1 (fundação): tokens de design e primitivas, sem restyling de telas/shell (
 
 ## Histórico
 
+| 2026-11-10 | **Horário do dia fica na página (WEB):** editar um horário abre uma seção na agenda, não um painel lateral. Mudar o rótulo, o tipo ou o alcance pede confirmação antes de recolher ou trocar de aba. Cancelar descarta. |
 | 2026-11-10 | **Agenda dos recursos no celular (WEB):** o título deixa de reservar 12rem de altura, então Dia/Semana fica logo abaixo da descrição. |
 | 2026-11-10 | **Produto inativo conta como rascunho (WEB):** marcar Inativo em Novo produto pede confirmação antes de sair. Voltar para Ativo limpa esse rascunho. Salvar ainda abre o assistente. |
 | 2026-11-10 | **Produto novo e edição rápida em página (WEB):** Novo produto abre `/catalogo/produtos/novo` e, ao criar, segue para o assistente. A edição rápida abre o passo Oferta. A lista deixa de usar o painel lateral. |

@@ -169,11 +169,12 @@ function AdminSchedulePage() {
   const [weeklyTarget, setWeeklyTarget] =
     useState<WeeklyGridCellPayload | null>(null)
   const [slotSheetOpen, setSlotSheetOpen] = useState(false)
+  const [slotDirty, setSlotDirty] = useState(false)
   const [pendingLeave, setPendingLeave] = useState<(() => void) | null>(null)
   const [editingCell, setEditingCell] =
     useState<DayResourceGridCellPayload | null>(null)
   const hasDataRouter = useContext(DataRouterContext) != null
-  const draftDirty = (templateSheetOpen && templateDirty) || (ruleOpen && ruleDirty) || (policyOpen && policyDirty)
+  const draftDirty = (templateSheetOpen && templateDirty) || (ruleOpen && ruleDirty) || (policyOpen && policyDirty) || (slotSheetOpen && slotDirty)
 
   useEffect(() => {
     if (!draftDirty) return
@@ -222,11 +223,26 @@ function AdminSchedulePage() {
     setPolicyDirty(false)
   }
 
+  function clearSlotDraft() {
+    setSlotSheetOpen(false)
+    setSlotDirty(false)
+    setEditingCell(null)
+  }
+
+  function requestCloseSlot() {
+    if (slotSheetOpen && slotDirty) {
+      setPendingLeave(() => clearSlotDraft)
+      return
+    }
+    clearSlotDraft()
+  }
+
   function runOrAsk(action: () => void) {
     const proceed = () => {
       clearTemplateDraft()
       if (ruleDirty) closeWeeklyRule()
       if (policyDirty) closePolicy()
+      clearSlotDraft()
       action()
     }
     if (draftDirty) {
@@ -848,6 +864,7 @@ function AdminSchedulePage() {
       <Card className="min-w-0 motion-reduce:transition-none">
       <CardContent className="min-w-0 px-3 sm:px-5">
         {tab === "daily" ? (
+          <>
           <DailyAgendaTab
             assets={assets}
             selectedRentalAssetIds={selectedRentalAssetIds}
@@ -867,12 +884,48 @@ function AdminSchedulePage() {
             onPublish={() => {
               void onPublish()
             }}
-            onGoWeeklySetup={() => setTab("templates")}
+            onGoWeeklySetup={() => {
+              runOrAsk(() => setTab("templates"))
+            }}
             onSlotOrCellClick={(target) => {
-              setEditingCell(target)
-              setSlotSheetOpen(true)
+              const openCell = () => {
+                setEditingCell(target)
+                setSlotSheetOpen(true)
+              }
+              if (slotSheetOpen && slotDirty) {
+                setPendingLeave(() => openCell)
+                return
+              }
+              openCell()
             }}
           />
+          <DaySlotSheet
+            open={slotSheetOpen}
+            onOpenChange={(open) => {
+              if (!open) clearSlotDraft()
+            }}
+            onDirtyChange={setSlotDirty}
+            onRequestClose={requestCloseSlot}
+            target={editingCell}
+            kinds={kinds}
+            defaultKindId={defaultKindId}
+            busy={busy}
+            busyAction={busyAction}
+            readOnly={isTrialReadOnly}
+            onSave={(draft, scope) =>
+              handleSlotAction("Update", "slotUpdate", draft, scope)
+            }
+            onMakeUnavailable={(scope) =>
+              handleSlotAction("MakeUnavailable", "slotUnavailable", undefined, scope)
+            }
+            onRestoreWeeklyDefault={() =>
+              handleSlotAction("RestoreWeeklyDefault", "slotRestore")
+            }
+            onGoWeeklySetup={() => {
+              runOrAsk(() => setTab("templates"))
+            }}
+          />
+          </>
         ) : null}
 
         {tab === "templates" ? (
@@ -1011,34 +1064,6 @@ function AdminSchedulePage() {
           const action = pendingLeave
           setPendingLeave(null)
           action?.()
-        }}
-      />
-      <DaySlotSheet
-        open={slotSheetOpen}
-        onOpenChange={(open) => {
-          setSlotSheetOpen(open)
-          if (!open) {
-            setEditingCell(null)
-          }
-        }}
-        target={editingCell}
-        kinds={kinds}
-        defaultKindId={defaultKindId}
-        busy={busy}
-        busyAction={busyAction}
-        readOnly={isTrialReadOnly}
-        onSave={(draft, scope) =>
-          handleSlotAction("Update", "slotUpdate", draft, scope)
-        }
-        onMakeUnavailable={(scope) =>
-          handleSlotAction("MakeUnavailable", "slotUnavailable", undefined, scope)
-        }
-        onRestoreWeeklyDefault={() =>
-          handleSlotAction("RestoreWeeklyDefault", "slotRestore")
-        }
-        onGoWeeklySetup={() => {
-          setSlotSheetOpen(false)
-          setTab("templates")
         }}
       />
     </div>
