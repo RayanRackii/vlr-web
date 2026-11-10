@@ -2,12 +2,17 @@ import { useCallback, useMemo, useSyncExternalStore } from "react"
 
 import { useAuth } from "@/contexts/AuthContext"
 import { useIsPlatformAdmin } from "@/features/admin/hooks/usePlatformAdmin"
+import {
+  readPlatformTenantExitedUserId,
+  subscribePlatformTenantExit,
+  writePlatformTenantExitedUserId,
+} from "@/features/admin/lib/platformTenantExit"
 import { invalidateCurrentUserCache } from "@/features/users/services/currentUserCache"
 import { supabase } from "@/lib/supabase"
 
 const TENANT_LABEL_KEY = "rolvix.activeTenantLabel"
-const EXITED_USER_KEY = "rolvix.platformTenantExitedUserId"
-const EXITED_EVENT = "rolvix:platform-tenant-exited"
+
+export { readPlatformTenantExitedUserId, subscribePlatformTenantExit }
 
 export function readActiveTenantLabel(): string | null {
   if (typeof window === "undefined") {
@@ -38,55 +43,15 @@ function readTenantIdFromUser(user: {
   return typeof raw === "string" && raw.trim().length > 0 ? raw.trim() : null
 }
 
-export function readPlatformTenantExitedUserId(): string | null {
-  if (typeof window === "undefined") {
-    return null
-  }
-
-  const value = window.sessionStorage.getItem(EXITED_USER_KEY)
-  return value && value.trim().length > 0 ? value : null
-}
-
-function notifyPlatformTenantExit() {
-  window.dispatchEvent(new Event(EXITED_EVENT))
-}
-
 /** Local UI exit for this user. The JWT claim can lag behind POST /exit. */
 export function markPlatformTenantExited(userId: string) {
-  if (typeof window === "undefined") {
-    return
-  }
-
   writeActiveTenantLabel(null)
-  const trimmed = userId.trim()
-  if (trimmed.length === 0) {
-    window.sessionStorage.removeItem(EXITED_USER_KEY)
-  } else {
-    window.sessionStorage.setItem(EXITED_USER_KEY, trimmed)
-  }
-
-  notifyPlatformTenantExit()
+  writePlatformTenantExitedUserId(userId)
 }
 
 /** Cleared on enter and after a successful sign-out so a later tenant session is visible. */
 export function clearPlatformTenantExited() {
-  if (typeof window === "undefined") {
-    return
-  }
-
-  window.sessionStorage.removeItem(EXITED_USER_KEY)
-  notifyPlatformTenantExit()
-}
-
-function subscribePlatformTenantExit(onStoreChange: () => void) {
-  if (typeof window === "undefined") {
-    return () => {}
-  }
-
-  window.addEventListener(EXITED_EVENT, onStoreChange)
-  return () => {
-    window.removeEventListener(EXITED_EVENT, onStoreChange)
-  }
+  writePlatformTenantExitedUserId(null)
 }
 
 export async function refreshAuthSession() {
