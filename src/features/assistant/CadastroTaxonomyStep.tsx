@@ -15,6 +15,7 @@ import { updateCatalogProduct } from "@/features/catalog/services/catalogService
 import { taxonomyMutationSchema, taxonomyTagMutationSchema, type TaxonomyCategory, type TaxonomyTag, type TaxonomyMutationValues, type TaxonomyTagMutationValues } from "@/features/taxonomy/schemas/taxonomySchemas"
 import { listTaxonomyCategories, listTaxonomyTags, createTaxonomyCategory, createTaxonomyTag } from "@/features/taxonomy/services/taxonomyService"
 
+const TAXONOMY_ASSIGNMENT_LIMIT = 20
 const slugify = (value: string) => value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "").slice(0, 80).replace(/-$/, "")
 
 export function CadastroTaxonomyStep({ product, canAssign = false, onSaved, onDirtyChange, onSavingChange }: { product?: CatalogProduct; canAssign?: boolean; onSaved?: () => void | Promise<void>; onDirtyChange?: (dirty: boolean) => void; onSavingChange?: (saving: boolean) => void }) {
@@ -36,6 +37,7 @@ export function CadastroTaxonomyStep({ product, canAssign = false, onSaved, onDi
   const [attempt, setAttempt] = useState(0)
 
   const sameIds = (left: string[], right: string[]) => left.length === right.length && left.every((id) => right.includes(id))
+  const overLimit = categoryIds.length > TAXONOMY_ASSIGNMENT_LIMIT || tagIds.length > TAXONOMY_ASSIGNMENT_LIMIT
   const dirty = (assign && (!sameIds(categoryIds, product?.taxonomy?.categories.map((item) => item.id) ?? []) || !sameIds(tagIds, product?.taxonomy?.tags.map((item) => item.id) ?? []))) || creating !== null
   useEffect(() => { onDirtyChange?.(dirty) }, [dirty, onDirtyChange])
   useEffect(() => { onSavingChange?.(busy || inlineSaving) }, [busy, inlineSaving, onSavingChange])
@@ -54,7 +56,7 @@ export function CadastroTaxonomyStep({ product, canAssign = false, onSaved, onDi
   }, [canRead, attempt, t])
 
   async function save() {
-    if (!product || !assign || busy) return
+    if (!product || !assign || busy || overLimit) return
     setBusy(true)
     try {
       await updateCatalogProduct(product.id, { name: product.name, code: product.code, description: product.description, price: product.price, currency: product.currency, taxonomy: { categoryIds, tagIds } })
@@ -93,7 +95,8 @@ export function CadastroTaxonomyStep({ product, canAssign = false, onSaved, onDi
         }} /> : null}
       </section>
     })}
-    {product && assign ? <Button type="button" variant="outline" className="min-h-11" disabled={busy || creating !== null} onClick={() => void save()}>{t("assistant.saveStep")}</Button> : null}
+    {overLimit ? <p role="alert">{t("cadastro.taxonomyLimit")}</p> : null}
+    {product && assign ? <Button type="button" variant="outline" className="min-h-11" disabled={busy || creating !== null || overLimit} onClick={() => void save()}>{t("assistant.saveStep")}</Button> : null}
   </div>
 }
 

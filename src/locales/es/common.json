@@ -5633,6 +5633,7 @@
     "createTag": "Añadir tag",
     "noParent": "Ninguna",
     "taxonomyHelp": "Selecciona las categorías y tags de este producto y guarda el paso.",
+    "taxonomyLimit": "El límite es 20 categorías y 20 tags.",
     "resourceTaxonomyHelp": "Puedes crear categorías y tags compartidos aquí, pero no se vinculan a este recurso. El tipo operativo del recurso se configura por separado.",
     "taxonomyNoRead": "Necesitas permiso para consultar categorías y tags."
   }

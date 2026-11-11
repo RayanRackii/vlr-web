@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest"
 
+import { holdsRoutePermission } from "@/features/users/permissions/permissionGroups"
+
 import appRoutesSource from "@/routes/AppRoutes.tsx?raw"
 import navigationSource from "@/components/layout/navigation.ts?raw"
 import { appNavigationItems } from "@/components/layout/navigation"
@@ -217,6 +219,20 @@ describe("feature manifests", () => {
     expect(navigationSource).toContain("= rentalsManifest.navigationItems")
     expect(appRoutesSource).toContain("rentalsManifest.routes.staff")
     expect(appRoutesSource).not.toContain("features/rentals/pages")
+  })
+
+  it("requires rentals.assets.write to open resource cadastro", () => {
+    const routes = rentalsManifest.routes.staff.filter((route) =>
+      route.path === "/configuracoes/recursos/cadastro" || route.path === "/configuracoes/recursos/:id/cadastro",
+    )
+    expect(routes.map((route) => route.path)).toEqual([
+      "/configuracoes/recursos/cadastro",
+      "/configuracoes/recursos/:id/cadastro",
+    ])
+    for (const route of routes) {
+      expect(holdsRoutePermission({ permissions: route.permissions }, (key) => key === "rentals.assets.read" || key === "core.units.read")).toBe(false)
+      expect(holdsRoutePermission({ permissions: route.permissions }, (key) => key === "rentals.assets.write" || key === "core.units.read")).toBe(true)
+    }
   })
 
   it("has a manifest for every feature that owns routes", () => {

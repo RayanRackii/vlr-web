@@ -60,6 +60,23 @@ it("allows assigning existing labels without exposing create for users without m
   expect(screen.queryByRole("button", { name: "Categoria +" })).not.toBeInTheDocument()
   expect(screen.queryByRole("button", { name: "Tag +" })).not.toBeInTheDocument()
 })
+it("disables save and shows the limit when more than 20 categories are selected", async () => {
+  const user = userEvent.setup()
+  const categories = Array.from({ length: 21 }, (_, index) => ({
+    ...category,
+    id: `00000000-0000-4000-8000-${index.toString(16).padStart(12, "0")}`,
+    name: `Categoria ${index + 1}`,
+    slug: `categoria-${index + 1}`,
+  }))
+  vi.mocked(taxonomy.listTaxonomyCategories).mockResolvedValue(categories)
+  render(<CadastroTaxonomyStep product={product} canAssign onSaved={vi.fn()} />)
+  for (const item of categories) {
+    await user.click(await screen.findByRole("button", { name: item.name }))
+  }
+  expect(screen.getByRole("button", { name: "Salvar passo" })).toBeDisabled()
+  expect(screen.getByRole("alert")).toHaveTextContent("O limite é 20 categorias e 20 tags.")
+  expect(updateCatalogProduct).not.toHaveBeenCalled()
+})
 it("keeps resource taxonomy create-only without product assignment controls", async () => {
   render(<CadastroTaxonomyStep />)
   expect(await screen.findByText(/não são vinculadas a este recurso/i)).toBeInTheDocument()
