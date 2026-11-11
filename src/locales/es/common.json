@@ -2051,6 +2051,7 @@
     }
   },
   "nav": {
+    "manutencao": "Mantenimiento",
     "agenda": "Agenda",
     "sidebar": {
       "people": "Personas",
@@ -5581,5 +5582,39 @@
       "pedidos": "Pedidos",
       "solicitacoes": "Solicitudes"
     }
+  },
+  "maintenance": {
+    "planUnavailable": "Este plan está inactivo y no puede generar órdenes.",
+    "eyebrow": "Operación · Mantenimiento",
+    "subtitle": "Planes recurrentes y órdenes de trabajo de tus equipos, en un solo lugar.",
+    "tabs": {
+      "hoje": "Hoy",
+      "ordens": "Órdenes",
+      "planos": "Planes"
+    },
+    "sections": {
+      "hoje": "Planes con primera fecha vencida y órdenes abiertas, incluidas las próximas.",
+      "ordens": "Sigue las órdenes de trabajo y su ejecución.",
+      "planos": "Organiza los planes recurrentes de mantenimiento."
+    },
+    "newPlan": "Nuevo plan",
+    "newOrder": "Nueva orden",
+    "generate": "Generar orden",
+    "search": "Buscar por plan, orden o equipo",
+    "filters": "Filtros",
+    "status": "Estado",
+    "type": "Tipo",
+    "allStatuses": "Todos los estados",
+    "allTypes": "Todos los tipos",
+    "due": "Primera fecha vencida",
+    "firstDue": "Primer vencimiento: {{date}}",
+    "emptyTitle": "No hay elementos para mostrar",
+    "emptyDescription": "Los elementos disponibles aparecerán aquí. Ajusta los filtros o crea un elemento.",
+    "clear": "Limpiar búsqueda/filtros",
+    "loading": "Cargando mantenimiento…",
+    "loadError": "No se pudo cargar el mantenimiento.",
+    "generateDescription": "Elige un equipo elegible y una fecha. La orden usará la lista del plan.",
+    "checklist": "Lista del plan",
+    "sourcePlan": "Plan de origen: {{name}}"
   }
 }

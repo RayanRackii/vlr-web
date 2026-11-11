@@ -22,6 +22,8 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form"
+import { Button } from "@/components/ui/button"
+import type { MaintenancePlan } from "@/features/pmoc/schemas/maintenancePlanSchemas"
 import { Input } from "@/components/ui/input"
 import {
   Select,
@@ -40,12 +42,13 @@ import {
 } from "@/features/workOrders/schemas/workOrderSchemas"
 import {
   createWorkOrder,
+  generateWorkOrderFromPlan,
   listWorkOrderAssets,
 } from "@/features/workOrders/services/workOrdersService"
 
 const UNASSIGNED_VALUE = "unassigned"
 
-export function CreateWorkOrderPage() {
+export function CreateWorkOrderPage({ maintenance = false, sourcePlan }: { maintenance?: boolean; sourcePlan?: MaintenancePlan }) {
   const { t, i18n } = useTranslation()
   const navigate = useNavigate()
   const redirectTimeoutRef = useRef<number | null>(null)
@@ -74,7 +77,7 @@ export function CreateWorkOrderPage() {
       assignedUserId: undefined,
       scheduledDate: new Date().toISOString().slice(0, 10),
       notes: "",
-      taskTitle: "",
+      taskTitle: sourcePlan?.name ?? "",
     },
   })
 
@@ -90,7 +93,7 @@ export function CreateWorkOrderPage() {
         listWorkOrderAssets(),
         getTechnicians(),
       ])
-      setAssets(assetData)
+      setAssets(sourcePlan ? assetData.filter(asset => asset.unitId === sourcePlan.unitId && asset.categoryId === sourcePlan.assetCategoryId && asset.status === "Active" && !asset.scheduledDeletionAt?.trim()) : assetData)
       setTechnicians(technicianData)
     } catch (error: unknown) {
       setLoadError(
@@ -101,7 +104,7 @@ export function CreateWorkOrderPage() {
     } finally {
       setIsLoadingLookups(false)
     }
-  }, [t])
+  }, [t, sourcePlan])
 
   useEffect(() => {
     void loadLookups()
@@ -143,7 +146,9 @@ export function CreateWorkOrderPage() {
     setSubmitError(null)
 
     try {
-      const created = await createWorkOrder({
+      const created = sourcePlan ? await generateWorkOrderFromPlan({
+        planId: sourcePlan.id, assetId: values.assetId, assignedUserId: values.assignedUserId ?? null, scheduledDate: values.scheduledDate,
+      }) : await createWorkOrder({
         assetId: values.assetId,
         maintenancePlanId: null,
         assignedUserId: values.assignedUserId ?? null,
@@ -178,10 +183,12 @@ export function CreateWorkOrderPage() {
 
   return (
     <div className="mx-auto w-full min-w-0 max-w-3xl space-y-6">
+      {maintenance && <p className="maintenance-eyebrow">{t("maintenance.eyebrow")}</p>}
       <PageHeader
-        title={t("workOrders.create.title")}
-        description={t("workOrders.create.description")}
+        title={t(sourcePlan ? "maintenance.generate" : maintenance ? "maintenance.newOrder" : "workOrders.create.title")}
+        description={t(sourcePlan ? "maintenance.generateDescription" : "workOrders.create.description")}
       />
+      {sourcePlan && <div className="space-y-2 text-sm"><p>{t("maintenance.sourcePlan", { name: sourcePlan.name })}</p><h2 className="font-semibold">{t("maintenance.checklist")}</h2><ol className="list-inside list-decimal">{sourcePlan.tasks.map(task => <li key={task.id}>{task.title}</li>)}</ol></div>}
       <Card className="min-w-0 motion-reduce:transition-none">
         <CardContent>
           {loadError ? (
@@ -316,7 +323,7 @@ export function CreateWorkOrderPage() {
                   )}
                 />
 
-                <FormField
+                {!sourcePlan && <FormField
                   control={form.control}
                   name="taskTitle"
                   render={({ field }) => (
@@ -334,10 +341,10 @@ export function CreateWorkOrderPage() {
                       <FormMessage />
                     </FormItem>
                   )}
-                />
+                />}
               </div>
 
-              <FormField
+              {!sourcePlan && <FormField
                 control={form.control}
                 name="notes"
                 render={({ field }) => (
@@ -356,9 +363,10 @@ export function CreateWorkOrderPage() {
                     <FormMessage />
                   </FormItem>
                 )}
-              />
+              />}
 
-              <div className="flex flex-wrap justify-end border-t border-border pt-5 [&>button]:w-full sm:[&>button]:w-auto">
+              <div className="flex flex-wrap gap-3 justify-end border-t border-border pt-5 [&>button]:w-full sm:[&>button]:w-auto">
+                {maintenance && <Button type="button" variant="ghost" onClick={() => { void navigate("/manutencao?aba=ordens") }}>{t("common.cancel")}</Button>}
                 <FormPrimaryButton
                   type="submit"
                   isValid={isCreateValid}

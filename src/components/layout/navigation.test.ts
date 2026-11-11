@@ -287,7 +287,9 @@ describe("staff menu permissions by role", () => {
         continue
       }
 
-      if (item.tabs) {
+      if (item.accessAlternatives) {
+        for (const rule of item.accessAlternatives) expect(declaredPermissionKeys(rule).length).toBeGreaterThan(0)
+      } else if (item.tabs) {
         for (const tab of item.tabs) expect(declaredPermissionKeys(tab).length).toBeGreaterThan(0)
       } else {
         expect(declaredPermissionKeys(item).length).toBeGreaterThan(0)
@@ -570,7 +572,7 @@ describe("staff sidebar groups", () => {
       "nav.sections.customers", "nav.sections.portal", "nav.sections.settings",
     ])
     expect(sections.slice(1).map((section) => section.items.map((item) => item.to))).toEqual([
-      ["/agendas", "/pedidos", "/configuracoes/reservas", "/os", "/pmoc"],
+      ["/agendas", "/pedidos", "/configuracoes/reservas", "/manutencao"],
       ["/configuracoes/recursos", "/catalogo/produtos", "/configuracoes/categorias-tags", "/ativos"],
       ["/pessoas-e-acesso", "/catalogo/grupos"],
       ["/configuracoes/menu", "/configuracoes/layout"],
@@ -582,7 +584,7 @@ describe("staff sidebar groups", () => {
     expect(new Set(destinations).size).toBe(destinations.length)
     const oldDestinations = filterNavigationItemsByAccess(appNavigationItems, modules, permissions)
       .flatMap((item) => item.children ? item.children.map((child) => child.to) : [item.to])
-    const retainedLegacyAgendas = ["/agenda", "/catalogo/agenda-recursos", "/catalogo/agenda-produto", "/catalogo/pedidos", "/catalogo/solicitacoes"]
+    const retainedLegacyAgendas = ["/os", "/pmoc", "/pmoc/novo", "/agenda", "/catalogo/agenda-recursos", "/catalogo/agenda-produto", "/catalogo/pedidos", "/catalogo/solicitacoes"]
     expect(oldDestinations.filter((path) => !destinations.includes(path)).sort()).toEqual(retainedLegacyAgendas.sort())
     expect(destinations.sort()).toEqual(oldDestinations.filter((path) => !retainedLegacyAgendas.includes(path)).sort())
   })
@@ -607,7 +609,7 @@ describe("staff sidebar groups", () => {
 
   it("keeps library-only users under New plan without granting custom-plan creation", () => {
     const visible = filterNavigationItemsByAccess(appNavigationItems, ["pmoc"], ["pmoc.templates.read"])
-    expect(visible[0]?.children).toMatchObject([
+    expect(visible.find(item => item.labelKey === "nav.pmoc")?.children).toMatchObject([
       { labelKey: "nav.pmocNew", to: "/pmoc/biblioteca" },
     ])
     expect(firstPermittedProductPath(["pmoc"], ["pmoc.templates.read"])).toBe("/pmoc/biblioteca")
@@ -683,5 +685,25 @@ describe("new agendas group", () => {
     expect(getPageTitleKey("/pedidos")).toBe("nav.pedidos")
     expect(getPageTitleKey("/catalogo/pedidos")).toBe("nav.catalogOrders")
     expect(getPageTitleKey("/catalogo/solicitacoes")).toBe("nav.catalogRequests")
+  })
+})
+
+ describe("Manutenção product navigation", () => {
+  it.each([
+    [["pmoc"], ["pmoc.plans.read"], true],
+    [["pmoc"], ["pmoc.templates.read"], true],
+    [["os"], ["os.work_orders.read"], true],
+    [["os"], ["pmoc.plans.read"], false],
+    [["pmoc"], ["os.work_orders.read"], false],
+    [[], ["pmoc.plans.read", "os.work_orders.read"], false],
+  ])("pairs modules with their own permission (%j, %j)", (modules, permissions, allowed) => {
+    const items = buildProductSections(modules as string[], permissions as string[]).flatMap(section => section.items)
+    expect(items.some(item => item.to === "/manutencao")).toBe(allowed)
+    expect(items.some(item => ["/os", "/pmoc", "/pmoc/novo"].includes(item.to))).toBe(false)
+  })
+  it("keeps old titles and adds the unified title", () => {
+    expect(getPageTitleKey("/manutencao")).toBe("nav.manutencao")
+    expect(getPageTitleKey("/os")).toBe("nav.workOrders")
+    expect(getPageTitleKey("/pmoc/novo")).toBe("nav.pmocNew")
   })
 })

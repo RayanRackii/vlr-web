@@ -11,7 +11,7 @@ import { hasSlotsToday, reservationsTodayTotal } from "@/features/dashboard/page
 import { usePermissions } from "@/features/users/permissions/PermissionContext"
 
 // Destinations and access come from the same catalog as the staff sidebar.
-const SHORTCUTS = ["nav.reservations", "nav.workOrders", "nav.assets", "nav.pmoc"] as const
+const SHORTCUTS = ["nav.reservations", "nav.manutencao", "nav.assets"] as const
 
 function useDashboardShortcuts() {
   const { activeModules, permissions } = usePermissions()
@@ -24,7 +24,7 @@ function useDashboardShortcuts() {
 
 export function DashboardHero({ metrics }: { metrics: DashboardMetrics | null }) {
   const { t, i18n } = useTranslation()
-  const shortcuts = useDashboardShortcuts().filter((item) => item.labelKey === "nav.reservations" || item.labelKey === "nav.workOrders")
+  const shortcuts = useDashboardShortcuts().filter((item) => item.labelKey === "nav.reservations" || item.labelKey === "nav.manutencao")
   const rentals = metrics?.rentals
   const pulses: { title: string; value: number | string; description: string }[] = []
   if (rentals) pulses.push({
@@ -74,8 +74,8 @@ export function DashboardQuickAccess() {
         {shortcuts.map(({ to, labelKey, icon: Icon }, index) => (
           <Link key={labelKey} to={to} className="staff-dashboard-tile" style={{ animationDelay: `${index * 55}ms` }}>
             <span className="staff-dashboard-tile-icon"><Icon aria-hidden="true" /></span>
-            <strong>{labelKey === "nav.pmoc" ? t("dashboard.sections.maintenance.title") : t(labelKey)}</strong>
-            <p>{t(`dashboard.home.shortcuts.${labelKey.slice(4)}`)}</p>
+            <strong>{t(labelKey)}</strong>
+            <p>{labelKey === "nav.manutencao" ? t("maintenance.subtitle") : t(`dashboard.home.shortcuts.${labelKey.slice(4)}`)}</p>
             <span className="staff-dashboard-go">{t("dashboard.home.open")}<ArrowRight aria-hidden="true" /></span>
           </Link>
         ))}

@@ -37,7 +37,7 @@ describe("staff dashboard states", () => {
     const quickAccess = await screen.findByRole("navigation", { name: "Acesso rápido" })
     expect(quickAccess).toBeInTheDocument()
     expect(screen.getByRole("link", { name: /Equipamentos.*Abrir/ })).toHaveAttribute("href", "/ativos")
-    expect(screen.getByRole("link", { name: /Ordens de serviço.*Abrir/ })).toHaveAttribute("href", "/os")
+    expect(screen.getByRole("link", { name: /Manutenção.*Abrir/ })).toHaveAttribute("href", "/manutencao")
     expect(screen.queryByRole("link", { name: /Reservas/ })).not.toBeInTheDocument()
     expect(screen.getByRole("heading", { level: 2, name: "Clientes no portal" })).toBeInTheDocument()
   })
