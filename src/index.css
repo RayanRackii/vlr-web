@@ -164,6 +164,12 @@
   }
 }
 
+/* Tailwind 3 drops opacity modifiers on CSS-variable colors, so hover is written here. */
+:root :is(input, textarea, [data-slot="input"], [data-slot="textarea"], [data-slot="select-trigger"]):not([aria-invalid="true"]):not(:disabled):hover {
+  border-color: color-mix(in srgb, var(--foreground) 30%, var(--input));
+  background-color: color-mix(in srgb, var(--accent) 30%, transparent);
+}
+
 /* Native date/time segments do not always report :focus-visible on the host.
    These rules also take precedence over page-specific focus outlines. */
 :root :is(input[type="date"], input[type="time"], input[type="datetime-local"], textarea, select, [data-slot="input"], [data-slot="textarea"], [data-slot="select-trigger"]):not([aria-invalid="true"]):is(:focus, :focus-visible, :focus-within) {
