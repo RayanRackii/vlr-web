@@ -53,7 +53,7 @@ describe("filterNavigationItemsByAccess", () => {
     const labels = sections.flatMap((section) => section.items.map((item) => item.labelKey))
     expect(labels).toContain("nav.notifications")
     expect(labels).not.toContain("nav.catalogNotifications")
-    expect(sections.flatMap((section) => section.items).find((item) => item.labelKey === "nav.notifications")?.to).toBe("/configuracoes/notificacoes")
+    expect(sections.flatMap((section) => section.items).find((item) => item.labelKey === "nav.notifications")?.to).toBe("/notificacoes")
   })
 
   it("filters children by permission independently", () => {
@@ -191,6 +191,7 @@ describe("filterNavigationItemsByAccess", () => {
     )
 
     expect(visible.map((item) => item.to)).toContain("/configuracoes/notificacoes")
+    expect(visible.map((item) => item.to)).toContain("/notificacoes")
   })
 
   it("shows notifications when rentals is on and the permission matches", () => {
@@ -201,6 +202,7 @@ describe("filterNavigationItemsByAccess", () => {
     )
 
     expect(visible.map((item) => item.to)).toContain("/configuracoes/notificacoes")
+    expect(visible.map((item) => item.to)).toContain("/notificacoes")
   })
 
   it("hides notifications when the permission is missing", () => {
@@ -213,6 +215,7 @@ describe("filterNavigationItemsByAccess", () => {
     expect(visible.map((item) => item.to)).not.toContain(
       "/configuracoes/notificacoes",
     )
+    expect(visible.map((item) => item.to)).not.toContain("/notificacoes")
   })
 
   it("hides notifications when neither catalog nor rentals is on", () => {
@@ -225,6 +228,7 @@ describe("filterNavigationItemsByAccess", () => {
     expect(visible.map((item) => item.to)).not.toContain(
       "/configuracoes/notificacoes",
     )
+    expect(visible.map((item) => item.to)).not.toContain("/notificacoes")
   })
 
   it("shows booking policy when rentals is on and the read permission matches", () => {
@@ -497,6 +501,7 @@ describe("getPageTitleKey", () => {
   })
 
   it("resolves the unified notifications settings page", () => {
+    expect(getPageTitleKey("/notificacoes")).toBe("nav.notifications")
     expect(getPageTitleKey("/configuracoes/notificacoes")).toBe(
       "nav.notifications",
     )
@@ -577,7 +582,7 @@ describe("staff sidebar groups", () => {
       ["/configuracoes/recursos", "/catalogo/produtos", "/ativos"],
       ["/pessoas-e-acesso", "/grupos"],
       ["/configuracoes/menu", "/configuracoes/layout"],
-      ["/configuracoes/agenda", "/catalogo/configuracoes", "/configuracoes/notificacoes"],
+      ["/configuracoes/agenda", "/catalogo/configuracoes", "/notificacoes"],
     ])
     const destinations = sections.flatMap((section) => section.items.flatMap((item) =>
       item.children ? item.children.map((child) => child.to) : [item.to],
@@ -585,7 +590,7 @@ describe("staff sidebar groups", () => {
     expect(new Set(destinations).size).toBe(destinations.length)
     const oldDestinations = filterNavigationItemsByAccess(appNavigationItems, modules, permissions)
       .flatMap((item) => item.children ? item.children.map((child) => child.to) : [item.to])
-    const retainedLegacyAgendas = ["/configuracoes/categorias-tags", "/os", "/pmoc", "/pmoc/novo", "/agenda", "/catalogo/agenda-recursos", "/catalogo/agenda-produto", "/catalogo/pedidos", "/catalogo/solicitacoes", "/catalogo/grupos"]
+    const retainedLegacyAgendas = ["/configuracoes/categorias-tags", "/os", "/pmoc", "/pmoc/novo", "/agenda", "/catalogo/agenda-recursos", "/catalogo/agenda-produto", "/catalogo/pedidos", "/catalogo/solicitacoes", "/catalogo/grupos", "/configuracoes/notificacoes"]
     expect(oldDestinations.filter((path) => !destinations.includes(path)).sort()).toEqual(retainedLegacyAgendas.sort())
     expect(destinations.sort()).toEqual(oldDestinations.filter((path) => !retainedLegacyAgendas.includes(path)).sort())
   })

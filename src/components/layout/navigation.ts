@@ -173,6 +173,11 @@ const customerGroupsPageItem: AppNavigationItem = {
   permission: "catalog.products.read",
 }
 
+const notificationsPageItem: AppNavigationItem = {
+  ...notificationsManifest.navigationItems[0],
+  to: "/notificacoes",
+}
+
 const maintenanceItem: AppNavigationItem = {
   labelKey: "nav.manutencao", to: "/manutencao", icon: pmocManifest.navigationItems[0].icon,
   accessAlternatives: [
@@ -192,6 +197,7 @@ export const appNavigationItems: readonly AppNavigationItem[] = [
   ...salesItems,
   ...peoplePortalItems,
   customerGroupsPageItem,
+  notificationsPageItem,
 ]
 
 const legacyNavigationSections: readonly AppNavigationSection[] = [
@@ -219,7 +225,7 @@ const productNavigationSections: readonly AppNavigationSection[] = [
   { titleKey: "nav.sections.customers", items: navigationItemsAt("/pessoas-e-acesso", "/grupos") },
   { titleKey: "nav.sections.portal", items: navigationItemsAt("/configuracoes/menu", "/configuracoes/layout") },
   { titleKey: "nav.sections.settings", defaultCollapsed: true, items: navigationItemsAt(
-    "/configuracoes/agenda", "/catalogo/configuracoes", "/configuracoes/notificacoes",
+    "/configuracoes/agenda", "/catalogo/configuracoes", "/notificacoes",
   ) },
 ]
 

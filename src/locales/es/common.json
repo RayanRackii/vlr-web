@@ -1717,6 +1717,32 @@
         "rentals": "Alquileres"
       }
     },
+    "page": {
+      "subtitle": "Defina por dónde se envía cada aviso y siga las entregas.",
+      "tabs": { "channels": "Canales", "history": "Historial" },
+      "channelsTitle": "Canales por evento",
+      "channelsSubtitle": "Marque los canales que avisan a clientes y al equipo en cada evento.",
+      "historyTitle": "Historial de entregas",
+      "historySubtitle": "Avisos enviados, con canal, destinatario y resultado.",
+      "search": "Buscar por destinatario o evento",
+      "filters": "Filtros",
+      "status": "Estado",
+      "channel": "Canal",
+      "event": "Evento",
+      "period": "Período",
+      "all": "Todos",
+      "clear": "Limpiar búsqueda y filtros",
+      "emptyChannelsTitle": "Ningún canal para configurar",
+      "emptyChannels": "Ningún módulo con avisos está activo en este entorno.",
+      "emptyHistoryTitle": "Todavía no hay entregas",
+      "emptyHistory": "Los avisos enviados aparecen aquí, con el canal y el resultado.",
+      "noResultsTitle": "Ninguna entrega encontrada",
+      "noResults": "Nada coincide con la búsqueda o los filtros.",
+      "showing": "Mostrando {{shown}} de {{total}}",
+      "previous": "Página anterior",
+      "next": "Página siguiente",
+      "modules": { "catalog": "Pedidos", "rentals": "Reservas" }
+    },
     "inbox": {
       "items": {
         "reservationConfirmed": "Reserva confirmada.",

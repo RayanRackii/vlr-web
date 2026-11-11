@@ -2,6 +2,7 @@ import type { ReactElement } from "react"
 import { Bell } from "lucide-react"
 
 import type { AppNavigationItem } from "@/components/layout/navigation"
+import { NotificationsPage } from "@/features/notifications/pages/NotificationsPage"
 import { NotificationsSettingsPage } from "@/features/notifications/pages/NotificationsSettingsPage"
 
 type FeatureRoute = {
@@ -26,6 +27,12 @@ export const notificationsManifest = {
   ] satisfies readonly AppNavigationItem[],
   routes: {
     staff: [
+      {
+        path: "/notificacoes",
+        element: <NotificationsPage />,
+        permission: "core.notifications.read",
+        anyOf: ["catalog.notifications.read"],
+      },
       {
         path: "/configuracoes/notificacoes",
         element: <NotificationsSettingsPage />,
