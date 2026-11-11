@@ -38,6 +38,9 @@ function matching(options: AgendaOption[], query: string) {
 type FilterPatch = Partial<Pick<AgendaState, "recurso" | "produto" | "pedido" | "tipo">>
 
 type AgendaFiltersProps = {
+  modern?: boolean
+  availableProducts?: AgendaOption[]
+  requiredProduct?: boolean
   state: AgendaState
   rental: boolean
   product: boolean
@@ -45,7 +48,7 @@ type AgendaFiltersProps = {
   onChange: (patch: FilterPatch) => void
 }
 
-export function AgendaFilters({ state, rental, product, order, onChange }: AgendaFiltersProps) {
+export function AgendaFilters({ state, rental, product, order, onChange, modern = false, requiredProduct = false, availableProducts = [] }: AgendaFiltersProps) {
   const { t } = useTranslation()
   const phone = usePhoneFilters()
   const [panel, setPanel] = useState(false)
@@ -75,9 +78,7 @@ export function AgendaFilters({ state, rental, product, order, onChange }: Agend
     setOpen((current) => (current === key ? null : key))
   }
 
-  const controls = (
-    <>
-      {order && (
+  const search = order ? (
         <OrderSearch
           options={pedido.options}
           loading={pedido.loading}
@@ -90,7 +91,10 @@ export function AgendaFilters({ state, rental, product, order, onChange }: Agend
           onSelect={(pedidoId) => { onChange({ pedido: pedidoId }); setOpen(null); setQuery("") }}
           onClear={() => onChange({ pedido: null })}
         />
-      )}
+      ) : null
+  const controls = (
+    <>
+      {!modern && search}
       {rental && (
         <PickFilter
           kind="recurso"
@@ -106,12 +110,13 @@ export function AgendaFilters({ state, rental, product, order, onChange }: Agend
           onClear={() => onChange({ recurso: null })}
         />
       )}
-      {product && (
+      {(product || availableProducts.length > 0 || requiredProduct) && (
         <PickFilter
+          required={requiredProduct}
           kind="produto"
-          options={produto.options}
-          loading={produto.loading}
-          error={produto.error}
+          options={product ? produto.options : availableProducts}
+          loading={product && produto.loading}
+          error={product && produto.error}
           value={state.produto}
           open={open === "produto"}
           query={open === "produto" ? query : ""}
@@ -133,18 +138,19 @@ export function AgendaFilters({ state, rental, product, order, onChange }: Agend
 
   if (phone) {
     return (
-      <section aria-label={t("staffAgenda.filters")} className="rounded-xl border bg-card p-3 text-card-foreground">
+      <section ref={modern ? rootRef : undefined} aria-label={t("staffAgenda.filters")} className={modern ? "border-b p-3" : "rounded-xl border bg-card p-3 text-card-foreground"}>
         <div className="flex flex-wrap items-center gap-2">
+          {modern && search}
           <Button type="button" variant="outline" aria-expanded={panel} onClick={() => { setPanel((current) => !current); setOpen(null) }}>
             <Filter className={ICON_SIZE.sm} strokeWidth={ICON_STROKE_WIDTH} aria-hidden />
-            {t("staffAgenda.filtersButton")}
+            {t("staffAgenda.filtersButton")}{modern && (panel ? " −" : " +")}
             {count > 0 && <span className="rounded-full bg-primary px-1.5 text-xs text-primary-foreground">{count}</span>}
           </Button>
-          <ActiveChips state={state} recurso={recurso.options} produto={produto.options} pedido={pedido.options} onChange={onChange} />
+          <ActiveChips state={state} recurso={recurso.options} produto={product ? produto.options : availableProducts} pedido={pedido.options} onChange={onChange} />
           {clearButton}
         </div>
         {panel && (
-          <div ref={rootRef} className="mt-3 space-y-3 border-t pt-3">
+          <div ref={modern ? undefined : rootRef} className="mt-3 space-y-3 border-t pt-3">
             {controls}
             <div className="flex flex-wrap items-center justify-between gap-2">
               {status}
@@ -157,8 +163,9 @@ export function AgendaFilters({ state, rental, product, order, onChange }: Agend
   }
 
   return (
-    <section aria-label={t("staffAgenda.filters")} className="rounded-xl border bg-card px-3 py-3 text-card-foreground">
+    <section aria-label={t("staffAgenda.filters")} className={modern ? "border-b p-3" : "rounded-xl border bg-card px-3 py-3 text-card-foreground"}>
       <div ref={rootRef} role="group" aria-label={t("staffAgenda.filters")} className="flex flex-wrap items-center gap-2">
+        {modern && search}
         {controls}
         {status}
         {clearButton}
@@ -209,7 +216,8 @@ function optionLabel(options: AgendaOption[], value: string | null) {
   return options.find((option) => option.id === value)?.label ?? value
 }
 
-function PickFilter({ kind, options, loading, error, value, open, query, onQuery, onToggle, onSelect, onClear }: {
+function PickFilter({ required = false, kind, options, loading, error, value, open, query, onQuery, onToggle, onSelect, onClear }: {
+  required?: boolean
   kind: "recurso" | "produto"
   options: AgendaOption[]
   loading: boolean
@@ -227,13 +235,13 @@ function PickFilter({ kind, options, loading, error, value, open, query, onQuery
   const selected = optionLabel(options, value)
   const shown = matching(options, query)
   return (
-    <div className="relative">
+    <div className="relative" data-agenda-filter={kind}>
       <span className={`inline-flex min-h-11 items-center rounded-full border ${value ? "border-primary/40 bg-primary/10" : "border-border bg-background"}`}>
         <button type="button" className="inline-flex min-h-11 items-center gap-2 px-3 text-sm font-medium" aria-haspopup="listbox" aria-expanded={open} onClick={onToggle}>
           {selected ?? label}
           {!value && <Plus className={ICON_SIZE.sm} strokeWidth={ICON_STROKE_WIDTH} aria-hidden />}
         </button>
-        {value && (
+        {value && !required && (
           <button type="button" className="inline-flex size-9 items-center justify-center rounded-full hover:bg-muted" aria-label={t("staffAgenda.removeFilter", { label: selected ?? label })} onClick={onClear}>
             <X className={ICON_SIZE.xs} strokeWidth={ICON_STROKE_WIDTH} aria-hidden />
           </button>

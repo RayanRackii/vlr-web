@@ -6,6 +6,8 @@ import { getHostTenantSubdomain } from "@/features/tenantPortal/services/tenantP
 import i18n from "@/lib/i18n"
 import { AppRoutes } from "./AppRoutes"
 
+vi.mock("@/features/catalog/pages/CatalogResourceAgendaPage", () => ({ CatalogResourceAgendaPage: () => <h1>Legacy resource agenda</h1> }))
+vi.mock("@/features/catalog/pages/CatalogProductAgendaPage", () => ({ CatalogProductAgendaPage: () => <h1>Legacy product agenda</h1> }))
 vi.mock("@/components/layout/MainLayout", () => ({ MainLayout: () => <div data-testid="staff-layout"><Outlet /></div> }))
 vi.mock("@/components/layout/ProtectedRoute", () => ({ ProtectedRoute: () => <Outlet /> }))
 vi.mock("@/features/users/permissions/PermissionContext", () => ({ usePermissions: vi.fn() }))
@@ -53,4 +55,34 @@ describe("staff agenda route", () => {
     expect(screen.getByRole("heading", { name: "Customer agenda" })).toBeInTheDocument()
     expect(screen.queryByTestId("staff-layout")).not.toBeInTheDocument()
   })
+})
+
+
+describe("new staff agenda routes", () => {
+  it.each([
+    ["/agendas", "rentals", "rentals.assets.read", "Visão geral das agendas"],
+    ["/agendas/recursos", "rentals", "rentals.schedule.read", "Agenda de recursos"],
+    ["/agendas/produto", "catalog", "catalog.orders.read", "Agenda do produto"],
+  ])("opens %s inside staff layout", (path, module, permission, title) => {
+    access([module], [permission]); visit(path)
+    expect(screen.getByTestId("staff-layout")).toContainElement(screen.getByRole("heading", { level: 1, name: title }))
+  })
+
+  it.each([
+    ["/agendas", [], ["rentals.schedule.read"]], ["/agendas", ["catalog"], []],
+    ["/agendas/recursos", ["catalog"], ["rentals.schedule.read"]], ["/agendas/recursos", ["rentals"], ["rentals.assets.read"]],
+    ["/agendas/produto", ["rentals"], ["catalog.orders.read"]], ["/agendas/produto", ["catalog"], ["catalog.products.read"]],
+  ] as const)("denies %s without its module or permission", (path, modules, permissions) => {
+    access([...modules], [...permissions]); visit(path)
+    expect(screen.getByRole("heading", { name: i18n.t("accessDenied.title") })).toBeInTheDocument()
+  })
+})
+
+
+it.each([
+  ["/catalogo/agenda-recursos", "rentals", "rentals.schedule.read", "Legacy resource agenda"],
+  ["/catalogo/agenda-produto", "catalog", "catalog.orders.read", "Legacy product agenda"],
+])("retains the legacy screen route at %s", (path, module, permission, title) => {
+  access([module], [permission]); visit(path)
+  expect(screen.getByTestId("staff-layout")).toContainElement(screen.getByRole("heading", { name: title }))
 })

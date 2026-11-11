@@ -166,3 +166,9 @@ it("gives breadcrumb links 44px tap targets without increasing the line height",
   renderBreadcrumb("/pmoc/plan-1", "Plano A")
   expect(screen.getByRole("link", { name: "Meus planos" })).toHaveClass("min-h-[44px]", "-my-3")
 })
+
+
+it.each(["/agendas", "/agendas/recursos", "/agendas/produto"])("does not repeat the top-level agenda heading in a breadcrumb at %s", (path) => {
+  renderBreadcrumb(path)
+  expect(screen.queryByRole("navigation", { name: "Caminho de navegação" })).not.toBeInTheDocument()
+})

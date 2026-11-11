@@ -25,11 +25,12 @@ type AgendaWeekProps = {
   failedSources: AgendaSourceId[]
   days: string[]
   rows: AgendaWeekRow[]
+  focusedRows?: AgendaWeekRow[]
   today: string
   onOpenDay: (date: string) => void
 }
 
-export function AgendaWeek({ loading, failedSources, days, rows, today, onOpenDay }: AgendaWeekProps) {
+export function AgendaWeek({ loading, failedSources, days, rows, today, onOpenDay, focusedRows }: AgendaWeekProps) {
   const { t, i18n } = useTranslation()
   const locale = i18n.resolvedLanguage ?? i18n.language
 
@@ -84,11 +85,19 @@ export function AgendaWeek({ loading, failedSources, days, rows, today, onOpenDa
                       <span className="text-xs text-muted-foreground">{t("staffAgenda.free")}</span>
                     ) : (
                       <span className="flex flex-wrap justify-center gap-1 sm:justify-start">
-                        {agendaTypes.map((kind) => cell.counts[kind] > 0 && (
-                          <span key={kind} className={`inline-flex rounded-md border px-1 text-xs font-semibold tabular-nums ${pipClass[kind]}`}>
-                            {cell.counts[kind]}
-                          </span>
-                        ))}
+                        {agendaTypes.flatMap((kind) => {
+                          const total = cell.counts[kind]
+                          const selected = focusedRows
+                            ? kind === "pedido" ? Math.min(total, focusedRows.find((focused) => focused.id === row.id)?.cells.find((focused) => focused.date === cell.date)?.counts.pedido ?? 0) : 0
+                            : total
+                          return [{ count: selected, dim: false }, { count: total - selected, dim: true }]
+                            .filter(({ count }) => count > 0)
+                            .map(({ count, dim }) => <span key={`${kind}:${dim}`}
+                              aria-label={focusedRows ? t(dim ? "agendas.otherUses" : "agendas.selectedProductOrders", { count, kind: t(`staffAgenda.types.${kind}`) }) : undefined}
+                              className={`inline-flex rounded-md border px-1 text-xs font-semibold tabular-nums ${pipClass[kind]} ${dim ? "opacity-40" : ""}`}>
+                              {count}
+                            </span>)
+                        })}
                       </span>
                     )}
                   </button>
