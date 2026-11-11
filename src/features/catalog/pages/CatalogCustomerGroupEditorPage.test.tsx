@@ -74,6 +74,8 @@ describe("CatalogCustomerGroupEditorPage", () => {
       expect(screen.getByRole("heading", { name: new RegExp(tr(`tabs.${section}`)) })).toBeVisible()
     }
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument()
+    expect(screen.getAllByRole("button", { name: i18n.t("common.cancel") })).toHaveLength(1)
+    expect(screen.getByRole("button", { name: i18n.t("common.cancel") }).parentElement).toHaveClass("sticky")
     await userEvent.click(screen.getByText(tr("page.whereUsed")))
     expect(screen.getByText(tr("page.deleteNoAffected"))).toBeVisible()
   })

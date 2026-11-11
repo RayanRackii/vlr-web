@@ -203,11 +203,12 @@ describe("RentalResourcesPage", () => {
     })
   })
 
-  it("opens the create page directly with both save actions gated by validity", async () => {
+  it("opens the create page directly with the footer save gated by validity", async () => {
     renderPage(WRITE_PERMS, "/configuracoes/recursos/novo")
     expect(await screen.findByRole("heading", { name: i18n.t("rentals.resources.add"), level: 1 })).toBeVisible()
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument()
-    expect(screen.getByRole("button", { name: i18n.t("common.save") })).toBeDisabled()
+    expect(screen.getAllByRole("button", { name: i18n.t("common.cancel") })).toHaveLength(1)
+    expect(screen.queryByRole("button", { name: i18n.t("common.save") })).not.toBeInTheDocument()
     expect(screen.getByRole("button", { name: i18n.t("rentals.resources.saveCreate") })).toBeDisabled()
     expect(screen.getByRole("region", { name: "Básico" })).toBeVisible()
     expect(screen.getByRole("region", { name: "Preço e regras" })).toBeVisible()
@@ -228,7 +229,6 @@ describe("RentalResourcesPage", () => {
     expect(unload()).toBe(true)
     for (const departure of [
       screen.getAllByRole("button", { name: i18n.t("common.cancel") })[0]!,
-      screen.getByRole("button", { name: i18n.t("rentals.resources.title") }),
       screen.getByRole("link", { name: "Dashboard" }),
       screen.getByRole("button", { name: "Back" }),
     ]) {
@@ -260,7 +260,6 @@ describe("RentalResourcesPage", () => {
     await waitFor(() => expect(createMock).toHaveBeenCalledTimes(1))
     for (const button of [
       ...screen.getAllByRole("button", { name: i18n.t("common.cancel") }),
-      screen.getByRole("button", { name: i18n.t("rentals.resources.title") }),
     ]) {
       expect(button).toBeDisabled()
       await user.click(button)

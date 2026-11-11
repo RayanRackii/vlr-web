@@ -512,15 +512,8 @@ export function CustomerGroupsView({ editor = false }: { editor?: boolean }) {
 
       </> : <>
         {hasDataRouter ? <GroupLeaveGuard dirty={dirty} saving={busy} allowNavigation={allowNavigation} /> : null}
-        <nav aria-label={t("catalog.customerGroups.page.breadcrumb")} className="flex items-center gap-3 text-sm">
-          <Button variant="link" disabled={busy} onClick={() => navigate("/catalogo/grupos")}>{t("catalog.customerGroups.title")}</Button>
-          <span aria-hidden="true">/</span><span>{editing?.name ?? t("catalog.customerGroups.createTitle")}</span>
-        </nav>
         <CatalogHeading title={t(id ? "catalog.customerGroups.editTitle" : "catalog.customerGroups.createTitle")}
-          description={t("catalog.customerGroups.page.subtitle")} actions={<>
-            <Button variant="outline" disabled={busy} onClick={() => navigate("/catalogo/grupos")}>{t("common.cancel")}</Button>
-            {canManage ? <FormPrimaryButton isValid={isFormValid && (!id || !!editing)} loading={busy} onClick={() => { void form.handleSubmit(onSubmit)() }}>{t("catalog.customerGroups.save")}</FormPrimaryButton> : null}
-          </>} />
+          description={t("catalog.customerGroups.page.subtitle")} />
         {!canManage ? <p>{t("catalog.customerGroups.readOnlyHint")}</p> : null}
         {loadError || (id && !loading && !editing) ? <Alert variant="destructive"><AlertDescription>{loadError ?? t("catalog.customerGroups.page.notFound")}</AlertDescription></Alert> : null}
         {id && loading ? <p role="status">{t("catalog.staff.loading")}</p> : !id || editing ? <>
@@ -548,7 +541,7 @@ export function CustomerGroupsView({ editor = false }: { editor?: boolean }) {
             <HistorySection entries={id ? history : []} />
           </section>
         </div>
-        <div className="fixed inset-x-0 bottom-0 z-20 flex items-center justify-end gap-3 border-t bg-background p-4">
+        <div className="sticky bottom-0 z-20 flex items-center justify-end gap-3 border-t bg-background p-4">
           <Button variant="outline" disabled={busy} onClick={() => navigate("/catalogo/grupos")}>{t("common.cancel")}</Button>
           {canManage ? <FormPrimaryButton isValid={isFormValid} loading={busy} onClick={() => { void form.handleSubmit(onSubmit)() }}>{t("catalog.customerGroups.save")}</FormPrimaryButton> : null}
         </div>

@@ -118,6 +118,36 @@ describe("ProductWizardPage", () => {
     })
   })
 
+  it("uses the checklist rows for the status badge", async () => {
+    vi.mocked(getCatalogProduct).mockResolvedValue({
+      id: PRODUCT_ID,
+      name: "Kit festa",
+      code: "FESTA-01",
+      description: null,
+      price: null,
+      currency: "BRL",
+      isActive: true,
+      createdAt: "2026-11-09T12:00:00.000Z",
+      files: [],
+      visibility: "Public",
+    } as never)
+    vi.mocked(getCatalogProductAccess).mockResolvedValue({
+      productId: PRODUCT_ID,
+      visibility: "Public",
+      customerIds: [],
+      groupIds: [],
+      restrictedWithoutGrants: false,
+    })
+    vi.mocked(listTenantModuleMenuItems).mockResolvedValue([{ moduleName: "catalog", isActive: true }] as never)
+    vi.mocked(getCatalogProductResourceRequirements).mockResolvedValue({ expectedVersion: 1, requirements: [] })
+    renderWizard()
+    expect(await screen.findByText(i18n.t("assistant.status.published"))).toBeInTheDocument()
+    expect(screen.queryByText(/Falta \d+ passos/)).not.toBeInTheDocument()
+    const labels = screen.getAllByText(i18n.t("catalog.productWizard.statusLabel.done"))
+    expect(labels.length).toBeGreaterThan(0)
+    expect(screen.queryByText(i18n.t("catalog.productWizard.statusLabel.missing"))).not.toBeInTheDocument()
+  })
+
   it("shows the blockers and moves one step at a time", async () => {
     const user = userEvent.setup()
     const router = renderWizard()

@@ -85,17 +85,6 @@ export function ResourceWizardPage() {
 
   return (
     <div className="mx-auto w-full min-w-0 max-w-5xl pb-[max(1rem,env(safe-area-inset-bottom))]">
-      <nav className="mb-3 flex flex-wrap items-center gap-2 text-sm text-muted-foreground" aria-label={t("rentals.resources.editor.breadcrumb")}>
-        <Link className="inline-flex min-h-11 items-center text-primary underline-offset-4 hover:underline" to="/configuracoes/recursos">
-          {t("rentals.resources.title")}
-        </Link>
-        <span aria-hidden="true">/</span>
-        <Link className="inline-flex min-h-11 items-center text-primary underline-offset-4 hover:underline" to={`/configuracoes/recursos/${encodeURIComponent(asset.id)}`}>
-          {asset.name}
-        </Link>
-        <span aria-hidden="true">/</span>
-        <span aria-current="page">{t("rentals.resourceWizard.breadcrumb")}</span>
-      </nav>
       <header className="mb-4 space-y-1">
         <p className="text-sm font-medium text-primary">{t("rentals.resources.eyebrow")}</p>
         <div className="flex flex-wrap items-center gap-2">
