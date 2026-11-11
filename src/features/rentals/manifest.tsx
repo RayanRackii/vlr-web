@@ -13,7 +13,7 @@ import { RentalLayoutsPage } from "@/features/rentals/pages/RentalLayoutsPage"
 import { RentalResourceEditorPage } from "@/features/rentals/pages/RentalResourceEditorPage"
 import { RentalResourcesPage } from "@/features/rentals/pages/RentalResourcesPage"
 import { ResourceAssistantPage } from "@/features/assistant/ResourceAssistantPage"
-import { ResourceWizardPage } from "@/features/rentals/pages/ResourceWizardPage"
+import { CadastroLegacyRedirect, RedirectKeepingLocation } from "@/routes/legacyScreenRedirect"
 import { SchedulePage } from "@/features/rentals/pages/SchedulePage"
 
 type FeatureRoute = {
@@ -92,7 +92,7 @@ export const rentalsManifest = {
       { path: "/configuracoes/recursos/:id/cadastro", element: <ResourceAssistantPage cadastro />, permissions: ["rentals.assets.write", "core.units.read"] },
       {
         path: "/configuracoes/recursos/novo",
-        element: <RentalResourceEditorPage />,
+        element: <RedirectKeepingLocation to="/configuracoes/recursos/cadastro" />,
         permissions: RENTAL_RESOURCES_PERMISSIONS,
       },
       {
@@ -102,12 +102,12 @@ export const rentalsManifest = {
       },
       {
         path: "/configuracoes/recursos/:id/assistente",
-        element: <ResourceWizardPage />,
+        element: <CadastroLegacyRedirect area="recursos" />,
         permissions: RENTAL_RESOURCES_PERMISSIONS,
       },
       {
         path: "/configuracoes/recursos/:id/passos",
-        element: <ResourceAssistantPage />,
+        element: <CadastroLegacyRedirect area="recursos" />,
         permissions: RENTAL_RESOURCES_PERMISSIONS,
       },
       {

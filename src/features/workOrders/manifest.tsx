@@ -2,9 +2,8 @@ import type { ReactElement } from "react"
 import { ClipboardPen } from "lucide-react"
 
 import type { AppNavigationItem } from "@/components/layout/navigation"
-import { CreateWorkOrderPage } from "@/features/workOrders/pages/CreateWorkOrderPage"
 import { WorkOrderExecutionPage } from "@/features/workOrders/pages/WorkOrderExecutionPage"
-import { WorkOrdersPage } from "@/features/workOrders/pages/WorkOrdersPage"
+import { MaintenanceListLegacyRedirect, RedirectKeepingLocation } from "@/routes/legacyScreenRedirect"
 
 type FeatureRoute = {
   path: string
@@ -28,7 +27,7 @@ export const workOrdersManifest = {
     staff: [
       {
         path: "/os",
-        element: <WorkOrdersPage />,
+        element: <MaintenanceListLegacyRedirect aba="ordens" />,
         permission: "os.work_orders.read",
       },
       {
@@ -38,7 +37,7 @@ export const workOrdersManifest = {
       },
       {
         path: "/os/nova",
-        element: <CreateWorkOrderPage />,
+        element: <RedirectKeepingLocation to="/manutencao/ordens/nova" />,
         permission: "os.work_orders.create",
       },
     ] satisfies readonly FeatureRoute[],

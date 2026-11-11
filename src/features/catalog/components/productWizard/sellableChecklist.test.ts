@@ -55,7 +55,7 @@ describe("sellable checklist", () => {
     expect(audience.blocksSale).toBe(true)
     expect(audience.action).toEqual({
       kind: "link",
-      href: `/catalogo/grupos/group-1?returnTo=${encodeURIComponent(`/catalogo/produtos/${PRODUCT_ID}/assistente?passo=access`)}`,
+      href: `/grupos/group-1?returnTo=${encodeURIComponent(`/catalogo/produtos/${PRODUCT_ID}/cadastro?passo=publicacao`)}`,
     })
     expect(sellableSummary(true, items)).toBe("missing")
   })

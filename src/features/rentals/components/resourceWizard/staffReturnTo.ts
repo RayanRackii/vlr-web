@@ -1,5 +1,11 @@
+import { cadastroSteps } from "@/features/assistant/useCadastroStep"
 import { isProductWizardStep } from "@/features/catalog/components/productWizard/wizardSteps"
 import { isResourceWizardStep } from "@/features/rentals/components/resourceWizard/wizardSteps"
+
+function isAllowedPasso(value: string | null, kind: "product" | "resource"): boolean {
+  if ((cadastroSteps as readonly string[]).includes(value ?? "")) return true
+  return kind === "product" ? isProductWizardStep(value) : isResourceWizardStep(value)
+}
 
 const MAX_DECODES = 5
 const ENCODED_SEPARATOR = /%(?:2e|2f|5c)/i
@@ -53,7 +59,7 @@ function isAllowedProductWizardPath(path: string, query: string): boolean {
   if (parts[0] !== "" || parts[1] !== "catalogo" || parts[2] !== "produtos") {
     return false
   }
-  if (parts.length !== 5 || parts[4] !== "assistente") {
+  if (parts.length !== 5 || !["assistente", "passos", "cadastro"].includes(parts[4] ?? "")) {
     return false
   }
   const id = parts[3] ?? ""
@@ -65,7 +71,7 @@ function isAllowedProductWizardPath(path: string, query: string): boolean {
   }
   const params = new URLSearchParams(query)
   const keys = [...params.keys()]
-  return keys.length === 1 && keys[0] === "passo" && isProductWizardStep(params.get("passo"))
+  return keys.length === 1 && keys[0] === "passo" && isAllowedPasso(params.get("passo"), "product")
 }
 
 function isAllowedResourcePath(path: string, query: string): boolean {
@@ -83,7 +89,7 @@ function isAllowedResourcePath(path: string, query: string): boolean {
   if (parts.length === 4) {
     return query.length === 0
   }
-  if (parts.length !== 5 || parts[4] !== "assistente") {
+  if (parts.length !== 5 || !["assistente", "passos", "cadastro"].includes(parts[4] ?? "")) {
     return false
   }
   if (query.length === 0) {
@@ -91,13 +97,13 @@ function isAllowedResourcePath(path: string, query: string): boolean {
   }
   const params = new URLSearchParams(query)
   const keys = [...params.keys()]
-  return keys.length === 1 && keys[0] === "passo" && isResourceWizardStep(params.get("passo"))
+  return keys.length === 1 && keys[0] === "passo" && isAllowedPasso(params.get("passo"), "resource")
 }
 
 /**
  * Same-origin return path for a setup wizard.
  * Resource paths stay limited to `/configuracoes/recursos`. Product paths stay
- * limited to `/catalogo/produtos/:id/assistente`.
+ * limited to a product cadastro or the previous wizard URL.
  */
 export function safeStaffReturnTo(value: string | null | undefined): string | null {
   if (value == null) {

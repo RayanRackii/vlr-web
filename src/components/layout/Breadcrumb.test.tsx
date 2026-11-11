@@ -124,7 +124,7 @@ describe("staff breadcrumb", () => {
   })
 
   it("leaves the item cadastro pages without a second breadcrumb", () => {
-    for (const path of ["/catalogo/produtos/cadastro", "/catalogo/produtos/p1/cadastro", "/configuracoes/recursos/cadastro", "/configuracoes/recursos/r1/cadastro"]) {
+    for (const path of ["/catalogo/produtos/cadastro", "/catalogo/produtos/p1/cadastro", "/configuracoes/recursos/cadastro", "/configuracoes/recursos/r1/cadastro", "/grupos/novo", "/grupos/grupo-1"]) {
       const view = render(
         <MemoryRouter initialEntries={[path]}>
           <TestPermissionProvider permissions={[...permissions, "catalog.products.read", "rentals.assets.read", "core.units.read"]} activeModules={["catalog", "rentals", "pmoc", "os", "inventory"]}>
@@ -145,7 +145,6 @@ describe("staff breadcrumb", () => {
   })
 
   it.each([
-    ["/catalogo/grupos/novo", "Grupos", "/catalogo/grupos", "Novo grupo", ["catalog.products.read"], ["catalog"]],
     ["/catalogo/produtos/novo", "Produtos", "/catalogo/produtos", "Novo produto", ["catalog.products.read"], ["catalog"]],
     ["/configuracoes/recursos/novo", "Recursos", "/configuracoes/recursos", "Novo recurso", ["rentals.assets.read", "core.units.read"], []],
     ["/os/nova", "Ordens de serviço", "/os", "Nova Ordem de Serviço", [], []],

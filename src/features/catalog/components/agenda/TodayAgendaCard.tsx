@@ -23,8 +23,8 @@ import {
 import { usePermissions } from "@/features/users/permissions/PermissionContext"
 
 const MAX_ROWS = 6
-const RESOURCE_ROUTE = "/catalogo/agenda-recursos"
-const PRODUCT_ROUTE = "/catalogo/agenda-produto"
+const RESOURCE_ROUTE = "/agendas/recursos"
+const PRODUCT_ROUTE = "/agendas/produto"
 
 type AgendaMode = "resource" | "product"
 

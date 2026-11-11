@@ -22,8 +22,8 @@ export function CatalogTabs({ active, counts = {} }: {
   const { can } = usePermissions()
   const tabs = [
     { key: "products", path: "/catalogo/produtos", permission: "catalog.products.read", icon: Tag },
-    { key: "orders", path: "/catalogo/pedidos", permission: "catalog.orders.read", icon: ShoppingBag },
-    { key: "requests", path: "/catalogo/solicitacoes", permission: "catalog.products.read", icon: FileText },
+    { key: "orders", path: "/pedidos?aba=pedidos", permission: "catalog.orders.read", icon: ShoppingBag },
+    { key: "requests", path: "/pedidos?aba=solicitacoes", permission: "catalog.products.read", icon: FileText },
   ] as const
 
   return (

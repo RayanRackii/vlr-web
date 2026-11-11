@@ -42,6 +42,7 @@ export function Breadcrumb() {
 
   const normalized = pathname.replace(/\/+$/, "") || "/"
   if (/^\/(?:catalogo\/produtos|configuracoes\/recursos)\/(?:[^/]+\/)?cadastro$/.test(normalized)) return null
+  if (/^\/grupos\/[^/]+$/.test(normalized)) return null
 
   const maintenanceChild = pathname.startsWith("/manutencao/")
   const pedidosChild = pathname.startsWith("/pedidos/")

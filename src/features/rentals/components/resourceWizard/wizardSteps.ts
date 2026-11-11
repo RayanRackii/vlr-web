@@ -1,3 +1,5 @@
+import { withCadastroPasso } from "@/features/assistant/useCadastroStep"
+
 export const RESOURCE_WIZARD_STEPS = ["status", "rules", "prices", "agenda"] as const
 
 export type ResourceWizardStepId = (typeof RESOURCE_WIZARD_STEPS)[number]
@@ -30,11 +32,10 @@ export function resourceWizardPath(
   rentalAssetId: string,
   step: ResourceWizardStepId = "status",
 ): string {
-  const path = `/configuracoes/recursos/${encodeURIComponent(rentalAssetId)}/assistente`
-  if (step === "status") {
-    return path
-  }
-  return `${path}?passo=${step}`
+  return withCadastroPasso(
+    `/configuracoes/recursos/${encodeURIComponent(rentalAssetId)}/cadastro`,
+    step,
+  )
 }
 
 export function scheduleDeepLink(

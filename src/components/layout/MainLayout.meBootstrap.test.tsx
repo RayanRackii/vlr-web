@@ -5,7 +5,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest"
 
 import { MainLayout } from "@/components/layout/MainLayout"
 import { PermissionRoute } from "@/components/layout/PermissionRoute"
-import { NotificationsSettingsPage } from "@/features/notifications/pages/NotificationsSettingsPage"
+import { NotificationsPage } from "@/features/notifications/pages/NotificationsPage"
 import {
   listNotificationChannelConfigs,
 } from "@/features/notifications/services/notificationChannelConfigService"
@@ -136,7 +136,7 @@ describe("MainLayout current-user bootstrap", () => {
             >
               <Route
                 path="/configuracoes/notificacoes"
-                element={<NotificationsSettingsPage />}
+                element={<NotificationsPage />}
               />
             </Route>
           </Route>
@@ -146,14 +146,13 @@ describe("MainLayout current-user bootstrap", () => {
 
     expect(
       await screen.findByRole("heading", {
-        name: i18n.t("notifications.settings.title"),
+        name: i18n.t("nav.notifications"),
       }),
     ).toBeInTheDocument()
     await waitFor(() => {
       expect(listConfigs).toHaveBeenCalledTimes(1)
     })
-    const labels = await screen.findAllByText(i18n.t("catalog.events.orderCreated"))
-    expect(labels.some((element) => element.closest("td"))).toBe(true)
+    expect(await screen.findByText(i18n.t("catalog.events.orderCreated"))).toBeInTheDocument()
 
     const meCalls = apiGet.mock.calls.filter((call) =>
       String(call[0]).includes("/api/users/me"),

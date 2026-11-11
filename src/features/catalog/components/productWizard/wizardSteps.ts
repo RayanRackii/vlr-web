@@ -1,3 +1,5 @@
+import { withCadastroPasso } from "@/features/assistant/useCadastroStep"
+
 export const PRODUCT_WIZARD_STEPS = ["status", "offer", "access", "resource"] as const
 
 export type ProductWizardStepId = (typeof PRODUCT_WIZARD_STEPS)[number]
@@ -30,13 +32,12 @@ export function productWizardPath(
   productId: string,
   step: ProductWizardStepId = "status",
 ): string {
-  const path = `/catalogo/produtos/${encodeURIComponent(productId)}/assistente`
-  if (step === "status") {
-    return path
-  }
-  return `${path}?passo=${step}`
+  return withCadastroPasso(
+    `/catalogo/produtos/${encodeURIComponent(productId)}/cadastro`,
+    step,
+  )
 }
 
 export function productGroupDeepLink(groupId: string, returnTo: string): string {
-  return `/catalogo/grupos/${encodeURIComponent(groupId)}?returnTo=${encodeURIComponent(returnTo)}`
+  return `/grupos/${encodeURIComponent(groupId)}?returnTo=${encodeURIComponent(returnTo)}`
 }

@@ -32,9 +32,9 @@ describe("resource wizard step navigation", () => {
   })
 
   it("builds a path that can return to a later step", () => {
-    expect(resourceWizardPath(ID)).toBe(`/configuracoes/recursos/${ID}/assistente`)
+    expect(resourceWizardPath(ID)).toBe(`/configuracoes/recursos/${ID}/cadastro`)
     expect(resourceWizardPath(ID, "agenda")).toBe(
-      `/configuracoes/recursos/${ID}/assistente?passo=agenda`,
+      `/configuracoes/recursos/${ID}/cadastro?passo=agenda`,
     )
   })
 

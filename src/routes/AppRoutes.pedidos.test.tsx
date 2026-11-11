@@ -14,8 +14,7 @@ vi.mock("@/features/tenantPortal/services/tenantPortalService", async importOrig
 vi.mock("@/features/catalog/pages/PedidosPage", () => ({ PedidosPage: () => <h1>Unified orders</h1> }))
 vi.mock("@/features/catalog/pages/PedidoRequestDetailPage", () => ({ PedidoRequestDetailPage: () => <h1>Request read</h1> }))
 vi.mock("@/features/catalog/pages/CatalogOrderDetailPage", () => ({ CatalogOrderDetailPage: ({ unified }: { unified?: boolean }) => <h1>{unified ? "Unified detail" : "Legacy detail"}</h1> }))
-vi.mock("@/features/catalog/pages/CatalogOrdersPage", () => ({ CatalogOrdersPage: () => <h1>Legacy orders</h1> }))
-vi.mock("@/features/catalog/pages/CatalogProductsPage", () => ({ CatalogProductsPage: ({ view }: { view?: string }) => <h1>{view === "requests" ? "Legacy requests" : "Legacy products"}</h1> }))
+vi.mock("@/features/catalog/pages/CatalogProductsPage", () => ({ CatalogProductsPage: () => <h1>Legacy products</h1> }))
 function mount(path: string, activeModules: string[], permissions: string[]) {
   return render(<MemoryRouter initialEntries={[path]}><TestPermissionProvider activeModules={activeModules} permissions={permissions}><AppRoutes /></TestPermissionProvider></MemoryRouter>)
 }
@@ -25,9 +24,9 @@ describe("Pedidos staff route selection and access", () => {
     ["/pedidos", "catalog.products.read", "Unified orders"],
     ["/pedidos/order-1", "catalog.orders.read", "Unified detail"],
     ["/pedidos/solicitacoes/request-1", "catalog.products.read", "Request read"],
-    ["/catalogo/pedidos", "catalog.orders.read", "Legacy orders"],
-    ["/catalogo/pedidos/order-1", "catalog.orders.read", "Legacy detail"],
-    ["/catalogo/solicitacoes", "catalog.products.read", "Legacy requests"],
+    ["/catalogo/pedidos", "catalog.orders.read", "Unified orders"],
+    ["/catalogo/pedidos/order-1", "catalog.orders.read", "Unified detail"],
+    ["/catalogo/solicitacoes", "catalog.products.read", "Unified orders"],
   ])("keeps %s routable with %s", (path, permission, title) => {
     mount(path, ["catalog"], [permission])
     expect(screen.getByRole("heading", { name: title })).toBeInTheDocument()

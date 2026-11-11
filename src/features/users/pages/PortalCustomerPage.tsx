@@ -161,7 +161,7 @@ export function PortalCustomerPage() {
           <ul className="divide-y divide-border rounded-xl border border-border">
             {orders.map((order) => (
               <li key={order.id}>
-                <Link className="flex min-h-11 items-center justify-between gap-3 px-3 text-sm" to={`/catalogo/pedidos/${order.id}`}>
+                <Link className="flex min-h-11 items-center justify-between gap-3 px-3 text-sm" to={`/pedidos/${order.id}`}>
                   <span>{order.displayNumber}</span>
                   <span className="text-muted-foreground">{t(`catalog.status.${order.status}`)}</span>
                 </Link>
@@ -178,7 +178,7 @@ export function PortalCustomerPage() {
           <ul className="divide-y divide-border rounded-xl border border-border">
             {groups.map((group) => (
               <li key={group.id}>
-                <Link className="flex min-h-11 items-center px-3 text-sm" to={`/catalogo/grupos/${group.id}`}>
+                <Link className="flex min-h-11 items-center px-3 text-sm" to={`/grupos/${group.id}`}>
                   {group.name}
                 </Link>
               </li>

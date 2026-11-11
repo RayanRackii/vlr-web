@@ -143,7 +143,7 @@ export function TechnicianDashboard() {
               title={canReadWorkOrders ? t("dashboard.technician.nextOrders.empty") : t("dashboard.limitedTitle")}
               description={canReadWorkOrders && activeModules.includes("os") ? t("dashboard.ordersEmptyHint") : t("dashboard.emptyDescription")}
               action={canReadWorkOrders && activeModules.includes("os") ? (
-                <Button variant="outline" className="min-h-11" render={<Link to="/os" />}>
+                <Button variant="outline" className="min-h-11" render={<Link to="/manutencao?aba=ordens" />}>
                   {t("dashboard.viewOrders")}
                 </Button>
               ) : undefined}

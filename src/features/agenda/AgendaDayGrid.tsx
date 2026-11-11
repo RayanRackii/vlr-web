@@ -327,7 +327,7 @@ function BlockDetail({ block, resourceName, onClose }: { block: AgendaBlock; res
         {orderNumber(block) && (
           <div>
             <dt className="text-muted-foreground">{t("staffAgenda.pedido")}</dt>
-            <dd><Link className="font-medium text-primary underline-offset-4 hover:underline" to={`/catalogo/pedidos/${block.orderId}`}>{orderNumber(block)}</Link></dd>
+            <dd><Link className="font-medium text-primary underline-offset-4 hover:underline" to={`/pedidos/${block.orderId}`}>{orderNumber(block)}</Link></dd>
           </div>
         )}
         {statusKey && i18n.exists(statusKey) && (

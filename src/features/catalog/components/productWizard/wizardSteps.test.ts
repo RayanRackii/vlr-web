@@ -36,19 +36,19 @@ describe("product wizard steps", () => {
   })
 
   it("omits the step query on the checklist and encodes the product id", () => {
-    expect(productWizardPath(ID)).toBe(`/catalogo/produtos/${ID}/assistente`)
+    expect(productWizardPath(ID)).toBe(`/catalogo/produtos/${ID}/cadastro`)
     expect(productWizardPath(ID, "resource")).toBe(
-      `/catalogo/produtos/${ID}/assistente?passo=resource`,
+      `/catalogo/produtos/${ID}/cadastro?passo=agenda`,
     )
     expect(productWizardPath("a/b", "offer")).toBe(
-      "/catalogo/produtos/a%2Fb/assistente?passo=offer",
+      "/catalogo/produtos/a%2Fb/cadastro?passo=precos",
     )
   })
 
   it("builds a group link that returns to the wizard", () => {
     const href = productGroupDeepLink("group-1", productWizardPath(ID, "access"))
     expect(href).toBe(
-      `/catalogo/grupos/group-1?returnTo=${encodeURIComponent(productWizardPath(ID, "access"))}`,
+      `/grupos/group-1?returnTo=${encodeURIComponent(productWizardPath(ID, "access"))}`,
     )
   })
 })

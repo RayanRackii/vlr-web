@@ -74,12 +74,11 @@ export function moduleIcon(module: string): LucideIcon {
 /**
  * Staff routes live at the app root (not under the `/t/<slug>` portal prefix),
  * and the catalog orders / rentals reservations screens sit at module-specific
- * paths that differ from the tenant-relative `targetRoute` the API emits
- * (`/pedidos`, `/reservas`). Rebase onto the real staff path by module while
- * preserving the query string the API chose (e.g. `?status=pending`).
+ * paths. Catalog orders now live at `/pedidos`. Rebase onto the staff path by
+ * module while preserving the query string the API chose (e.g. `?status=pending`).
  */
 const MODULE_STAFF_ROUTE: Record<string, string> = {
-  catalog: "/catalogo/pedidos",
+  catalog: "/pedidos",
   rentals: "/configuracoes/reservas",
 }
 
@@ -98,7 +97,7 @@ export function resolveNotificationItemRoute(
 ): string {
   const orderId = item.aggregateId?.trim()
   if (item.module === "catalog" && item.eventType.toLowerCase().includes("order") && orderId) {
-    return `/catalogo/pedidos/${encodeURIComponent(orderId)}`
+    return `/pedidos/${encodeURIComponent(orderId)}`
   }
   return resolveStaffRoute(item.module, item.targetRoute)
 }

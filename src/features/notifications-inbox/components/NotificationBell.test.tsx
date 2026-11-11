@@ -181,7 +181,7 @@ describe("NotificationBell", () => {
     await user.click(await screen.findByText("3 novos pedidos"))
 
     expect(mockMarkEventType).toHaveBeenCalledWith("catalog.order.created")
-    expect(navigate).toHaveBeenCalledWith("/catalogo/pedidos?status=pending")
+    expect(navigate).toHaveBeenCalledWith("/pedidos?status=pending")
   })
 
   it("marks everything read via the mark-all action", async () => {
@@ -193,8 +193,8 @@ describe("NotificationBell", () => {
   })
 
   it.each([
-    ["catalog", "catalog.order.approved", "order-12", "/catalogo/pedidos/order-12"],
-    ["catalog", "catalog.order.approved", null, "/catalogo/pedidos?status=approved"],
+    ["catalog", "catalog.order.approved", "order-12", "/pedidos/order-12"],
+    ["catalog", "catalog.order.approved", null, "/pedidos?status=approved"],
     ["rentals", "rentals.reservation.confirmed", "reservation-12", "/configuracoes/reservas?status=approved"],
   ])("opens a recent %s item using its aggregate when an order detail is available", async (module, eventType, aggregateId, expectedRoute) => {
     mockList.mockResolvedValue({

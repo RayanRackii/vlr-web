@@ -118,14 +118,9 @@ describe("filterNavigationItemsByAccess", () => {
     )
 
     expect(visible.map((item) => item.to)).toEqual([
-      "/agenda",
       "/agendas",
       "/pedidos",
       "/catalogo/produtos",
-      "/catalogo/grupos",
-      "/catalogo/pedidos",
-      "/catalogo/agenda-produto",
-      "/catalogo/solicitacoes",
       "/grupos",
     ])
   })
@@ -190,8 +185,8 @@ describe("filterNavigationItemsByAccess", () => {
       ["core.notifications.read"],
     )
 
-    expect(visible.map((item) => item.to)).toContain("/configuracoes/notificacoes")
-    expect(visible.map((item) => item.to)).toContain("/notificacoes")
+    expect(visible.map((item) => item.to)).not.toContain("/configuracoes/notificacoes")
+    expect(visible.filter((item) => item.to === "/notificacoes")).toHaveLength(1)
   })
 
   it("shows notifications when rentals is on and the permission matches", () => {
@@ -201,8 +196,8 @@ describe("filterNavigationItemsByAccess", () => {
       ["core.notifications.read"],
     )
 
-    expect(visible.map((item) => item.to)).toContain("/configuracoes/notificacoes")
-    expect(visible.map((item) => item.to)).toContain("/notificacoes")
+    expect(visible.map((item) => item.to)).not.toContain("/configuracoes/notificacoes")
+    expect(visible.filter((item) => item.to === "/notificacoes")).toHaveLength(1)
   })
 
   it("hides notifications when the permission is missing", () => {
@@ -397,7 +392,7 @@ describe("staff menu permissions by role", () => {
       receptionistPermissions,
     )
 
-    expect(visible.map((item) => item.to)).toEqual(["/agenda", "/agendas", "/configuracoes/reservas"])
+    expect(visible.map((item) => item.to)).toEqual(["/agendas", "/configuracoes/reservas"])
     expect(
       firstPermittedProductPath(["rentals"], receptionistPermissions),
     ).toBe("/configuracoes/reservas")
@@ -423,7 +418,7 @@ describe("firstPermittedProductPath", () => {
   it("does not open the staff agenda without asset read", () => {
     expect(
       firstPermittedProductPath(["rentals"], ["rentals.schedule.read"]),
-    ).toBe("/catalogo/agenda-recursos")
+    ).toBe("/agendas/recursos")
     expect(
       filterNavigationItemsByAccess(
         appNavigationItems,
@@ -447,9 +442,9 @@ describe("firstPermittedProductPath", () => {
 
 describe("getPageTitleKey", () => {
   it.each([
-    ["/catalogo/agenda-recursos", "nav.catalogResourceAgenda"],
+    ["/catalogo/agenda-recursos", "nav.agendasResources"],
     ["/catalogo/produtos", "nav.catalogProducts"],
-    ["/catalogo/agenda-produto", "nav.catalogProductAgenda"],
+    ["/catalogo/agenda-produto", "nav.agendasProduct"],
     ["/catalogo/configuracoes", "nav.catalogSettings"],
   ])("resolves the navigation destination title for %s", (path, titleKey) => {
     expect(getPageTitleKey(path)).toBe(titleKey)
@@ -526,7 +521,7 @@ describe("getPageTitleKey", () => {
       "nav.pmocPlanDetail",
     )
     expect(getPageTitleKey("/pmoc/novo")).toBe("nav.pmocNew")
-    expect(getPageTitleKey("/pmoc")).toBe("nav.pmocPlans")
+    expect(getPageTitleKey("/pmoc")).toBe("nav.manutencao")
   })
 })
 
@@ -590,7 +585,7 @@ describe("staff sidebar groups", () => {
     expect(new Set(destinations).size).toBe(destinations.length)
     const oldDestinations = filterNavigationItemsByAccess(appNavigationItems, modules, permissions)
       .flatMap((item) => item.children ? item.children.map((child) => child.to) : [item.to])
-    const retainedLegacyAgendas = ["/configuracoes/categorias-tags", "/os", "/pmoc", "/pmoc/novo", "/agenda", "/catalogo/agenda-recursos", "/catalogo/agenda-produto", "/catalogo/pedidos", "/catalogo/solicitacoes", "/catalogo/grupos", "/configuracoes/notificacoes"]
+    const retainedLegacyAgendas = ["/configuracoes/categorias-tags", "/os", "/pmoc", "/pmoc/novo"]
     expect(oldDestinations.filter((path) => !destinations.includes(path)).sort()).toEqual(retainedLegacyAgendas.sort())
     expect(destinations.sort()).toEqual(oldDestinations.filter((path) => !retainedLegacyAgendas.includes(path)).sort())
   })
@@ -632,7 +627,7 @@ describe("staff sidebar groups", () => {
 
 describe("staff agenda navigation", () => {
   it("resolves the staff title and leaves the professor landing unchanged", () => {
-    expect(getPageTitleKey("/agenda")).toBe("nav.agenda")
+    expect(getPageTitleKey("/agenda")).toBe("nav.agendasOverview")
     expect(firstPermittedProductPath(["rentals"], ["rentals.schedule.read", "rentals.assets.read"]))
       .toBe("/configuracoes/agenda")
   })
@@ -646,7 +641,7 @@ describe("staff agenda navigation", () => {
   })
 
   it("requires both an enabled module and one permission", () => {
-    const agenda = appNavigationItems.filter((item) => item.to === "/agenda")
+    const agenda = appNavigationItems.filter((item) => item.to === "/agendas")
     expect(agenda).toHaveLength(1)
     expect(filterNavigationItemsByAccess(agenda, [], ["rentals.schedule.read"])).toEqual([])
     expect(filterNavigationItemsByAccess(agenda, ["rentals"], [])).toEqual([])
@@ -679,7 +674,7 @@ describe("new agendas group", () => {
 
   it.each([
     ["/agendas", "nav.agendasOverview"], ["/agendas/recursos", "nav.agendasResources"], ["/agendas/produto", "nav.agendasProduct"],
-    ["/agenda", "nav.agenda"], ["/catalogo/agenda-recursos", "nav.catalogResourceAgenda"], ["/catalogo/agenda-produto", "nav.catalogProductAgenda"],
+    ["/agenda", "nav.agendasOverview"], ["/catalogo/agenda-recursos", "nav.agendasResources"], ["/catalogo/agenda-produto", "nav.agendasProduct"],
   ])("keeps the title at %s", (path, title) => expect(getPageTitleKey(path)).toBe(title))
 })
 
@@ -696,8 +691,8 @@ describe("new agendas group", () => {
   })
   it("keeps old titles and registers the new title", () => {
     expect(getPageTitleKey("/pedidos")).toBe("nav.pedidos")
-    expect(getPageTitleKey("/catalogo/pedidos")).toBe("nav.catalogOrders")
-    expect(getPageTitleKey("/catalogo/solicitacoes")).toBe("nav.catalogRequests")
+    expect(getPageTitleKey("/catalogo/pedidos")).toBe("nav.pedidos")
+    expect(getPageTitleKey("/catalogo/solicitacoes")).toBe("nav.pedidos")
   })
 })
 
@@ -716,7 +711,7 @@ describe("new agendas group", () => {
   })
   it("keeps old titles and adds the unified title", () => {
     expect(getPageTitleKey("/manutencao")).toBe("nav.manutencao")
-    expect(getPageTitleKey("/os")).toBe("nav.workOrders")
+    expect(getPageTitleKey("/os")).toBe("nav.manutencao")
     expect(getPageTitleKey("/pmoc/novo")).toBe("nav.pmocNew")
   })
 })

@@ -30,7 +30,7 @@ import type { Unit } from "@/features/assets/schemas/unitSchemas"
 
 function resourceAgendaPath(plannedWorkStart: string, timeZoneId: string): string {
   const day = zonedDayAndMinutes(plannedWorkStart, timeZoneId)?.dayKey
-  return day ? `/catalogo/agenda-recursos?date=${day}` : "/catalogo/agenda-recursos"
+  return day ? `/agendas/recursos?date=${day}` : "/agendas/recursos"
 }
 
 type CatalogOrderAllocationPanelProps = {

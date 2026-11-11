@@ -181,7 +181,7 @@ describe("CatalogProductsPage validity gate", () => {
     const assistants = screen.getAllByRole("link", { name: new RegExp(`^${i18n.t("catalog.productWizard.open")}`) })
     expect(assistants.length).toBeGreaterThan(0)
     for (const assistant of assistants) {
-      expect(assistant).toHaveAttribute("href", `/catalogo/produtos/${PRODUCT.id}/assistente`)
+      expect(assistant).toHaveAttribute("href", `/catalogo/produtos/${PRODUCT.id}/cadastro`)
     }
     expect(header).toHaveClass("md:max-lg:right-0")
     await user.click(edit)
@@ -197,7 +197,7 @@ describe("CatalogProductsPage validity gate", () => {
     const create = await screen.findByRole("link", { name: i18n.t("catalog.products.create") })
     expect(create).toHaveAttribute("href", "/catalogo/produtos/cadastro")
     const quick = screen.getByRole("link", { name: new RegExp(`^${i18n.t("catalog.products.quickEdit")}`) })
-    expect(quick).toHaveAttribute("href", `/catalogo/produtos/${PRODUCT.id}/assistente?passo=offer`)
+    expect(quick).toHaveAttribute("href", `/catalogo/produtos/${PRODUCT.id}/cadastro?passo=precos`)
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument()
     await user.click(create)
     expect(screen.getByTestId("location")).toHaveTextContent("/catalogo/produtos/cadastro")

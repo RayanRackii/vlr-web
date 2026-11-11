@@ -3,6 +3,7 @@ import {
   catalogMenuIsActive,
   type SellableGroup,
 } from "@/features/catalog/components/productWizard/sellableChecklist"
+import { productWizardPath } from "@/features/catalog/components/productWizard/wizardSteps"
 
 export type PortalReadinessCheck = {
   key: "portalMenu" | "emptyGroup"
@@ -78,8 +79,8 @@ export function pendingPortalChecks(input: {
     checks.push({
       key: "emptyGroup",
       href: emptyGroupId
-        ? `/catalogo/grupos/${emptyGroupId}`
-        : `/catalogo/produtos/${blocked.id}/assistente?passo=access`,
+        ? `/grupos/${emptyGroupId}`
+        : productWizardPath(blocked.id, "access"),
     })
   }
 
