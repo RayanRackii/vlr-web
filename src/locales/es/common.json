@@ -2127,7 +2127,8 @@
     "agendas": "Agendas",
     "agendasOverview": "Vista general",
     "agendasResources": "Agenda de recursos",
-    "agendasProduct": "Agenda del producto"
+    "agendasProduct": "Agenda del producto",
+    "pedidos": "Pedidos"
   },
   "moduleIntro": {
     "title": "Presentación",
@@ -5552,5 +5553,33 @@
     "cleanup": "Limpieza",
     "selectedProductOrders": "Pedidos del producto: {{count}}",
     "otherUses": "Otros usos · {{kind}}: {{count}}"
+  },
+  "pedidos": {
+    "eyebrow": "Operación · Pedidos",
+    "subtitle": "Pedidos y solicitudes de clientes en una sola lista.",
+    "type": "Tipo",
+    "search": "Buscar por número, cliente o descripción",
+    "filters": "Filtros",
+    "status": "Estado",
+    "allStatuses": "Todos los estados",
+    "emptyTitle": "Sin resultados",
+    "emptyDescription": "Ningún pedido o solicitud coincide con la búsqueda y los filtros.",
+    "clear": "Limpiar búsqueda/filtros",
+    "loading": "Cargando pedidos…",
+    "quantity": "Cantidad: {{count}}",
+    "detailTitle": "Detalles del pedido",
+    "requestTitle": "Detalles de la solicitud",
+    "notFound": "Solicitud no encontrada.",
+    "description": "Descripción",
+    "quantityLabel": "Cantidad",
+    "note": "Nota",
+    "createdAt": "Creada el",
+    "files": "Archivos",
+    "customer": "Cliente",
+    "tabs": {
+      "todos": "Todos",
+      "pedidos": "Pedidos",
+      "solicitacoes": "Solicitudes"
+    }
   }
 }

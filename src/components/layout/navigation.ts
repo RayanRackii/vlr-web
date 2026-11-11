@@ -1,7 +1,7 @@
 import { useMemo } from "react"
 import type { LucideIcon } from "lucide-react"
 import {
-  MenuSquare,
+  MenuSquare, ShoppingBag,
 } from "lucide-react"
 
 import { filterNavigationTabs, type NavigationTab } from "@/components/layout/navigationTabs"
@@ -36,6 +36,7 @@ export type AppNavigationChildItem = {
     | "nav.adminAssetFamilies"
     | "nav.catalogProducts"
     | "nav.catalogCustomerGroups"
+    | "nav.pedidos"
     | "nav.catalogOrders"
     | "nav.agendasOverview"
     | "nav.agendasResources"
@@ -81,6 +82,7 @@ export type AppNavigationItem = {
     | "nav.notifications"
     | "nav.taxonomy"
     | "nav.catalogProducts"
+    | "nav.pedidos"
     | "nav.catalogOrders"
     | "nav.agendasOverview"
     | "nav.agendasResources"
@@ -156,9 +158,15 @@ const salesItems: readonly AppNavigationItem[] = catalogManifest.navigationItems
   (item) => item.children.map((child) => ({ ...child, icon: child.icon ?? item.icon, modules: child.modules ?? item.modules })),
 )
 
+const pedidosItem: AppNavigationItem = {
+  labelKey: "nav.pedidos", to: "/pedidos", icon: ShoppingBag,
+  modules: ["catalog"], permissions: ["catalog.orders.read", "catalog.products.read"], anyOf: true,
+}
+
 /** Flat catalog used for title resolution and module filtering helpers. */
 export const appNavigationItems: readonly AppNavigationItem[] = [
   ...agendaManifest.navigationItems,
+  pedidosItem,
   overviewItem,
   ...bookingsItems,
   ...maintenanceItems,
@@ -182,8 +190,7 @@ function navigationItemsAt(...paths: string[]): AppNavigationItem[] {
 const productNavigationSections: readonly AppNavigationSection[] = [
   { titleKey: "nav.sections.overview", standalone: true, items: [overviewItem] },
   { titleKey: "nav.sections.operations", items: navigationItemsAt(
-    "/agendas", "/catalogo/pedidos",
-    "/catalogo/solicitacoes", "/configuracoes/reservas", "/os", "/pmoc",
+    "/agendas", "/pedidos", "/configuracoes/reservas", "/os", "/pmoc",
   ) },
   { titleKey: "nav.sections.registration", items: navigationItemsAt(
     "/configuracoes/recursos", "/catalogo/produtos", "/configuracoes/categorias-tags",

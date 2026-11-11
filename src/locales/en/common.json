@@ -2127,7 +2127,8 @@
     "agendas": "Agendas",
     "agendasOverview": "Overview",
     "agendasResources": "Resource agenda",
-    "agendasProduct": "Product agenda"
+    "agendasProduct": "Product agenda",
+    "pedidos": "Orders"
   },
   "moduleIntro": {
     "title": "Introduction",
@@ -5552,5 +5553,33 @@
     "cleanup": "Cleanup",
     "selectedProductOrders": "Product orders: {{count}}",
     "otherUses": "Other uses · {{kind}}: {{count}}"
+  },
+  "pedidos": {
+    "eyebrow": "Operations · Orders",
+    "subtitle": "Customer orders and requests in one list.",
+    "type": "Type",
+    "search": "Search by number, customer or description",
+    "filters": "Filters",
+    "status": "Status",
+    "allStatuses": "All statuses",
+    "emptyTitle": "Nothing found",
+    "emptyDescription": "No orders or requests match your search and filters.",
+    "clear": "Clear search/filters",
+    "loading": "Loading orders…",
+    "quantity": "Quantity: {{count}}",
+    "detailTitle": "Order details",
+    "requestTitle": "Request details",
+    "notFound": "Request not found.",
+    "description": "Description",
+    "quantityLabel": "Quantity",
+    "note": "Note",
+    "createdAt": "Created on",
+    "files": "Files",
+    "customer": "Customer",
+    "tabs": {
+      "todos": "All",
+      "pedidos": "Orders",
+      "solicitacoes": "Requests"
+    }
   }
 }

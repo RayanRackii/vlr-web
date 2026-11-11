@@ -220,7 +220,7 @@ export function AppRoutes() {
             route.permission ? (
               <Route
                 key={route.path}
-                element={<PermissionRoute permission={route.permission} modules={route.modules} />}
+                element={<PermissionRoute permission={route.permission} anyOf={route.anyOf} modules={route.modules} />}
               >
                 <Route path={route.path} element={route.element} />
               </Route>

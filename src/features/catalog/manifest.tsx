@@ -1,3 +1,5 @@
+import { PedidosPage } from "./pages/PedidosPage"
+import { PedidoRequestDetailPage } from "./pages/PedidoRequestDetailPage"
 import { CatalogCustomerGroupEditorPage } from "@/features/catalog/pages/CatalogCustomerGroupEditorPage"
 import type { ReactElement } from "react"
 import { CalendarDays, FileText, Package, Settings, ShoppingBag, Tag, Users } from "lucide-react"
@@ -28,6 +30,7 @@ type FeatureRoute = {
   path: string
   element: ReactElement
   permission?: string
+  anyOf?: readonly string[]
   /** Canonical tenant module keys that unlock this route. Absent = catalog only. */
   modules?: readonly string[]
 }
@@ -109,6 +112,25 @@ export const catalogManifest = {
       { path: "pedidos/:orderId", element: <PortalOrderDetailPage /> },
     ] satisfies readonly FeatureRoute[],
     staff: [
+      {
+        path: "/pedidos",
+        element: <PedidosPage />,
+        permission: "catalog.orders.read",
+        anyOf: ["catalog.products.read"],
+        modules: ["catalog"],
+      },
+      {
+        path: "/pedidos/solicitacoes/:requestId",
+        element: <PedidoRequestDetailPage />,
+        permission: "catalog.products.read",
+        modules: ["catalog"],
+      },
+      {
+        path: "/pedidos/:orderId",
+        element: <CatalogOrderDetailPage unified />,
+        permission: "catalog.orders.read",
+        modules: ["catalog"],
+      },
       {
         path: "/catalogo/configuracoes",
         element: <CatalogPolicyPage />,
