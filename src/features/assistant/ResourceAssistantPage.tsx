@@ -167,6 +167,7 @@ export function ResourceAssistantPage({ cadastro = false }: { cadastro?: boolean
                     asset={asset}
                     busy={wizard.busy || (cadastro && !wizard.access.assetWrite)}
                     products={products}
+                    onDirtyChange={cadastro ? setStepDirty : undefined}
                     onDurations={saveDurations}
                     onCutoff={(hours) => void wizard.saveFields(hours === null
                       ? { cancelCutoffMode: "inherit", cancelCutoffHours: "" }
@@ -189,6 +190,7 @@ export function ResourceAssistantPage({ cadastro = false }: { cadastro?: boolean
                     showQueue={false}
                     onSavePrices={wizard.savePrices}
                     onSaveQueue={wizard.saveQueue}
+                    onDirtyChange={cadastro ? setStepDirty : undefined}
                   />
                 ) : null}
                 {step === "publicacao" ? (
@@ -216,7 +218,7 @@ export function ResourceAssistantPage({ cadastro = false }: { cadastro?: boolean
       </div>
   )
 
-  if (cadastro) return <CadastroShell title={asset.name} step={cadastroStep} go={go} dirty={stepDirty} busy={wizard.busy || stepSaving} canPublish={wizard.access.menuWrite} onPublish={() => void wizard.publishMenu()} onBack={() => navigate("/configuracoes/recursos")}>
+  if (cadastro) return <CadastroShell title={asset.name} step={cadastroStep} go={go} dirty={stepDirty} busy={wizard.busy || stepSaving} canPublish={firstMissing == null && wizard.access.menuWrite} onPublish={() => void wizard.publishMenu()} onBack={() => navigate("/configuracoes/recursos")}>
     {cadastroStep === "categorias" ? <CadastroTaxonomyStep onDirtyChange={setStepDirty} onSavingChange={setStepSaving} /> : body}
   </CadastroShell>
 
@@ -252,6 +254,7 @@ function InheritedNumberControl({
   max,
   busy,
   onSave,
+  onDirtyChange,
 }: {
   title: string
   note?: string
@@ -265,10 +268,12 @@ function InheritedNumberControl({
   max: number
   busy: boolean
   onSave: (value: number | null) => void
+  onDirtyChange?: (dirty: boolean) => void
 }) {
   const { t } = useTranslation()
   const [invalid, setInvalid] = useState(false)
   const hasOverride = typeof stored === "number"
+  useEffect(() => () => onDirtyChange?.(false), [onDirtyChange])
   return (
     <section aria-label={title} className="space-y-2">
       <h3 className="text-sm font-semibold">{title}</h3>
@@ -296,7 +301,7 @@ function InheritedNumberControl({
       >
         <label className="block min-w-0 flex-1 space-y-1 text-sm font-medium">
           {inputLabel}
-          <Input key={hasOverride ? String(stored) : "inherit"} name="value" inputMode="numeric" className="min-h-11" defaultValue={hasOverride ? String(stored) : ""} aria-invalid={invalid} />
+          <Input key={hasOverride ? String(stored) : "inherit"} name="value" inputMode="numeric" className="min-h-11" defaultValue={hasOverride ? String(stored) : ""} aria-invalid={invalid} onChange={(event) => onDirtyChange?.(event.target.value.trim() !== (hasOverride ? String(stored) : ""))} />
         </label>
         <Button type="submit" className="min-h-11 w-full sm:w-auto" disabled={busy}>{t("assistant.saveStep")}</Button>
       </form>
@@ -326,7 +331,7 @@ function QueueStep({ asset, busy, canWrite, onSave }: {
   )
 }
 
-function RulesStep({ asset, busy, products, onDurations, onCutoff, onLead, onDeposit }: {
+function RulesStep({ asset, busy, products, onDurations, onCutoff, onLead, onDeposit, onDirtyChange }: {
   asset: AdminRentalAsset
   busy: boolean
   products: readonly CatalogProduct[]
@@ -334,8 +339,13 @@ function RulesStep({ asset, busy, products, onDurations, onCutoff, onLead, onDep
   onCutoff: (hours: number | null) => void
   onLead: (minutes: number | null) => void
   onDeposit: (percent: number | null) => void
+  onDirtyChange?: (dirty: boolean) => void
 }) {
   const { t } = useTranslation()
+  const [leadDirty, setLeadDirty] = useState(false)
+  const [depositDirty, setDepositDirty] = useState(false)
+  useEffect(() => { onDirtyChange?.(leadDirty || depositDirty) }, [leadDirty, depositDirty, onDirtyChange])
+  useEffect(() => () => onDirtyChange?.(false), [onDirtyChange])
   const selected = parseDurations(asset.allowedDurationMinutes)
   return (
     <div className="space-y-4">
@@ -374,6 +384,7 @@ function RulesStep({ asset, busy, products, onDurations, onCutoff, onLead, onDep
         max={525600}
         busy={busy}
         onSave={onLead}
+        onDirtyChange={onDirtyChange ? setLeadDirty : undefined}
       />
       <InheritedNumberControl
         title={t("assistant.depositTitle")}
@@ -388,6 +399,7 @@ function RulesStep({ asset, busy, products, onDurations, onCutoff, onLead, onDep
         max={100}
         busy={busy}
         onSave={onDeposit}
+        onDirtyChange={onDirtyChange ? setDepositDirty : undefined}
       />
       <section aria-label={t("assistant.audienceTitle")} className="space-y-2">
         <h3 className="text-sm font-semibold">{t("assistant.audienceTitle")}</h3>

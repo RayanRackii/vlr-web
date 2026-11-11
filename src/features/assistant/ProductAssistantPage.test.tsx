@@ -101,11 +101,34 @@ it("defaults an unknown cadastro step to Dados", () => {
   expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1)
 })
 it("publishes from the last cadastro step through the existing assistant action", async () => {
-  
+  vi.mocked(useProductWizard).mockReturnValue({
+    loading: false,
+    error: null,
+    busy: false,
+    rentalsActive: true,
+    canManage: true,
+    canSearchCustomers: false,
+    wizardPath: `/catalogo/produtos/${productId}/assistente`,
+    reload: vi.fn(),
+    publishMenu: vi.fn(),
+    model: {
+      product: { id: productId, name: "Diária", isActive: true, price: 10, visibility: "Public" },
+      access: { visibility: "Public", customerIds: [], groupIds: [] },
+      groups: [],
+      menuItems: [],
+      requirements: [{ rentalAssetId: assetId }],
+      resourceCapability: "ready",
+    },
+  } as never)
   const user = userEvent.setup()
   renderCadastro("?passo=publicacao")
   await user.click(screen.getByRole("button", { name: "Publicar" }))
   expect(vi.mocked(useProductWizard).mock.results.at(-1)?.value.publishMenu).toHaveBeenCalled()
+})
+
+it("keeps Publicar disabled while a setup step is missing", () => {
+  renderCadastro("?passo=publicacao")
+  expect(screen.getByRole("button", { name: "Publicar" })).toBeDisabled()
 })
 
 it("keeps taxonomy chips on the page until their assignment has been saved", async () => {
@@ -116,8 +139,7 @@ it("keeps taxonomy chips on the page until their assignment has been saved", asy
   expect(screen.getByRole("button", { name: "Hospedagem" })).toHaveClass("w-fit")
   expect(screen.getByRole("button", { name: "Continuar" })).toBeDisabled()
   expect(screen.getByRole("button", { name: "Agenda" })).toBeDisabled()
-  await user.click(screen.getByRole("button", { name: "Voltar" }))
-  expect(screen.getByRole("button", { name: "Categorias e tags" })).toHaveAttribute("aria-current", "step")
+  expect(screen.getByRole("button", { name: "Voltar" })).toBeDisabled()
   await user.click(screen.getByRole("button", { name: "Hospedagem" }))
   expect(screen.getByRole("button", { name: "Continuar" })).toBeEnabled()
 })

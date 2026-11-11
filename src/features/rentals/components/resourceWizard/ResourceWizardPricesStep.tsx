@@ -1,3 +1,4 @@
+import { useEffect } from "react"
 import { useForm, useWatch } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 
@@ -35,6 +36,7 @@ type ResourceWizardPricesStepProps = {
   onSavePrices: (draft: PriceDraft) => Promise<void>
   onSaveQueue: (enabled: boolean, openingTime: string) => Promise<void>
   showQueue?: boolean
+  onDirtyChange?: (dirty: boolean) => void
 }
 
 export function ResourceWizardPricesStep({
@@ -48,6 +50,7 @@ export function ResourceWizardPricesStep({
   onSavePrices,
   onSaveQueue,
   showQueue = true,
+  onDirtyChange,
 }: ResourceWizardPricesStepProps) {
   const { t, i18n } = useTranslation()
 
@@ -69,6 +72,7 @@ export function ResourceWizardPricesStep({
           busy={busy}
           locale={i18n.language}
           onSave={onSavePrices}
+          onDirtyChange={onDirtyChange}
         />
       ) : (
         <p className="rounded-xl border border-border bg-muted/40 p-4 text-sm" role="status">
@@ -94,6 +98,7 @@ function PriceEditor({
   busy,
   locale,
   onSave,
+  onDirtyChange,
 }: {
   prices: readonly RentalPricing[]
   canWrite: boolean
@@ -101,6 +106,7 @@ function PriceEditor({
   busy: boolean
   locale: string
   onSave: (draft: PriceDraft) => Promise<void>
+  onDirtyChange?: (dirty: boolean) => void
 }) {
   const { t } = useTranslation()
   const form = useForm<PriceDraft>({
@@ -112,6 +118,11 @@ function PriceEditor({
     startTime: watched.startTime ?? "",
     endTime: watched.endTime ?? "",
   })
+  const dirty = form.formState.isDirty
+  useEffect(() => {
+    onDirtyChange?.(dirty)
+    return () => onDirtyChange?.(false)
+  }, [dirty, onDirtyChange])
 
   return (
     <div className="space-y-4">

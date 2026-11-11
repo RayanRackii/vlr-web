@@ -127,7 +127,7 @@ export function ProductAssistantPage({ cadastro = false }: { cadastro?: boolean 
       </div>
   )
 
-  if (cadastro) return <CadastroShell title={product.name} step={cadastroStep} go={go} dirty={stepDirty} busy={wizard.busy || stepSaving} canPublish={Boolean(permissions?.can("core.module_menu.write")) && !wizard.readOnly && model.menuItems !== null} onPublish={() => void wizard.publishMenu()} onBack={() => navigate("/catalogo/produtos")}>
+  if (cadastro) return <CadastroShell title={product.name} step={cadastroStep} go={go} dirty={stepDirty} busy={wizard.busy || stepSaving} canPublish={firstMissing == null && Boolean(permissions?.can("core.module_menu.write")) && !wizard.readOnly && model.menuItems !== null} onPublish={() => void wizard.publishMenu()} onBack={() => navigate("/catalogo/produtos")}>
     {cadastroStep === "categorias" ? <CadastroTaxonomyStep onDirtyChange={setStepDirty} onSavingChange={setStepSaving} product={product} canAssign={wizard.canManage} onSaved={() => wizard.reload()} /> : body}
   </CadastroShell>
 

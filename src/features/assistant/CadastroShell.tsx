@@ -35,7 +35,7 @@ export function CadastroShell({ title, step, go, busy, dirty = false, canPublish
       {children}
       {dirty ? <p role="status" className="text-sm text-muted-foreground">{t("cadastro.saveBeforeContinue")}</p> : null}
       <footer className="flex justify-between gap-3 border-t pt-5">
-        <Button type="button" variant="outline" className="min-h-11" disabled={busy} onClick={() => !dirty && (index > 0 ? go(cadastroSteps[index - 1]) : onBack())}>{t("cadastro.back")}</Button>
+        <Button type="button" variant="outline" className="min-h-11" disabled={busy || dirty} onClick={() => index > 0 ? go(cadastroSteps[index - 1]) : onBack()}>{t("cadastro.back")}</Button>
         <Button type="button" className="min-h-11" disabled={busy || dirty || (index === cadastroSteps.length - 1 && !canPublish)} onClick={() => index < cadastroSteps.length - 1 ? go(cadastroSteps[index + 1]) : onPublish()}>{t(index === cadastroSteps.length - 1 ? "assistant.publish" : "cadastro.next")}</Button>
       </footer>
     </div>

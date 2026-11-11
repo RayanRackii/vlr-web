@@ -37,11 +37,11 @@ const savePolicy = vi.fn()
 const saveQueue = vi.fn()
 const saveFields = vi.fn()
 
-function setup(overrides: Partial<AdminRentalAsset> = {}) {
+function setup(overrides: Partial<AdminRentalAsset> = {}, prices: readonly { pricePerHour: number }[] = []) {
   vi.mocked(useResourceWizard).mockReturnValue({
     loading: false,
     error: null,
-    model: { asset: { ...asset, ...overrides }, menuItems: [], templates: [], kinds: [], prices: [] },
+    model: { asset: { ...asset, ...overrides }, menuItems: [], templates: [], kinds: [], prices },
     access: { menuWrite: true, assetWrite: true, scheduleRead: true, scheduleWrite: true, pricingRead: true, pricingWrite: true, pricingReplace: true },
     busy: false,
     busyAction: null,
@@ -166,11 +166,21 @@ it("defaults an unknown cadastro step to Dados", () => {
   expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1)
 })
 it("publishes from the last cadastro step through the existing assistant action", async () => {
-  setup().unmount()
+  setup({
+    queueOpeningTime: "08:00:00",
+    allowedDurationMinutes: "60",
+    cancelCutoffHours: 24,
+  }, [{ pricePerHour: 10 }]).unmount()
   const user = userEvent.setup()
   renderCadastro("?passo=publicacao")
   await user.click(screen.getByRole("button", { name: "Publicar" }))
   expect(vi.mocked(useResourceWizard).mock.results.at(-1)?.value.publishMenu).toHaveBeenCalled()
+})
+
+it("keeps Publicar disabled while a setup step is missing", () => {
+  setup().unmount()
+  renderCadastro("?passo=publicacao")
+  expect(screen.getByRole("button", { name: "Publicar" })).toBeDisabled()
 })
 
 it("validates the new resource Dados name and retains an invalid dirty draft", async () => {
