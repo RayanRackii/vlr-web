@@ -1,4 +1,4 @@
-import { render, screen, within } from "@testing-library/react"
+import { render, screen } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { MemoryRouter, useLocation } from "react-router-dom"
 import { beforeEach, describe, expect, it, vi } from "vitest"
@@ -45,21 +45,32 @@ beforeEach(() => {
 })
 
 describe("staff agenda shell", () => {
-  it("writes stable chip IDs and removes the key with Todos", async () => {
+  it("searches, selects one value per filter, and writes it to the URL", async () => {
     const user = userEvent.setup()
-    setup("?visao=dia&date=2026-11-10&recurso=&recurso=duplicate&produto=")
-    await user.click(await screen.findByRole("button", { name: "Estúdio" }))
+    setup("?visao=dia&date=2026-11-10&produto=")
+    await user.click(screen.getByRole("button", { name: "Recurso" }))
+    await user.type(screen.getByRole("textbox", { name: "Buscar recurso" }), "zzz")
+    expect(screen.getByText("Nenhum resultado para “zzz”.")).toBeInTheDocument()
+    await user.clear(screen.getByRole("textbox", { name: "Buscar recurso" }))
+    await user.type(screen.getByRole("textbox", { name: "Buscar recurso" }), "est")
+    await user.click(await screen.findByRole("option", { name: "Estúdio" }))
     expect(params().getAll("recurso")).toEqual([categoryId])
     expect(params().has("produto")).toBe(false)
-    await user.click(await screen.findByRole("button", { name: "Podcast" }))
+    await user.click(screen.getByRole("button", { name: "Produto" }))
+    await user.type(screen.getByRole("textbox", { name: "Buscar produto" }), "pod")
+    await user.click(await screen.findByRole("option", { name: "Podcast" }))
     expect(params().get("produto")).toBe(productId)
-    await user.click(await screen.findByRole("button", { name: /#42/ }))
+    await user.click(screen.getByRole("combobox", { name: "Buscar pedido por número ou cliente" }))
+    await user.type(screen.getByRole("combobox", { name: "Buscar pedido por número ou cliente" }), "ana")
+    await user.click(await screen.findByRole("option", { name: "#42 · Ana" }))
     expect(params().get("pedido")).toBe(orderId)
     await user.click(screen.getByRole("button", { name: "Manutenção" }))
     expect(params().get("tipo")).toBe("manutencao")
     expect(screen.getByText("4 filtros aplicados")).toBeInTheDocument()
-    await user.click(within(screen.getByRole("group", { name: "Recurso" })).getByRole("button", { name: "Todos" }))
+    await user.click(screen.getByRole("button", { name: "Remover Estúdio" }))
     expect(params().has("recurso")).toBe(false)
+    await user.click(screen.getByRole("button", { name: "Todos" }))
+    expect(params().has("tipo")).toBe(false)
   })
 })
 
@@ -68,7 +79,7 @@ describe("staff agenda controls", () => {
   it("clears all four filters while keeping view, date and unrelated params", async () => {
     const user = userEvent.setup()
     setup(`?visao=semana&date=2026-11-10&recurso=${categoryId}&produto=${productId}&pedido=${orderId}&tipo=bloqueio&other=keep`)
-    await user.click(screen.getByRole("button", { name: "Limpar filtros" }))
+    await user.click(screen.getByRole("button", { name: "Limpar" }))
     expect(params().toString()).toBe("visao=semana&date=2026-11-10&other=keep")
     expect(screen.getByText("Nenhum filtro aplicado")).toBeInTheDocument()
   })
@@ -104,7 +115,9 @@ describe("staff agenda controls", () => {
   ])("hides unavailable rows and never loads their options: $modules $grants", ({ modules, grants }) => {
     access(modules, grants)
     setup()
-    for (const name of ["Recurso", "Produto", "Pedido"]) expect(screen.queryByRole("group", { name })).not.toBeInTheDocument()
+    expect(screen.queryByRole("button", { name: "Recurso" })).not.toBeInTheDocument()
+    expect(screen.queryByRole("button", { name: "Produto" })).not.toBeInTheDocument()
+    expect(screen.queryByRole("combobox", { name: "Buscar pedido por número ou cliente" })).not.toBeInTheDocument()
     expect(screen.getByRole("group", { name: "Tipo" })).toBeInTheDocument()
     expect(listRentalAssetCategories).not.toHaveBeenCalled()
     expect(listCatalogProducts).not.toHaveBeenCalled()
@@ -112,9 +125,11 @@ describe("staff agenda controls", () => {
   })
 
   it("loads only rental categories with schedule permission alone", async () => {
+    const user = userEvent.setup()
     access(["rentals"], ["rentals.schedule.read"])
     setup()
-    expect(await screen.findByRole("button", { name: "Estúdio" })).toBeInTheDocument()
+    await user.click(screen.getByRole("button", { name: "Recurso" }))
+    expect(await screen.findByRole("option", { name: "Estúdio" })).toBeInTheDocument()
     expect(screen.queryByRole("group", { name: "Produto" })).not.toBeInTheDocument()
     expect(screen.queryByRole("group", { name: "Pedido" })).not.toBeInTheDocument()
     expect(listCatalogProducts).not.toHaveBeenCalled()
@@ -125,7 +140,38 @@ describe("staff agenda controls", () => {
     vi.mocked(listRentalAssetCategories).mockRejectedValue(new Error("unavailable"))
     setup()
     expect(await screen.findByRole("alert")).toHaveTextContent("Não foi possível carregar opções de Recurso.")
-    expect(await screen.findByRole("button", { name: "Podcast" })).toBeInTheDocument()
+    const user = userEvent.setup()
+    await user.click(screen.getByRole("button", { name: "Produto" }))
+    expect(await screen.findByRole("option", { name: "Podcast" })).toBeInTheDocument()
+  })
+
+  it("opens the phone filters in the page instead of a side panel", async () => {
+    const user = userEvent.setup()
+    vi.stubGlobal("matchMedia", (query: string) => ({
+      matches: query === "(max-width: 639px)",
+      media: query,
+      addEventListener: () => {},
+      removeEventListener: () => {},
+      onchange: null,
+      addListener: () => {},
+      removeListener: () => {},
+      dispatchEvent: () => false,
+    }))
+    try {
+      setup(`?visao=dia&date=2026-11-10&recurso=${categoryId}&tipo=reserva`)
+      const filters = screen.getByRole("button", { name: /Filtros/ })
+      expect(filters).toHaveAttribute("aria-expanded", "false")
+      expect(screen.queryByRole("group", { name: "Tipo" })).not.toBeInTheDocument()
+      expect(screen.queryByRole("dialog")).not.toBeInTheDocument()
+      await user.click(filters)
+      expect(filters).toHaveAttribute("aria-expanded", "true")
+      expect(screen.getByRole("group", { name: "Tipo" })).toBeInTheDocument()
+      expect(screen.getByRole("button", { name: "Ver agenda" })).toBeInTheDocument()
+      await user.click(screen.getByRole("button", { name: "Ver agenda" }))
+      expect(filters).toHaveAttribute("aria-expanded", "false")
+    } finally {
+      vi.unstubAllGlobals()
+    }
   })
 })
 

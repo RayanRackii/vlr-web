@@ -337,6 +337,7 @@ PR 1 (fundação): tokens de design e primitivas, sem restyling de telas/shell (
 
 ## Histórico
 
+| 2026-11-11 | **Filtros da Agenda em uma barra (WEB):** Pedido é uma busca por número ou cliente. Recurso e Produto abrem a lista no próprio controle, com busca. Tipo é uma faixa com Todos, Reserva, Pedido, Manutenção e Bloqueio. O valor escolhido vira um chip removível. No telefone, Filtros abre o painel na página. A URL continua com um valor por filtro. A lista do dia abaixo de 900px permanece. |
 | 2026-11-11 | **Dia da agenda em viewport de zoom (WEB):** a lista entra abaixo de 900px. Uma janela de 1920px com zoom 250% fica em 768px, acima do corte antigo de 640px, e a grade de 48rem cortava os pedidos. `GET /api/reservations` manda só `yyyy-MM-dd`, mesmo se o chamador passar um instante. |
 | 2026-11-10 | **Antecedência e sinal no assistente do recurso (WEB):** em Regras, o recurso mostra o valor herdado e pode gravar o próprio ou limpar. O percentual de sinal fica só salvo, sem cobrança parcial. Uma reserva cedo demais mostra o texto do código `booking_lead_time_not_met`. Depende da API #340 no ambiente. |
 | 2026-11-10 | **Assistente do produto em seis passos (WEB):** `/catalogo/produtos/:id/passos` salva a oferta, o recurso, quem compra e o menu. A fila e o recurso usado são leitura, com link para os passos do recurso. O assistente antigo continua. |
