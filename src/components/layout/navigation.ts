@@ -204,7 +204,7 @@ const productNavigationSections: readonly AppNavigationSection[] = [
     "/agendas", "/pedidos", "/configuracoes/reservas", "/manutencao",
   ) },
   { titleKey: "nav.sections.registration", items: navigationItemsAt(
-    "/configuracoes/recursos", "/catalogo/produtos", "/configuracoes/categorias-tags",
+    "/configuracoes/recursos", "/catalogo/produtos",
     "/ativos", "/configuracoes/cadastro",
   ) },
   { titleKey: "nav.sections.customers", items: navigationItemsAt("/pessoas-e-acesso", "/catalogo/grupos") },
@@ -419,7 +419,14 @@ export function getPageTitleKey(
   | "account.profile"
   | "nav.rentalsResourceWizard"
   | "nav.catalogProductWizard"
+  | "cadastro.title"
+  | "cadastro.productCreate"
+  | "cadastro.resourceCreate"
   | "app.name" {
+  if (pathname === "/catalogo/produtos/cadastro") return "cadastro.productCreate"
+  if (pathname === "/configuracoes/recursos/cadastro") return "cadastro.resourceCreate"
+  if (/^\/(catalogo\/produtos|configuracoes\/recursos)\/[^/]+\/cadastro\/?$/.test(pathname)) return "cadastro.title"
+
   const intro = matchModuleIntro([...legacyNavigationSections, platformNavigationSection], pathname)
   if (intro) return intro.titleKey
 

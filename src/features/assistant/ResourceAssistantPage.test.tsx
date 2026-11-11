@@ -1,3 +1,4 @@
+import { TestPermissionProvider } from "@/features/users/permissions/PermissionContext"
 import { render, screen, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { MemoryRouter, Route, Routes } from "react-router-dom"
@@ -41,7 +42,7 @@ function setup(overrides: Partial<AdminRentalAsset> = {}) {
     loading: false,
     error: null,
     model: { asset: { ...asset, ...overrides }, menuItems: [], templates: [], kinds: [], prices: [] },
-    access: { assetWrite: true, scheduleRead: true, scheduleWrite: true, pricingRead: true, pricingWrite: true, pricingReplace: true },
+    access: { menuWrite: true, assetWrite: true, scheduleRead: true, scheduleWrite: true, pricingRead: true, pricingWrite: true, pricingReplace: true },
     busy: false,
     busyAction: null,
     wizardPath: `/configuracoes/recursos/${rentalId}/assistente`,
@@ -136,4 +137,50 @@ it("keeps the steps on the page at phone width", async () => {
   expect(screen.getByRole("button", { name: "Continuar em Fila" })).toHaveClass("w-full")
   expect(screen.queryByRole("dialog")).not.toBeInTheDocument()
   vi.unstubAllGlobals()
+})
+
+function renderCadastro(query = "") {
+  return render(<MemoryRouter initialEntries={[`/configuracoes/recursos/${rentalId}/cadastro${query}`]}>
+    <TestPermissionProvider permissions={["core.taxonomy.read", "core.taxonomy.manage", "core.module_menu.write"]}>
+      <Routes><Route path="/configuracoes/recursos/:id/cadastro" element={<ResourceAssistantPage cadastro />} /></Routes>
+    </TestPermissionProvider>
+  </MemoryRouter>)
+}
+it("opens cadastro as one full page with a horizontal rail and query-controlled steps", async () => {
+  setup().unmount()
+  const user = userEvent.setup()
+  renderCadastro("?passo=fila")
+  expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1)
+  expect(screen.queryByRole("dialog")).not.toBeInTheDocument()
+  expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument()
+  expect(screen.getByRole("button", { name: "Fila" })).toHaveAttribute("aria-current", "step")
+  await user.click(screen.getByRole("button", { name: "Continuar" }))
+  expect(screen.getByRole("button", { name: "Regras" })).toHaveAttribute("aria-current", "step")
+  await user.click(screen.getByRole("button", { name: "Voltar" }))
+  expect(screen.getByRole("button", { name: "Fila" })).toHaveAttribute("aria-current", "step")
+})
+it("defaults an unknown cadastro step to Dados", () => {
+  setup().unmount()
+  renderCadastro("?passo=unknown")
+  expect(screen.getByRole("button", { name: "Dados" })).toHaveAttribute("aria-current", "step")
+  expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1)
+})
+it("publishes from the last cadastro step through the existing assistant action", async () => {
+  setup().unmount()
+  const user = userEvent.setup()
+  renderCadastro("?passo=publicacao")
+  await user.click(screen.getByRole("button", { name: "Publicar" }))
+  expect(vi.mocked(useResourceWizard).mock.results.at(-1)?.value.publishMenu).toHaveBeenCalled()
+})
+
+it("validates the new resource Dados name and retains an invalid dirty draft", async () => {
+  setup().unmount()
+  const user = userEvent.setup()
+  renderCadastro()
+  await user.clear(screen.getByRole("textbox", { name: "Nome" }))
+  expect(screen.getByRole("button", { name: "Salvar passo" })).toBeDisabled()
+  expect(screen.getByRole("button", { name: "Continuar" })).toBeDisabled()
+  await user.type(screen.getByRole("textbox", { name: "Nome" }), "Sala nova")
+  expect(screen.getByRole("button", { name: "Salvar passo" })).toBeEnabled()
+  expect(screen.getByRole("button", { name: "Continuar" })).toBeDisabled()
 })

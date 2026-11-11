@@ -1,5 +1,9 @@
+import { ResourceCadastroDadosStep } from "./ResourceCadastroDadosStep"
+import { CadastroShell } from "./CadastroShell"
+import { useCadastroStep } from "./useCadastroStep"
+import { CadastroTaxonomyStep } from "./CadastroTaxonomyStep"
 import { useEffect, useState } from "react"
-import { Link, useParams } from "react-router-dom"
+import { Link, useNavigate, useParams } from "react-router-dom"
 import { useTranslation } from "react-i18next"
 
 import { ErrorState } from "@/components/ErrorState"
@@ -27,7 +31,11 @@ function parseDurations(value: string | null | undefined): number[] {
   return (value ?? "").split(",").map((part) => Number(part.trim())).filter((part) => Number.isInteger(part) && part > 0)
 }
 
-export function ResourceAssistantPage() {
+export function ResourceAssistantPage({ cadastro = false }: { cadastro?: boolean } = {}) {
+  const { step: cadastroStep, go } = useCadastroStep()
+  const navigate = useNavigate()
+  const [stepDirty, setStepDirty] = useState(false)
+  const [stepSaving, setStepSaving] = useState(false)
   const { id = "" } = useParams()
   const { t } = useTranslation()
   const wizard = useResourceWizard(id)
@@ -107,23 +115,11 @@ export function ResourceAssistantPage() {
     void wizard.savePolicy({ ...currentPolicy(), ...patch })
   }
 
-  return (
-    <div className="mx-auto w-full min-w-0 max-w-3xl space-y-4 pb-8">
-      <header className="space-y-3">
-        <p className="text-sm text-muted-foreground">{t("rentals.resources.eyebrow")}</p>
-        <div className="flex flex-wrap items-center gap-2">
-          <h1 className="text-2xl font-semibold tracking-tight">{asset.name}</h1>
-          <ItemStatusBadge status={status} />
-        </div>
-        {firstMissing ? (
-          <Button type="button" className="min-h-11 w-full sm:w-auto" onClick={() => setOpen(firstMissing)}>{t("assistant.continue", { step: t(`assistant.steps.${firstMissing}`) })}</Button>
-        ) : (
-          <Button type="button" className="min-h-11 w-full sm:w-auto" disabled={wizard.busy} onClick={() => wizard.publishMenu()}>{t("assistant.publish")}</Button>
-        )}
-      </header>
+  const body = (
       <div className="space-y-3">
-        {STEPS.map((step, index) => (
+        {STEPS.filter((step) => !cadastro || step === cadastroStep).map((step, index) => (
           <section key={step} aria-label={t(`assistant.steps.${step}`)} className="rounded-xl border bg-card p-4 text-card-foreground">
+            {cadastro ? <h2 className="text-base font-semibold">{t(`assistant.steps.${step}`)}</h2> : (
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
                 <h2 className="text-base font-semibold">{index + 1}. {t(`assistant.steps.${step}`)}</h2>
@@ -135,9 +131,10 @@ export function ResourceAssistantPage() {
                 {open === step ? t("assistant.close") : t("assistant.edit")}
               </Button>
             </div>
-            {open === step ? (
+            )}
+            {cadastro || open === step ? (
               <div className="mt-4">
-                {step === "dados" ? (
+                {step === "dados" ? (cadastro ? <ResourceCadastroDadosStep name={asset.name} busy={wizard.busy} readOnly={!wizard.access.assetWrite} onSave={wizard.saveFields} onDirtyChange={setStepDirty} /> :
                   <form className="space-y-3" onSubmit={(event) => {
                     event.preventDefault()
                     const next = new FormData(event.currentTarget).get("name")
@@ -145,9 +142,9 @@ export function ResourceAssistantPage() {
                   }}>
                     <label className="block space-y-1 text-sm font-medium">
                       {t("assistant.name")}
-                      <Input key={asset.name} name="name" className="min-h-11" defaultValue={asset.name} required />
+                      <Input key={asset.name} name="name" className="min-h-11" defaultValue={asset.name} disabled={cadastro && !wizard.access.assetWrite} required />
                     </label>
-                    <Button type="submit" className="min-h-11 w-full sm:w-auto" disabled={wizard.busy}>{t("assistant.saveStep")}</Button>
+                    <Button type="submit" className="min-h-11 w-full sm:w-auto" disabled={wizard.busy || (cadastro && !wizard.access.assetWrite)}>{t("assistant.saveStep")}</Button>
                   </form>
                 ) : null}
                 {step === "agenda" ? (
@@ -168,7 +165,7 @@ export function ResourceAssistantPage() {
                 {step === "regras" ? (
                   <RulesStep
                     asset={asset}
-                    busy={wizard.busy}
+                    busy={wizard.busy || (cadastro && !wizard.access.assetWrite)}
                     products={products}
                     onDurations={saveDurations}
                     onCutoff={(hours) => void wizard.saveFields(hours === null
@@ -217,6 +214,27 @@ export function ResourceAssistantPage() {
           </section>
         ))}
       </div>
+  )
+
+  if (cadastro) return <CadastroShell title={asset.name} step={cadastroStep} go={go} dirty={stepDirty} busy={wizard.busy || stepSaving} canPublish={wizard.access.menuWrite} onPublish={() => void wizard.publishMenu()} onBack={() => navigate("/configuracoes/recursos")}>
+    {cadastroStep === "categorias" ? <CadastroTaxonomyStep onDirtyChange={setStepDirty} onSavingChange={setStepSaving} /> : body}
+  </CadastroShell>
+
+  return (
+    <div className="mx-auto w-full min-w-0 max-w-3xl space-y-4 pb-8">
+      <header className="space-y-3">
+        <p className="text-sm text-muted-foreground">{t("rentals.resources.eyebrow")}</p>
+        <div className="flex flex-wrap items-center gap-2">
+          <h1 className="text-2xl font-semibold tracking-tight">{asset.name}</h1>
+          <ItemStatusBadge status={status} />
+        </div>
+        {firstMissing ? (
+          <Button type="button" className="min-h-11 w-full sm:w-auto" onClick={() => setOpen(firstMissing)}>{t("assistant.continue", { step: t(`assistant.steps.${firstMissing}`) })}</Button>
+        ) : (
+          <Button type="button" className="min-h-11 w-full sm:w-auto" disabled={wizard.busy} onClick={() => wizard.publishMenu()}>{t("assistant.publish")}</Button>
+        )}
+      </header>
+      {body}
     </div>
   )
 }

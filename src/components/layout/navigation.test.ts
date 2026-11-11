@@ -573,7 +573,7 @@ describe("staff sidebar groups", () => {
     ])
     expect(sections.slice(1).map((section) => section.items.map((item) => item.to))).toEqual([
       ["/agendas", "/pedidos", "/configuracoes/reservas", "/manutencao"],
-      ["/configuracoes/recursos", "/catalogo/produtos", "/configuracoes/categorias-tags", "/ativos"],
+      ["/configuracoes/recursos", "/catalogo/produtos", "/ativos"],
       ["/pessoas-e-acesso", "/catalogo/grupos"],
       ["/configuracoes/menu", "/configuracoes/layout"],
       ["/configuracoes/agenda", "/catalogo/configuracoes", "/configuracoes/notificacoes"],
@@ -584,14 +584,14 @@ describe("staff sidebar groups", () => {
     expect(new Set(destinations).size).toBe(destinations.length)
     const oldDestinations = filterNavigationItemsByAccess(appNavigationItems, modules, permissions)
       .flatMap((item) => item.children ? item.children.map((child) => child.to) : [item.to])
-    const retainedLegacyAgendas = ["/os", "/pmoc", "/pmoc/novo", "/agenda", "/catalogo/agenda-recursos", "/catalogo/agenda-produto", "/catalogo/pedidos", "/catalogo/solicitacoes"]
+    const retainedLegacyAgendas = ["/configuracoes/categorias-tags", "/os", "/pmoc", "/pmoc/novo", "/agenda", "/catalogo/agenda-recursos", "/catalogo/agenda-produto", "/catalogo/pedidos", "/catalogo/solicitacoes"]
     expect(oldDestinations.filter((path) => !destinations.includes(path)).sort()).toEqual(retainedLegacyAgendas.sort())
     expect(destinations.sort()).toEqual(oldDestinations.filter((path) => !retainedLegacyAgendas.includes(path)).sort())
   })
 
   it("hides empty groups and disabled modules even with stale grants", () => {
     expect(buildProductSections([], permissions).map((section) => section.titleKey))
-      .toEqual(["nav.sections.overview", "nav.sections.registration", "nav.sections.customers"])
+      .toEqual(["nav.sections.overview", "nav.sections.customers"])
     expect(buildProductSections(modules, [])).toEqual([])
   })
 
@@ -706,4 +706,12 @@ describe("new agendas group", () => {
     expect(getPageTitleKey("/os")).toBe("nav.workOrders")
     expect(getPageTitleKey("/pmoc/novo")).toBe("nav.pmocNew")
   })
+})
+
+it("keeps taxonomy and old wizard titles while titling cadastro pages", () => {
+  expect(getPageTitleKey("/configuracoes/categorias-tags")).toBe("nav.taxonomy")
+  expect(getPageTitleKey("/catalogo/produtos/cadastro")).toBe("cadastro.productCreate")
+  expect(getPageTitleKey("/catalogo/produtos/p1/cadastro")).toBe("cadastro.title")
+  expect(getPageTitleKey("/configuracoes/recursos/cadastro")).toBe("cadastro.resourceCreate")
+  expect(getPageTitleKey("/configuracoes/recursos/r1/cadastro")).toBe("cadastro.title")
 })

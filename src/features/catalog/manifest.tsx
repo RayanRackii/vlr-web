@@ -1,3 +1,4 @@
+import { ProductCadastroCreatePage } from "@/features/assistant/ProductCadastroCreatePage"
 import { PedidosPage } from "./pages/PedidosPage"
 import { PedidoRequestDetailPage } from "./pages/PedidoRequestDetailPage"
 import { CatalogCustomerGroupEditorPage } from "@/features/catalog/pages/CatalogCustomerGroupEditorPage"
@@ -136,6 +137,8 @@ export const catalogManifest = {
         element: <CatalogPolicyPage />,
         permission: "catalog.products.manage",
       },
+      { path: "/catalogo/produtos/cadastro", element: <ProductCadastroCreatePage />, permission: "catalog.products.manage" },
+      { path: "/catalogo/produtos/:id/cadastro", element: <ProductAssistantPage cadastro />, permission: "catalog.products.read" },
       {
         path: "/catalogo/produtos/novo",
         element: <CatalogProductCreatePage />,

@@ -51,6 +51,8 @@ describe("feature manifests", () => {
       "/pedidos/solicitacoes/:requestId",
       "/pedidos/:orderId",
       "/catalogo/configuracoes",
+      "/catalogo/produtos/cadastro",
+      "/catalogo/produtos/:id/cadastro",
       "/catalogo/produtos/novo",
       "/catalogo/produtos/:id/assistente",
       "/catalogo/produtos/:id/passos",
@@ -197,6 +199,8 @@ describe("feature manifests", () => {
     expect(rentalsManifest.modules).toEqual(["rentals"])
     expect(rentalsManifest.routes.staff.map((route) => route.path)).toEqual([
       "/configuracoes/recursos",
+      "/configuracoes/recursos/cadastro",
+      "/configuracoes/recursos/:id/cadastro",
       "/configuracoes/recursos/novo",
       "/configuracoes/recursos/:id",
       "/configuracoes/recursos/:id/assistente",

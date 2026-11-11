@@ -71,6 +71,7 @@
       "missing_other": "Faltan {{count}} pasos"
     },
     "steps": {
+      "categorias": "Categorías y tags",
       "dados": "Datos",
       "agenda": "Agenda",
       "fila": "Fila",
@@ -5616,5 +5617,23 @@
     "generateDescription": "Elige un equipo elegible y una fecha. La orden usará la lista del plan.",
     "checklist": "Lista del plan",
     "sourcePlan": "Plan de origen: {{name}}"
+  },
+  "cadastro": {
+    "saveBeforeContinue": "Guarda los cambios o restaura los valores antes de cambiar de paso.",
+    "title": "Registro",
+    "productCreate": "Nuevo producto",
+    "resourceCreate": "Nuevo recurso",
+    "subtitle": "Paso {{count}} de {{total}} · {{step}}. Guarda los cambios antes de continuar.",
+    "steps": "Pasos del registro",
+    "back": "Volver",
+    "next": "Continuar",
+    "addCategory": "Categoría +",
+    "addTag": "Tag +",
+    "createCategory": "Añadir categoría",
+    "createTag": "Añadir tag",
+    "noParent": "Ninguna",
+    "taxonomyHelp": "Selecciona las categorías y tags de este producto y guarda el paso.",
+    "resourceTaxonomyHelp": "Puedes crear categorías y tags compartidos aquí, pero no se vinculan a este recurso. El tipo operativo del recurso se configura por separado.",
+    "taxonomyNoRead": "Necesitas permiso para consultar categorías y tags."
   }
 }

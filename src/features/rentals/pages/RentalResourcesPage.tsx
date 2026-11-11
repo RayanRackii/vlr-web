@@ -100,7 +100,7 @@ export function RentalResourcesPage() {
   }, [load])
 
   function openCreate() {
-    navigate("/configuracoes/recursos/novo")
+    navigate("/configuracoes/recursos/cadastro")
   }
 
   function openEdit(asset: AdminRentalAsset) {

@@ -88,6 +88,8 @@ export const rentalsManifest = {
         element: <RentalResourcesPage />,
         permissions: RENTAL_RESOURCES_PERMISSIONS,
       },
+      { path: "/configuracoes/recursos/cadastro", element: <RentalResourceEditorPage cadastro />, permissions: RENTAL_RESOURCES_PERMISSIONS },
+      { path: "/configuracoes/recursos/:id/cadastro", element: <ResourceAssistantPage cadastro />, permissions: RENTAL_RESOURCES_PERMISSIONS },
       {
         path: "/configuracoes/recursos/novo",
         element: <RentalResourceEditorPage />,

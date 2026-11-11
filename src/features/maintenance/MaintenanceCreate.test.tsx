@@ -38,7 +38,7 @@ it("generates from a plan on the full page using only eligible equipment and the
   const assetPicker = screen.getByRole("combobox", { name: i18n.t("workOrders.create.form.asset") })
   await waitFor(() => expect(assetPicker).toBeEnabled())
   await user.click(assetPicker)
-  expect(screen.getAllByRole("option")).toHaveLength(1)
+  expect(await screen.findAllByRole("option")).toHaveLength(1)
   await user.click(await screen.findByRole("option", { name: `${matchingRegistryAsset.tag} — ${matchingRegistryAsset.name}` }))
   expect(submit).toBeEnabled()
   await user.click(submit)

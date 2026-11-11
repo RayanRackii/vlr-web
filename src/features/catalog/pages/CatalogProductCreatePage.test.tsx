@@ -1,3 +1,4 @@
+import { ProductCadastroCreatePage } from "@/features/assistant/ProductCadastroCreatePage"
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { createMemoryRouter, MemoryRouter, Route, RouterProvider, Routes, useLocation } from "react-router-dom"
@@ -135,6 +136,25 @@ describe("CatalogProductCreatePage", () => {
     await user.click(screen.getByRole("button", { name: i18n.t("catalog.products.createContinue") }))
     expect(await screen.findByRole("heading", { name: "Assistente" })).toBeInTheDocument()
     expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument()
+  })
+
+  it("creates from the new full cadastro page and opens the new wizard", async () => {
+    const user = userEvent.setup()
+    render(<MemoryRouter initialEntries={["/catalogo/produtos/cadastro"]}>
+      <TestPermissionProvider permissions={["catalog.products.manage"]}>
+        <Routes>
+          <Route path="/catalogo/produtos/cadastro" element={<ProductCadastroCreatePage />} />
+          <Route path="/catalogo/produtos/:id/cadastro" element={<h1>Cadastro salvo</h1>} />
+        </Routes><LocationProbe />
+      </TestPermissionProvider>
+    </MemoryRouter>)
+    expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1)
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "Continuar" })).toBeDisabled()
+    await user.type(screen.getByLabelText(i18n.t("catalog.products.form.name")), "Raquete")
+    await user.click(screen.getByRole("button", { name: "Continuar" }))
+    expect(await screen.findByRole("heading", { name: "Cadastro salvo" })).toBeInTheDocument()
+    expect(screen.getByTestId("location")).toHaveTextContent(`/catalogo/produtos/${CREATED_ID}/cadastro`)
   })
 
   it("creates an inactive product and opens the wizard", async () => {

@@ -1,3 +1,4 @@
+import { CadastroHeader } from "@/features/assistant/CadastroShell"
 import type { PricingUnit } from "@/api/generated/rentalPricing"
 import { LiveFieldMessage } from "@/features/pmoc/components/FormValidationSummary"
 import { issueMessageAt } from "@/features/pmoc/lib/formIssues"
@@ -69,6 +70,7 @@ type RentalResourceEditorFormProps = {
   readOnly: boolean
   pricePerHour?: number | null
   pricingUnit?: PricingUnit
+  cadastro?: boolean
   assistantHref?: string
   onSubmit: (values: RentalResourceFormValues) => Promise<boolean>
 }
@@ -111,6 +113,7 @@ export function RentalResourceEditorForm({
   pricePerHour,
   pricingUnit,
   assistantHref,
+  cadastro = false,
   onSubmit,
 }: RentalResourceEditorFormProps) {
   const { t } = useTranslation()
@@ -288,7 +291,8 @@ export function RentalResourceEditorForm({
   }
 
   return (
-    <div className="rental-resource-editor">
+    <div className={cadastro ? "cadastro-page" : "rental-resource-editor"}>
+      {cadastro ? <CadastroHeader title={t("cadastro.resourceCreate")} /> : (
       <header className="resources-header resource-editor-header">
         <div>
           <p className="resources-eyebrow">{t("rentals.resources.eyebrow")}</p>
@@ -305,6 +309,7 @@ export function RentalResourceEditorForm({
           </div>
         ) : null}
       </header>
+      )}
         <Form {...form}>
           <form
             id="rental-resource-form"
@@ -893,7 +898,7 @@ export function RentalResourceEditorForm({
                   onCancel()
                 }}
               >
-                {t("common.cancel")}
+                {t(cadastro ? "cadastro.back" : "common.cancel")}
               </Button>
               <FormPrimaryButton
                 type="submit"
@@ -901,7 +906,7 @@ export function RentalResourceEditorForm({
                 loading={busy}
                 disabled={readOnly || busy || (Boolean(editing) && !isDirty)}
               >
-                {editing
+                {cadastro ? t("cadastro.next") : editing
                   ? t("rentals.resources.saveEdit")
                   : t("rentals.resources.saveCreate")}
               </FormPrimaryButton>
