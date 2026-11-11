@@ -337,6 +337,7 @@ PR 1 (fundação): tokens de design e primitivas, sem restyling de telas/shell (
 
 ## Histórico
 
+| 2026-11-11 | **Uma barra de ações no conteúdo (WEB):** adicionar recurso e novo grupo ficam só com Cancelar e Salvar no rodapé. O rodapé gruda na coluna da página, sem cobrir o menu. Voltar some onde o caminho da página já existe. O selo do assistente do produto conta as mesmas linhas que a lista mostra. |
 | 2026-11-11 | **Foco dos campos (WEB):** input, select e textarea usam borda de 1px e um anel suave de 3px na cor da marca. O erro fica numa borda mais leve. O select nativo não tem seta e parece um campo. A data em pt-BR mostra dd/mm/aaaa. |
 | 2026-11-11 | **Indicador da aba sob o rótulo (WEB):** a linha da aba ativa usa ::before. O ::after continua só a área de toque, então a linha não atravessa o texto nem sai da aba. |
 | 2026-11-11 | **Todos fica primeiro no Tipo (WEB):** no controle de Tipo, Todos é a primeira opção, no desktop e no painel Filtros do telefone. Sem tipo na URL, Todos continua selecionado. |

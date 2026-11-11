@@ -13,11 +13,13 @@ export type ItemStatus =
   | { kind: "draft" }
   | { kind: "missing"; count: number }
 
+export function statusFromMissing(published: boolean, missingCount: number): ItemStatus {
+  if (missingCount > 0) return { kind: "missing", count: missingCount }
+  return published ? { kind: "published" } : { kind: "draft" }
+}
+
 export function itemStatus(published: boolean, steps: Record<SetupStepId, boolean>): ItemStatus {
-  const count = setupStepIds.filter((step) => !steps[step]).length
-  if (count > 0) return { kind: "missing", count }
-  if (published) return { kind: "published" }
-  return { kind: "draft" }
+  return statusFromMissing(published, setupStepIds.filter((step) => !steps[step]).length)
 }
 
 function filled(value: string | null | undefined): boolean {

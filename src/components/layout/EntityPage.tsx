@@ -149,7 +149,7 @@ export function EntityPage({
       )}
 
       {dirty ? (
-        <div className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-background/95 p-3 shadow-lg backdrop-blur supports-backdrop-filter:bg-background/80">
+        <div className="sticky bottom-0 z-40 mt-4 border-t border-border bg-background/95 p-3 shadow-lg backdrop-blur supports-backdrop-filter:bg-background/80">
           <div className="mx-auto flex max-w-5xl flex-wrap items-center gap-3 px-2">
             <span className="text-sm text-muted-foreground">
               {t("fullPage.unsavedChanges", { count: unsavedCount })}

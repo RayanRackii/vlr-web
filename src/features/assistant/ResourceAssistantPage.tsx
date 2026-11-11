@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Skeleton } from "@/components/ui/skeleton"
 import { ItemStatusBadge } from "@/features/assistant/ItemStatusBadge"
-import { resourceItemStatus, type SetupStepId } from "@/features/assistant/itemStatus"
+import { itemStatus, resourceSetupSteps, type SetupStepId } from "@/features/assistant/itemStatus"
 import { getCatalogProductResourceRequirements, listCatalogProducts } from "@/features/catalog/services/catalogService"
 import type { CatalogProduct } from "@/features/catalog/schemas/catalogSchemas"
 import { productWizardPath } from "@/features/catalog/components/productWizard/wizardSteps"
@@ -65,7 +65,7 @@ export function ResourceAssistantPage() {
 
   const model = wizard.model
   const { asset } = model
-  const status = resourceItemStatus({
+  const steps = resourceSetupSteps({
     name: asset.name,
     isActive: asset.isActive,
     type: asset.type,
@@ -80,14 +80,8 @@ export function ResourceAssistantPage() {
     hasActiveTemplate: (model.templates ?? []).some((template) => template.isActive),
     hasPrice: (model.prices ?? []).some((price) => price.pricePerHour > 0),
   })
-  const done: Record<SetupStepId, boolean> = {
-    dados: asset.name.trim().length > 0,
-    agenda: asset.schedulePolicy === "OpenHours" ? Boolean(asset.openTime && asset.closeTime) : (model.templates ?? []).some((template) => template.isActive),
-    fila: asset.type !== "Location" || !asset.queueEnabled || Boolean(asset.queueOpeningTime?.trim()),
-    regras: Boolean(asset.allowedDurationMinutes?.trim()) && asset.cancelCutoffHours != null,
-    precos: (model.prices ?? []).some((price) => price.pricePerHour > 0),
-  }
-  const firstMissing = (Object.keys(done) as SetupStepId[]).find((step) => !done[step])
+  const status = itemStatus(asset.isActive && model.menuItems !== null && model.menuItems.some((item) => menuCoversAsset(item, asset.id)), steps)
+  const firstMissing = (Object.keys(steps) as SetupStepId[]).find((step) => !steps[step])
 
   function toggle(step: AssistantStepId) {
     setOpen((current) => current === step ? null : step)
@@ -134,7 +128,7 @@ export function ResourceAssistantPage() {
               <div>
                 <h2 className="text-base font-semibold">{index + 1}. {t(`assistant.steps.${step}`)}</h2>
                 {step !== "publicacao" ? (
-                  <p className="text-sm text-muted-foreground">{done[step as SetupStepId] ? t("assistant.complete") : t("assistant.pending")}</p>
+                  <p className="text-sm text-muted-foreground">{steps[step] ? t("assistant.complete") : t("assistant.pending")}</p>
                 ) : null}
               </div>
               <Button type="button" variant="outline" className="min-h-11" aria-expanded={open === step} onClick={() => toggle(step)}>
