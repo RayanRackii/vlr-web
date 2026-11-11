@@ -171,8 +171,8 @@ function MainLayoutShell({ children }: { children?: ReactNode }) {
               {t("admin.support.platformPanel")}
             </div>
           ) : isInTenantEnvironment ? (
-          <div className="flex items-center justify-between gap-3 border-b border-amber-500/30 bg-amber-500/10 px-4 py-2 text-sm text-amber-950 dark:text-amber-100">
-            <p className="min-w-0 truncate">
+          <div className="flex min-w-0 max-w-full flex-col gap-2 border-b border-amber-500/30 bg-amber-500/10 px-4 py-2 text-sm text-amber-950 sm:flex-row sm:items-center sm:justify-between dark:text-amber-100">
+            <p className="min-w-0 break-words [overflow-wrap:anywhere]">
               {t("admin.support.banner", {
                 tenant: activeTenantLabel ?? t("admin.support.tenantFallback"),
               })}
@@ -182,7 +182,7 @@ function MainLayoutShell({ children }: { children?: ReactNode }) {
               variant="outline"
               size="sm"
               disabled={isExiting}
-              className="shrink-0 border-amber-600/40 bg-background/80"
+              className="w-full shrink-0 border-amber-600/40 bg-background/80 sm:w-auto"
               onClick={() => {
                 void handleExitEnvironment()
               }}

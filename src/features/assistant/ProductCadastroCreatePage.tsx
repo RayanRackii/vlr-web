@@ -141,7 +141,7 @@ export function ProductCadastroCreatePage() {
   return (
     <div className="cadastro-page">
       {hasDataRouter ? <CreateLeaveGuard dirty={dirty} /> : null}
-      <CadastroHeader title={t("cadastro.productCreate")} />
+      <CadastroHeader title={t("cadastro.productCreate")} area="products" />
       <Form {...form}>
         <form className="space-y-4 rounded-xl border bg-card p-4 text-card-foreground sm:p-6" onSubmit={form.handleSubmit(onCreate)} noValidate>
           <fieldset disabled={creating} className="space-y-4">

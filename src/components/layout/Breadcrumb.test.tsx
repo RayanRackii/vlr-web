@@ -123,6 +123,22 @@ describe("staff breadcrumb", () => {
     expect(media.removeEventListener).toHaveBeenCalledWith("change", onChange)
   })
 
+  it("leaves the item cadastro pages without a second breadcrumb", () => {
+    for (const path of ["/catalogo/produtos/cadastro", "/catalogo/produtos/p1/cadastro", "/configuracoes/recursos/cadastro", "/configuracoes/recursos/r1/cadastro"]) {
+      const view = render(
+        <MemoryRouter initialEntries={[path]}>
+          <TestPermissionProvider permissions={[...permissions, "catalog.products.read", "rentals.assets.read", "core.units.read"]} activeModules={["catalog", "rentals", "pmoc", "os", "inventory"]}>
+            <BreadcrumbTitleProvider>
+              <Breadcrumb />
+            </BreadcrumbTitleProvider>
+          </TestPermissionProvider>
+        </MemoryRouter>,
+      )
+      expect(screen.queryByRole("navigation", { name: "Caminho de navegação" })).not.toBeInTheDocument()
+      view.unmount()
+    }
+  })
+
   it("does not repeat the profile title when it is the only crumb", () => {
     renderBreadcrumb("/perfil")
     expect(screen.queryByRole("navigation", { name: "Caminho de navegação" })).not.toBeInTheDocument()
