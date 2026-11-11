@@ -31,8 +31,10 @@ function axisBounds(start: number | null, end: number | null) {
   return { axisStart, axisEnd }
 }
 
-const NARROW_AGENDA = "(max-width: 639px)"
-const NARROW_COLUMN_PX = 640
+// The timeline is at least 48rem (768px). A 1920px window at 250% zoom is 768 CSS px:
+// above the old 640px check, below the shell's 1024px menu, and too narrow for that grid.
+const NARROW_AGENDA = "(max-width: 899px)"
+const NARROW_COLUMN_PX = 900
 
 function readViewportWidth(): number {
   if (typeof window === "undefined") return NARROW_COLUMN_PX
@@ -82,8 +84,8 @@ function useNarrowAgenda() {
     observerRef.current = observer
   }, [])
   // Width 0 means the column has not been measured yet, so the viewport decides
-  // the first paint. A later measurement can still switch a wide window whose
-  // sidebar leaves this column under 640px.
+  // the first paint. A later measurement still switches a wide window whose
+  // sidebar leaves this column under 900px.
   return { ref, narrow: viewportNarrow || (width > 0 && width < NARROW_COLUMN_PX) }
 }
 
@@ -182,7 +184,7 @@ export function AgendaDayGrid({ loading, failedSources, rows, start, end, canRes
           {t(`staffAgenda.sourceWarning.${source}`)}
         </p>
       ))}
-      <section aria-label={t("staffAgenda.grid")} className={phone ? "rounded-xl border bg-card text-card-foreground" : "overflow-x-auto rounded-xl border bg-card text-card-foreground"}>
+      <section aria-label={t("staffAgenda.grid")} data-layout={phone ? "list" : "grid"} className={phone ? "rounded-xl border bg-card text-card-foreground" : "overflow-x-auto rounded-xl border bg-card text-card-foreground"}>
         <div className={phone ? "" : "min-w-[48rem]"}>
           {!phone && <div className="flex border-b">
             <span className="w-44 shrink-0 px-3 py-2 text-xs font-medium text-muted-foreground">{t("staffAgenda.recurso")}</span>
