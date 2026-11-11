@@ -1,5 +1,5 @@
 [data-shell-part="main"]:has(.grupos-page) > div { max-width: none; }
-.grupos-page { width: 100%; max-width: 1240px; min-width: 0; margin-inline: auto; }
+.grupos-page { width: 100%; max-width: min(1240px, 100%); min-width: 0; margin-inline: auto; overflow-wrap: anywhere; }
 .grupos-eyebrow { color: var(--primary); font-size: .8125rem; font-weight: 600; letter-spacing: .025em; }
 .grupos-header { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
 .grupos-card {

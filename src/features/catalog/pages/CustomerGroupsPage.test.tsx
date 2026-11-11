@@ -13,6 +13,7 @@ import {
   deleteCustomerGroup,
   getCatalogProductAccess,
   getCustomerGroup,
+  removeCustomerGroupMember,
   listCatalogProducts,
   listCustomerGroups,
   updateCustomerGroup,
@@ -31,6 +32,7 @@ vi.mock("@/features/catalog/services/catalogService", async (orig) => {
     updateCustomerGroup: vi.fn(),
     deleteCustomerGroup: vi.fn(),
     addCustomerGroupMembers: vi.fn(),
+    removeCustomerGroupMember: vi.fn(),
     getCustomerGroup: vi.fn(),
     getCatalogProductAccess: vi.fn(),
     listCatalogProducts: vi.fn(),
@@ -80,6 +82,7 @@ describe("CustomerGroupsPage", () => {
     vi.mocked(createCustomerGroup).mockReset()
     vi.mocked(updateCustomerGroup).mockReset()
     vi.mocked(addCustomerGroupMembers).mockReset()
+    vi.mocked(removeCustomerGroupMember).mockReset()
     vi.mocked(getCustomerGroup).mockReset()
     vi.mocked(listTenantCustomers).mockReset()
     vi.mocked(listCustomerGroups).mockResolvedValue([GROUP])
@@ -187,5 +190,25 @@ describe("CustomerGroupsPage", () => {
     expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent(i18n.t("grupos.editTitle"))
     await user.click(screen.getByRole("button", { name: i18n.t("grupos.save") }))
     await waitFor(() => expect(updateCustomerGroup).toHaveBeenCalledWith(GROUP.id, { name: GROUP.name, description: GROUP.description }))
+  })
+
+  it("adds and removes members on the edit page through the customers query", async () => {
+    const user = userEvent.setup()
+    vi.mocked(getCustomerGroup).mockResolvedValue({ ...GROUP, memberCustomerIds: [CUSTOMER.id], memberNames: { [CUSTOMER.id]: CUSTOMER.name } })
+    vi.mocked(listTenantCustomers).mockResolvedValue({ items: [{ ...CUSTOMER, id: "cccccccc-cccc-4ccc-8ccc-cccccccccccc", name: "Bruno Tavares" }], total: 1, page: 1, pageSize: 20 })
+    vi.mocked(addCustomerGroupMembers).mockResolvedValue({ ...GROUP, memberCustomerIds: [CUSTOMER.id, "cccccccc-cccc-4ccc-8ccc-cccccccccccc"], memberNames: { [CUSTOMER.id]: CUSTOMER.name, "cccccccc-cccc-4ccc-8ccc-cccccccccccc": "Bruno Tavares" } })
+    vi.mocked(removeCustomerGroupMember).mockResolvedValue({ ...GROUP, memberCustomerIds: [], memberNames: {} })
+    renderAt(`/grupos/${GROUP.id}`, [...MANAGE, "core.customers.read"])
+    await screen.findByDisplayValue(GROUP.name)
+    await user.click(screen.getByRole("button", { name: i18n.t("grupos.membersEdit") }))
+    expect(screen.getByText(CUSTOMER.name)).toBeInTheDocument()
+    await user.click(screen.getByRole("button", { name: i18n.t("catalog.customerGroups.members.remove") }))
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument()
+    await user.click(screen.getByRole("button", { name: i18n.t("catalog.customerGroups.members.remove") }))
+    await waitFor(() => expect(removeCustomerGroupMember).toHaveBeenCalledWith(GROUP.id, CUSTOMER.id))
+    await user.type(screen.getByRole("searchbox", { name: i18n.t("catalog.customerGroups.members.searchLabel") }), "Bruno")
+    await waitFor(() => expect(listTenantCustomers).toHaveBeenCalledWith({ q: "Bruno", pageSize: 20 }))
+    await user.click(await screen.findByRole("button", { name: i18n.t("grupos.addMember") }))
+    await waitFor(() => expect(addCustomerGroupMembers).toHaveBeenCalledWith(GROUP.id, ["cccccccc-cccc-4ccc-8ccc-cccccccccccc"]))
   })
 })

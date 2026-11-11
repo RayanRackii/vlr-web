@@ -1,7 +1,7 @@
 [data-shell-part="main"]:has(.maintenance-page) > div { max-width: none; }
-.maintenance-page { max-width: 1240px; }
+.maintenance-page { width: 100%; max-width: min(1240px, 100%); min-width: 0; overflow-wrap: anywhere; }
 .maintenance-eyebrow { color: var(--primary); font-size: .8125rem; font-weight: 600; letter-spacing: .025em; }
-.maintenance-tabs { display: flex; gap: 8px; overflow-x: auto; border-bottom: 1px solid var(--border); padding-top: 16px; }
+.maintenance-tabs { display: flex; gap: 8px; min-width: 0; max-width: 100%; overflow-x: auto; border-bottom: 1px solid var(--border); padding-top: 16px; }
 .maintenance-tabs button { flex: none; min-height: 46px; padding: 8px 14px; border-bottom: 2px solid transparent; font-size: .875rem; font-weight: 600; color: var(--muted-foreground); }
 .maintenance-tabs button[aria-selected="true"] { color: var(--primary); border-bottom-color: var(--primary); }
 .maintenance-card { min-width: 0; border: 1px solid var(--border); border-radius: 16px; background: var(--card); box-shadow: 0 2px 8px color-mix(in oklch, var(--foreground) 4%, transparent); overflow: hidden; }
@@ -14,6 +14,8 @@
 .maintenance-badge[data-tone="danger"] { color: var(--destructive); background: color-mix(in oklch, var(--destructive) 10%, var(--card)); }
 .maintenance-page :is(button, input, a):focus-visible { outline: 1px solid var(--ring); outline-offset: 1px; box-shadow: 0 0 0 3px color-mix(in oklch, var(--ring) 28%, transparent); }
 @media (max-width: 639px) {
+  .maintenance-toolbar { flex-direction: column; align-items: stretch; }
+  .maintenance-search, .maintenance-mobile-filter { width: 100%; }
   .maintenance-mobile-filter { display: inline-flex; min-height: 44px; }
   .maintenance-row { flex-direction: column; align-items: stretch; }
   .maintenance-filters { display: none; flex-basis: 100%; }

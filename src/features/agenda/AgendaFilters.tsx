@@ -139,7 +139,7 @@ export function AgendaFilters({ state, rental, product, order, onChange, modern 
   if (phone) {
     return (
       <section ref={modern ? rootRef : undefined} aria-label={t("staffAgenda.filters")} className={modern ? "border-b p-3" : "rounded-xl border bg-card p-3 text-card-foreground"}>
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
           {modern && search}
           <Button type="button" variant="outline" aria-expanded={panel} onClick={() => { setPanel((current) => !current); setOpen(null) }}>
             <Filter className={ICON_SIZE.sm} strokeWidth={ICON_STROKE_WIDTH} aria-hidden />
@@ -287,7 +287,7 @@ function OrderSearch({ options, loading, error, value, open, query, onQuery, onO
   const shown = matching(options, query).slice(0, query.trim() ? 6 : 8)
   const listId = "agenda-order-results"
   return (
-    <div className="relative min-w-64 flex-1">
+    <div className="relative w-full min-w-0 flex-1 sm:w-auto sm:min-w-64">
       <div className="flex min-h-11 items-center gap-2 rounded-lg border border-border bg-background px-3">
         <Search className={ICON_SIZE.sm} strokeWidth={ICON_STROKE_WIDTH} aria-hidden />
         {selected && (

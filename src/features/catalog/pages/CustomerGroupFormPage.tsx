@@ -13,6 +13,7 @@ import {
   CatalogDuplicateGroupNameError,
   createCustomerGroup,
   getCustomerGroup,
+  removeCustomerGroupMember,
   updateCustomerGroup,
 } from "@/features/catalog/services/catalogService"
 import { usePermissions } from "@/features/users/permissions/PermissionContext"
@@ -43,6 +44,12 @@ export function CustomerGroupFormPage() {
   const [memberQuery, setMemberQuery] = useState("")
   const [selected, setSelected] = useState<string[]>([])
   const [createdId, setCreatedId] = useState<string | null>(null)
+  const [memberIds, setMemberIds] = useState<string[]>([])
+  const [memberNames, setMemberNames] = useState<Record<string, string>>({})
+  const [memberResults, setMemberResults] = useState<TenantCustomer[]>([])
+  const [memberSearching, setMemberSearching] = useState(false)
+  const [memberBusy, setMemberBusy] = useState(false)
+  const [removeId, setRemoveId] = useState<string | null>(null)
 
   useEffect(() => {
     if (!id) return
@@ -53,6 +60,8 @@ export function CustomerGroupFormPage() {
       setName(next.name)
       setDescription(next.description)
       setBaseline(next)
+      setMemberIds(group.memberCustomerIds)
+      setMemberNames(group.memberNames ?? {})
       setMissing(false)
     }).catch((error: unknown) => {
       if (cancelled) return
@@ -74,6 +83,67 @@ export function CustomerGroupFormPage() {
     })
     return () => { cancelled = true }
   }, [canReadCustomers, customers, membersOpen])
+
+  useEffect(() => {
+    if (!editing || !membersOpen || !canReadCustomers) return
+    const term = memberQuery.trim()
+    if (!term) return
+    let cancelled = false
+    const timer = setTimeout(() => {
+      setMemberSearching(true)
+      void listTenantCustomers({ q: term, pageSize: 20 }).then((page) => {
+        if (!cancelled) setMemberResults(page.items)
+      }).catch(() => {
+        if (!cancelled) setMemberResults([])
+      }).finally(() => {
+        if (!cancelled) setMemberSearching(false)
+      })
+    }, 250)
+    return () => {
+      cancelled = true
+      clearTimeout(timer)
+    }
+  }, [canReadCustomers, editing, memberQuery, membersOpen])
+
+  function rememberMembers(group: { memberCustomerIds: string[]; memberNames?: Record<string, string> | null }, extra?: TenantCustomer) {
+    setMemberIds(group.memberCustomerIds)
+    setMemberNames({
+      ...memberNames,
+      ...(group.memberNames ?? {}),
+      ...(extra ? { [extra.id]: extra.name } : {}),
+    })
+  }
+
+  async function addMember(customer: TenantCustomer) {
+    if (!id || memberBusy || memberIds.includes(customer.id)) return
+    setMemberBusy(true)
+    try {
+      const updated = await addCustomerGroupMembers(id, [customer.id])
+      rememberMembers(updated, customer)
+      setMemberQuery("")
+      setMemberResults([])
+      toast.success(t("catalog.customerGroups.members.toastAdded"))
+    } catch (error: unknown) {
+      toast.error(error instanceof Error ? error.message : t("catalog.customerGroups.errors.addMembers"))
+    } finally {
+      setMemberBusy(false)
+    }
+  }
+
+  async function removeMember(customerId: string) {
+    if (!id || memberBusy) return
+    setMemberBusy(true)
+    try {
+      const updated = await removeCustomerGroupMember(id, customerId)
+      rememberMembers(updated)
+      setRemoveId(null)
+      toast.success(t("catalog.customerGroups.members.toastRemoved"))
+    } catch (error: unknown) {
+      toast.error(error instanceof Error ? error.message : t("catalog.customerGroups.errors.removeMember"))
+    } finally {
+      setMemberBusy(false)
+    }
+  }
 
   const dirty = !saved && (name !== baseline.name || description !== baseline.description || selected.length > 0)
   useEffect(() => {
@@ -204,6 +274,59 @@ export function CustomerGroupFormPage() {
                       </label>
                     ))}
                     <p className="text-xs text-muted-foreground">{t("grupos.membersHint")}</p>
+                  </div>
+                ) : null}
+              </div>
+            ) : null}
+            {editing && canManage ? (
+              <div className="grupos-expander">
+                <button type="button" aria-expanded={membersOpen} aria-controls="group-edit-members" onClick={() => setMembersOpen((open) => !open)}>
+                  <span>{t("grupos.membersEdit")}</span>
+                  <span aria-hidden="true">{membersOpen ? "−" : "+"}</span>
+                </button>
+                {membersOpen ? (
+                  <div id="group-edit-members" className="space-y-2 px-3.5 pb-3">
+                    {canReadCustomers ? (
+                      <>
+                        <Input
+                          type="search"
+                          aria-label={t("catalog.customerGroups.members.searchLabel")}
+                          placeholder={t("catalog.customerGroups.members.searchPlaceholder")}
+                          value={memberQuery}
+                          onChange={(event) => {
+                            setMemberQuery(event.target.value)
+                            if (!event.target.value.trim()) setMemberResults([])
+                          }}
+                        />
+                        {memberSearching ? <p role="status" className="text-sm text-muted-foreground">{t("common.loading")}</p> : null}
+                        {memberResults.filter((customer) => !memberIds.includes(customer.id)).map((customer) => (
+                          <div key={customer.id} className="flex min-h-11 items-center justify-between gap-2 text-sm">
+                            <span className="min-w-0">{customer.name}{customer.email ? <small className="ml-2 text-muted-foreground">{customer.email}</small> : null}</span>
+                            <Button type="button" variant="outline" size="sm" disabled={memberBusy} onClick={() => { void addMember(customer) }}>{t("grupos.addMember")}</Button>
+                          </div>
+                        ))}
+                      </>
+                    ) : <p className="text-xs text-muted-foreground">{t("catalog.products.access.needCustomersPermission")}</p>}
+                    {memberIds.length === 0 ? <p className="text-sm text-muted-foreground">{t("catalog.customerGroups.members.empty")}</p> : (
+                      <ul>
+                        {memberIds.map((memberId) => {
+                          const memberName = memberNames[memberId] ?? t("catalog.customerGroups.members.unknown")
+                          return (
+                            <li key={memberId} className="flex min-h-11 flex-wrap items-center justify-between gap-2 border-t border-border py-1 text-sm">
+                              <span className="min-w-0">{memberName}</span>
+                              {removeId === memberId ? (
+                                <span className="flex gap-2">
+                                  <Button type="button" variant="outline" size="sm" disabled={memberBusy} onClick={() => { void removeMember(memberId) }}>{t("catalog.customerGroups.members.remove")}</Button>
+                                  <Button type="button" variant="ghost" size="sm" disabled={memberBusy} onClick={() => setRemoveId(null)}>{t("common.cancel")}</Button>
+                                </span>
+                              ) : (
+                                <Button type="button" variant="ghost" size="sm" disabled={memberBusy} onClick={() => setRemoveId(memberId)}>{t("catalog.customerGroups.members.remove")}</Button>
+                              )}
+                            </li>
+                          )
+                        })}
+                      </ul>
+                    )}
                   </div>
                 ) : null}
               </div>

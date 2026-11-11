@@ -292,7 +292,7 @@ export function RentalResourceEditorForm({
 
   return (
     <div className={cadastro ? "cadastro-page" : "rental-resource-editor"}>
-      {cadastro ? <CadastroHeader title={t("cadastro.resourceCreate")} /> : (
+      {cadastro ? <CadastroHeader title={t("cadastro.resourceCreate")} area="resources" /> : (
       <header className="resources-header resource-editor-header">
         <div>
           <p className="resources-eyebrow">{t("rentals.resources.eyebrow")}</p>
