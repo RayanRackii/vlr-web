@@ -4,7 +4,7 @@ import { ClipboardList } from "lucide-react"
 import type { AppNavigationItem } from "@/components/layout/navigation"
 import { newPlanTabs } from "@/features/pmoc/navigationTabs"
 import { NewPlanPage } from "@/features/pmoc/pages/NewPlanPage"
-import { MaintenancePlansPage } from "@/features/pmoc/pages/MaintenancePlansPage"
+import { MaintenanceListLegacyRedirect, RedirectKeepingLocation } from "@/routes/legacyScreenRedirect"
 import { PmocPlanDetailPage } from "@/features/pmoc/pages/PmocPlanDetailPage"
 import { PmocTemplatePreviewPage } from "@/features/pmoc/pages/PmocTemplatePreviewPage"
 
@@ -42,7 +42,7 @@ export const pmocManifest = {
     staff: [
       {
         path: "/pmoc",
-        element: <MaintenancePlansPage />,
+        element: <MaintenanceListLegacyRedirect aba="planos" />,
         permission: "pmoc.plans.read",
       },
       {
@@ -57,7 +57,7 @@ export const pmocManifest = {
       },
       {
         path: "/pmoc/novo",
-        element: <NewPlanPage />,
+        element: <RedirectKeepingLocation to="/manutencao/planos/novo" />,
         permission: "pmoc.plans.write",
       },
       {

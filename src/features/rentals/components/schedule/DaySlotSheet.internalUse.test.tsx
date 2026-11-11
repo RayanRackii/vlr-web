@@ -87,7 +87,7 @@ describe("DaySlotSheet internal-use cells", () => {
     renderSheet(internalSlot())
 
     const link = screen.getByRole("link", { name: "Ver pedido" })
-    expect(link).toHaveAttribute("href", `/catalogo/pedidos/${ORDER_ID}`)
+    expect(link).toHaveAttribute("href", `/pedidos/${ORDER_ID}`)
   })
 
   it("falls back to a neutral message without the order link when permission is missing", () => {

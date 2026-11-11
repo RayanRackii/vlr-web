@@ -24,7 +24,7 @@ describe("PeopleBottomNavigation", () => {
 
     expect(screen.getByRole("link", { name: "Início" })).toHaveAttribute("href", "/dashboard")
     expect(screen.getByRole("link", { name: "Reservas" })).toHaveAttribute("href", "/configuracoes/reservas")
-    expect(screen.getByRole("link", { name: "Ordens de serviço" })).toHaveAttribute("href", "/os")
+    expect(screen.getByRole("link", { name: "Ordens de serviço" })).toHaveAttribute("href", "/manutencao?aba=ordens")
     expect(screen.getByRole("link", { name: "Pessoas e acesso" })).toHaveAttribute("href", "/pessoas-e-acesso")
     expect(screen.getByRole("link", { name: "Meu Perfil" })).toHaveAttribute("href", "/perfil")
   })

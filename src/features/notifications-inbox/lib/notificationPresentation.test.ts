@@ -55,7 +55,7 @@ describe("moduleIcon", () => {
 describe("resolveStaffRoute", () => {
   it("rebases tenant-relative routes onto the staff path per module, keeping the query", () => {
     expect(resolveStaffRoute("catalog", "/pedidos?status=pending")).toBe(
-      "/catalogo/pedidos?status=pending",
+      "/pedidos?status=pending",
     )
     expect(resolveStaffRoute("rentals", "/reservas")).toBe(
       "/configuracoes/reservas",
@@ -87,15 +87,15 @@ describe("formatRelativeTime", () => {
 
 describe("resolveNotificationItemRoute", () => {
   it("opens the staff order detail with an encoded aggregate id", () => {
-    expect(resolveNotificationItemRoute({ module: "catalog", eventType: "Catalog.Order.Approved", aggregateId: " order/12 ", targetRoute: "/pedidos?status=approved" })).toBe("/catalogo/pedidos/order%2F12")
+    expect(resolveNotificationItemRoute({ module: "catalog", eventType: "Catalog.Order.Approved", aggregateId: " order/12 ", targetRoute: "/pedidos?status=approved" })).toBe("/pedidos/order%2F12")
   })
 
   it.each([null, undefined, "", "   "])("keeps the module route when aggregateId is %s", (aggregateId) => {
-    expect(resolveNotificationItemRoute({ module: "catalog", eventType: "catalog.order.approved", aggregateId, targetRoute: "/pedidos?status=approved#recent" })).toBe("/catalogo/pedidos?status=approved#recent")
+    expect(resolveNotificationItemRoute({ module: "catalog", eventType: "catalog.order.approved", aggregateId, targetRoute: "/pedidos?status=approved#recent" })).toBe("/pedidos?status=approved#recent")
   })
 
   it("keeps non-order and unknown module routes", () => {
-    expect(resolveNotificationItemRoute({ module: "catalog", eventType: "catalog.product.updated", aggregateId: "product-12", targetRoute: "/produtos" })).toBe("/catalogo/pedidos")
+    expect(resolveNotificationItemRoute({ module: "catalog", eventType: "catalog.product.updated", aggregateId: "product-12", targetRoute: "/produtos" })).toBe("/pedidos")
     expect(resolveNotificationItemRoute({ module: "other", eventType: "other.order.created", aggregateId: "order-12", targetRoute: "/somewhere?x=1" })).toBe("/somewhere?x=1")
   })
 })

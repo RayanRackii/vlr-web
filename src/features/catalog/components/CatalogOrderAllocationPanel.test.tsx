@@ -169,7 +169,7 @@ describe("CatalogOrderAllocationPanel", () => {
     renderPanel(order, ["catalog.orders.manage", "catalog.orders.allocate", "rentals.schedule.read"])
     expect(await screen.findByRole("link", { name: agendaName })).toHaveAttribute(
       "href",
-      "/catalogo/agenda-recursos?date=2026-11-02",
+      "/agendas/recursos?date=2026-11-02",
     )
   })
 

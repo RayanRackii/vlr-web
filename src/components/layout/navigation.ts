@@ -157,7 +157,7 @@ const maintenanceItems: readonly AppNavigationItem[] = [
 
 const bookingsItems: readonly AppNavigationItem[] = rentalsManifest.navigationItems
 const salesItems: readonly AppNavigationItem[] = catalogManifest.navigationItems.flatMap(
-  (item) => item.children.map((child) => ({ ...child, icon: child.icon ?? item.icon, modules: child.modules ?? item.modules })),
+  (item) => item.children.map((child) => ({ ...child, icon: child.icon ?? item.icon, modules: item.modules })),
 )
 
 const pedidosItem: AppNavigationItem = {
@@ -171,11 +171,6 @@ const customerGroupsPageItem: AppNavigationItem = {
   icon: Users,
   modules: ["catalog"],
   permission: "catalog.products.read",
-}
-
-const notificationsPageItem: AppNavigationItem = {
-  ...notificationsManifest.navigationItems[0],
-  to: "/notificacoes",
 }
 
 const maintenanceItem: AppNavigationItem = {
@@ -197,14 +192,19 @@ export const appNavigationItems: readonly AppNavigationItem[] = [
   ...salesItems,
   ...peoplePortalItems,
   customerGroupsPageItem,
-  notificationsPageItem,
 ]
 
 const legacyNavigationSections: readonly AppNavigationSection[] = [
   { introKey: "overview", titleKey: "nav.sections.overview", items: [overviewItem] },
-  { introKey: "bookings", titleKey: "nav.sections.bookings", items: bookingsItems },
+  { introKey: "bookings", titleKey: "nav.sections.bookings", items: [...bookingsItems, {
+    labelKey: "nav.agendas",
+    to: "/agendas/recursos",
+    icon: agendaManifest.navigationItems[0].icon,
+    modules: ["rentals"],
+    permission: "rentals.schedule.read",
+  }] },
   { introKey: "maintenance", titleKey: "nav.sections.maintenance", items: maintenanceItems },
-  { introKey: "sales", titleKey: "nav.sections.sales", items: salesItems },
+  { introKey: "sales", titleKey: "nav.sections.sales", items: [...salesItems, pedidosItem] },
   { introKey: "peoplePortal", titleKey: "nav.sections.peoplePortal", items: peoplePortalItems },
 ]
 
@@ -441,6 +441,13 @@ export function getPageTitleKey(
   if (pathname === "/catalogo/produtos/cadastro") return "cadastro.productCreate"
   if (pathname === "/configuracoes/recursos/cadastro") return "cadastro.resourceCreate"
   if (/^\/(catalogo\/produtos|configuracoes\/recursos)\/[^/]+\/cadastro\/?$/.test(pathname)) return "cadastro.title"
+  if (pathname === "/agenda" || pathname === "/agendas") return "nav.agendasOverview"
+  if (pathname === "/catalogo/agenda-recursos" || pathname === "/agendas/recursos") return "nav.agendasResources"
+  if (pathname === "/catalogo/agenda-produto" || pathname === "/agendas/produto") return "nav.agendasProduct"
+  if (pathname === "/catalogo/pedidos" || pathname === "/catalogo/solicitacoes" || pathname === "/pedidos" || pathname.startsWith("/catalogo/pedidos/")) return "nav.pedidos"
+  if (pathname === "/catalogo/grupos" || pathname.startsWith("/catalogo/grupos/")) return "nav.catalogCustomerGroups"
+  if (pathname === "/configuracoes/notificacoes" || pathname === "/catalogo/notificacoes" || pathname === "/notificacoes") return "nav.notifications"
+  if (pathname === "/pmoc" || pathname === "/os" || pathname === "/manutencao") return "nav.manutencao"
 
   const intro = matchModuleIntro([...legacyNavigationSections, platformNavigationSection], pathname)
   if (intro) return intro.titleKey

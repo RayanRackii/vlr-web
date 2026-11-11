@@ -50,6 +50,9 @@ function renderRoute(path: string, permissions: string[], modules: string[] = ["
               <Route path={route.path} element={route.element} />
             </Route>
           ))}
+          <Route element={<PermissionRoute permission="pmoc.plans.write" modules={["pmoc"]} />}>
+            <Route path="/manutencao/planos/novo" element={<div>custom plan content</div>} />
+          </Route>
           <Route path="*" element={<div>route not found</div>} />
         </Routes>
       </TestPermissionProvider>
@@ -103,12 +106,18 @@ describe("legacy sidebar URLs rendered inside their new screens", () => {
   it.each([
     ["/ativos", "inventory.assets.read", "equipment content", "nav.assetsInventory", "nav.assetsCategories"],
     ["/configuracoes/reservas", "rentals.reservations.read", "reservations content", "nav.reservations", "nav.bookingPolicy"],
-    ["/pmoc/novo", "pmoc.plans.write", "custom plan content", "nav.pmocCustom", "nav.pmocLibrary"],
   ])("keeps the main page %s usable without the absorbed tab's permission", (path, permission, content, tab, hidden) => {
     renderRoute(path, [permission])
     expect(screen.getByText(content)).toBeInTheDocument()
     expect(screen.getByRole("tab", { name: i18n.t(tab) })).toHaveAttribute("aria-selected", "true")
     expect(screen.queryByRole("tab", { name: i18n.t(hidden) })).not.toBeInTheDocument()
+  })
+
+  it("sends /pmoc/novo to the maintenance plan form", () => {
+    renderRoute("/pmoc/novo", ["pmoc.plans.write"])
+    expect(screen.getByTestId("location")).toHaveTextContent("/manutencao/planos/novo")
+    expect(screen.getByText("custom plan content")).toBeInTheDocument()
+    expect(screen.queryByRole("tab", { name: i18n.t("nav.pmocLibrary") })).not.toBeInTheDocument()
   })
 
   it("navigates between reservations and booking rules and restores the selected tab on Back", async () => {

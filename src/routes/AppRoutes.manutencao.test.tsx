@@ -22,8 +22,8 @@ it.each([
   ["/manutencao", "os", "os.work_orders.read", "Maintenance list"],
   ["/manutencao/planos/novo", "pmoc", "pmoc.plans.write", "New plan page"],
   ["/manutencao/ordens/nova", "os", "os.work_orders.create", "New order page"],
-  ["/pmoc/novo", "pmoc", "pmoc.plans.write", "Legacy plan page"],
-  ["/os/nova", "os", "os.work_orders.create", "Legacy order page"],
+  ["/pmoc/novo", "pmoc", "pmoc.plans.write", "New plan page"],
+  ["/os/nova", "os", "os.work_orders.create", "New order page"],
 ])("renders %s as a full page with %s / %s", (path, module, permission, title) => {
   mount(path, [module], [permission])
   expect(screen.getByRole("heading", { level: 1, name: title })).toBeInTheDocument()

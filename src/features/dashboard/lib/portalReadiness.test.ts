@@ -43,7 +43,7 @@ describe("pendingPortalChecks", () => {
       accessByProductId: {
         kit: { customerIds: [], groupIds: ["group-1"] },
       },
-    })).toEqual([{ key: "emptyGroup", href: "/catalogo/grupos/group-1" }])
+    })).toEqual([{ key: "emptyGroup", href: "/grupos/group-1" }])
   })
 
   it("accepts a restricted product granted to a group that has a member", () => {

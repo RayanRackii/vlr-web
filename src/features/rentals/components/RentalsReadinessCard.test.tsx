@@ -289,7 +289,7 @@ describe("RentalsReadinessCard", () => {
       permissions: ["catalog.products.read"],
     })
 
-    expect(await screen.findByRole("link", { name: i18n.t("dashboard.portalReadiness.items.emptyGroup") })).toHaveAttribute("href", "/catalogo/grupos/group-1")
+    expect(await screen.findByRole("link", { name: i18n.t("dashboard.portalReadiness.items.emptyGroup") })).toHaveAttribute("href", "/grupos/group-1")
     expect(getReadiness).not.toHaveBeenCalled()
   })
 })

@@ -3,7 +3,7 @@ import { Bell } from "lucide-react"
 
 import type { AppNavigationItem } from "@/components/layout/navigation"
 import { NotificationsPage } from "@/features/notifications/pages/NotificationsPage"
-import { NotificationsSettingsPage } from "@/features/notifications/pages/NotificationsSettingsPage"
+import { NotificationsLegacyRedirect } from "@/routes/legacyScreenRedirect"
 
 type FeatureRoute = {
   path: string
@@ -18,7 +18,7 @@ export const notificationsManifest = {
   navigationItems: [
     {
       labelKey: "nav.notifications",
-      to: "/configuracoes/notificacoes",
+      to: "/notificacoes",
       icon: Bell,
       modules: ["catalog", "rentals"],
       permissions: ["core.notifications.read", "catalog.notifications.read"],
@@ -35,7 +35,7 @@ export const notificationsManifest = {
       },
       {
         path: "/configuracoes/notificacoes",
-        element: <NotificationsSettingsPage />,
+        element: <NotificationsLegacyRedirect />,
         permission: "core.notifications.read",
         anyOf: ["catalog.notifications.read"],
       },

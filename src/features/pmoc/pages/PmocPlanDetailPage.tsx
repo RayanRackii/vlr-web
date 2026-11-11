@@ -348,7 +348,7 @@ export function PmocPlanDetailPage() {
     try {
       await deletePlan(plan.id)
       toast.success(t("pmoc.plans.toast.deleted"))
-      void navigate("/pmoc")
+      void navigate("/manutencao?aba=planos")
     } catch (error: unknown) {
       if (isPlanInUseError(error)) {
         setIsDeleteConfirmOpen(false)

@@ -5,11 +5,11 @@ import { describe, expect, it } from "vitest"
 import { catalogManifest } from "@/features/catalog/manifest"
 
 describe("staff sales navigation", () => {
-  it("gives requests the existing products read permission in both sidebar and route", () => {
+  it("keeps the requests route permission and leaves it out of the sidebar", () => {
     const requestRoute = catalogManifest.routes.staff.find((route) => route.path === "/catalogo/solicitacoes")
-    const requestItem = catalogManifest.navigationItems[0].children.find((item) => item.to === "/catalogo/solicitacoes")
+    const requestItem = catalogManifest.navigationItems[0].children.find((item) => item.to === "/catalogo/solicitacoes" || item.to === "/pedidos")
     expect(requestRoute?.permission).toBe("catalog.products.read")
-    expect(requestItem).toMatchObject({ labelKey: "nav.catalogRequests", permission: "catalog.products.read" })
+    expect(requestItem).toBeUndefined()
     expect(catalogManifest.modules).toEqual(["catalog"])
   })
 
@@ -43,7 +43,7 @@ describe("staff sales navigation", () => {
       <MemoryRouter initialEntries={["/catalogo/notificacoes"]}>
         <Routes>
           <Route path="/catalogo/notificacoes" element={route?.element} />
-          <Route path="/configuracoes/notificacoes" element={<h1>Notificações</h1>} />
+          <Route path="/notificacoes" element={<h1>Notificações</h1>} />
         </Routes>
       </MemoryRouter>,
     )
