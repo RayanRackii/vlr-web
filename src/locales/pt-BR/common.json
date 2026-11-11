@@ -2051,6 +2051,7 @@
     }
   },
   "nav": {
+    "manutencao": "Manutenção",
     "agenda": "Agenda",
     "sidebar": {
       "people": "Pessoas",
@@ -5581,5 +5582,39 @@
       "pedidos": "Pedidos",
       "solicitacoes": "Solicitações"
     }
+  },
+  "maintenance": {
+    "planUnavailable": "Este plano está inativo e não pode gerar ordens.",
+    "eyebrow": "Operação · Manutenção",
+    "subtitle": "Planos recorrentes e ordens de serviço dos seus equipamentos, em um só lugar.",
+    "tabs": {
+      "hoje": "Hoje",
+      "ordens": "Ordens",
+      "planos": "Planos"
+    },
+    "sections": {
+      "hoje": "Planos com primeira data devida e ordens abertas, incluindo as próximas.",
+      "ordens": "Acompanhe as ordens de serviço e sua execução.",
+      "planos": "Organize os planos recorrentes de manutenção."
+    },
+    "newPlan": "Novo plano",
+    "newOrder": "Nova ordem",
+    "generate": "Gerar ordem",
+    "search": "Buscar por plano, ordem ou equipamento",
+    "filters": "Filtros",
+    "status": "Status",
+    "type": "Tipo",
+    "allStatuses": "Todos os status",
+    "allTypes": "Todos os tipos",
+    "due": "Primeira data devida",
+    "firstDue": "Primeiro vencimento: {{date}}",
+    "emptyTitle": "Nenhum item para mostrar",
+    "emptyDescription": "Os itens disponíveis aparecerão aqui. Ajuste os filtros ou crie um novo item.",
+    "clear": "Limpar busca/filtros",
+    "loading": "Carregando manutenção…",
+    "loadError": "Não foi possível carregar a manutenção.",
+    "generateDescription": "Escolha um equipamento elegível e uma data. A ordem usará o checklist do plano.",
+    "checklist": "Checklist do plano",
+    "sourcePlan": "Plano de origem: {{name}}"
   }
 }

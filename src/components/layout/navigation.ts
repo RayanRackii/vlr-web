@@ -69,6 +69,7 @@ export type AppNavigationItem = {
     | "nav.peopleAccess"
     | "nav.assets"
     | "nav.pmoc"
+    | "nav.manutencao"
     | "nav.workOrders"
     | "nav.registrationFields"
     | "nav.moduleMenu"
@@ -96,6 +97,7 @@ export type AppNavigationItem = {
   to: string
   tabs?: readonly NavigationTab[]
   icon: LucideIcon
+  accessAlternatives?: readonly { modules: readonly string[]; permissions: readonly string[]; anyOf?: boolean }[]
   children?: readonly AppNavigationChildItem[]
   /** Canonical tenant module keys that unlock this item. Empty = always visible. */
   modules?: readonly string[]
@@ -163,10 +165,19 @@ const pedidosItem: AppNavigationItem = {
   modules: ["catalog"], permissions: ["catalog.orders.read", "catalog.products.read"], anyOf: true,
 }
 
+const maintenanceItem: AppNavigationItem = {
+  labelKey: "nav.manutencao", to: "/manutencao", icon: pmocManifest.navigationItems[0].icon,
+  accessAlternatives: [
+    { modules: ["pmoc"], permissions: ["pmoc.plans.read", "pmoc.templates.read"], anyOf: true },
+    { modules: ["os"], permissions: ["os.work_orders.read"] },
+  ],
+}
+
 /** Flat catalog used for title resolution and module filtering helpers. */
 export const appNavigationItems: readonly AppNavigationItem[] = [
   ...agendaManifest.navigationItems,
   pedidosItem,
+  maintenanceItem,
   overviewItem,
   ...bookingsItems,
   ...maintenanceItems,
@@ -190,7 +201,7 @@ function navigationItemsAt(...paths: string[]): AppNavigationItem[] {
 const productNavigationSections: readonly AppNavigationSection[] = [
   { titleKey: "nav.sections.overview", standalone: true, items: [overviewItem] },
   { titleKey: "nav.sections.operations", items: navigationItemsAt(
-    "/agendas", "/pedidos", "/configuracoes/reservas", "/os", "/pmoc",
+    "/agendas", "/pedidos", "/configuracoes/reservas", "/manutencao",
   ) },
   { titleKey: "nav.sections.registration", items: navigationItemsAt(
     "/configuracoes/recursos", "/catalogo/produtos", "/configuracoes/categorias-tags",
@@ -261,6 +272,9 @@ export function filterNavigationItemsByAccess(
   permissions: readonly string[],
 ): AppNavigationItem[] {
   return items.flatMap((item) => {
+    if (item.accessAlternatives) {
+      return item.accessAlternatives.some(rule => moduleIsEnabled(rule.modules, activeModules) && hasDeclaredAccess(rule, permissions)) ? [item] : []
+    }
     if (!moduleIsEnabled(item.modules, activeModules)) {
       return []
     }
@@ -397,6 +411,8 @@ export function getPageTitleKey(
   | AppNavigationItem["labelKey"]
   | AppNavigationChildItem["labelKey"]
   | ModuleIntro["titleKey"]
+  | "maintenance.newPlan"
+  | "maintenance.newOrder"
   | "nav.pmocTemplatePreview"
   | "nav.pmocPlanDetail"
   | NavigationTab["labelKey"]
@@ -432,6 +448,8 @@ export function getPageTitleKey(
   }
 
   // Keep the custom-plan page title at its original URL.
+  if (pathname === "/manutencao/planos/novo") return "maintenance.newPlan"
+  if (pathname === "/manutencao/ordens/nova") return "maintenance.newOrder"
   if (pathname === "/pmoc/novo") return "nav.pmocNew"
 
   const match = matchNavigationPath(appNavigationItems, pathname)

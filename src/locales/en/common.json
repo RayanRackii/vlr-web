@@ -2051,6 +2051,7 @@
     }
   },
   "nav": {
+    "manutencao": "Maintenance",
     "agenda": "Agenda",
     "sidebar": {
       "people": "People",
@@ -5581,5 +5582,39 @@
       "pedidos": "Orders",
       "solicitacoes": "Requests"
     }
+  },
+  "maintenance": {
+    "planUnavailable": "This plan is inactive and cannot generate work orders.",
+    "eyebrow": "Operations · Maintenance",
+    "subtitle": "Recurring plans and equipment work orders in one place.",
+    "tabs": {
+      "hoje": "Today",
+      "ordens": "Work orders",
+      "planos": "Plans"
+    },
+    "sections": {
+      "hoje": "Plans whose first date is due and open work orders, including upcoming ones.",
+      "ordens": "Track work orders and their execution.",
+      "planos": "Organize recurring maintenance plans."
+    },
+    "newPlan": "New plan",
+    "newOrder": "New work order",
+    "generate": "Generate work order",
+    "search": "Search plans, work orders or equipment",
+    "filters": "Filters",
+    "status": "Status",
+    "type": "Type",
+    "allStatuses": "All statuses",
+    "allTypes": "All types",
+    "due": "First date due",
+    "firstDue": "First due date: {{date}}",
+    "emptyTitle": "No items to display",
+    "emptyDescription": "Available items will appear here. Adjust the filters or create a new item.",
+    "clear": "Clear search/filters",
+    "loading": "Loading maintenance…",
+    "loadError": "Unable to load maintenance.",
+    "generateDescription": "Choose eligible equipment and a date. The work order will use the plan checklist.",
+    "checklist": "Plan checklist",
+    "sourcePlan": "Source plan: {{name}}"
   }
 }

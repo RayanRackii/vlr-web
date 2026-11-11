@@ -188,3 +188,18 @@ describe("Pedidos child breadcrumb", () => {
     expect(screen.queryByRole("navigation")).not.toBeInTheDocument()
   })
 })
+
+it.each([
+  ["/manutencao/planos/novo", "Novo plano"],
+  ["/manutencao/ordens/nova", "Nova ordem"],
+])("links the new child breadcrumb back to maintenance at %s", (path, title) => {
+  renderBreadcrumb(path)
+  const nav = screen.getByRole("navigation", { name: i18n.t("nav.breadcrumbLabel") })
+  expect(within(nav).getByRole("link", { name: "Manutenção" })).toHaveAttribute("href", "/manutencao")
+  expect(within(nav).getByText(title)).toHaveAttribute("aria-current", "page")
+  expect(within(nav).getByText("/")).toBeInTheDocument()
+})
+it("does not repeat the maintenance list title in a breadcrumb", () => {
+  renderBreadcrumb("/manutencao")
+  expect(screen.queryByRole("navigation")).not.toBeInTheDocument()
+})

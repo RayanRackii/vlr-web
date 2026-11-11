@@ -149,25 +149,19 @@ describe("module introductions", () => {
     expect(within(nav).getByRole("link", { name: "Recursos" })).toBeVisible()
   })
 
-  it("navigates from a nested module title while its own toggle still expands", async () => {
-    const user = userEvent.setup()
-    renderIntro("/pmoc", { sidebar: true })
+  it("keeps the PMOC introduction directly reachable alongside the unified sidebar", () => {
+    renderIntro("/modulos/pmoc", { sidebar: true })
+    expect(screen.getByRole("heading", { level: 1, name: "Planos de manutenção" })).toBeInTheDocument()
     const nav = screen.getByRole("navigation", { name: "Menu de navegação" })
-    await user.click(within(nav).getByRole("button", { name: "Recolher Planos de manutenção" }))
-    expect(within(nav).queryByRole("link", { name: "Meus planos" })).not.toBeInTheDocument()
-    await user.click(within(nav).getByRole("link", { name: "Sobre Planos de manutenção" }))
-    expect(screen.getByTestId("location")).toHaveTextContent("/modulos/pmoc")
-    expect(within(nav).getByRole("link", { name: "Sobre Planos de manutenção" })).toHaveAttribute("aria-current", "page")
-    await user.click(within(nav).getByRole("button", { name: "Expandir Planos de manutenção" }))
-    expect(within(nav).getByRole("link", { name: "Meus planos" })).toBeVisible()
+    expect(within(nav).getByRole("link", { name: "Manutenção" })).toHaveAttribute("href", "/manutencao")
+    expect(within(nav).queryByRole("link", { name: "Novo plano" })).not.toBeInTheDocument()
   })
 
-  it("keeps nested module intros reachable in the collapsed rail", async () => {
+  it("opens unified maintenance from the collapsed rail", async () => {
     renderIntro("/pmoc", { sidebar: true, collapsed: true })
     const nav = screen.getByRole("navigation", { name: "Menu de navegação" })
-    await userEvent.click(within(nav).getByRole("button", { name: "Expandir Planos de manutenção" }))
-    await userEvent.click(screen.getByRole("link", { name: "Sobre Planos de manutenção" }))
-    expect(screen.getByRole("heading", { level: 1, name: "Planos de manutenção" })).toBeInTheDocument()
+    await userEvent.click(within(nav).getByRole("link", { name: "Manutenção" }))
+    expect(screen.getByTestId("location")).toHaveTextContent("/manutencao")
   })
 
   it.each(["pt-BR", "en", "es"])("has complete intro and control translations in %s", async (locale) => {
