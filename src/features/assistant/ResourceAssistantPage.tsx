@@ -93,13 +93,24 @@ export function ResourceAssistantPage() {
     setOpen((current) => current === step ? null : step)
   }
 
-  function saveDurations(next: number[]) {
-    void wizard.savePolicy({
+  function currentPolicy() {
+    return {
       schedulePolicy: asset.schedulePolicy,
       openTime: asset.openTime,
       closeTime: asset.closeTime,
+      allowedDurationMinutes: asset.allowedDurationMinutes,
+    }
+  }
+
+  function saveDurations(next: number[]) {
+    void wizard.savePolicy({
+      ...currentPolicy(),
       allowedDurationMinutes: next.length > 0 ? next.join(",") : null,
     })
+  }
+
+  function saveTerms(patch: { minimumBookingLeadMinutes?: number | null; depositPercent?: number | null }) {
+    void wizard.savePolicy({ ...currentPolicy(), ...patch })
   }
 
   return (
@@ -171,6 +182,8 @@ export function ResourceAssistantPage() {
                       : hours === 0
                         ? { cancelCutoffMode: "none", cancelCutoffHours: "0" }
                         : { cancelCutoffMode: "hours", cancelCutoffHours: String(hours) })}
+                    onLead={(minutes) => saveTerms({ minimumBookingLeadMinutes: minutes })}
+                    onDeposit={(percent) => saveTerms({ depositPercent: percent })}
                   />
                 ) : null}
                 {step === "precos" ? (
@@ -214,6 +227,75 @@ export function ResourceAssistantPage() {
   )
 }
 
+function InheritedNumberControl({
+  title,
+  note,
+  stored,
+  effective,
+  inheritedText,
+  inheritedNone,
+  overrideText,
+  inputLabel,
+  invalidText,
+  max,
+  busy,
+  onSave,
+}: {
+  title: string
+  note?: string
+  stored: number | null | undefined
+  effective: number | null | undefined
+  inheritedText: (count: number) => string
+  inheritedNone: string
+  overrideText: (count: number) => string
+  inputLabel: string
+  invalidText: string
+  max: number
+  busy: boolean
+  onSave: (value: number | null) => void
+}) {
+  const { t } = useTranslation()
+  const [invalid, setInvalid] = useState(false)
+  const hasOverride = typeof stored === "number"
+  return (
+    <section aria-label={title} className="space-y-2">
+      <h3 className="text-sm font-semibold">{title}</h3>
+      {note ? <p className="text-sm text-muted-foreground">{note}</p> : null}
+      <p className="text-sm" role="status">
+        {hasOverride ? overrideText(stored) : typeof effective === "number" ? inheritedText(effective) : inheritedNone}
+      </p>
+      <form
+        className="flex flex-col gap-2 sm:flex-row sm:items-end"
+        onSubmit={(event) => {
+          event.preventDefault()
+          const raw = String(new FormData(event.currentTarget).get("value") ?? "").trim()
+          if (!/^\d+$/.test(raw)) {
+            setInvalid(true)
+            return
+          }
+          const value = Number(raw)
+          if (!Number.isInteger(value) || value > max) {
+            setInvalid(true)
+            return
+          }
+          setInvalid(false)
+          onSave(value)
+        }}
+      >
+        <label className="block min-w-0 flex-1 space-y-1 text-sm font-medium">
+          {inputLabel}
+          <Input key={hasOverride ? String(stored) : "inherit"} name="value" inputMode="numeric" className="min-h-11" defaultValue={hasOverride ? String(stored) : ""} aria-invalid={invalid} />
+        </label>
+        <Button type="submit" className="min-h-11 w-full sm:w-auto" disabled={busy}>{t("assistant.saveStep")}</Button>
+      </form>
+      {invalid ? <p role="alert" className="text-sm text-destructive">{invalidText}</p> : null}
+      {hasOverride ? (
+        <Button type="button" variant="outline" className="min-h-11 w-full sm:w-auto" disabled={busy} onClick={() => onSave(null)}>{t("assistant.useInherited")}</Button>
+      ) : null}
+    </section>
+  )
+}
+
 function QueueStep({ asset, busy, canWrite, onSave }: {
   asset: AdminRentalAsset
   busy: boolean
@@ -232,12 +314,14 @@ function QueueStep({ asset, busy, canWrite, onSave }: {
   )
 }
 
-function RulesStep({ asset, busy, products, onDurations, onCutoff }: {
+function RulesStep({ asset, busy, products, onDurations, onCutoff, onLead, onDeposit }: {
   asset: AdminRentalAsset
   busy: boolean
   products: readonly CatalogProduct[]
   onDurations: (minutes: number[]) => void
   onCutoff: (hours: number | null) => void
+  onLead: (minutes: number | null) => void
+  onDeposit: (percent: number | null) => void
 }) {
   const { t } = useTranslation()
   const selected = parseDurations(asset.allowedDurationMinutes)
@@ -266,6 +350,33 @@ function RulesStep({ asset, busy, products, onDurations, onCutoff }: {
           ))}
         </div>
       </div>
+      <InheritedNumberControl
+        title={t("assistant.leadTitle")}
+        stored={asset.minimumBookingLeadMinutes}
+        effective={asset.effectiveMinimumBookingLeadMinutes}
+        inheritedText={(count) => t("assistant.leadInherited", { count })}
+        inheritedNone={t("assistant.leadInheritedNone")}
+        overrideText={(count) => t("assistant.leadOverride", { count })}
+        inputLabel={t("assistant.leadInput")}
+        invalidText={t("assistant.leadInvalid")}
+        max={525600}
+        busy={busy}
+        onSave={onLead}
+      />
+      <InheritedNumberControl
+        title={t("assistant.depositTitle")}
+        note={t("assistant.depositStoredOnly")}
+        stored={asset.depositPercent}
+        effective={asset.effectiveDepositPercent}
+        inheritedText={(count) => t("assistant.depositInherited", { count })}
+        inheritedNone={t("assistant.depositInheritedNone")}
+        overrideText={(count) => t("assistant.depositOverride", { count })}
+        inputLabel={t("assistant.depositInput")}
+        invalidText={t("assistant.depositInvalid")}
+        max={100}
+        busy={busy}
+        onSave={onDeposit}
+      />
       <section aria-label={t("assistant.audienceTitle")} className="space-y-2">
         <h3 className="text-sm font-semibold">{t("assistant.audienceTitle")}</h3>
         {products.length === 0 ? <p className="text-sm text-muted-foreground">{t("assistant.audienceEmpty")}</p> : products.map((product) => (

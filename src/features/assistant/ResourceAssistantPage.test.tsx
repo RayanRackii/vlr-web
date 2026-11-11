@@ -36,11 +36,11 @@ const savePolicy = vi.fn()
 const saveQueue = vi.fn()
 const saveFields = vi.fn()
 
-function setup() {
+function setup(overrides: Partial<AdminRentalAsset> = {}) {
   vi.mocked(useResourceWizard).mockReturnValue({
     loading: false,
     error: null,
-    model: { asset, menuItems: [], templates: [], kinds: [], prices: [] },
+    model: { asset: { ...asset, ...overrides }, menuItems: [], templates: [], kinds: [], prices: [] },
     access: { assetWrite: true, scheduleRead: true, scheduleWrite: true, pricingRead: true, pricingWrite: true, pricingReplace: true },
     busy: false,
     busyAction: null,
@@ -85,6 +85,49 @@ it("edits the durations and the cancel cutoff that already persist", async () =>
   const audience = await screen.findByRole("link", { name: "Editar no produto" })
   expect(audience).toHaveAttribute("href", `/catalogo/produtos/${productId}/assistente?passo=access`)
   expect(screen.queryByRole("dialog")).not.toBeInTheDocument()
+})
+
+it("overrides the inherited lead and deposit, and clears the deposit", async () => {
+  const user = userEvent.setup()
+  setup({
+    minimumBookingLeadMinutes: null,
+    effectiveMinimumBookingLeadMinutes: 180,
+    depositPercent: 30,
+    effectiveDepositPercent: 30,
+  })
+  await user.click(within(screen.getByRole("region", { name: "Regras" })).getByRole("button", { name: "Editar" }))
+
+  const lead = screen.getByRole("region", { name: "Antecedência mínima" })
+  expect(within(lead).getByRole("status")).toHaveTextContent("Herdado: 180 min.")
+  expect(within(lead).queryByRole("button", { name: "Usar o valor herdado" })).not.toBeInTheDocument()
+  await user.type(within(lead).getByRole("textbox", { name: "Minutos deste recurso" }), "90")
+  await user.click(within(lead).getByRole("button", { name: "Salvar passo" }))
+  expect(savePolicy).toHaveBeenCalledWith({
+    schedulePolicy: "OpenHours",
+    openTime: "08:00:00",
+    closeTime: "20:00:00",
+    allowedDurationMinutes: null,
+    minimumBookingLeadMinutes: 90,
+  })
+
+  const deposit = screen.getByRole("region", { name: "Percentual de sinal" })
+  expect(deposit).toHaveTextContent("Este percentual fica só salvo. Ainda não há cobrança parcial.")
+  expect(within(deposit).getByRole("status")).toHaveTextContent("Neste recurso: 30%.")
+  expect(within(deposit).getByRole("button", { name: "Salvar passo" })).toHaveClass("w-full")
+  await user.click(within(deposit).getByRole("button", { name: "Usar o valor herdado" }))
+  expect(savePolicy).toHaveBeenLastCalledWith({
+    schedulePolicy: "OpenHours",
+    openTime: "08:00:00",
+    closeTime: "20:00:00",
+    allowedDurationMinutes: null,
+    depositPercent: null,
+  })
+
+  await user.clear(within(lead).getByRole("textbox", { name: "Minutos deste recurso" }))
+  await user.type(within(lead).getByRole("textbox", { name: "Minutos deste recurso" }), "525601")
+  await user.click(within(lead).getByRole("button", { name: "Salvar passo" }))
+  expect(within(lead).getByRole("alert")).toHaveTextContent("Use um número inteiro de 0 a 525600.")
+  expect(savePolicy).toHaveBeenCalledTimes(2)
 })
 
 it("keeps the steps on the page at phone width", async () => {

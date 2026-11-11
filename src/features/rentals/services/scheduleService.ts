@@ -181,6 +181,12 @@ export const rentalAssetSchema = z.object({
   familyId: guidLikeIdSchema.nullable().optional(),
   cancelCutoffHours: z.number().int().min(0).max(8760).nullable().optional(),
   effectiveCancelCutoffHours: z.number().int().min(0).max(8760).nullable().optional(),
+  /** Stored override. Null inherits category, then tenant. Absent means the API did not send it. */
+  minimumBookingLeadMinutes: z.number().int().min(0).max(525600).nullable().optional(),
+  effectiveMinimumBookingLeadMinutes: z.number().int().min(0).max(525600).nullable().optional(),
+  /** Stored override. Null inherits. This percent is not applied to a charge. */
+  depositPercent: z.number().int().min(0).max(100).nullable().optional(),
+  effectiveDepositPercent: z.number().int().min(0).max(100).nullable().optional(),
   /** Stored override. Null inherits the tenant policy. Absent means not sent. */
   maxAdvanceBookingDays: z
     .number()
@@ -220,6 +226,10 @@ export type UpdateSchedulePolicyInput = {
   openTime?: string | null
   closeTime?: string | null
   allowedDurationMinutes?: string | null
+  /** Undefined omits the field and keeps the stored override. Null clears it. */
+  minimumBookingLeadMinutes?: number | null
+  /** Undefined omits the field and keeps the stored override. Null clears it. */
+  depositPercent?: number | null
 }
 
 export const DAY_NAMES = [
@@ -614,7 +624,14 @@ export async function updateRentalSchedulePolicyBulk(
 }
 
 function toSchedulePolicyBody(body: UpdateSchedulePolicyInput) {
-  return {
+  const payload: {
+    schedulePolicy: SchedulePolicy
+    openTime: string | null
+    closeTime: string | null
+    allowedDurationMinutes: string | null
+    minimumBookingLeadMinutes?: number | null
+    depositPercent?: number | null
+  } = {
     schedulePolicy: body.schedulePolicy,
     openTime: body.openTime
       ? normalizeScheduleTime(body.openTime).slice(0, 8)
@@ -624,6 +641,13 @@ function toSchedulePolicyBody(body: UpdateSchedulePolicyInput) {
       : null,
     allowedDurationMinutes: body.allowedDurationMinutes ?? null,
   }
+  if (body.minimumBookingLeadMinutes !== undefined) {
+    payload.minimumBookingLeadMinutes = body.minimumBookingLeadMinutes
+  }
+  if (body.depositPercent !== undefined) {
+    payload.depositPercent = body.depositPercent
+  }
+  return payload
 }
 
 /**
