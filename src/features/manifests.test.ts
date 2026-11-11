@@ -117,6 +117,7 @@ describe("feature manifests", () => {
     ])
     expect(notificationsManifest.modules).toEqual(["catalog", "rentals"])
     expect(notificationsManifest.routes.staff.map((route) => route.path)).toEqual([
+      "/notificacoes",
       "/configuracoes/notificacoes",
     ])
 

@@ -1717,6 +1717,32 @@
         "rentals": "Rentals"
       }
     },
+    "page": {
+      "subtitle": "Choose where each notice is sent and follow the deliveries.",
+      "tabs": { "channels": "Channels", "history": "History" },
+      "channelsTitle": "Channels by event",
+      "channelsSubtitle": "Choose the channels that notify customers and staff for each event.",
+      "historyTitle": "Delivery history",
+      "historySubtitle": "Notices sent, with channel, recipient, and result.",
+      "search": "Search by recipient or event",
+      "filters": "Filters",
+      "status": "Status",
+      "channel": "Channel",
+      "event": "Event",
+      "period": "Period",
+      "all": "All",
+      "clear": "Clear search and filters",
+      "emptyChannelsTitle": "No channels to configure",
+      "emptyChannels": "No module with notices is active in this workspace.",
+      "emptyHistoryTitle": "No deliveries yet",
+      "emptyHistory": "Sent notices show up here, with the channel and the result.",
+      "noResultsTitle": "No deliveries found",
+      "noResults": "Nothing matches the search or the filters.",
+      "showing": "Showing {{shown}} of {{total}}",
+      "previous": "Previous page",
+      "next": "Next page",
+      "modules": { "catalog": "Orders", "rentals": "Bookings" }
+    },
     "inbox": {
       "items": {
         "reservationConfirmed": "Reservation confirmed.",
