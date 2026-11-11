@@ -40,6 +40,9 @@ describe("Tabs styling hooks", () => {
     expect(container.querySelector('[data-slot="tabs"]')).toHaveAttribute("data-orientation", "horizontal")
     expect(screen.getByRole("tab", { name: "A" })).toHaveAttribute("data-active")
     expect(screen.getByRole("tab", { name: "B" })).not.toHaveAttribute("data-active")
+    const active = screen.getByRole("tab", { name: "A" })
+    expect(active.className).toContain("before:inset-x-0")
+    expect(active.className).not.toContain("after:inset-x-0")
   })
 
   it("compiles the orientation and active variants to real selectors", async () => {
@@ -48,10 +51,10 @@ describe("Tabs styling hooks", () => {
     expect(css).toMatch(/\[data-orientation="horizontal"\] ?\{ ?flex-direction: column/)
     // horizontal list keeps its bar height
     expect(css).toMatch(/\.group\\\/tabs\[data-orientation="horizontal"\] \.group-data-horizontal\\\/tabs\\:h-8/)
-    // active tab underline in the line variant
-    expect(css).toMatch(/\[data-active\]::after ?\{ ?content: var\(--tw-content\); ?opacity: 1/)
-    // Keep the underline inside horizontally scrollable lists.
-    expect(css).toMatch(/::after ?\{ ?content: var\(--tw-content\); ?bottom: 0px/)
+    // The line sits on ::before. ::after is reserved for the touch-target hit area.
+    expect(css).toMatch(/\[data-active\]::before ?\{ ?content: var\(--tw-content\); ?opacity: 1/)
+    expect(css).toMatch(/::before ?\{ ?content: var\(--tw-content\); ?bottom: 0px/)
+    expect(css).not.toMatch(/\[data-active\]::after[^{]*\{[^}]*opacity: 1/)
     expect(css).not.toContain("bottom: -5px")
   })
 })

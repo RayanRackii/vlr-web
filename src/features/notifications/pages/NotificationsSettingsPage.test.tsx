@@ -212,6 +212,9 @@ describe("NotificationsSettingsPage", () => {
       name: i18n.t("notifications.settings.modules.rentals"),
     })
     expect(catalogTab).toHaveAttribute("aria-selected", "true")
+    expect(catalogTab.className).toContain("before:bg-primary")
+    expect(catalogTab.className).not.toContain("after:bg-primary")
+    expect(rentalsTab.className).toContain("touch-target")
     expect(screen.getAllByRole("table")).toHaveLength(2)
     expect(within(screen.getByRole("tabpanel")).queryByText(i18n.t("rentals.events.reservationConfirmed"))).not.toBeInTheDocument()
 

@@ -227,7 +227,7 @@ export function NotificationsSettingsPage() {
               <TabsTrigger
                 key={group.module}
                 value={group.module}
-                className="touch-target min-h-11 flex-none rounded-none px-4 py-2 max-[759.98px]:flex-1 max-[759.98px]:px-2 after:bg-primary data-active:text-primary dark:data-active:text-foreground group-data-horizontal/tabs:after:bottom-[-1px]"
+                className="touch-target min-h-11 flex-none rounded-none px-4 py-2 max-[759.98px]:flex-1 max-[759.98px]:px-2 before:bg-primary data-active:text-primary dark:data-active:text-foreground group-data-horizontal/tabs:before:bottom-[-1px]"
               >
                 {t(`notifications.settings.modules.${group.module}`, {
                   defaultValue: group.module,
