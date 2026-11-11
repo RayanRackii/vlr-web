@@ -4,24 +4,24 @@ import { useTranslation } from "react-i18next"
 import { Button } from "@/components/ui/button"
 import "./cadastro.css"
 
-export function CadastroHeader({ title, step = "dados" }: { title: string; step?: CadastroStep }) {
+export function CadastroHeader({ title, step = "dados", area }: { title: string; step?: CadastroStep; area: "products" | "resources" }) {
   const { t } = useTranslation()
-  return <header className="space-y-2">
-    <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t("cadastro.title")}</p>
-    <h1 className="text-[26px] font-bold tracking-tight text-foreground">{title}</h1>
-    <p className="text-sm text-muted-foreground">{t("cadastro.subtitle", { count: cadastroSteps.indexOf(step) + 1, total: cadastroSteps.length, step: t(`assistant.steps.${step}`) })}</p>
+  return <header className="min-w-0 space-y-1">
+    <p className="cadastro-eyebrow">{t(area === "products" ? "cadastro.eyebrowProducts" : "cadastro.eyebrowResources")}</p>
+    <h1 className="text-xl font-semibold tracking-tight sm:text-2xl">{title}</h1>
+    <p className="max-w-2xl text-sm text-muted-foreground">{t("cadastro.subtitle", { count: cadastroSteps.indexOf(step) + 1, total: cadastroSteps.length, step: t(`assistant.steps.${step}`) })}</p>
   </header>
 }
 
-export function CadastroShell({ title, step, go, busy, dirty = false, canPublish, onPublish, onBack, children }: {
-  title: string; step: CadastroStep; go: (step: CadastroStep) => void
+export function CadastroShell({ title, step, area, go, busy, dirty = false, canPublish, onPublish, onBack, children }: {
+  title: string; step: CadastroStep; area: "products" | "resources"; go: (step: CadastroStep) => void
   dirty?: boolean; busy: boolean; canPublish: boolean; onPublish: () => void; onBack: () => void; children: ReactNode
 }) {
   const { t } = useTranslation()
   const index = cadastroSteps.indexOf(step)
   return <div className="cadastro-page">
-    <CadastroHeader title={title} step={step} />
-    <nav aria-label={t("cadastro.steps")} className="overflow-x-auto rounded-xl border bg-card">
+    <CadastroHeader title={title} step={step} area={area} />
+    <nav aria-label={t("cadastro.steps")} className="min-w-0 max-w-full overflow-x-auto rounded-xl border bg-card">
       <ol className="flex min-w-max p-2">
         {cadastroSteps.map((item, i) => <li key={item}>
           <Button type="button" variant="ghost" className="min-h-11 gap-2" disabled={busy || dirty} aria-current={step === item ? "step" : undefined} onClick={() => go(item)}>

@@ -218,7 +218,7 @@ export function ResourceAssistantPage({ cadastro = false }: { cadastro?: boolean
       </div>
   )
 
-  if (cadastro) return <CadastroShell title={asset.name} step={cadastroStep} go={go} dirty={stepDirty} busy={wizard.busy || stepSaving} canPublish={firstMissing == null && wizard.access.menuWrite} onPublish={() => void wizard.publishMenu()} onBack={() => navigate("/configuracoes/recursos")}>
+  if (cadastro) return <CadastroShell area="resources" title={asset.name} step={cadastroStep} go={go} dirty={stepDirty} busy={wizard.busy || stepSaving} canPublish={firstMissing == null && wizard.access.menuWrite} onPublish={() => void wizard.publishMenu()} onBack={() => navigate("/configuracoes/recursos")}>
     {cadastroStep === "categorias" ? <CadastroTaxonomyStep onDirtyChange={setStepDirty} onSavingChange={setStepSaving} /> : body}
   </CadastroShell>
 

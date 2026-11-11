@@ -40,6 +40,9 @@ export function Breadcrumb() {
   const crumbs: { label: string; to?: string }[] = []
   const intro = matchModuleIntro(sections, pathname)
 
+  const normalized = pathname.replace(/\/+$/, "") || "/"
+  if (/^\/(?:catalogo\/produtos|configuracoes\/recursos)\/(?:[^/]+\/)?cadastro$/.test(normalized)) return null
+
   const maintenanceChild = pathname.startsWith("/manutencao/")
   const pedidosChild = pathname.startsWith("/pedidos/")
   if (maintenanceChild) {

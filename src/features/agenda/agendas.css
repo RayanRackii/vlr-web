@@ -1,6 +1,6 @@
 /* Only the new staff pages opt out of the shell width, like Pessoas e acesso. */
 [data-shell-part="main"]:has(.agendas-page) > div { max-width: none; }
-.agendas-page { max-width: 1240px; }
+.agendas-page { width: 100%; max-width: min(1240px, 100%); min-width: 0; overflow-wrap: anywhere; }
 .agendas-eyebrow { color: var(--primary); font-size: .8125rem; font-weight: 600; letter-spacing: .025em; }
 .agendas-page :is(button, input):focus-visible { outline: none; box-shadow: 0 0 0 1px var(--ring); }
 
