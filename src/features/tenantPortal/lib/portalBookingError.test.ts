@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest"
 import {
   describeBookingError,
   isBookingHorizonError,
+  isBookingLeadTimeError,
   isDailyBookingLimitError,
   isCancelCutoffError,
   isSlotTakenConflict,
@@ -119,6 +120,41 @@ describe("portal booking failures", () => {
       "La fecha pedida supera el límite de reserva.",
     )
     await i18n.changeLanguage("pt-BR")
+  })
+
+  it("translates a booking that starts too soon", async () => {
+    const error = portalBookingErrorFromUnknown(
+      axiosError(400, {
+        error: "A reserva precisa ser feita com pelo menos 90 minutos de antecedência.",
+        code: "booking_lead_time_not_met",
+      }),
+      "fallback",
+    )
+
+    expect(isBookingLeadTimeError(error)).toBe(true)
+    expect(error.minimumBookingLeadMinutes).toBe(90)
+    expect(describeBookingError(error, "fallback")).toBe(
+      "A reserva precisa ser feita com pelo menos 90 minutos de antecedência.",
+    )
+    expect(error.message).toBe("A reserva precisa ser feita com pelo menos 90 minutos de antecedência.")
+    await i18n.changeLanguage("en")
+    expect(describeBookingError(error, "fallback")).toBe("Book at least 90 minutes ahead.")
+    await i18n.changeLanguage("es")
+    expect(describeBookingError(error, "fallback")).toBe(
+      "La reserva tiene que hacerse con al menos 90 minutos de antelación.",
+    )
+    await i18n.changeLanguage("pt-BR")
+
+    const missing = portalBookingErrorFromUnknown(
+      axiosError(400, { error: "too soon", code: "booking_lead_time_not_met" }),
+      "fallback",
+    )
+    expect(describeBookingError(missing, "fallback")).toBe("A reserva precisa ser feita com mais antecedência.")
+    expect(isBookingLeadTimeError(portalBookingErrorFromUnknown(
+      axiosError(500, { code: "booking_lead_time_not_met", minimumBookingLeadMinutes: 30 }),
+      "fallback",
+    ))).toBe(false)
+    expect(isSlotTakenConflict(error)).toBe(false)
   })
 })
 

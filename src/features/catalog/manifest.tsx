@@ -13,6 +13,7 @@ import { CatalogCustomerGroupsPage } from "@/features/catalog/pages/CatalogCusto
 import { CatalogProductCreatePage } from "@/features/catalog/pages/CatalogProductCreatePage"
 import { CatalogProductEditorPage } from "@/features/catalog/pages/CatalogProductEditorPage"
 import { ProductWizardPage } from "@/features/catalog/pages/ProductWizardPage"
+import { ProductAssistantPage } from "@/features/assistant/ProductAssistantPage"
 import { CatalogProductsPage } from "@/features/catalog/pages/CatalogProductsPage"
 import { PortalCartPage } from "@/features/catalog/pages/PortalCartPage"
 import { PortalCatalogPage } from "@/features/catalog/pages/PortalCatalogPage"
@@ -121,6 +122,11 @@ export const catalogManifest = {
       {
         path: "/catalogo/produtos/:id/assistente",
         element: <ProductWizardPage />,
+        permission: "catalog.products.read",
+      },
+      {
+        path: "/catalogo/produtos/:id/passos",
+        element: <ProductAssistantPage />,
         permission: "catalog.products.read",
       },
       {

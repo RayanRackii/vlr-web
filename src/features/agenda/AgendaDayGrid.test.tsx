@@ -247,6 +247,29 @@ it("uses the order list number and the customer when the grid block has neither"
   expect(within(detail).getByText("Marina")).toBeInTheDocument()
 })
 
+it("uses the day list at a 400px viewport before the column is measured", async () => {
+  const previous = window.innerWidth
+  vi.stubGlobal("matchMedia", () => ({
+    matches: false,
+    media: "",
+    addEventListener: () => {},
+    removeEventListener: () => {},
+    onchange: null,
+    addListener: () => {},
+    removeListener: () => {},
+    dispatchEvent: () => false,
+  }))
+  Object.defineProperty(window, "innerWidth", { configurable: true, value: 400 })
+  try {
+    setup()
+    const grid = await screen.findByRole("region", { name: "Grade do dia" })
+    expect(grid.className).not.toContain("overflow-x-auto")
+    expect(within(grid).queryByText("06:00")).not.toBeInTheDocument()
+  } finally {
+    Object.defineProperty(window, "innerWidth", { configurable: true, value: previous })
+  }
+})
+
 it("uses the day list when the agenda column is 512px on a wide viewport", async () => {
   vi.stubGlobal("matchMedia", () => ({
     matches: false,

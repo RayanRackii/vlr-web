@@ -12,6 +12,7 @@ import { ReservationsScreen } from "@/features/rentals/pages/ReservationsScreen"
 import { RentalLayoutsPage } from "@/features/rentals/pages/RentalLayoutsPage"
 import { RentalResourceEditorPage } from "@/features/rentals/pages/RentalResourceEditorPage"
 import { RentalResourcesPage } from "@/features/rentals/pages/RentalResourcesPage"
+import { ResourceAssistantPage } from "@/features/assistant/ResourceAssistantPage"
 import { ResourceWizardPage } from "@/features/rentals/pages/ResourceWizardPage"
 import { SchedulePage } from "@/features/rentals/pages/SchedulePage"
 
@@ -100,6 +101,11 @@ export const rentalsManifest = {
       {
         path: "/configuracoes/recursos/:id/assistente",
         element: <ResourceWizardPage />,
+        permissions: RENTAL_RESOURCES_PERMISSIONS,
+      },
+      {
+        path: "/configuracoes/recursos/:id/passos",
+        element: <ResourceAssistantPage />,
         permissions: RENTAL_RESOURCES_PERMISSIONS,
       },
       {

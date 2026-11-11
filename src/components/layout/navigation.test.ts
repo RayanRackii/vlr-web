@@ -464,8 +464,14 @@ describe("getPageTitleKey", () => {
 
   it("resolves the rentals resources page", () => {
     expect(getPageTitleKey("/configuracoes/recursos")).toBe("nav.rentalsResources")
+    expect(getPageTitleKey("/configuracoes/recursos/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa/passos")).toBe(
+      "nav.rentalsResourceWizard",
+    )
     expect(getPageTitleKey("/configuracoes/recursos/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa/assistente")).toBe(
       "nav.rentalsResourceWizard",
+    )
+    expect(getPageTitleKey("/catalogo/produtos/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa/passos")).toBe(
+      "nav.catalogProductWizard",
     )
     expect(getPageTitleKey("/catalogo/produtos/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa/assistente")).toBe(
       "nav.catalogProductWizard",

@@ -32,22 +32,39 @@ function axisBounds(start: number | null, end: number | null) {
 }
 
 const NARROW_AGENDA = "(max-width: 639px)"
-
-function subscribeNarrowAgenda(onChange: () => void) {
-  if (typeof window.matchMedia !== "function") return () => {}
-  const media = window.matchMedia(NARROW_AGENDA)
-  media.addEventListener("change", onChange)
-  return () => media.removeEventListener("change", onChange)
-}
-
-function narrowAgendaSnapshot() {
-  return typeof window.matchMedia === "function" && window.matchMedia(NARROW_AGENDA).matches
-}
-
 const NARROW_COLUMN_PX = 640
 
+function readViewportWidth(): number {
+  if (typeof window === "undefined") return NARROW_COLUMN_PX
+  const layout = window.innerWidth
+  const visual = window.visualViewport?.width ?? 0
+  if (layout > 0 && visual > 0) return Math.round(Math.min(layout, visual))
+  return layout > 0 ? layout : 0
+}
+
+function viewportIsNarrow(): boolean {
+  const media = typeof window !== "undefined" && typeof window.matchMedia === "function" && window.matchMedia(NARROW_AGENDA).matches
+  const width = readViewportWidth()
+  return media || (width > 0 && width < NARROW_COLUMN_PX)
+}
+
+function subscribeViewport(onChange: () => void) {
+  if (typeof window === "undefined") return () => {}
+  // Browser zoom changes the CSS viewport. Chrome does not always emit a
+  // matchMedia change for that, but it does resize the window.
+  window.addEventListener("resize", onChange)
+  window.visualViewport?.addEventListener("resize", onChange)
+  const media = typeof window.matchMedia === "function" ? window.matchMedia(NARROW_AGENDA) : null
+  media?.addEventListener("change", onChange)
+  return () => {
+    window.removeEventListener("resize", onChange)
+    window.visualViewport?.removeEventListener("resize", onChange)
+    media?.removeEventListener("change", onChange)
+  }
+}
+
 function useNarrowAgenda() {
-  const viewport = useSyncExternalStore(subscribeNarrowAgenda, narrowAgendaSnapshot, () => false)
+  const viewportNarrow = useSyncExternalStore(subscribeViewport, viewportIsNarrow, () => false)
   const observerRef = useRef<ResizeObserver | null>(null)
   const [width, setWidth] = useState(0)
   const ref = useCallback((node: HTMLDivElement | null) => {
@@ -55,15 +72,19 @@ function useNarrowAgenda() {
     observerRef.current = null
     if (!node || typeof ResizeObserver === "undefined") return
     const observer = new ResizeObserver((entries) => {
-      const next = Math.round(entries[0]?.contentRect.width ?? 0)
+      const target = entries[0]?.target
+      const box = target instanceof HTMLElement ? target.clientWidth : 0
+      const content = entries[0]?.contentRect.width ?? 0
+      const next = Math.round(box > 0 && content > 0 ? Math.min(box, content) : box || content)
       setWidth((current) => (current === next ? current : next))
     })
     observer.observe(node)
     observerRef.current = observer
   }, [])
-  // The staff sidebar is a drawer below 1024px and a 16rem rail from there up.
-  // Viewport media queries miss a column that is already under 640px.
-  return { ref, narrow: viewport || (width > 0 && width < NARROW_COLUMN_PX) }
+  // Width 0 means the column has not been measured yet, so the viewport decides
+  // the first paint. A later measurement can still switch a wide window whose
+  // sidebar leaves this column under 640px.
+  return { ref, narrow: viewportNarrow || (width > 0 && width < NARROW_COLUMN_PX) }
 }
 
 function orderNumber(block: AgendaBlock): string | null {
@@ -155,7 +176,7 @@ export function AgendaDayGrid({ loading, failedSources, rows, start, end, canRes
   }
 
   return (
-    <div ref={columnRef} className="space-y-4">
+    <div ref={columnRef} className="w-full min-w-0 space-y-4">
       {failedSources.map((source) => (
         <p key={source} role="status" className="text-sm text-muted-foreground">
           {t(`staffAgenda.sourceWarning.${source}`)}

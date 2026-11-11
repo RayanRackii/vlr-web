@@ -397,11 +397,11 @@ export function getPageTitleKey(
     return "account.profile"
   }
 
-  if (/^\/configuracoes\/recursos\/[^/]+\/assistente\/?$/.test(pathname)) {
+  if (/^\/configuracoes\/recursos\/[^/]+\/(assistente|passos)\/?$/.test(pathname)) {
     return "nav.rentalsResourceWizard"
   }
 
-  if (/^\/catalogo\/produtos\/[^/]+\/assistente\/?$/.test(pathname)) {
+  if (/^\/catalogo\/produtos\/[^/]+\/(assistente|passos)\/?$/.test(pathname)) {
     return "nav.catalogProductWizard"
   }
 

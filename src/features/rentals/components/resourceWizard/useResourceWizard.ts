@@ -57,7 +57,7 @@ export function useResourceWizard(rentalAssetId: string) {
   const [model, setModel] = useState<WizardModel | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [busyAction, setBusyAction] = useState<ScheduleBusyAction | "menu" | "kind" | "price" | "queue" | null>(null)
+  const [busyAction, setBusyAction] = useState<ScheduleBusyAction | "menu" | "kind" | "price" | "queue" | "details" | null>(null)
   const wizardPath = resourceWizardPath(rentalAssetId)
   const readOnlyTrial = isTrialReadOnly
   const active = useRef(true)
@@ -240,9 +240,12 @@ export function useResourceWizard(rentalAssetId: string) {
     }
     return run("policy", async () => {
       await updateRentalSchedulePolicy(asset.id, input)
-      toast.success(t(input.schedulePolicy === "OpenHours"
-        ? "rentals.schedule.policy.saveOpenHoursSuccess"
-        : "rentals.schedule.policy.saveSlotGridSuccess"))
+      const savingTerms = input.minimumBookingLeadMinutes !== undefined || input.depositPercent !== undefined
+      toast.success(t(savingTerms
+        ? "assistant.saved"
+        : input.schedulePolicy === "OpenHours"
+          ? "rentals.schedule.policy.saveOpenHoursSuccess"
+          : "rentals.schedule.policy.saveSlotGridSuccess"))
     })
   }
 
@@ -281,6 +284,24 @@ export function useResourceWizard(rentalAssetId: string) {
         }
       }
       toast.success(t("rentals.resourceWizard.prices.saved"))
+    })
+  }
+
+  function saveFields(patch: Partial<ReturnType<typeof buildRentalResourceFormValues>>) {
+    const asset = model?.asset
+    if (!asset) {
+      return Promise.resolve()
+    }
+    return run("details", async () => {
+      const values = { ...buildRentalResourceFormValues(asset, [], [], []), ...patch }
+      const body = toCreateRentableRequest(values, {
+        creating: false,
+        stored: asset.maxAdvanceBookingDays,
+        storedVisualTemplateRevisionId: asset.visualTemplateRevisionId,
+        storedCapacityPeople: asset.capacityPeople,
+      })
+      await updateRentalAsset(asset.id, body)
+      toast.success(t("assistant.saved"))
     })
   }
 
@@ -323,6 +344,7 @@ export function useResourceWizard(rentalAssetId: string) {
     seedTemplates,
     savePrices,
     saveQueue,
+    saveFields,
   }
 }
 

@@ -34,6 +34,7 @@ type ResourceWizardPricesStepProps = {
   busy: boolean
   onSavePrices: (draft: PriceDraft) => Promise<void>
   onSaveQueue: (enabled: boolean, openingTime: string) => Promise<void>
+  showQueue?: boolean
 }
 
 export function ResourceWizardPricesStep({
@@ -46,6 +47,7 @@ export function ResourceWizardPricesStep({
   busy,
   onSavePrices,
   onSaveQueue,
+  showQueue = true,
 }: ResourceWizardPricesStepProps) {
   const { t, i18n } = useTranslation()
 
@@ -73,12 +75,14 @@ export function ResourceWizardPricesStep({
           {t("rentals.resourceWizard.permission")}
         </p>
       )}
-      <QueueEditor
-        asset={asset}
-        canWrite={canWriteAsset}
-        busy={busy}
-        onSave={onSaveQueue}
-      />
+      {showQueue ? (
+        <QueueEditor
+          asset={asset}
+          canWrite={canWriteAsset}
+          busy={busy}
+          onSave={onSaveQueue}
+        />
+      ) : null}
     </section>
   )
 }

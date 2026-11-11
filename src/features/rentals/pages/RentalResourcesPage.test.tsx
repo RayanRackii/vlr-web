@@ -61,6 +61,11 @@ vi.mock("@/features/assets/services/rentalPricingService", () => ({
 
 vi.mock("@/features/rentals/services/scheduleService", () => ({
   listAdminRentalAssets: vi.fn(),
+  listScheduleTemplates: vi.fn().mockResolvedValue([]),
+}))
+
+vi.mock("@/features/tenantPortal/services/tenantPortalService", () => ({
+  listTenantModuleMenuItems: vi.fn().mockResolvedValue([]),
 }))
 
 vi.mock("@/features/rentals/services/rentalResourcesService", () => ({
