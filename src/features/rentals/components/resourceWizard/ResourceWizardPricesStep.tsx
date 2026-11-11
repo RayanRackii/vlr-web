@@ -33,7 +33,7 @@ type ResourceWizardPricesStepProps = {
   canReplacePricing: boolean
   canWriteAsset: boolean
   busy: boolean
-  onSavePrices: (draft: PriceDraft) => Promise<void>
+  onSavePrices: (draft: PriceDraft) => Promise<boolean | void>
   onSaveQueue: (enabled: boolean, openingTime: string) => Promise<void>
   showQueue?: boolean
   onDirtyChange?: (dirty: boolean) => void
@@ -105,7 +105,7 @@ function PriceEditor({
   replaces: boolean
   busy: boolean
   locale: string
-  onSave: (draft: PriceDraft) => Promise<void>
+  onSave: (draft: PriceDraft) => Promise<boolean | void>
   onDirtyChange?: (dirty: boolean) => void
 }) {
   const { t } = useTranslation()
@@ -150,8 +150,8 @@ function PriceEditor({
         <form
           className="space-y-3"
           onSubmit={(event) => form.handleSubmit(async (values) => {
-            await onSave(values)
-            form.reset(values)
+            const saved = await onSave(values)
+            if (saved !== false) form.reset(values)
           })(event)}
         >
           <p className="text-sm text-muted-foreground">

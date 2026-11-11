@@ -36,6 +36,7 @@ const asset = {
 const savePolicy = vi.fn()
 const saveQueue = vi.fn()
 const saveFields = vi.fn()
+const savePrices = vi.fn()
 
 function mockWizard(overrides: Partial<AdminRentalAsset> = {}, prices: readonly { pricePerHour: number }[] = []) {
   vi.mocked(useResourceWizard).mockReturnValue({
@@ -49,7 +50,7 @@ function mockWizard(overrides: Partial<AdminRentalAsset> = {}, prices: readonly 
     savePolicy,
     saveQueue,
     saveFields,
-    savePrices: vi.fn(),
+    savePrices,
     publishMenu: vi.fn(),
     seedTemplates: vi.fn(),
     reload: vi.fn(),
@@ -189,6 +190,46 @@ it("keeps Publicar disabled while a setup step is missing", () => {
   setup().unmount()
   renderCadastro("?passo=publicacao")
   expect(screen.getByRole("button", { name: "Publicar" })).toBeDisabled()
+})
+
+it("keeps the price form dirty when the save fails", async () => {
+  savePrices.mockResolvedValueOnce(false)
+  setup().unmount()
+  const user = userEvent.setup()
+  renderCadastro("?passo=precos")
+  await user.type(screen.getByRole("textbox", { name: "Valor" }), "50")
+  expect(screen.getByRole("button", { name: "Continuar" })).toBeDisabled()
+  await user.click(screen.getByRole("button", { name: "Substituir preços da semana" }))
+  expect(screen.getByRole("button", { name: "Continuar" })).toBeDisabled()
+  expect(screen.getByRole("textbox", { name: "Valor" })).toHaveValue("50")
+})
+
+it("clears the lead field and re-enables Continuar when the value is inherited", async () => {
+  const user = userEvent.setup()
+  setup({ minimumBookingLeadMinutes: 90, effectiveMinimumBookingLeadMinutes: 90 }).unmount()
+  const view = renderCadastro("?passo=regras")
+  const lead = () => screen.getByRole("region", { name: "Antecedência mínima" })
+  expect(within(lead()).getByRole("textbox", { name: "Minutos deste recurso" })).toHaveValue("90")
+  expect(screen.getByRole("button", { name: "Continuar" })).toBeEnabled()
+  mockWizard({ minimumBookingLeadMinutes: null, effectiveMinimumBookingLeadMinutes: 180 })
+  await user.click(within(lead()).getByRole("button", { name: "Usar o valor herdado" }))
+  view.rerender(cadastroTree("?passo=regras"))
+  expect(within(lead()).getByRole("textbox", { name: "Minutos deste recurso" })).toHaveValue("")
+  expect(screen.getByRole("button", { name: "Continuar" })).toBeEnabled()
+})
+
+it("re-enables Continuar after saving a zero-padded lead", async () => {
+  const user = userEvent.setup()
+  setup({ minimumBookingLeadMinutes: null, effectiveMinimumBookingLeadMinutes: 180 }).unmount()
+  const view = renderCadastro("?passo=regras")
+  const lead = () => screen.getByRole("region", { name: "Antecedência mínima" })
+  await user.type(within(lead()).getByRole("textbox", { name: "Minutos deste recurso" }), "090")
+  expect(screen.getByRole("button", { name: "Continuar" })).toBeDisabled()
+  mockWizard({ minimumBookingLeadMinutes: 90, effectiveMinimumBookingLeadMinutes: 90 })
+  await user.click(within(lead()).getByRole("button", { name: "Salvar passo" }))
+  view.rerender(cadastroTree("?passo=regras"))
+  expect(within(lead()).getByRole("textbox", { name: "Minutos deste recurso" })).toHaveValue("90")
+  expect(screen.getByRole("button", { name: "Continuar" })).toBeEnabled()
 })
 
 it("disables Continuar while the price draft is open and enables it after a successful save", async () => {

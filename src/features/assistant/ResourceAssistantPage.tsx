@@ -241,6 +241,13 @@ export function ResourceAssistantPage({ cadastro = false }: { cadastro?: boolean
   )
 }
 
+function numberDraftDiffers(text: string, stored: number | null | undefined): boolean {
+  const trimmed = text.trim()
+  if (trimmed === "") return typeof stored === "number"
+  if (!/^\d+$/.test(trimmed)) return true
+  return Number(trimmed) !== stored
+}
+
 function InheritedNumberControl({
   title,
   note,
@@ -276,9 +283,13 @@ function InheritedNumberControl({
   const storedText = hasOverride ? String(stored) : ""
   const [value, setValue] = useState(storedText)
   useEffect(() => {
-    onDirtyChange?.(value.trim() !== storedText)
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- the stored number replaces the draft after save or inherit
+    setValue(storedText)
+  }, [storedText])
+  useEffect(() => {
+    onDirtyChange?.(numberDraftDiffers(value, stored))
     return () => onDirtyChange?.(false)
-  }, [value, storedText, onDirtyChange])
+  }, [value, stored, onDirtyChange])
   return (
     <section aria-label={title} className="space-y-2">
       <h3 className="text-sm font-semibold">{title}</h3>
