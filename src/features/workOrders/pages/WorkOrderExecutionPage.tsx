@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { formatWorkOrderShortId } from "@/features/workOrders/lib/workOrderLabel"
 import { useBreadcrumbTitle } from "@/components/layout/useBreadcrumbTitle"
-import { useNavigate, useParams } from "react-router-dom"
-import { ArrowLeft, CircleCheck, Play } from "lucide-react"
+import { useParams } from "react-router-dom"
+import { CircleCheck, Play } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 
@@ -527,7 +527,6 @@ function TaskField({
 export function WorkOrderExecutionPage() {
   const { t, i18n } = useTranslation()
   const { session } = useAuth()
-  const navigate = useNavigate()
   const { id } = useParams<{ id: string }>()
 
   const [workOrder, setWorkOrder] = useState<WorkOrder | null>(null)
@@ -991,16 +990,6 @@ export function WorkOrderExecutionPage() {
             {errorMessage ?? t("workOrders.errors.loadOneFailed")}
           </div>
         ) : null}
-        <Button
-          type="button"
-          variant="outline"
-          onClick={() => {
-            void navigate("/os")
-          }}
-        >
-          <ArrowLeft data-icon="inline-start" />
-          {t("workOrders.execution.back")}
-        </Button>
       </div>
     )
   }
@@ -1057,16 +1046,6 @@ export function WorkOrderExecutionPage() {
           tag: workOrder.asset.tag,
           name: workOrder.asset.name,
         })}
-        actions={<Button
-          type="button"
-          variant="outline"
-          onClick={() => {
-            void navigate("/os")
-          }}
-        >
-          <ArrowLeft data-icon="inline-start" />
-          {t("workOrders.execution.back")}
-        </Button>}
       />
 
       <Card className="min-w-0 motion-reduce:transition-none">

@@ -137,16 +137,15 @@ describe("CreateWorkOrderPage validity gate", () => {
     await user.click(await screen.findByRole("option", { name: ASSET_LABEL }))
   }
 
-  it("keeps Criar OS disabled until the form schema is valid and leaves Voltar free", async () => {
+  it("keeps Criar OS disabled until the form schema is valid", async () => {
     const user = userEvent.setup()
     renderPage()
 
     const submit = await screen.findByRole("button", {
       name: i18n.t("workOrders.create.submit"),
     })
-    const back = screen.getByRole("button", { name: i18n.t("common.back") })
+    expect(screen.queryByRole("button", { name: i18n.t("common.back") })).not.toBeInTheDocument()
     expect(submit).toBeDisabled()
-    expect(back).toBeEnabled()
 
     const task = screen.getByLabelText(i18n.t("workOrders.create.form.task"))
     await user.type(task, "   ")
@@ -159,14 +158,12 @@ describe("CreateWorkOrderPage validity gate", () => {
 
     await selectAsset(user)
     expect(submit).toBeEnabled()
-    expect(back).toBeEnabled()
 
     const date = screen.getByLabelText(
       i18n.t("workOrders.create.form.scheduledDate"),
     )
     await user.clear(date)
     expect(submit).toBeDisabled()
-    expect(back).toBeEnabled()
 
     await user.type(date, "14/10/2026")
     expect(submit).toBeEnabled()
@@ -220,7 +217,7 @@ describe("CreateWorkOrderPage validity gate", () => {
         name: i18n.t("workOrders.create.form.asset"),
       }),
     ).toHaveTextContent(ASSET_LABEL)
-    expect(screen.getByRole("button", { name: i18n.t("common.back") })).toBeEnabled()
+    expect(screen.queryByRole("button", { name: i18n.t("common.back") })).not.toBeInTheDocument()
     expect(toastError).toHaveBeenCalledWith("Falha ao criar a OS")
     expect(createWorkOrderMock).toHaveBeenCalledTimes(1)
     expect(screen.queryByText(i18n.t("workOrders.create.redirecting"))).not.toBeInTheDocument()
