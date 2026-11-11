@@ -149,11 +149,10 @@ function PriceEditor({
       {canWrite ? (
         <form
           className="space-y-3"
-          onSubmit={(event) => {
-            void form.handleSubmit(async (values) => {
-              await onSave(values)
-            })(event)
-          }}
+          onSubmit={(event) => form.handleSubmit(async (values) => {
+            await onSave(values)
+            form.reset(values)
+          })(event)}
         >
           <p className="text-sm text-muted-foreground">
             {t(replaces ? "rentals.resourceWizard.prices.replaceHint" : "rentals.resourceWizard.prices.addHint")}

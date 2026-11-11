@@ -273,7 +273,12 @@ function InheritedNumberControl({
   const { t } = useTranslation()
   const [invalid, setInvalid] = useState(false)
   const hasOverride = typeof stored === "number"
-  useEffect(() => () => onDirtyChange?.(false), [onDirtyChange])
+  const storedText = hasOverride ? String(stored) : ""
+  const [value, setValue] = useState(storedText)
+  useEffect(() => {
+    onDirtyChange?.(value.trim() !== storedText)
+    return () => onDirtyChange?.(false)
+  }, [value, storedText, onDirtyChange])
   return (
     <section aria-label={title} className="space-y-2">
       <h3 className="text-sm font-semibold">{title}</h3>
@@ -301,7 +306,7 @@ function InheritedNumberControl({
       >
         <label className="block min-w-0 flex-1 space-y-1 text-sm font-medium">
           {inputLabel}
-          <Input key={hasOverride ? String(stored) : "inherit"} name="value" inputMode="numeric" className="min-h-11" defaultValue={hasOverride ? String(stored) : ""} aria-invalid={invalid} onChange={(event) => onDirtyChange?.(event.target.value.trim() !== (hasOverride ? String(stored) : ""))} />
+          <Input name="value" inputMode="numeric" className="min-h-11" value={value} aria-invalid={invalid} onChange={(event) => setValue(event.target.value)} />
         </label>
         <Button type="submit" className="min-h-11 w-full sm:w-auto" disabled={busy}>{t("assistant.saveStep")}</Button>
       </form>

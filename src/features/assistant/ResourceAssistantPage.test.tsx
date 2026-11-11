@@ -37,7 +37,7 @@ const savePolicy = vi.fn()
 const saveQueue = vi.fn()
 const saveFields = vi.fn()
 
-function setup(overrides: Partial<AdminRentalAsset> = {}, prices: readonly { pricePerHour: number }[] = []) {
+function mockWizard(overrides: Partial<AdminRentalAsset> = {}, prices: readonly { pricePerHour: number }[] = []) {
   vi.mocked(useResourceWizard).mockReturnValue({
     loading: false,
     error: null,
@@ -54,6 +54,10 @@ function setup(overrides: Partial<AdminRentalAsset> = {}, prices: readonly { pri
     seedTemplates: vi.fn(),
     reload: vi.fn(),
   } as never)
+}
+
+function setup(overrides: Partial<AdminRentalAsset> = {}, prices: readonly { pricePerHour: number }[] = []) {
+  mockWizard(overrides, prices)
   return render(
     <MemoryRouter initialEntries={[`/configuracoes/recursos/${rentalId}/passos`]}>
       <Routes>
@@ -139,12 +143,16 @@ it("keeps the steps on the page at phone width", async () => {
   vi.unstubAllGlobals()
 })
 
-function renderCadastro(query = "") {
-  return render(<MemoryRouter initialEntries={[`/configuracoes/recursos/${rentalId}/cadastro${query}`]}>
+function cadastroTree(query = "") {
+  return <MemoryRouter initialEntries={[`/configuracoes/recursos/${rentalId}/cadastro${query}`]}>
     <TestPermissionProvider permissions={["core.taxonomy.read", "core.taxonomy.manage", "core.module_menu.write"]}>
       <Routes><Route path="/configuracoes/recursos/:id/cadastro" element={<ResourceAssistantPage cadastro />} /></Routes>
     </TestPermissionProvider>
-  </MemoryRouter>)
+  </MemoryRouter>
+}
+
+function renderCadastro(query = "") {
+  return render(cadastroTree(query))
 }
 it("opens cadastro as one full page with a horizontal rail and query-controlled steps", async () => {
   setup().unmount()
@@ -181,6 +189,57 @@ it("keeps Publicar disabled while a setup step is missing", () => {
   setup().unmount()
   renderCadastro("?passo=publicacao")
   expect(screen.getByRole("button", { name: "Publicar" })).toBeDisabled()
+})
+
+it("disables Continuar while the price draft is open and enables it after a successful save", async () => {
+  setup().unmount()
+  const user = userEvent.setup()
+  renderCadastro("?passo=precos")
+  const continuar = screen.getByRole("button", { name: "Continuar" })
+  expect(continuar).toBeEnabled()
+  await user.type(screen.getByRole("textbox", { name: "Valor" }), "50")
+  expect(continuar).toBeDisabled()
+  await user.click(screen.getByRole("button", { name: "Substituir preços da semana" }))
+  expect(continuar).toBeEnabled()
+})
+
+it("disables Continuar while lead or deposit is edited and enables it when the stored value matches", async () => {
+  const user = userEvent.setup()
+  setup({
+    minimumBookingLeadMinutes: null,
+    effectiveMinimumBookingLeadMinutes: 180,
+    depositPercent: null,
+    effectiveDepositPercent: null,
+  }).unmount()
+  const view = renderCadastro("?passo=regras")
+  const continuar = screen.getByRole("button", { name: "Continuar" })
+  expect(continuar).toBeEnabled()
+
+  const lead = screen.getByRole("region", { name: "Antecedência mínima" })
+  await user.type(within(lead).getByRole("textbox", { name: "Minutos deste recurso" }), "90")
+  expect(continuar).toBeDisabled()
+  mockWizard({
+    minimumBookingLeadMinutes: 90,
+    effectiveMinimumBookingLeadMinutes: 90,
+    depositPercent: null,
+    effectiveDepositPercent: null,
+  })
+  await user.click(within(lead).getByRole("button", { name: "Salvar passo" }))
+  view.rerender(cadastroTree("?passo=regras"))
+  expect(screen.getByRole("button", { name: "Continuar" })).toBeEnabled()
+
+  const deposit = screen.getByRole("region", { name: "Percentual de sinal" })
+  await user.type(within(deposit).getByRole("textbox", { name: "Percentual deste recurso" }), "30")
+  expect(screen.getByRole("button", { name: "Continuar" })).toBeDisabled()
+  mockWizard({
+    minimumBookingLeadMinutes: 90,
+    effectiveMinimumBookingLeadMinutes: 90,
+    depositPercent: 30,
+    effectiveDepositPercent: 30,
+  })
+  await user.click(within(deposit).getByRole("button", { name: "Salvar passo" }))
+  view.rerender(cadastroTree("?passo=regras"))
+  expect(screen.getByRole("button", { name: "Continuar" })).toBeEnabled()
 })
 
 it("validates the new resource Dados name and retains an invalid dirty draft", async () => {
