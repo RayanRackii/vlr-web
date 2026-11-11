@@ -32,16 +32,25 @@
   * {
     @apply border-border ;
   }
-  :where(a[href], button, [role="button"], [role="tab"], [role="menuitem"], [role="option"], [role="checkbox"], [role="switch"], [role="radio"], summary, input, select, textarea, [tabindex]:not([tabindex="-1"])):focus-visible {
+  :where(a[href], button, [role="button"], [role="tab"], [role="menuitem"], [role="option"], [role="checkbox"], [role="switch"], [role="radio"], summary, [tabindex]:not([tabindex="-1"])):focus-visible {
     outline: 2px solid var(--focus-ring, var(--ring));
     outline-offset: 2px;
   }
-  /* Rolvix: no native dropdown arrow on any <select> (Rayan t1294u). */
+  /* Rolvix: no native dropdown arrow. The border is the affordance that the control opens a list. */
   select {
     appearance: none;
     -webkit-appearance: none;
     -moz-appearance: none;
     background-image: none;
+    border: 1px solid var(--input);
+    border-radius: var(--radius-lg, 0.5rem);
+    background-color: var(--background);
+    min-height: 2.5rem;
+    padding: 0.5rem 0.75rem;
+  }
+  select:hover:not(:disabled) {
+    border-color: color-mix(in srgb, var(--foreground) 30%, var(--input));
+    background-color: color-mix(in srgb, var(--accent) 30%, var(--background));
   }
   body {
     @apply bg-background text-foreground;
@@ -155,23 +164,29 @@
   }
 }
 
+/* Tailwind 3 drops opacity modifiers on CSS-variable colors, so hover is written here. */
+:root :is(input, textarea, [data-slot="input"], [data-slot="textarea"], [data-slot="select-trigger"]):not([aria-invalid="true"]):not(:disabled):hover {
+  border-color: color-mix(in srgb, var(--foreground) 30%, var(--input));
+  background-color: color-mix(in srgb, var(--accent) 30%, transparent);
+}
+
 /* Native date/time segments do not always report :focus-visible on the host.
    These rules also take precedence over page-specific focus outlines. */
-:root :is(input[type="date"], input[type="time"], input[type="datetime-local"], textarea, select, [data-slot="input"], [data-slot="select-trigger"]):not([aria-invalid="true"]):is(:focus, :focus-visible, :focus-within) {
-  border-color: var(--focus-ring, var(--ring));
-  outline: 2px solid var(--focus-ring, var(--ring));
-  outline-offset: 2px;
-  --tw-ring-color: var(--focus-ring, var(--ring));
+:root :is(input[type="date"], input[type="time"], input[type="datetime-local"], textarea, select, [data-slot="input"], [data-slot="textarea"], [data-slot="select-trigger"]):not([aria-invalid="true"]):is(:focus, :focus-visible, :focus-within) {
+  border-width: 1px;
+  border-color: var(--ring);
+  outline: 3px solid color-mix(in srgb, var(--ring) 28%, transparent) !important;
+  outline-offset: 1px !important;
 }
 
 /* The native date input is transparent; paint focus on the visible field. */
 :root [data-slot="date-field"]:focus-within {
-  outline: 2px solid var(--focus-ring, var(--ring));
-  outline-offset: 2px;
+  outline: 3px solid color-mix(in srgb, var(--ring) 28%, transparent) !important;
+  outline-offset: 1px !important;
 }
 [data-slot="date-field"] > [aria-hidden="true"] { min-height: inherit; }
 :root [data-slot="date-field"][data-invalid="true"]:focus-within {
-  outline-color: var(--destructive);
+  outline: 3px solid color-mix(in srgb, var(--destructive) 22%, transparent) !important;
 }
 @media (pointer: coarse), (max-width: 767px) {
   [data-slot="date-field"] { min-height: 44px; }
@@ -179,20 +194,14 @@
 
 /* Validation owns all feedback layers, even dark/page focus utilities. Reset
    shadows immediately on blur so ring offsets and transitions cannot linger. */
-:root :is(input, select, textarea, [data-slot="select-trigger"])[aria-invalid="true"] {
-  border-color: var(--destructive) !important;
-  outline: none !important;
-  box-shadow: none !important;
-  --tw-ring-color: var(--destructive) !important;
-  --tw-ring-offset-width: 0px !important;
-  --tw-ring-offset-shadow: 0 0 #0000 !important;
-  --tw-ring-shadow: 0 0 #0000 !important;
-  transition-property: color, background-color, border-color !important;
+:root :is(input, select, textarea, [data-slot="input"], [data-slot="textarea"], [data-slot="select-trigger"])[aria-invalid="true"] {
+  border-width: 1px;
+  border-color: color-mix(in srgb, var(--destructive) 55%, var(--border));
+  outline: none;
 }
-:root :is(input, select, textarea, [data-slot="select-trigger"])[aria-invalid="true"]:is(:focus, :focus-visible, :focus-within) {
-  border-color: var(--destructive) !important;
-  outline: 2px solid var(--destructive) !important;
-  outline-offset: 2px !important;
-  box-shadow: none !important;
-  --tw-ring-color: var(--destructive) !important;
+:root :is(input, select, textarea, [data-slot="input"], [data-slot="textarea"], [data-slot="select-trigger"])[aria-invalid="true"]:is(:focus, :focus-visible, :focus-within) {
+  border-width: 1px;
+  border-color: color-mix(in srgb, var(--destructive) 70%, var(--border));
+  outline: 3px solid color-mix(in srgb, var(--destructive) 22%, transparent) !important;
+  outline-offset: 1px !important;
 }

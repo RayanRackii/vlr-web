@@ -175,7 +175,7 @@ describe("RentalResourceEditorForm visual validation", () => {
         expect(input.closest('[data-slot="form-item"]')).toHaveTextContent(message)
         expect(input).toHaveAttribute("aria-invalid", "true")
         expect(input).toHaveAccessibleDescription(message)
-        expect(input).toHaveClass("aria-invalid:border-destructive")
+        expect(input).toHaveClass("aria-invalid:border-destructive/55")
         expect(screen.getByRole("button", { name: i18n.t("rentals.resources.saveCreate") })).toBeDisabled()
       }
       for (const value of ["1", "100000", ""]) {
@@ -202,7 +202,7 @@ describe("RentalResourceEditorForm visual validation", () => {
     expect(name.closest('[data-slot="form-item"]')).toHaveTextContent(message)
     expect(name).toHaveAccessibleDescription(message)
     expect(name).toHaveAttribute("aria-invalid", "true")
-    expect(name).toHaveClass("aria-invalid:border-destructive")
+    expect(name).toHaveClass("aria-invalid:border-destructive/55")
     await user.type(name, "Sala de reunião")
     expect(screen.queryByText(message)).not.toBeInTheDocument()
     expect(name).toHaveAttribute("aria-invalid", "false")

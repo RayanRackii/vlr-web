@@ -83,7 +83,7 @@ export function CatalogColumnFilter<T>({ column, title, options }: {
       <PopoverContent className="w-64" align="start">
         <label className="grid gap-2 text-sm font-medium">
           {title}
-          {options ? <select className="touch-target min-h-11 w-full rounded-lg border border-input bg-background px-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          {options ? <select className="touch-target min-h-11 w-full rounded-lg border border-input bg-background px-3 focus-visible:outline-none"
             value={typeof value === "string" ? value : ""} onChange={(event) => column.setFilterValue(event.target.value)}>
             <option value="">{t("catalog.staff.allStatuses")}</option>
             {options.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}

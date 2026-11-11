@@ -1,7 +1,9 @@
+import { readFileSync } from "node:fs"
 import { describe, expect, it } from "vitest"
 import postcss from "postcss"
 import tailwindcss from "tailwindcss"
 import config from "../../../tailwind.config"
+import { fieldControlClass } from "./fieldControl"
 
 // Tailwind 3.4 does not generate the v4 CSS-variable shorthand (`w-(--x)`),
 // so such classes silently do nothing. Primitives must use `w-[var(--x)]`.
@@ -19,17 +21,21 @@ describe("ui primitives use Tailwind 3 arbitrary CSS-var syntax", () => {
     })
   }
 
-  it("generates invalid borders and focused rings for the shared form controls in both themes", async () => {
+  it("paints the shared field focus and error border from CSS, not a dropped opacity utility", async () => {
     const { root } = await postcss([tailwindcss({
       ...config,
-      content: [{ raw: [sources["./input.tsx"], sources["./select.tsx"], sources["./textarea.tsx"]].join("\n"), extension: "tsx" }],
+      content: [{ raw: [sources["./input.tsx"], sources["./select.tsx"], sources["./textarea.tsx"], fieldControlClass].join("\n"), extension: "tsx" }],
     })]).process("@tailwind utilities;", { from: undefined })
     const rules: { selector: string; declarations: string }[] = []
     root.walkRules((rule) => { rules.push({ selector: rule.selector, declarations: rule.toString() }) })
-    const invalid = rules.filter(({ selector }) => selector.includes('[aria-invalid="true"]'))
-    expect(invalid.some(({ declarations }) => declarations.includes("border-color: var(--destructive)"))).toBe(true)
-    expect(invalid.some(({ selector, declarations }) => selector.includes(":focus-visible") && declarations.includes("--tw-ring-color: var(--destructive)"))).toBe(true)
-    expect(invalid.some(({ selector, declarations }) => selector.includes("dark") && selector.includes(":focus-visible") && declarations.includes("--tw-ring-color: var(--destructive)"))).toBe(true)
+    expect(rules.some(({ selector, declarations }) => selector.includes(":focus-visible") && declarations.includes("border-color: var(--ring)"))).toBe(true)
+    // Tailwind 3 drops `border-destructive/55` on a CSS-variable color, so the painted border lives in index.css.
+    expect(rules.some(({ declarations }) => declarations.includes("border-color: var(--destructive)"))).toBe(false)
+    const css = readFileSync("src/index.css", "utf8")
+    expect(css).toContain("color-mix(in srgb, var(--destructive) 55%, var(--border))")
+    expect(css).toContain("color-mix(in srgb, var(--destructive) 70%, var(--border))")
+    expect(css).toContain("outline: 3px solid color-mix(in srgb, var(--ring) 28%, transparent)")
+    expect(css).toContain("color-mix(in srgb, var(--foreground) 30%, var(--input))")
   })
 
   it("select/dropdown popups are at least as wide as their trigger and capped to the viewport", () => {
