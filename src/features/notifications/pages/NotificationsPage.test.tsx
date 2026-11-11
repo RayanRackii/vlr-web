@@ -4,7 +4,6 @@ import { beforeEach, describe, expect, it, vi } from "vitest"
 import { MemoryRouter } from "react-router-dom"
 
 import { NotificationsPage } from "@/features/notifications/pages/NotificationsPage"
-import { NotificationsSettingsPage } from "@/features/notifications/pages/NotificationsSettingsPage"
 import { notificationsManifest } from "@/features/notifications/manifest"
 import type { TenantNotificationChannelGroup } from "@/features/notifications/schemas/notificationChannelConfigSchemas"
 import type { NotificationDelivery } from "@/features/notifications/schemas/notificationDeliverySchemas"
@@ -94,8 +93,7 @@ describe("NotificationsPage", () => {
       { path: "/configuracoes/notificacoes", permission: "core.notifications.read", anyOf: ["catalog.notifications.read"] },
     ])
     expect(notificationsManifest.routes.staff[0]?.element.type).toBe(NotificationsPage)
-    expect(notificationsManifest.routes.staff[1]?.element.type).toBe(NotificationsSettingsPage)
-    expect(notificationsManifest.navigationItems[0]?.to).toBe("/configuracoes/notificacoes")
+    expect(notificationsManifest.navigationItems[0]?.to).toBe("/notificacoes")
   })
 
   it("renders one heading, task tabs, and a channel matrix that saves on each toggle", async () => {
@@ -169,15 +167,4 @@ describe("NotificationsPage", () => {
     expect(listDeliveries).not.toHaveBeenCalled()
   })
 
-  it("keeps the previous settings page on its own layout", () => {
-    render(
-      <MemoryRouter initialEntries={["/configuracoes/notificacoes"]}>
-        <TestPermissionProvider permissions={["core.notifications.read"]}>
-          <NotificationsSettingsPage />
-        </TestPermissionProvider>
-      </MemoryRouter>,
-    )
-    expect(document.querySelector(".notifications-page")).not.toBeInTheDocument()
-    expect(document.querySelector(".max-w-7xl")).toBeInTheDocument()
-  })
 })

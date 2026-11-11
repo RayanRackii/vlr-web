@@ -40,7 +40,7 @@ describe("maintenance dashboard permissions", () => {
     vi.mocked(getWorkOrders).mockResolvedValue([])
     renderDashboard(["os.work_orders.read"])
     expect(await screen.findByText("Nenhuma ordem de serviço atribuída no momento.")).toBeInTheDocument()
-    expect(screen.getByRole("link", { name: "Ver ordens de serviço" })).toHaveAttribute("href", "/os")
+    expect(screen.getByRole("link", { name: "Ver ordens de serviço" })).toHaveAttribute("href", "/manutencao?aba=ordens")
   })
 
   it("does not claim the list is empty on failure and lets the user retry", async () => {

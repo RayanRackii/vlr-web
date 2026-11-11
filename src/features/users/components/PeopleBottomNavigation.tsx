@@ -24,7 +24,7 @@ export function PeopleBottomNavigation() {
         <Link className="touch-target" to={reservations.to}><CalendarCheck aria-hidden strokeWidth={1.75} /><span>{t("nav.reservations")}</span></Link>
       ) : null}
       {hasWorkOrders ? (
-        <Link className="touch-target" to="/os"><ClipboardList aria-hidden strokeWidth={1.75} /><span>{t("nav.workOrders")}</span></Link>
+        <Link className="touch-target" to="/manutencao?aba=ordens"><ClipboardList aria-hidden strokeWidth={1.75} /><span>{t("nav.workOrders")}</span></Link>
       ) : null}
       {people ? (
         <Link className="touch-target" to={people.to} aria-current="page"><Users aria-hidden strokeWidth={1.75} /><span>{t("nav.peopleAccess")}</span></Link>

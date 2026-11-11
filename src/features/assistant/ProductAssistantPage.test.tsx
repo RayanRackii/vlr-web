@@ -69,7 +69,7 @@ it("links the used resource and does not invent a deposit or a lead time", async
   expect(screen.queryByText(/antecedência|sinal|30%/i)).not.toBeInTheDocument()
   await user.click(within(screen.getByRole("region", { name: "Publicação" })).getByRole("button", { name: "Editar" }))
   const link = await screen.findByRole("link", { name: "Abrir recurso" })
-  expect(link).toHaveAttribute("href", `/configuracoes/recursos/${assetId}/passos`)
+  expect(link).toHaveAttribute("href", `/configuracoes/recursos/${assetId}/cadastro`)
   expect(screen.queryByRole("dialog")).not.toBeInTheDocument()
   expect(screen.getByRole("button", { name: "Continuar em Preços" })).toHaveClass("w-full")
 })

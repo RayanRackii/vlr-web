@@ -199,7 +199,7 @@ function DaySlotSheetForm({
               ) : null}
               {owningOrderId ? (
                 <Link
-                  to={`/catalogo/pedidos/${owningOrderId}`}
+                  to={`/pedidos/${owningOrderId}`}
                   className={buttonVariants({ variant: "outline", size: "sm" })}
                 >
                   {t("rentals.schedule.occurrence.viewOrder")}

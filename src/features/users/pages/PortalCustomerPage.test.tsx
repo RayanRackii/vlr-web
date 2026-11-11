@@ -96,7 +96,7 @@ describe("PortalCustomerPage", () => {
       </MemoryRouter>,
     )
     expect(await screen.findByRole("heading", { name: "Ana Souza" })).toBeInTheDocument()
-    expect(screen.getByRole("link", { name: /PED-9/ })).toHaveAttribute("href", "/catalogo/pedidos/order-1")
+    expect(screen.getByRole("link", { name: /PED-9/ })).toHaveAttribute("href", "/pedidos/order-1")
     expect(screen.getByRole("link", { name: "Sócios" })).toBeInTheDocument()
     expect(screen.getByRole("link", { name: "Camisa" })).toBeInTheDocument()
     expect(screen.queryByRole("link", { name: "Suco" })).not.toBeInTheDocument()

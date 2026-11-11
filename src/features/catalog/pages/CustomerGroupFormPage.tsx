@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react"
-import { Link, useNavigate, useParams } from "react-router-dom"
+import { useNavigate, useParams } from "react-router-dom"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 
@@ -16,6 +16,7 @@ import {
   removeCustomerGroupMember,
   updateCustomerGroup,
 } from "@/features/catalog/services/catalogService"
+import { StaffReturnLink } from "@/features/rentals/components/resourceWizard/StaffReturnLink"
 import { usePermissions } from "@/features/users/permissions/PermissionContext"
 import type { TenantCustomer } from "@/features/users/schemas/userSchemas"
 import { listTenantCustomers } from "@/features/users/services/usersService"
@@ -201,17 +202,11 @@ export function CustomerGroupFormPage() {
 
   return (
     <div className="grupos-page mx-auto min-w-0 space-y-5">
-      <nav aria-label={t("nav.breadcrumbLabel")} className="text-sm text-muted-foreground">
-        <ol className="flex min-w-0 flex-wrap items-center gap-2">
-          <li><Link to="/grupos" className="inline-flex min-h-11 items-center rounded-md">{t("grupos.title")}</Link></li>
-          <li aria-hidden="true">/</li>
-          <li><span aria-current="page" className="text-foreground">{title}</span></li>
-        </ol>
-      </nav>
       <header>
         <p className="grupos-eyebrow">{t("grupos.eyebrow")}</p>
         <h1 className="text-xl font-semibold tracking-tight sm:text-2xl">{title}</h1>
         <p className="max-w-2xl text-sm text-muted-foreground">{t(editing ? "grupos.editSubtitle" : "grupos.createSubtitle")}</p>
+        <StaffReturnLink />
       </header>
       {loading ? <p role="status" className="text-sm text-muted-foreground">{t("common.loading")}</p> : null}
       {!loading && missing ? <p role="alert" className="text-sm text-destructive">{nameError ?? t("catalog.customerGroups.page.notFound")}</p> : null}

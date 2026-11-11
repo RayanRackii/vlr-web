@@ -11,7 +11,6 @@ describe("navigation route matching", () => {
     ["/pedidos", "nav.pedidos", undefined, undefined, false],
     ["/pedidos/order-1", "nav.pedidos", undefined, undefined, true],
     ["/pedidos/solicitacoes/request-1", "nav.pedidos", undefined, undefined, true],
-    ["/agenda", "nav.agenda", undefined, undefined, false],
     ["/pmoc", "nav.pmoc", "nav.pmocPlans", undefined, false],
     ["/pmoc/plan-1", "nav.pmoc", "nav.pmocPlans", undefined, true],
     ["/pmoc/plan-1/tasks", "nav.pmoc", "nav.pmocPlans", undefined, true],
@@ -23,7 +22,6 @@ describe("navigation route matching", () => {
     ["/configuracoes/politica-reservas", "nav.reservations", undefined, "nav.bookingPolicy", false],
     ["/configuracoes/cadastro", "nav.peopleAccess", undefined, "nav.registrationFields", false],
     ["/os/order-1", "nav.workOrders", undefined, undefined, true],
-    ["/catalogo/pedidos/order-1", "nav.catalogOrders", undefined, undefined, true],
   ])("resolves %s to its most specific item", (path, item, child, tab, detail) => {
     const match = matchNavigationPath(appNavigationItems, path)
     expect(match?.item.labelKey).toBe(item)

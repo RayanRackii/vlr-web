@@ -1,24 +1,23 @@
 import { ProductCadastroCreatePage } from "@/features/assistant/ProductCadastroCreatePage"
 import { PedidosPage } from "./pages/PedidosPage"
 import { PedidoRequestDetailPage } from "./pages/PedidoRequestDetailPage"
-import { CatalogCustomerGroupEditorPage } from "@/features/catalog/pages/CatalogCustomerGroupEditorPage"
 import type { ReactElement } from "react"
-import { CalendarDays, FileText, Package, Settings, ShoppingBag, Tag, Users } from "lucide-react"
+import { Package, Settings, Tag } from "lucide-react"
 
 import type { AppNavigationItem } from "@/components/layout/navigation"
-import { Navigate } from "react-router-dom"
-import { CatalogProductAgendaPage } from "@/features/catalog/pages/CatalogProductAgendaPage"
-import { CatalogResourceAgendaPage } from "@/features/catalog/pages/CatalogResourceAgendaPage"
 import { CatalogOrderDetailPage } from "@/features/catalog/pages/CatalogOrderDetailPage"
-import { CatalogOrdersPage } from "@/features/catalog/pages/CatalogOrdersPage"
 import { CatalogPolicyPage } from "@/features/catalog/pages/CatalogPolicyPage"
-import { CatalogCustomerGroupsPage } from "@/features/catalog/pages/CatalogCustomerGroupsPage"
 import { CustomerGroupFormPage } from "@/features/catalog/pages/CustomerGroupFormPage"
 import { CustomerGroupsPage } from "@/features/catalog/pages/CustomerGroupsPage"
-import { CatalogProductCreatePage } from "@/features/catalog/pages/CatalogProductCreatePage"
 import { CatalogProductEditorPage } from "@/features/catalog/pages/CatalogProductEditorPage"
-import { ProductWizardPage } from "@/features/catalog/pages/ProductWizardPage"
 import { ProductAssistantPage } from "@/features/assistant/ProductAssistantPage"
+import {
+  CadastroLegacyRedirect,
+  NotificationsLegacyRedirect,
+  OrdersListLegacyRedirect,
+  RedirectKeepingLocation,
+  RequestsListLegacyRedirect,
+} from "@/routes/legacyScreenRedirect"
 import { CatalogProductsPage } from "@/features/catalog/pages/CatalogProductsPage"
 import { PortalCartPage } from "@/features/catalog/pages/PortalCartPage"
 import { PortalCatalogPage } from "@/features/catalog/pages/PortalCatalogPage"
@@ -58,37 +57,6 @@ export const catalogManifest = {
           labelKey: "nav.catalogProducts",
           icon: Tag,
           to: "/catalogo/produtos",
-          permission: "catalog.products.read",
-        },
-        {
-          labelKey: "nav.catalogCustomerGroups",
-          icon: Users,
-          to: "/catalogo/grupos",
-          permission: "catalog.products.read",
-        },
-        {
-          labelKey: "nav.catalogOrders",
-          icon: ShoppingBag,
-          to: "/catalogo/pedidos",
-          permission: "catalog.orders.read",
-        },
-        {
-          labelKey: "nav.catalogProductAgenda",
-          icon: CalendarDays,
-          to: "/catalogo/agenda-produto",
-          permission: "catalog.orders.read",
-        },
-        {
-          labelKey: "nav.catalogResourceAgenda",
-          icon: CalendarDays,
-          to: "/catalogo/agenda-recursos",
-          permission: "rentals.schedule.read",
-          modules: ["rentals"],
-        },
-        {
-          labelKey: "nav.catalogRequests",
-          icon: FileText,
-          to: "/catalogo/solicitacoes",
           permission: "catalog.products.read",
         },
         {
@@ -143,17 +111,17 @@ export const catalogManifest = {
       { path: "/catalogo/produtos/:id/cadastro", element: <ProductAssistantPage cadastro />, permission: "catalog.products.read" },
       {
         path: "/catalogo/produtos/novo",
-        element: <CatalogProductCreatePage />,
+        element: <RedirectKeepingLocation to="/catalogo/produtos/cadastro" />,
         permission: "catalog.products.manage",
       },
       {
         path: "/catalogo/produtos/:id/assistente",
-        element: <ProductWizardPage />,
+        element: <CadastroLegacyRedirect area="produtos" />,
         permission: "catalog.products.read",
       },
       {
         path: "/catalogo/produtos/:id/passos",
-        element: <ProductAssistantPage />,
+        element: <CadastroLegacyRedirect area="produtos" />,
         permission: "catalog.products.read",
       },
       {
@@ -168,22 +136,22 @@ export const catalogManifest = {
       },
       {
         path: "/catalogo/solicitacoes",
-        element: <CatalogProductsPage view="requests" />,
+        element: <RequestsListLegacyRedirect />,
         permission: "catalog.products.read",
       },
       {
         path: "/catalogo/grupos",
-        element: <CatalogCustomerGroupsPage />,
+        element: <RedirectKeepingLocation to="/grupos" />,
         permission: "catalog.products.read",
       },
       {
         path: "/catalogo/grupos/novo",
-        element: <CatalogCustomerGroupEditorPage />,
+        element: <RedirectKeepingLocation to="/grupos/novo" />,
         permission: "catalog.products.read",
       },
       {
         path: "/catalogo/grupos/:id",
-        element: <CatalogCustomerGroupEditorPage />,
+        element: <RedirectKeepingLocation to="/grupos/:id" />,
         permission: "catalog.products.read",
       },
       {
@@ -203,28 +171,28 @@ export const catalogManifest = {
       },
       {
         path: "/catalogo/pedidos",
-        element: <CatalogOrdersPage />,
+        element: <OrdersListLegacyRedirect />,
         permission: "catalog.orders.read",
       },
       {
         path: "/catalogo/agenda-produto",
-        element: <CatalogProductAgendaPage />,
+        element: <RedirectKeepingLocation to="/agendas/produto" />,
         permission: "catalog.orders.read",
       },
       {
         path: "/catalogo/agenda-recursos",
-        element: <CatalogResourceAgendaPage />,
+        element: <RedirectKeepingLocation to="/agendas/recursos" />,
         permission: "rentals.schedule.read",
         modules: ["rentals"],
       },
       {
         path: "/catalogo/pedidos/:orderId",
-        element: <CatalogOrderDetailPage />,
+        element: <RedirectKeepingLocation to="/pedidos/:orderId" />,
         permission: "catalog.orders.read",
       },
       {
         path: "/catalogo/notificacoes",
-        element: <Navigate to="/configuracoes/notificacoes#entregas" replace />,
+        element: <NotificationsLegacyRedirect history />,
       },
     ] satisfies readonly FeatureRoute[],
   },

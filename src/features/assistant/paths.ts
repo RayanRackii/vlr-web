@@ -1,7 +1,7 @@
 export function resourceAssistantPath(rentalAssetId: string): string {
-  return `/configuracoes/recursos/${encodeURIComponent(rentalAssetId)}/passos`
+  return `/configuracoes/recursos/${encodeURIComponent(rentalAssetId)}/cadastro`
 }
 
 export function productAssistantPath(productId: string): string {
-  return `/catalogo/produtos/${encodeURIComponent(productId)}/passos`
+  return `/catalogo/produtos/${encodeURIComponent(productId)}/cadastro`
 }
