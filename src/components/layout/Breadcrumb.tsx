@@ -9,6 +9,17 @@ import { matchModuleIntro, moduleIntroPath } from "./navigationIntros"
 import { BreadcrumbTitleContext } from "./useBreadcrumbTitle"
 import { ICON_STROKE_WIDTH } from "@/lib/icon"
 
+const createTitleKey: Record<string, string> = {
+  "/ativos/novo": "nav.createEquipment",
+  "/ativos/categorias/novo": "assets.categories.actions.new",
+  "/catalogo/grupos/novo": "catalog.customerGroups.createTitle",
+  "/catalogo/produtos/novo": "catalog.products.createTitle",
+  "/configuracoes/recursos/novo": "nav.createResource",
+  "/os/nova": "workOrders.create.title",
+  "/pessoas-e-acesso/funcoes/nova": "peopleAccess.roles.createTitle",
+  "/pmoc/novo": "nav.pmocNew",
+}
+
 const narrowQuery = "(max-width: 639px)"
 function subscribeToViewport(onChange: () => void) {
   const media = window.matchMedia?.(narrowQuery)
@@ -39,14 +50,24 @@ export function Breadcrumb() {
     if (tab && crumbs.at(-1)?.label !== t(tab.labelKey)) {
       crumbs.push({ label: t(tab.labelKey), to: tab.to })
     }
+    const path = pathname.replace(/\/+$/, "")
+    const createKey = createTitleKey[path]
+    if (createKey && !isDetail && crumbs.length > 0) {
+      crumbs[crumbs.length - 1] = { label: t(createKey) }
+    }
     if (isDetail) {
-      crumbs.push({ label: title?.pathname === pathname ? title.value : t("nav.details") })
+      crumbs.push({
+        label: createKey
+          ? t(createKey)
+          : title?.pathname === pathname ? title.value : t("nav.details"),
+      })
     }
   } else {
     crumbs.push({ label: t(getPageTitleKey(pathname)) })
   }
 
   const visibleCrumbs = narrow ? crumbs.slice(-2) : crumbs
+  if (visibleCrumbs.length < 2) return null
   return (
     <nav aria-label={t("nav.breadcrumbLabel")} className="mb-4 text-sm text-muted-foreground">
       <ol className="flex min-w-0 items-center gap-2">
