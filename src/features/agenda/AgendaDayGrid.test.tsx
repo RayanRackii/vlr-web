@@ -28,7 +28,7 @@ function setup(search = "visao=dia&date=2026-11-10") {
 }
 function stubNarrow() {
   vi.stubGlobal("matchMedia", (query: string) => ({
-    matches: query === "(max-width: 639px)",
+    matches: query === "(max-width: 899px)",
     media: query,
     addEventListener: () => {},
     removeEventListener: () => {},
@@ -245,6 +245,33 @@ it("uses the order list number and the customer when the grid block has neither"
   const detail = screen.getByRole("region", { name: "Detalhes do bloco selecionado" })
   expect(within(detail).getByRole("link", { name: "#22" })).toHaveAttribute("href", `/catalogo/pedidos/${order.orderId}`)
   expect(within(detail).getByText("Marina")).toBeInTheDocument()
+})
+
+it.each([390, 430, 512, 768])("uses the day list at a %ipx viewport before the column is measured", async (width) => {
+  const previous = window.innerWidth
+  vi.stubGlobal("matchMedia", (query: string) => ({
+    matches: query === "(max-width: 899px)" && width <= 899,
+    media: query,
+    addEventListener: () => {},
+    removeEventListener: () => {},
+    onchange: null,
+    addListener: () => {},
+    removeListener: () => {},
+    dispatchEvent: () => false,
+  }))
+  const previousVisual = window.visualViewport
+  Object.defineProperty(window, "innerWidth", { configurable: true, value: width })
+  Object.defineProperty(window, "visualViewport", { configurable: true, value: { width, addEventListener: () => {}, removeEventListener: () => {} } })
+  try {
+    setup()
+    const grid = await screen.findByRole("region", { name: "Grade do dia" })
+    expect(grid.className).not.toContain("overflow-x-auto")
+    expect(within(grid).queryByText("00:00")).not.toBeInTheDocument()
+    expect(within(grid).queryByText("06:00")).not.toBeInTheDocument()
+  } finally {
+    Object.defineProperty(window, "innerWidth", { configurable: true, value: previous })
+    Object.defineProperty(window, "visualViewport", { configurable: true, value: previousVisual })
+  }
 })
 
 it("uses the day list at a 400px viewport before the column is measured", async () => {
