@@ -2123,7 +2123,11 @@
     "catalogProductAgenda": "Agenda del producto",
     "catalogResourceAgenda": "Agenda de recursos",
     "rentalsResourceWizard": "Asistente del recurso",
-    "catalogProductWizard": "Asistente del producto"
+    "catalogProductWizard": "Asistente del producto",
+    "agendas": "Agendas",
+    "agendasOverview": "Vista general",
+    "agendasResources": "Agenda de recursos",
+    "agendasProduct": "Agenda del producto"
   },
   "moduleIntro": {
     "title": "Presentación",
@@ -5528,5 +5532,25 @@
       "portalRequests": "Ej.: un producto de limpieza para recepción",
       "portalCatalog": "Ej.: materiales de uso diario para recepción"
     }
+  },
+  "agendas": {
+    "eyebrow": "Operación · Agendas",
+    "overview": {
+      "title": "Vista general de las agendas",
+      "subtitle": "Ocupación de los recursos en el período: reservas, pedidos, mantenimiento y bloqueos."
+    },
+    "resources": {
+      "title": "Agenda de recursos",
+      "subtitle": "Ocupación por recurso, centrada en los recursos seleccionados."
+    },
+    "product": {
+      "title": "Agenda del producto",
+      "subtitle": "Ocupación de los recursos utilizados por el producto en el período."
+    },
+    "chooseProduct": "Elige un producto para consultar su agenda.",
+    "prep": "Preparación",
+    "cleanup": "Limpieza",
+    "selectedProductOrders": "Pedidos del producto: {{count}}",
+    "otherUses": "Otros usos · {{kind}}: {{count}}"
   }
 }

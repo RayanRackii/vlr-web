@@ -5,6 +5,8 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { Button } from "@/components/ui/button"
 import type { AgendaBlock, AgendaRow } from "./dayGridModel"
 import type { AgendaSourceId } from "./useAgendaDay"
+import { useTenantTimeZone } from "@/contexts/TenantTimeZoneContext"
+import { AgendaProductPads } from "./AgendaProductPads"
 import { visibleHourLabels } from "./hourLabels"
 
 const DEFAULT_START_MINUTES = 6 * 60
@@ -136,6 +138,8 @@ type AgendaDayGridProps = {
   end: number | null
   canReserve: boolean
   canBlock: boolean
+  focusDate?: string
+  focusedProductId?: string | null
 }
 
 function useTrackWidth() {
@@ -155,8 +159,9 @@ function useTrackWidth() {
   return { ref, width }
 }
 
-export function AgendaDayGrid({ loading, failedSources, rows, start, end, canReserve, canBlock }: AgendaDayGridProps) {
+export function AgendaDayGrid({ loading, failedSources, rows, start, end, canReserve, canBlock, focusedProductId, focusDate }: AgendaDayGridProps) {
   const { t } = useTranslation()
+  const timeZone = useTenantTimeZone()
   const [selectedKey, setSelectedKey] = useState<string | null>(null)
   const { axisStart, axisEnd } = axisBounds(start, end)
   const span = Math.max(axisEnd - axisStart, 1)
@@ -220,10 +225,11 @@ export function AgendaDayGrid({ loading, failedSources, rows, start, end, canRes
                             aria-pressed={selectedKey === block.key}
                             aria-label={name}
                             title={name}
-                            className={`flex min-h-11 w-full items-center rounded-md border px-3 py-2 text-left text-sm font-medium ${kindClass[block.kind]}`}
+                            className={`${focusedProductId ? "relative overflow-hidden" : ""} flex min-h-11 w-full items-center rounded-md border px-3 py-2 text-left text-sm font-medium ${kindClass[block.kind]} ${focusedProductId && block.productId !== focusedProductId ? "opacity-40" : ""}`}
                             onClick={() => setSelectedKey(block.key)}
                           >
-                            <span className="truncate">{heading}</span>
+                            {focusedProductId === block.productId && focusDate && <AgendaProductPads block={block} date={focusDate} timeZone={timeZone} />}
+                                <span className={focusedProductId ? "relative truncate" : "truncate"}>{heading}</span>
                           </button>
                         )
                       })}
@@ -248,11 +254,12 @@ export function AgendaDayGrid({ loading, failedSources, rows, start, end, canRes
                                 aria-pressed={selectedKey === block.key}
                                 aria-label={name}
                                 title={name}
-                                className={`absolute flex items-center overflow-hidden rounded-md border px-2 text-sm font-medium ${clamped >= 50 ? "justify-center text-center" : "justify-start text-left"} ${kindClass[block.kind]}`}
+                                className={`absolute flex items-center overflow-hidden rounded-md border px-2 text-sm font-medium ${clamped >= 50 ? "justify-center text-center" : "justify-start text-left"} ${kindClass[block.kind]} ${focusedProductId && block.productId !== focusedProductId ? "opacity-40" : ""}`}
                                 style={{ left: `${left}%`, width: `${clamped}%`, top: `${lane * 2.75 + 0.25}rem`, height: "2.5rem" }}
                                 onClick={() => setSelectedKey(block.key)}
                               >
-                                <span className="truncate">{heading}</span>
+                                {focusedProductId === block.productId && focusDate && <AgendaProductPads block={block} date={focusDate} timeZone={timeZone} />}
+                                <span className={focusedProductId ? "relative truncate" : "truncate"}>{heading}</span>
                               </button>
                             )
                           })}

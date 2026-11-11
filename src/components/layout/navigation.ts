@@ -37,6 +37,9 @@ export type AppNavigationChildItem = {
     | "nav.catalogProducts"
     | "nav.catalogCustomerGroups"
     | "nav.catalogOrders"
+    | "nav.agendasOverview"
+    | "nav.agendasResources"
+    | "nav.agendasProduct"
     | "nav.catalogProductAgenda"
     | "nav.catalogResourceAgenda"
     | "nav.catalogRequests"
@@ -60,6 +63,7 @@ export type AppNavigationItem = {
   introKey?: ModuleIntroKey
   labelKey:
     | "nav.agenda"
+    | "nav.agendas"
     | "nav.dashboard"
     | "nav.peopleAccess"
     | "nav.assets"
@@ -78,6 +82,9 @@ export type AppNavigationItem = {
     | "nav.taxonomy"
     | "nav.catalogProducts"
     | "nav.catalogOrders"
+    | "nav.agendasOverview"
+    | "nav.agendasResources"
+    | "nav.agendasProduct"
     | "nav.catalogProductAgenda"
     | "nav.catalogResourceAgenda"
     | "nav.catalogRequests"
@@ -175,7 +182,7 @@ function navigationItemsAt(...paths: string[]): AppNavigationItem[] {
 const productNavigationSections: readonly AppNavigationSection[] = [
   { titleKey: "nav.sections.overview", standalone: true, items: [overviewItem] },
   { titleKey: "nav.sections.operations", items: navigationItemsAt(
-    "/agenda", "/catalogo/agenda-recursos", "/catalogo/agenda-produto", "/catalogo/pedidos",
+    "/agendas", "/catalogo/pedidos",
     "/catalogo/solicitacoes", "/configuracoes/reservas", "/os", "/pmoc",
   ) },
   { titleKey: "nav.sections.registration", items: navigationItemsAt(

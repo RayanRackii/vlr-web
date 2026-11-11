@@ -165,3 +165,16 @@ it("starts settings collapsed and toggles groups only through dedicated plus/min
   await user.click(operations)
   expect(screen.getByRole("link", { name: "Reservas" })).toBeVisible()
 })
+
+
+it.each([
+  ["/agendas", "Visão geral"], ["/agendas/recursos", "Agenda de recursos"], ["/agendas/produto", "Agenda do produto"],
+])("marks exactly the new agenda child current at %s", (path, label) => {
+  renderSidebar(["rentals.schedule.read", "catalog.orders.read"], ["rentals", "catalog"], path)
+  expect(screen.getAllByRole("link", { current: "page" })).toHaveLength(1)
+  expect(screen.getByRole("link", { name: label })).toHaveAttribute("aria-current", "page")
+  const toggle = screen.getByRole("button", { name: "Recolher Agendas" })
+  expect(toggle.querySelector(".lucide-minus")).toBeInTheDocument()
+  const links = screen.getAllByRole("link").map((link) => link.getAttribute("href"))
+  for (const legacy of ["/agenda", "/catalogo/agenda-recursos", "/catalogo/agenda-produto"]) expect(links).not.toContain(legacy)
+})
