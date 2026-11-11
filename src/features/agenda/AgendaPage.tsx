@@ -1,50 +1,14 @@
 import { useTranslation } from "react-i18next"
 import { useSearchParams } from "react-router-dom"
-import { Skeleton } from "@/components/ui/skeleton"
 import { Button } from "@/components/ui/button"
 import { useTenantTimeZone } from "@/contexts/TenantTimeZoneContext"
 import { addCivilDays, civilToday, formatDayLabel, startOfCivilWeek } from "@/features/catalog/components/agenda/agendaLayout"
 import { usePermissions } from "@/features/users/permissions/PermissionContext"
 import { AgendaDayGrid } from "./AgendaDayGrid"
+import { AgendaFilters } from "./AgendaFilters"
 import { AgendaWeek } from "./AgendaWeek"
 import { useAgendaDay } from "./useAgendaDay"
-import { agendaFilterKeys, agendaTypes, parseAgendaState, serializeAgendaState, type AgendaState } from "./urlState"
-import { agendaOptionLoaders, useAgendaOptions, type AgendaOption } from "./useAgendaOptions"
-
-type ChipRowProps = {
-  label: string
-  value: string | null
-  options: AgendaOption[]
-  onSelect: (value: string | null) => void
-}
-
-function ChipRow({ label, value, options, onSelect }: ChipRowProps) {
-  const { t } = useTranslation()
-  return (
-    <div role="group" aria-label={label} className="flex flex-col gap-2 py-3 sm:flex-row sm:flex-wrap sm:items-center">
-      <span className="text-sm font-medium text-muted-foreground sm:w-24">{label}</span>
-      <div className="flex min-w-0 flex-wrap gap-2">
-      {[{ id: null, label: t("staffAgenda.all") }, ...options].map((option) => (
-        <Button key={option.id ?? "all"} type="button" className="min-h-11 rounded-full" variant={value === option.id ? "default" : "outline"} aria-pressed={value === option.id} onClick={() => onSelect(option.id)}>
-          {option.label}
-        </Button>
-      ))}
-      </div>
-    </div>
-  )
-}
-
-function LoadedChipRow({ load, ...props }: Omit<ChipRowProps, "options"> & { load: () => Promise<AgendaOption[]> }) {
-  const { t } = useTranslation()
-  const { options, loading, error } = useAgendaOptions(load)
-  return (
-    <div>
-      <ChipRow {...props} options={options} />
-      {loading && <div role="status" aria-label={t("staffAgenda.loading", { label: props.label })} className="flex gap-2 pb-3"><Skeleton variant="shimmer" className="h-11 w-24 rounded-full" /><Skeleton variant="shimmer" className="h-11 w-32 rounded-full" /></div>}
-      {error && <p role="alert" className="text-sm text-destructive">{t("staffAgenda.loadError", { label: props.label })}</p>}
-    </div>
-  )
-}
+import { parseAgendaState, serializeAgendaState, type AgendaState } from "./urlState"
 
 export function AgendaPage() {
   const { t, i18n } = useTranslation()
@@ -54,7 +18,6 @@ export function AgendaPage() {
   const today = civilToday(timeZone)
   const state = parseAgendaState(params, today)
   const update = (patch: Partial<AgendaState>) => setParams(serializeAgendaState({ ...state, ...patch }, params))
-  const count = agendaFilterKeys.filter((key) => state[key] !== null).length
   const locale = i18n.resolvedLanguage ?? i18n.language
   const weekStart = startOfCivilWeek(state.date)
   const dateLabel = state.visao === "dia" ? formatDayLabel(state.date, locale)
@@ -92,16 +55,14 @@ export function AgendaPage() {
           <span aria-live="polite" className="text-sm font-medium">{dateLabel}</span>
         </div>
       </header>
-      <section aria-label={t("staffAgenda.filters")} className="rounded-xl border bg-card px-4 text-card-foreground">
-        {rentalFilters && <LoadedChipRow key={`${tenantKey}:recurso`} label={t("staffAgenda.recurso")} value={state.recurso} load={agendaOptionLoaders.recurso} onSelect={(recurso) => update({ recurso })} />}
-        {productFilters && <LoadedChipRow key={`${tenantKey}:produto`} label={t("staffAgenda.produto")} value={state.produto} load={agendaOptionLoaders.produto} onSelect={(produto) => update({ produto })} />}
-        {orderFilters && <LoadedChipRow key={`${tenantKey}:pedido`} label={t("staffAgenda.pedido")} value={state.pedido} load={agendaOptionLoaders.pedido} onSelect={(pedido) => update({ pedido })} />}
-        <ChipRow label={t("staffAgenda.tipo")} value={state.tipo} options={agendaTypes.map((id) => ({ id, label: t(`staffAgenda.types.${id}`) }))} onSelect={(value) => update({ tipo: agendaTypes.find((tipo) => tipo === value) ?? null })} />
-        <div className="flex flex-wrap items-center justify-between gap-2 border-t py-3">
-          <p role="status" className="text-sm text-muted-foreground">{t("staffAgenda.applied", { count })}</p>
-          <Button type="button" variant="ghost" onClick={() => update({ recurso: null, produto: null, pedido: null, tipo: null })}>{t("staffAgenda.clear")}</Button>
-        </div>
-      </section>
+      <AgendaFilters
+        key={tenantKey}
+        state={state}
+        rental={rentalFilters}
+        product={productFilters}
+        order={orderFilters}
+        onChange={update}
+      />
       {state.visao === "dia" ? (
         <AgendaDayGrid
           loading={isLoading || day.loading}
