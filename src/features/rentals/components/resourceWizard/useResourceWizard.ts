@@ -240,9 +240,12 @@ export function useResourceWizard(rentalAssetId: string) {
     }
     return run("policy", async () => {
       await updateRentalSchedulePolicy(asset.id, input)
-      toast.success(t(input.schedulePolicy === "OpenHours"
-        ? "rentals.schedule.policy.saveOpenHoursSuccess"
-        : "rentals.schedule.policy.saveSlotGridSuccess"))
+      const savingTerms = input.minimumBookingLeadMinutes !== undefined || input.depositPercent !== undefined
+      toast.success(t(savingTerms
+        ? "assistant.saved"
+        : input.schedulePolicy === "OpenHours"
+          ? "rentals.schedule.policy.saveOpenHoursSuccess"
+          : "rentals.schedule.policy.saveSlotGridSuccess"))
     })
   }
 

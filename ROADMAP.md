@@ -337,6 +337,7 @@ PR 1 (fundação): tokens de design e primitivas, sem restyling de telas/shell (
 
 ## Histórico
 
+| 2026-11-10 | **Antecedência e sinal no assistente do recurso (WEB):** em Regras, o recurso mostra o valor herdado e pode gravar o próprio ou limpar. O percentual de sinal fica só salvo, sem cobrança parcial. Uma reserva cedo demais mostra o texto do código `booking_lead_time_not_met`. Depende da API #340 no ambiente. |
 | 2026-11-10 | **Assistente do produto em seis passos (WEB):** `/catalogo/produtos/:id/passos` salva a oferta, o recurso, quem compra e o menu. A fila e o recurso usado são leitura, com link para os passos do recurso. O assistente antigo continua. |
 | 2026-11-10 | **Assistente do recurso em seis passos (WEB):** `/configuracoes/recursos/:id/passos` edita nome, agenda, fila, durações, cancelamento, preço e menu. Quem pode reservar aparece só como leitura, com link para o produto. Antecedência mínima e sinal percentual ficam de fora. O assistente antigo continua. |
 | 2026-11-10 | **Um status para recurso e produto (WEB):** Publicado, Rascunho ou Falta N passos sai dos dados que já existem: nome, agenda, fila, duração e cancelamento, preço, e o menu do portal. O mesmo selo aparece na lista e no assistente. As telas antigas continuam. |

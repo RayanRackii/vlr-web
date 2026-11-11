@@ -3,6 +3,8 @@ import i18n from "@/lib/i18n"
 
 export const DAILY_BOOKING_LIMIT_REACHED = "DAILY_BOOKING_LIMIT_REACHED"
 export const BOOKING_HORIZON_EXCEEDED = "booking_horizon_exceeded"
+export const BOOKING_LEAD_TIME_NOT_MET = "booking_lead_time_not_met"
+const LEAD_MINUTES_MAX = 525600
 
 export const RESERVATION_QUEUE_ERROR_CODES = [
   "QUEUE_REQUIRED",
@@ -40,13 +42,21 @@ export class PortalBookingError extends Error {
   readonly status: number | null
   readonly code: string | null
   readonly cancelCutoffHours: number | null
+  readonly minimumBookingLeadMinutes: number | null
 
-  constructor(message: string, status: number | null, code: string | null, cancelCutoffHours: number | null = null) {
+  constructor(
+    message: string,
+    status: number | null,
+    code: string | null,
+    cancelCutoffHours: number | null = null,
+    minimumBookingLeadMinutes: number | null = null,
+  ) {
     super(message)
     this.name = "PortalBookingError"
     this.status = status
     this.code = code
     this.cancelCutoffHours = cancelCutoffHours
+    this.minimumBookingLeadMinutes = minimumBookingLeadMinutes
   }
 }
 
@@ -79,14 +89,42 @@ export function portalBookingErrorFromUnknown(
     && typeof payload.cancelCutoffHours === "number" && Number.isInteger(payload.cancelCutoffHours)
     && payload.cancelCutoffHours >= 0 && payload.cancelCutoffHours <= 8760
       ? payload.cancelCutoffHours : null
+  const leadMinutes = status === 400 && code === BOOKING_LEAD_TIME_NOT_MET
+    ? readLeadMinutes(payload)
+    : null
   return new PortalBookingError(
     status === 409 && code === "cancel_cutoff_passed"
       ? i18n.t("tenantPortal.agenda.cancelCutoffPassed", { hours: hours ?? "" })
-      : parseApiError(payload, fallback),
+      : status === 400 && code === BOOKING_LEAD_TIME_NOT_MET
+        ? leadTimeMessage(leadMinutes)
+        : parseApiError(payload, fallback),
     status,
     code,
     hours,
+    leadMinutes,
   )
+}
+
+function readLeadMinutes(payload: unknown): number | null {
+  if (typeof payload === "object" && payload !== null && "minimumBookingLeadMinutes" in payload) {
+    const value = payload.minimumBookingLeadMinutes
+    if (isLeadMinutes(value)) return value
+  }
+  if (typeof payload === "object" && payload !== null && "error" in payload && typeof payload.error === "string") {
+    const match = /(\d+)/.exec(payload.error)
+    if (match && isLeadMinutes(Number(match[1]))) return Number(match[1])
+  }
+  return null
+}
+
+function isLeadMinutes(value: unknown): value is number {
+  return typeof value === "number" && Number.isInteger(value) && value >= 0 && value <= LEAD_MINUTES_MAX
+}
+
+function leadTimeMessage(minutes: number | null): string {
+  return minutes == null
+    ? i18n.t("tenantPortal.agenda.leadTimeNotMet")
+    : i18n.t("tenantPortal.agenda.leadTimeNotMetMinutes", { count: minutes })
 }
 
 export function isCancelCutoffError(error: unknown): error is PortalBookingError {
@@ -111,6 +149,12 @@ export function isBookingHorizonError(
   )
 }
 
+export function isBookingLeadTimeError(error: unknown): error is PortalBookingError {
+  return error instanceof PortalBookingError
+    && error.status === 400
+    && error.code === BOOKING_LEAD_TIME_NOT_MET
+}
+
 /** Message for a booking failure. A horizon rejection uses the translated sentence. */
 export function describeBookingError(
   error: unknown,
@@ -119,6 +163,9 @@ export function describeBookingError(
 ): string {
   if (isCancelCutoffError(error)) {
     return i18n.t("tenantPortal.agenda.cancelCutoffPassed", { hours: error.cancelCutoffHours ?? "" })
+  }
+  if (isBookingLeadTimeError(error)) {
+    return leadTimeMessage(error.minimumBookingLeadMinutes)
   }
   if (isBookingHorizonError(error)) {
     return typeof horizonDays === "number"
