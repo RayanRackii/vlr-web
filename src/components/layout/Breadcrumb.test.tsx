@@ -127,10 +127,22 @@ describe("staff breadcrumb", () => {
     expect(screen.queryByRole("navigation", { name: "Caminho de navegação" })).not.toBeInTheDocument()
   })
 
-  it("names a create page Novo instead of Detalhes", () => {
+  it.each([
+    ["/catalogo/grupos/novo", "Grupos", "/catalogo/grupos", "Novo grupo", ["catalog.products.read"], ["catalog"]],
+    ["/catalogo/produtos/novo", "Produtos", "/catalogo/produtos", "Novo produto", ["catalog.products.read"], ["catalog"]],
+    ["/configuracoes/recursos/novo", "Recursos", "/configuracoes/recursos", "Novo recurso", ["rentals.assets.read", "core.units.read"], []],
+    ["/os/nova", "Ordens de serviço", "/os", "Nova Ordem de Serviço", [], []],
+    ["/pmoc/novo", "Planos de manutenção", "", "Novo plano", [], []],
+    ["/pessoas-e-acesso/funcoes/nova", "Pessoas e acesso", "/pessoas-e-acesso", "Nova função", [], []],
+    ["/ativos/novo", "Equipamentos", "/ativos", "Novo equipamento", [], []],
+    ["/ativos/categorias/novo", "Tipos de equipamento", "/ativos/categorias", "Novo tipo", [], []],
+  ] as const)("names %s with a singular create label", (path, parent, href, label, extraPermissions, extraModules) => {
     render(
-      <MemoryRouter initialEntries={["/catalogo/grupos/novo"]}>
-        <TestPermissionProvider permissions={[...permissions, "catalog.products.read"]} activeModules={["pmoc", "os", "inventory", "rentals", "catalog"]}>
+      <MemoryRouter initialEntries={[path]}>
+        <TestPermissionProvider
+          permissions={[...permissions, ...extraPermissions]}
+          activeModules={["pmoc", "os", "inventory", "rentals", ...extraModules]}
+        >
           <BreadcrumbTitleProvider>
             <Breadcrumb />
           </BreadcrumbTitleProvider>
@@ -138,9 +150,14 @@ describe("staff breadcrumb", () => {
       </MemoryRouter>,
     )
     const nav = screen.getByRole("navigation", { name: "Caminho de navegação" })
-    expect(within(nav).getByRole("link", { name: "Grupos" })).toHaveAttribute("href", "/catalogo/grupos")
-    expect(within(nav).getByText("Novo grupo")).toHaveAttribute("aria-current", "page")
+    if (href) {
+      expect(within(nav).getByRole("link", { name: parent })).toHaveAttribute("href", href)
+    } else {
+      expect(within(nav).getByText(parent)).toBeInTheDocument()
+    }
+    expect(nav.querySelector("[aria-current='page']")).toHaveTextContent(label)
     expect(within(nav).queryByText("Detalhes")).not.toBeInTheDocument()
+    expect(within(nav).queryByText(/Novo Recursos|Novo Equipamentos|Novo Ordens|Novo Tipos/)).not.toBeInTheDocument()
   })
 })
 

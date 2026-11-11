@@ -10,8 +10,14 @@ import { BreadcrumbTitleContext } from "./useBreadcrumbTitle"
 import { ICON_STROKE_WIDTH } from "@/lib/icon"
 
 const createTitleKey: Record<string, string> = {
-  "/catalogo/grupos": "catalog.customerGroups.createTitle",
-  "/catalogo/produtos": "catalog.products.createTitle",
+  "/ativos/novo": "nav.createEquipment",
+  "/ativos/categorias/novo": "assets.categories.actions.new",
+  "/catalogo/grupos/novo": "catalog.customerGroups.createTitle",
+  "/catalogo/produtos/novo": "catalog.products.createTitle",
+  "/configuracoes/recursos/novo": "nav.createResource",
+  "/os/nova": "workOrders.create.title",
+  "/pessoas-e-acesso/funcoes/nova": "peopleAccess.roles.createTitle",
+  "/pmoc/novo": "nav.pmocNew",
 }
 
 const narrowQuery = "(max-width: 639px)"
@@ -44,16 +50,16 @@ export function Breadcrumb() {
     if (tab && crumbs.at(-1)?.label !== t(tab.labelKey)) {
       crumbs.push({ label: t(tab.labelKey), to: tab.to })
     }
+    const path = pathname.replace(/\/+$/, "")
+    const createKey = createTitleKey[path]
+    if (createKey && !isDetail && crumbs.length > 0) {
+      crumbs[crumbs.length - 1] = { label: t(createKey) }
+    }
     if (isDetail) {
-      const path = pathname.replace(/\/+$/, "")
-      const destination = (child ?? item).to
-      const createKey = path.endsWith("/novo") ? createTitleKey[destination] : undefined
       crumbs.push({
         label: createKey
           ? t(createKey)
-          : path.endsWith("/novo")
-            ? t("nav.newNamed", { name: t((child ?? item).labelKey) })
-            : title?.pathname === pathname ? title.value : t("nav.details"),
+          : title?.pathname === pathname ? title.value : t("nav.details"),
       })
     }
   } else {
