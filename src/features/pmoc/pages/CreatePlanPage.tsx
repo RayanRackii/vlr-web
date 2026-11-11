@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { ArrowLeft, ClipboardList, LoaderCircle, Plus } from "lucide-react"
+import { ClipboardList, LoaderCircle, Plus } from "lucide-react"
 import { useFieldArray, useForm, useWatch } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
@@ -202,19 +202,6 @@ export function CreatePlanPage() {
           <p className="text-sm text-muted-foreground">
             {t("pmoc.create.description")}
           </p>
-        </div>
-
-        <div className="flex flex-wrap gap-2">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => {
-              void navigate("/pmoc")
-            }}
-          >
-            <ArrowLeft data-icon="inline-start" />
-            {t("pmoc.create.actions.back")}
-          </Button>
         </div>
       </div>
 

@@ -53,7 +53,7 @@ describe("RentalResourceEditorForm page layout", () => {
     await i18n.changeLanguage(locale)
     try {
       renderEditor()
-      expect(screen.getByRole("navigation", { name: i18n.t("rentals.resources.editor.breadcrumb") }).textContent).not.toContain("rentals.")
+      expect(screen.queryByRole("navigation", { name: i18n.t("rentals.resources.editor.breadcrumb") })).not.toBeInTheDocument()
       expect(screen.getByRole("navigation", { name: i18n.t("rentals.resources.editor.sections") })).toHaveAccessibleName(locale === "en" ? "Resource sections" : "Seções do recurso")
       expect(document.body.textContent).not.toContain("rentals.resources.editor.")
     } finally { await i18n.changeLanguage("pt-BR") }
@@ -70,7 +70,7 @@ describe("RentalResourceEditorForm page layout", () => {
     expect(screen.getByRole("spinbutton", { name: i18n.t("resourceVisual.capacityPeople") })).toBeVisible()
   })
 
-  it("lets keyboard users jump to a module and cancel from the fixed footer", async () => {
+  it("lets keyboard users jump to a module and cancel from the sticky footer", async () => {
     const user = userEvent.setup()
     const onCancel = vi.fn()
     renderEditor({ onCancel })
@@ -81,7 +81,9 @@ describe("RentalResourceEditorForm page layout", () => {
     await user.click(screen.getAllByRole("button", { name: i18n.t("common.cancel") }).at(-1)!)
     expect(onCancel).toHaveBeenCalledWith()
     const css = readFileSync("src/features/rentals/components/rentalResources.css", "utf8")
-    expect(css).toMatch(/\.resource-editor-footer\s*\{[^}]*position:\s*fixed/)
+    expect(screen.getAllByRole("button", { name: i18n.t("common.cancel") })).toHaveLength(1)
+    expect(css).toMatch(/\.resource-editor-footer\s*\{[^}]*position:\s*sticky/)
+    expect(css).not.toMatch(/\.resource-editor-footer\s*\{[^}]*position:\s*fixed/)
   })
 
   it("keeps every loaded template available and applies defaults from its preview card", async () => {
@@ -133,13 +135,13 @@ describe("RentalResourceEditorForm page layout", () => {
 })
 
 
-it("keeps both save actions disabled until an edited resource changes and disables them after reverting", async () => {
+it("keeps the footer save disabled until an edited resource changes and disables it after reverting", async () => {
   const user = userEvent.setup()
   const { rentalAssetSchema } = await import("@/features/rentals/services/scheduleService")
   const editedId = "11111111-1111-4111-8111-111111111111"
   renderEditor({ editing: rentalAssetSchema.parse({ id: editedId, assetId: editedId, unitId: editedId, categoryId: editedId, familyId: editedId, name: "Resource", type: "Location", isActive: true }) })
   const saves = () => screen.getAllByRole("button").filter((button) => button.getAttribute("type") === "submit")
-  await waitFor(() => expect(saves()).toHaveLength(2))
+  await waitFor(() => expect(saves()).toHaveLength(1))
   saves().forEach((button) => expect(button).toBeDisabled())
   const name = screen.getByLabelText(i18n.t("rentals.resources.form.name"))
   await user.type(name, " updated")

@@ -17,10 +17,10 @@ import { WizardPanelsStepper } from "@/components/ui/wizard-panels"
 import { ProductWizardAccessStep } from "@/features/catalog/components/productWizard/ProductWizardAccessStep"
 import { isSameTabPrimaryClick } from "@/features/catalog/components/productWizard/plainClick"
 import { ProductWizardOfferStep } from "@/features/catalog/components/productWizard/ProductWizardOfferStep"
-import { audienceBlocksSale, catalogMenuIsActive } from "@/features/catalog/components/productWizard/sellableChecklist"
+import { catalogMenuIsActive } from "@/features/catalog/components/productWizard/sellableChecklist"
 import { ProductWizardStatusStep } from "@/features/catalog/components/productWizard/ProductWizardStatusStep"
 import { ItemStatusBadge } from "@/features/assistant/ItemStatusBadge"
-import { productItemStatus } from "@/features/assistant/itemStatus"
+import { statusFromMissing } from "@/features/assistant/itemStatus"
 import { useProductWizard } from "@/features/catalog/components/productWizard/useProductWizard"
 import {
   moveProductWizardStep,
@@ -210,15 +210,10 @@ export function ProductWizardPage() {
         <p className="text-sm font-medium text-primary">{t("catalog.products.title")}</p>
         <div className="flex flex-wrap items-center gap-2">
           <h1 className="text-2xl font-semibold tracking-tight">{t("catalog.productWizard.title")}</h1>
-          <ItemStatusBadge status={productItemStatus({
-            name: product.name,
-            isActive: product.isActive,
-            price: product.price,
-            audienceReady: (wizard.model.access?.visibility ?? product.visibility) !== "Restricted"
-              || (wizard.model.access !== null && wizard.model.groups !== null && !audienceBlocksSale(wizard.model.access, wizard.model.groups)),
-            agendaReady: !wizard.rentalsActive || (wizard.model.requirements ?? []).some((row) => (row.rentalAssetId?.trim().length ?? 0) > 0),
-            menuPublished: wizard.model.menuItems === null ? null : catalogMenuIsActive(wizard.model.menuItems),
-          })} />
+          <ItemStatusBadge status={statusFromMissing(
+            product.isActive && wizard.model.menuItems !== null && catalogMenuIsActive(wizard.model.menuItems),
+            wizard.checklist.filter((item) => item.status === "missing").length,
+          )} />
         </div>
         <p className="text-sm text-muted-foreground">{product.name}. {t("catalog.productWizard.description")}</p>
       </header>

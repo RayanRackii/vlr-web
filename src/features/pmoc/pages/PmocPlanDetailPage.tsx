@@ -2,7 +2,7 @@ import { useVisibleFormIssues } from "@/lib/useVisibleFormIssues"
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react"
 import { useNavigate, useParams } from "react-router-dom"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { ArrowLeft, Plus } from "lucide-react"
+import { Plus } from "lucide-react"
 import { useBreadcrumbTitle } from "@/components/layout/useBreadcrumbTitle"
 import { useFieldArray, useForm, useWatch } from "react-hook-form"
 import { useTranslation } from "react-i18next"
@@ -396,17 +396,6 @@ export function PmocPlanDetailPage() {
     <div className="space-y-6">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0 space-y-1">
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            onClick={() => {
-              void navigate("/pmoc")
-            }}
-          >
-            <ArrowLeft data-icon="inline-start" />
-            {t("pmoc.create.actions.back")}
-          </Button>
           <h1 className="text-xl font-semibold tracking-tight">{plan.name}</h1>
           {!canWrite && plan.description ? (
             <p className="text-sm text-muted-foreground">{plan.description}</p>

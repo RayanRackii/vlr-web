@@ -162,7 +162,7 @@ describe("Recursos permission before layout", () => {
       await screen.findByRole("heading", { name: "Recursos" }),
     ).toBeInTheDocument()
     expect(screen.getByRole("navigation", { name: i18n.t("nav.menu") })).toBeInTheDocument()
-    expect(screen.getByRole("navigation", { name: i18n.t("nav.breadcrumbLabel") })).toBeInTheDocument()
+    expect(screen.queryByRole("navigation", { name: i18n.t("nav.breadcrumbLabel") })).not.toBeInTheDocument()
     expect(
       screen.queryByRole("heading", { name: i18n.t("accessDenied.title") }),
     ).not.toBeInTheDocument()

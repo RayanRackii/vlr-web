@@ -2,6 +2,7 @@ import * as React from "react"
 import { Select as SelectPrimitive } from "@base-ui/react/select"
 import { CheckIcon, ChevronDownIcon, ChevronUpIcon } from "lucide-react"
 
+import { fieldControlClass } from "@/components/ui/fieldControl"
 import { cn } from "@/lib/utils"
 
 const Select = SelectPrimitive.Root
@@ -42,7 +43,8 @@ function SelectTrigger({
       data-slot="select-trigger"
       data-size={size}
       className={cn(
-        "touch-target flex w-full min-w-0 cursor-pointer items-center justify-between gap-1.5 overflow-hidden rounded-lg border border-input bg-transparent py-2 pr-2.5 pl-3 text-sm whitespace-nowrap shadow-xs transition-[color,border-color,box-shadow] duration-150 ease-out outline-none select-none hover:bg-accent/40 focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-destructive aria-invalid:focus-visible:border-destructive aria-invalid:focus-visible:ring-destructive aria-invalid:focus-visible:outline-destructive data-placeholder:text-muted-foreground data-[size=default]:h-10 data-[size=sm]:h-9 data-[size=sm]:rounded-md *:data-[slot=select-value]:line-clamp-1 *:data-[slot=select-value]:flex *:data-[slot=select-value]:min-w-0 *:data-[slot=select-value]:items-center *:data-[slot=select-value]:gap-1.5 dark:bg-input/30 dark:hover:bg-input/50 dark:aria-invalid:focus-visible:ring-destructive [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg]:[stroke-width:1.75] [&_svg:not([class*='size-'])]:size-4",
+        "touch-target flex w-full min-w-0 cursor-pointer items-center justify-between gap-1.5 overflow-hidden rounded-lg py-2 pr-2.5 pl-3 text-sm whitespace-nowrap select-none disabled:cursor-not-allowed disabled:opacity-50 data-placeholder:text-muted-foreground data-[size=default]:h-10 data-[size=sm]:h-9 data-[size=sm]:rounded-md *:data-[slot=select-value]:line-clamp-1 *:data-[slot=select-value]:flex *:data-[slot=select-value]:min-w-0 *:data-[slot=select-value]:items-center *:data-[slot=select-value]:gap-1.5 dark:bg-input/30 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg]:[stroke-width:1.75] [&_svg:not([class*='size-'])]:size-4",
+        fieldControlClass,
         className,
       )}
       nativeButton={true}

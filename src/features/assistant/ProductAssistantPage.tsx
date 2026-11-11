@@ -6,7 +6,7 @@ import { ErrorState } from "@/components/ErrorState"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { ItemStatusBadge } from "@/features/assistant/ItemStatusBadge"
-import { productItemStatus } from "@/features/assistant/itemStatus"
+import { itemStatus, productSetupSteps, type SetupStepId } from "@/features/assistant/itemStatus"
 import { resourceAssistantPath } from "@/features/assistant/paths"
 import { CatalogProductResourceRequirements } from "@/features/catalog/components/CatalogProductResourceRequirements"
 import { ProductWizardAccessStep } from "@/features/catalog/components/productWizard/ProductWizardAccessStep"
@@ -50,7 +50,7 @@ export function ProductAssistantPage() {
   const audienceReady = (model.access?.visibility ?? product.visibility) !== "Restricted"
     || (model.access !== null && model.groups !== null && !audienceBlocksSale(model.access, model.groups))
   const agendaReady = !wizard.rentalsActive || linkedIds.length > 0
-  const status = productItemStatus({
+  const steps = productSetupSteps({
     name: product.name,
     isActive: product.isActive,
     price: product.price,
@@ -58,14 +58,8 @@ export function ProductAssistantPage() {
     agendaReady,
     menuPublished: model.menuItems === null ? null : catalogMenuIsActive(model.menuItems),
   })
-  const done = {
-    dados: product.name.trim().length > 0,
-    agenda: agendaReady,
-    fila: agendaReady,
-    regras: audienceReady,
-    precos: product.price != null && product.price > 0,
-  }
-  const firstMissing = (Object.keys(done) as Array<keyof typeof done>).find((step) => !done[step])
+  const status = itemStatus(product.isActive && model.menuItems !== null && catalogMenuIsActive(model.menuItems), steps)
+  const firstMissing = (Object.keys(steps) as SetupStepId[]).find((step) => !steps[step])
 
   return (
     <div className="mx-auto w-full min-w-0 max-w-3xl space-y-4 pb-8">
@@ -85,7 +79,12 @@ export function ProductAssistantPage() {
         {STEPS.map((step, index) => (
           <section key={step} aria-label={t(`assistant.steps.${step}`)} className="rounded-xl border bg-card p-4 text-card-foreground">
             <div className="flex flex-wrap items-start justify-between gap-3">
-              <h2 className="text-base font-semibold">{index + 1}. {t(`assistant.steps.${step}`)}</h2>
+              <div>
+                <h2 className="text-base font-semibold">{index + 1}. {t(`assistant.steps.${step}`)}</h2>
+                {step !== "publicacao" ? (
+                  <p className="text-sm text-muted-foreground">{steps[step] ? t("assistant.complete") : t("assistant.pending")}</p>
+                ) : null}
+              </div>
               <Button type="button" variant="outline" className="min-h-11" aria-expanded={open === step} onClick={() => setOpen((current) => current === step ? null : step)}>
                 {open === step ? t("assistant.close") : t("assistant.edit")}
               </Button>

@@ -180,7 +180,7 @@ describe("CreatePlanPage validity gate", () => {
     await waitFor(() => expect(name).toHaveAttribute("aria-invalid", "true"))
     expect(name).toHaveFocus()
     expect(name).toHaveAccessibleDescription(i18n.t("pmoc.create.validation.nameRequired"))
-    expect(name).toHaveClass("aria-invalid:border-destructive")
+    expect(name).toHaveClass("aria-invalid:border-destructive/55")
     expect(createPlanMock).not.toHaveBeenCalled()
   })
 
@@ -260,22 +260,19 @@ describe("CreatePlanPage validity gate", () => {
     }
   })
 
-  it("keeps Salvar plano disabled until the plan schema is valid and leaves Voltar and Cancelar free", async () => {
+  it("keeps Salvar plano disabled until the plan schema is valid and leaves Cancelar free", async () => {
     const user = userEvent.setup()
     renderPage()
 
     const save = await screen.findByRole("button", {
       name: i18n.t("pmoc.create.actions.save"),
     })
-    const back = screen.getByRole("button", {
-      name: i18n.t("pmoc.create.actions.back"),
-    })
+    expect(screen.queryByRole("button", { name: i18n.t("pmoc.create.actions.back") })).not.toBeInTheDocument()
     const cancel = screen.getByRole("button", { name: i18n.t("common.cancel") })
     const addTask = screen.getByRole("button", {
       name: i18n.t("pmoc.create.actions.addTask"),
     })
     expect(save).toBeDisabled()
-    expect(back).toBeEnabled()
     expect(cancel).toBeEnabled()
     expect(addTask).toBeEnabled()
 
@@ -297,7 +294,6 @@ describe("CreatePlanPage validity gate", () => {
     expect(
       screen.getAllByText(i18n.t("pmoc.scheduling.intervalInvalid")).length,
     ).toBeGreaterThan(0)
-    expect(back).toBeEnabled()
     expect(cancel).toBeEnabled()
     expect(addTask).toBeEnabled()
 
@@ -362,8 +358,8 @@ describe("CreatePlanPage validity gate", () => {
       screen.getByLabelText(i18n.t("pmoc.scheduling.firstDue")),
     ).toHaveValue("14/10/2026")
     expect(
-      screen.getByRole("button", { name: i18n.t("pmoc.create.actions.back") }),
-    ).toBeEnabled()
+      screen.queryByRole("button", { name: i18n.t("pmoc.create.actions.back") }),
+    ).not.toBeInTheDocument()
     expect(
       screen.getByRole("button", { name: i18n.t("common.cancel") }),
     ).toBeEnabled()

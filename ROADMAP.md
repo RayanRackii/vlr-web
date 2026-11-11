@@ -337,6 +337,11 @@ PR 1 (fundação): tokens de design e primitivas, sem restyling de telas/shell (
 
 ## Histórico
 
+| 2026-11-11 | **Nome do menu na página (WEB):** Horários, Vendas, Mapa, Notificações, Solicitações e Grupos usam o nome do menu no título. Um caminho que só repete o título some. Página nova termina no nome singular, como Novo recurso ou Nova função, e não em Detalhes. |
+| 2026-11-11 | **Uma barra de ações no conteúdo (WEB):** adicionar recurso e novo grupo ficam só com Cancelar e Salvar no rodapé. O rodapé gruda na coluna da página, sem cobrir o menu. Voltar some onde o caminho da página já existe. O selo do assistente do produto conta as mesmas linhas que a lista mostra. |
+| 2026-11-11 | **Foco dos campos (WEB):** input, select e textarea usam borda de 1px e um anel suave de 3px na cor da marca. O erro fica numa borda mais leve. O select nativo não tem seta e parece um campo. A data em pt-BR mostra dd/mm/aaaa. |
+| 2026-11-11 | **Indicador da aba sob o rótulo (WEB):** a linha da aba ativa usa ::before. O ::after continua só a área de toque, então a linha não atravessa o texto nem sai da aba. |
+| 2026-11-11 | **Todos fica primeiro no Tipo (WEB):** no controle de Tipo, Todos é a primeira opção, no desktop e no painel Filtros do telefone. Sem tipo na URL, Todos continua selecionado. |
 | 2026-11-11 | **Filtros da Agenda em uma barra (WEB):** Pedido é uma busca por número ou cliente. Recurso e Produto abrem a lista no próprio controle, com busca. Tipo é uma faixa com Todos, Reserva, Pedido, Manutenção e Bloqueio. O valor escolhido vira um chip removível. No telefone, Filtros abre o painel na página. A URL continua com um valor por filtro. A lista do dia abaixo de 900px permanece. |
 | 2026-11-11 | **Dia da agenda em viewport de zoom (WEB):** a lista entra abaixo de 900px. Uma janela de 1920px com zoom 250% fica em 768px, acima do corte antigo de 640px, e a grade de 48rem cortava os pedidos. `GET /api/reservations` manda só `yyyy-MM-dd`, mesmo se o chamador passar um instante. |
 | 2026-11-10 | **Antecedência e sinal no assistente do recurso (WEB):** em Regras, o recurso mostra o valor herdado e pode gravar o próprio ou limpar. O percentual de sinal fica só salvo, sem cobrança parcial. Uma reserva cedo demais mostra o texto do código `booking_lead_time_not_met`. Depende da API #340 no ambiente. |

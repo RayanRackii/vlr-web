@@ -194,7 +194,7 @@ function TypeSegment({ value, onSelect }: { value: AgendaState["tipo"]; onSelect
   const { t } = useTranslation()
   const items = [{ id: null, label: t("staffAgenda.all") }, ...agendaTypes.map((id) => ({ id, label: t(`staffAgenda.types.${id}`) }))]
   return (
-    <div role="group" aria-label={t("staffAgenda.tipo")} className="flex flex-wrap gap-1">
+    <div role="group" aria-label={t("staffAgenda.tipo")} className="flex flex-row flex-wrap justify-start gap-1">
       {items.map((item) => (
         <Button key={item.id ?? "all"} type="button" className="min-h-11 rounded-full px-3" variant={value === item.id ? "default" : "outline"} aria-pressed={value === item.id} onClick={() => onSelect(item.id)}>
           {item.label}

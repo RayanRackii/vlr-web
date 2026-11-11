@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react"
+import { render, screen, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { MemoryRouter, useLocation } from "react-router-dom"
 import { beforeEach, describe, expect, it, vi } from "vitest"
@@ -35,6 +35,10 @@ function setup(search = "?visao=dia&date=2026-11-10") {
   return render(<MemoryRouter initialEntries={[`/agenda${search}`]}><AgendaPage /><Location /></MemoryRouter>)
 }
 function params() { return new URLSearchParams(screen.getByTestId("search").textContent ?? "") }
+const tipoOrder = ["Todos", "Reserva", "Pedido", "Manutenção", "Bloqueio"]
+function tipoButtonNames() {
+  return within(screen.getByRole("group", { name: "Tipo" })).getAllByRole("button").map((button) => button.textContent?.trim())
+}
 
 beforeEach(() => {
   vi.clearAllMocks()
@@ -76,6 +80,41 @@ describe("staff agenda shell", () => {
 
 
 describe("staff agenda controls", () => {
+  it("puts Todos first in the type control and keeps it selected by default", () => {
+    setup()
+    expect(tipoButtonNames()).toEqual(tipoOrder)
+    const buttons = within(screen.getByRole("group", { name: "Tipo" })).getAllByRole("button")
+    expect(buttons[0]).toHaveAttribute("aria-pressed", "true")
+    expect(buttons.slice(1).every((button) => button.getAttribute("aria-pressed") === "false")).toBe(true)
+    expect(params().has("tipo")).toBe(false)
+  })
+
+  it("keeps Todos first inside the phone filter panel", async () => {
+    const user = userEvent.setup()
+    vi.stubGlobal("matchMedia", (query: string) => ({
+      matches: query === "(max-width: 639px)",
+      media: query,
+      addEventListener: () => {},
+      removeEventListener: () => {},
+      onchange: null,
+      addListener: () => {},
+      removeListener: () => {},
+      dispatchEvent: () => false,
+    }))
+    try {
+      setup("?visao=dia&date=2026-11-10&tipo=pedido")
+      expect(screen.queryByRole("group", { name: "Tipo" })).not.toBeInTheDocument()
+      await user.click(screen.getByRole("button", { name: /Filtros/ }))
+      expect(tipoButtonNames()).toEqual(tipoOrder)
+      const tipo = screen.getByRole("group", { name: "Tipo" })
+      expect(within(tipo).getByRole("button", { name: "Todos" })).toHaveAttribute("aria-pressed", "false")
+      expect(within(tipo).getByRole("button", { name: "Pedido" })).toHaveAttribute("aria-pressed", "true")
+      expect(screen.queryByRole("dialog")).not.toBeInTheDocument()
+    } finally {
+      vi.unstubAllGlobals()
+    }
+  })
+
   it("clears all four filters while keeping view, date and unrelated params", async () => {
     const user = userEvent.setup()
     setup(`?visao=semana&date=2026-11-10&recurso=${categoryId}&produto=${productId}&pedido=${orderId}&tipo=bloqueio&other=keep`)

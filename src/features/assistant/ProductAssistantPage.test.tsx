@@ -44,6 +44,14 @@ function setup() {
   )
 }
 
+it("shows the same unfinished steps in the badge and the rows", () => {
+  setup()
+  expect(screen.getByText("Falta 1 passo")).toBeInTheDocument()
+  expect(screen.getAllByText("Pendente")).toHaveLength(1)
+  expect(within(screen.getByRole("region", { name: "Preços" })).getByText("Pendente")).toBeInTheDocument()
+  expect(screen.getAllByText("Completo")).toHaveLength(4)
+})
+
 it("links the used resource and does not invent a deposit or a lead time", async () => {
   const user = userEvent.setup()
   setup()

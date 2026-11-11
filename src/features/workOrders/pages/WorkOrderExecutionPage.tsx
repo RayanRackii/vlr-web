@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { formatWorkOrderShortId } from "@/features/workOrders/lib/workOrderLabel"
 import { useBreadcrumbTitle } from "@/components/layout/useBreadcrumbTitle"
-import { useNavigate, useParams } from "react-router-dom"
-import { ArrowLeft, CircleCheck, Play } from "lucide-react"
+import { useParams } from "react-router-dom"
+import { CircleCheck, Play } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 
@@ -483,7 +483,7 @@ function TaskField({
       return (
         <div className="space-y-2">
           <select
-            className="touch-target h-8 w-full min-w-0 rounded-lg border border-input bg-transparent px-2.5 text-sm outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:cursor-not-allowed disabled:opacity-50"
+            className="touch-target h-8 w-full min-w-0 rounded-lg border border-input bg-transparent px-2.5 text-sm outline-none disabled:cursor-not-allowed disabled:opacity-50"
             aria-label={task.title}
             disabled={disabled}
             value={task.value ?? ""}
@@ -527,7 +527,6 @@ function TaskField({
 export function WorkOrderExecutionPage() {
   const { t, i18n } = useTranslation()
   const { session } = useAuth()
-  const navigate = useNavigate()
   const { id } = useParams<{ id: string }>()
 
   const [workOrder, setWorkOrder] = useState<WorkOrder | null>(null)
@@ -991,16 +990,6 @@ export function WorkOrderExecutionPage() {
             {errorMessage ?? t("workOrders.errors.loadOneFailed")}
           </div>
         ) : null}
-        <Button
-          type="button"
-          variant="outline"
-          onClick={() => {
-            void navigate("/os")
-          }}
-        >
-          <ArrowLeft data-icon="inline-start" />
-          {t("workOrders.execution.back")}
-        </Button>
       </div>
     )
   }
@@ -1057,16 +1046,6 @@ export function WorkOrderExecutionPage() {
           tag: workOrder.asset.tag,
           name: workOrder.asset.name,
         })}
-        actions={<Button
-          type="button"
-          variant="outline"
-          onClick={() => {
-            void navigate("/os")
-          }}
-        >
-          <ArrowLeft data-icon="inline-start" />
-          {t("workOrders.execution.back")}
-        </Button>}
       />
 
       <Card className="min-w-0 motion-reduce:transition-none">

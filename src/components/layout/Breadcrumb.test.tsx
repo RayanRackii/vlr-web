@@ -45,11 +45,9 @@ afterEach(async () => {
 })
 
 describe("staff breadcrumb", () => {
-  it("renders the list label as the current page", () => {
+  it("does not repeat a page title that has no parent", () => {
     renderBreadcrumb("/os")
-    const nav = screen.getByRole("navigation", { name: "Caminho de navegação" })
-    expect(within(nav).getByText("Ordens de serviço")).toHaveAttribute("aria-current", "page")
-    expect(within(nav).queryByRole("link")).not.toBeInTheDocument()
+    expect(screen.queryByRole("navigation", { name: "Caminho de navegação" })).not.toBeInTheDocument()
   })
 
   it.each([undefined, "Plano de climatização"])("renders a detail with title %s", (title) => {
@@ -124,9 +122,42 @@ describe("staff breadcrumb", () => {
     expect(media.removeEventListener).toHaveBeenCalledWith("change", onChange)
   })
 
-  it("uses the shared title metadata for staff pages outside the sidebar", () => {
+  it("does not repeat the profile title when it is the only crumb", () => {
     renderBreadcrumb("/perfil")
-    expect(screen.getByText(i18n.t("account.profile"))).toHaveAttribute("aria-current", "page")
+    expect(screen.queryByRole("navigation", { name: "Caminho de navegação" })).not.toBeInTheDocument()
+  })
+
+  it.each([
+    ["/catalogo/grupos/novo", "Grupos", "/catalogo/grupos", "Novo grupo", ["catalog.products.read"], ["catalog"]],
+    ["/catalogo/produtos/novo", "Produtos", "/catalogo/produtos", "Novo produto", ["catalog.products.read"], ["catalog"]],
+    ["/configuracoes/recursos/novo", "Recursos", "/configuracoes/recursos", "Novo recurso", ["rentals.assets.read", "core.units.read"], []],
+    ["/os/nova", "Ordens de serviço", "/os", "Nova Ordem de Serviço", [], []],
+    ["/pmoc/novo", "Planos de manutenção", "", "Novo plano", [], []],
+    ["/pessoas-e-acesso/funcoes/nova", "Pessoas e acesso", "/pessoas-e-acesso", "Nova função", [], []],
+    ["/ativos/novo", "Equipamentos", "/ativos", "Novo equipamento", [], []],
+    ["/ativos/categorias/novo", "Tipos de equipamento", "/ativos/categorias", "Novo tipo", [], []],
+  ] as const)("names %s with a singular create label", (path, parent, href, label, extraPermissions, extraModules) => {
+    render(
+      <MemoryRouter initialEntries={[path]}>
+        <TestPermissionProvider
+          permissions={[...permissions, ...extraPermissions]}
+          activeModules={["pmoc", "os", "inventory", "rentals", ...extraModules]}
+        >
+          <BreadcrumbTitleProvider>
+            <Breadcrumb />
+          </BreadcrumbTitleProvider>
+        </TestPermissionProvider>
+      </MemoryRouter>,
+    )
+    const nav = screen.getByRole("navigation", { name: "Caminho de navegação" })
+    if (href) {
+      expect(within(nav).getByRole("link", { name: parent })).toHaveAttribute("href", href)
+    } else {
+      expect(within(nav).getByText(parent)).toBeInTheDocument()
+    }
+    expect(nav.querySelector("[aria-current='page']")).toHaveTextContent(label)
+    expect(within(nav).queryByText("Detalhes")).not.toBeInTheDocument()
+    expect(within(nav).queryByText(/Novo Recursos|Novo Equipamentos|Novo Ordens|Novo Tipos/)).not.toBeInTheDocument()
   })
 })
 

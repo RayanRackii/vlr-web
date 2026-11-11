@@ -1,7 +1,7 @@
 import { CivilDateInput } from "@/components/CivilDateInput"
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { ArrowLeft, ClipboardPen } from "lucide-react"
+import { ClipboardPen } from "lucide-react"
 import { useForm, useWatch } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 import { useNavigate } from "react-router-dom"
@@ -9,7 +9,6 @@ import { toast } from "sonner"
 
 import { PageHeader } from "@/components/layout/PageHeader"
 import { EmptyState } from "@/components/ui/empty-state"
-import { Button } from "@/components/ui/button"
 import { FormPrimaryButton } from "@/components/ui/form-primary-button"
 import {
   Card,
@@ -179,17 +178,6 @@ export function CreateWorkOrderPage() {
 
   return (
     <div className="mx-auto w-full min-w-0 max-w-3xl space-y-6">
-      <Button
-        type="button"
-        variant="ghost"
-        onClick={() => {
-          void navigate("/os")
-        }}
-      >
-        <ArrowLeft data-icon="inline-start" />
-        {t("common.back")}
-      </Button>
-
       <PageHeader
         title={t("workOrders.create.title")}
         description={t("workOrders.create.description")}

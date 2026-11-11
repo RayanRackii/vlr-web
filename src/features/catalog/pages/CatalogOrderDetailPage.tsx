@@ -5,7 +5,7 @@ import { CatalogTabs } from "@/features/catalog/components/StaffCatalogChrome"
 import { useEffect, useState } from "react"
 import { useForm, useWatch } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { useNavigate, useParams } from "react-router-dom"
+import { useParams } from "react-router-dom"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 
@@ -67,7 +67,6 @@ const USAGE_HISTORY_LABELS: Record<string, string> = {
 export function CatalogOrderDetailPage() {
   const { t, i18n } = useTranslation()
   const timeZoneId = useTenantTimeZone()
-  const navigate = useNavigate()
   const params = useParams()
   const orderId = params.orderId ?? ""
 
@@ -264,15 +263,6 @@ export function CatalogOrderDetailPage() {
 
   return (
     <div className="staff-catalog staff-catalog-detail space-y-6">
-      <Button
-        type="button"
-        variant="ghost"
-        size="sm"
-        className="touch-target min-h-11 px-3"
-        onClick={() => { void navigate("/catalogo/pedidos") }}
-      >
-        {t("common.back")}
-      </Button>
       <PageHeader
         className="min-w-0 [&_h1]:tabular-nums"
         title={order.displayNumber}
