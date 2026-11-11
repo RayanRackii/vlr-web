@@ -2,6 +2,7 @@ import { Bell, Mail, MessageCircle, Smartphone } from "lucide-react"
 import type { ReactNode } from "react"
 import { useTranslation } from "react-i18next"
 
+import { CivilDateInput } from "@/components/CivilDateInput"
 import { cn } from "@/lib/utils"
 import type {
   NotificationChannel,
@@ -59,7 +60,8 @@ function Chip({
 }
 
 export function DeliveryLogControls(props: DeliveryLogControlsProps) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
+  const locale = i18n.resolvedLanguage ?? i18n.language
   return (
     <div className="min-w-0 space-y-3">
       <div className="flex min-w-0 flex-wrap gap-2" role="group" aria-label={t("catalog.notifications.columns.status")}>
@@ -90,20 +92,20 @@ export function DeliveryLogControls(props: DeliveryLogControlsProps) {
       <div className="flex min-w-0 flex-wrap items-end gap-3">
         <label className="space-y-1 text-sm">
           <span className="text-muted-foreground">{t("catalog.notifications.filters.from")}</span>
-          <input
-            type="date"
+          <CivilDateInput
+            aria-label={t("catalog.notifications.filters.from")}
+            locale={locale}
             value={props.from}
-            onChange={(event) => props.onFrom(event.target.value)}
-            className="block rounded-md border border-border bg-background px-2 py-1"
+            onChange={props.onFrom}
           />
         </label>
         <label className="space-y-1 text-sm">
           <span className="text-muted-foreground">{t("catalog.notifications.filters.to")}</span>
-          <input
-            type="date"
+          <CivilDateInput
+            aria-label={t("catalog.notifications.filters.to")}
+            locale={locale}
             value={props.to}
-            onChange={(event) => props.onTo(event.target.value)}
-            className="block rounded-md border border-border bg-background px-2 py-1"
+            onChange={props.onTo}
           />
         </label>
         <div className="flex gap-2" role="group" aria-label={t("catalog.notifications.filters.pageSize")}>

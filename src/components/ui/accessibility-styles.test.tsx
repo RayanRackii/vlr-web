@@ -34,9 +34,14 @@ describe("small control accessibility", () => {
           if (!rule.selector.startsWith(":root :is(") || !rule.selector.includes(":focus-within") || !control.matches(rule.selector)) return
           rule.walkDecls((declaration) => { declarations[declaration.prop] = declaration.value })
         })
-        const color = invalid ? "var(--destructive)" : "var(--focus-ring, var(--ring))"
-        expect(declarations, `${label}, invalid=${invalid}`).toMatchObject({ outline: `2px solid ${color}`, "outline-offset": "2px", "border-color": color, "--tw-ring-color": color })
-        if (invalid) expect(declarations["box-shadow"]).toBe("none")
+        const ring = invalid ? "var(--destructive)" : "var(--ring)"
+        expect(declarations["outline"], `${label}, invalid=${invalid}`).toContain("3px solid color-mix")
+        expect(declarations["outline"], `${label}, invalid=${invalid}`).toContain(ring)
+        expect(declarations, `${label}, invalid=${invalid}`).toMatchObject({
+          "outline-offset": "1px",
+          "border-width": "1px",
+        })
+        expect(declarations["border-color"], `${label}, invalid=${invalid}`).toContain(ring)
       }
     }
   })
@@ -70,8 +75,8 @@ describe("small control accessibility", () => {
       <Select><SelectTrigger aria-label="Type" aria-invalid="true"><SelectValue /></SelectTrigger></Select>
     </>)
     for (const control of [screen.getByRole("textbox", { name: "Name" }), screen.getByRole("textbox", { name: "Notes" }), screen.getByRole("combobox", { name: "Type" })]) {
-      expect(control).toHaveClass("aria-invalid:border-destructive", "aria-invalid:focus-visible:border-destructive", "aria-invalid:focus-visible:ring-destructive", "dark:aria-invalid:focus-visible:ring-destructive")
-      expect(control).not.toHaveClass("dark:aria-invalid:border-destructive/50")
+      expect(control).toHaveClass("aria-invalid:border-destructive/55", "hover:border-foreground/30")
+      expect(control.className).not.toContain("focus-visible:ring-2")
     }
   })
 

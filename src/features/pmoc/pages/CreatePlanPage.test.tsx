@@ -180,7 +180,7 @@ describe("CreatePlanPage validity gate", () => {
     await waitFor(() => expect(name).toHaveAttribute("aria-invalid", "true"))
     expect(name).toHaveFocus()
     expect(name).toHaveAccessibleDescription(i18n.t("pmoc.create.validation.nameRequired"))
-    expect(name).toHaveClass("aria-invalid:border-destructive")
+    expect(name).toHaveClass("aria-invalid:border-destructive/55")
     expect(createPlanMock).not.toHaveBeenCalled()
   })
 
