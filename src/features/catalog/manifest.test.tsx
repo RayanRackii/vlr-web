@@ -16,6 +16,8 @@ describe("staff sales navigation", () => {
   it("preserves every existing staff route and permission", () => {
     expect(catalogManifest.routes.staff.filter((route) => route.path !== "/catalogo/solicitacoes" && !route.path.startsWith("/pedidos")).map(({ path, permission }) => ({ path, permission }))).toEqual([
       { path: "/catalogo/configuracoes", permission: "catalog.products.manage" },
+      { path: "/catalogo/produtos/cadastro", permission: "catalog.products.manage" },
+      { path: "/catalogo/produtos/:id/cadastro", permission: "catalog.products.read" },
       { path: "/catalogo/produtos/novo", permission: "catalog.products.manage" },
       { path: "/catalogo/produtos/:id/assistente", permission: "catalog.products.read" },
       { path: "/catalogo/produtos/:id/passos", permission: "catalog.products.read" },

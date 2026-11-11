@@ -116,6 +116,8 @@ function renderPage(permissions: readonly string[] = WRITE_PERMS, path = "/confi
         <Routes>
           <Route path="/dashboard" element={<h1>Dashboard</h1>} />
           <Route path="/configuracoes/recursos" element={<RentalResourcesPage />} />
+          <Route path="/configuracoes/recursos/cadastro" element={<RentalResourceEditorPage cadastro />} />
+          <Route path="/configuracoes/recursos/:id/cadastro" element={<h1>Cadastro salvo</h1>} />
           <Route path="/configuracoes/recursos/novo" element={<RentalResourceEditorPage />} />
           <Route path="/configuracoes/recursos/:id" element={<RentalResourceEditorPage />} />
         </Routes>
@@ -201,6 +203,20 @@ describe("RentalResourcesPage", () => {
       categoryId: CATEGORY_ID,
       categoryName: "Quadra",
     })
+  })
+
+  it("opens the new resource cadastro as a full page with a valid create destination", async () => {
+    const user = userEvent.setup()
+    const { router } = renderPage(WRITE_PERMS, "/configuracoes/recursos/cadastro")
+    expect(await screen.findByRole("heading", { level: 1, name: "Novo recurso" })).toBeVisible()
+    expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1)
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "Continuar" })).toBeDisabled()
+    await user.type(screen.getByRole("textbox", { name: i18n.t("rentals.resources.form.name") }), "Sala nova")
+    await user.click(screen.getByRole("button", { name: "Continuar" }))
+    await waitFor(() => expect(createMock).toHaveBeenCalled())
+    await waitFor(() => expect(router.state.location.pathname).toBe(`/configuracoes/recursos/${RENTAL_ID}/cadastro`), { timeout: 4500 })
+    expect(screen.getByRole("heading", { name: "Cadastro salvo" })).toBeVisible()
   })
 
   it("opens the create page directly with the footer save gated by validity", async () => {
@@ -536,7 +552,7 @@ describe("RentalResourcesPage", () => {
     await user.click(await screen.findByRole("option", { name: "Quadra" }))
 
     await user.click(
-      screen.getByRole("button", { name: i18n.t("rentals.resources.saveCreate") }),
+      screen.getByRole("button", { name: i18n.t("cadastro.next") }),
     )
 
     await waitFor(() => {
@@ -714,7 +730,7 @@ describe("RentalResourcesPage", () => {
     )
     await chooseHorizon(user, "rentals.resources.form.horizonUnlimited")
     await user.click(
-      screen.getByRole("button", { name: i18n.t("rentals.resources.saveCreate") }),
+      screen.getByRole("button", { name: i18n.t("cadastro.next") }),
     )
 
     await waitFor(() => {
@@ -746,7 +762,7 @@ describe("RentalResourcesPage", () => {
 
     const days = screen.getByLabelText(i18n.t("rentals.resources.form.horizonDays"))
     const save = screen.getByRole("button", {
-      name: i18n.t("rentals.resources.saveCreate"),
+      name: i18n.t("cadastro.next"),
     })
     expect(save).toBeDisabled()
     await user.type(days, "3651")
@@ -942,7 +958,7 @@ describe("RentalResourcesPage", () => {
     )
     await chooseCancelCutoff(user, "rentals.resources.form.cancelCutoffNone")
     await user.click(
-      screen.getByRole("button", { name: i18n.t("rentals.resources.saveCreate") }),
+      screen.getByRole("button", { name: i18n.t("cadastro.next") }),
     )
 
     await waitFor(() => {
@@ -975,7 +991,7 @@ describe("RentalResourcesPage", () => {
 
     const days = screen.getByRole("textbox", { name: i18n.t("rentals.resources.form.cancelCutoffHours") })
     const save = screen.getByRole("button", {
-      name: i18n.t("rentals.resources.saveCreate"),
+      name: i18n.t("cadastro.next"),
     })
     expect(save).toBeDisabled()
     await user.type(days, "8761")

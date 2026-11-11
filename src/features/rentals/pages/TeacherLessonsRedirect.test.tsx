@@ -126,9 +126,9 @@ describe("teacher agenda after the dashboard redirect", () => {
     expect(
       screen.queryByText(i18n.t("rentals.teacherLessons.loadingResources")),
     ).not.toBeInTheDocument()
-    expect(
+    await waitFor(() => expect(
       screen.queryByText(i18n.t("rentals.teacherLessons.loading")),
-    ).not.toBeInTheDocument()
+    ).not.toBeInTheDocument())
 
     redirected.unmount()
     renderAgenda("/configuracoes/agenda")

@@ -1,0 +1,8 @@
+[data-shell-part="main"]:has(.cadastro-page) > div { max-width: none; }
+.cadastro-page { width: 100%; max-width: 1240px; min-width: 0; margin: 0 auto; padding: 28px 32px 56px; display: flex; flex-direction: column; gap: 24px; }
+.cadastro-page [aria-current="step"] { color: var(--primary); background: var(--muted); }
+.cadastro-page .rental-resource-editor { width: 100%; max-width: none; }
+@media (max-width: 640px) { .cadastro-page { padding: 20px 16px 40px; gap: 20px; } .cadastro-page h1 { font-size: 22px; } }
+
+.cadastro-page .resource-editor-footer { position: static; padding: 20px 0 0; margin-top: 0; background: transparent; box-shadow: none; }
+.cadastro-page .resource-editor-footer button { flex: 0 1 auto; }

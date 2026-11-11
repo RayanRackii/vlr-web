@@ -71,6 +71,7 @@
       "missing_other": "{{count}} steps left"
     },
     "steps": {
+      "categorias": "Categories and tags",
       "dados": "Details",
       "agenda": "Schedule",
       "fila": "Queue",
@@ -5616,5 +5617,24 @@
     "generateDescription": "Choose eligible equipment and a date. The work order will use the plan checklist.",
     "checklist": "Plan checklist",
     "sourcePlan": "Source plan: {{name}}"
+  },
+  "cadastro": {
+    "saveBeforeContinue": "Save changes or restore the values before changing steps.",
+    "title": "Registration",
+    "productCreate": "New product",
+    "resourceCreate": "New resource",
+    "subtitle": "Step {{count}} of {{total}} · {{step}}. Save changes before continuing.",
+    "steps": "Registration steps",
+    "back": "Back",
+    "next": "Continue",
+    "addCategory": "Category +",
+    "addTag": "Tag +",
+    "createCategory": "Add category",
+    "createTag": "Add tag",
+    "noParent": "None",
+    "taxonomyHelp": "Choose categories and tags for this product and save the step.",
+    "taxonomyLimit": "The limit is 20 categories and 20 tags.",
+    "resourceTaxonomyHelp": "You can create shared categories and tags here, but they are not assigned to this resource. The operational resource type is configured separately.",
+    "taxonomyNoRead": "You need permission to view categories and tags."
   }
 }

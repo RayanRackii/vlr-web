@@ -1,5 +1,9 @@
+import { useOptionalPermissions } from "@/features/users/permissions/PermissionContext"
+import { CadastroShell } from "./CadastroShell"
+import { useCadastroStep } from "./useCadastroStep"
+import { CadastroTaxonomyStep } from "./CadastroTaxonomyStep"
 import { useEffect, useState } from "react"
-import { Link, useParams } from "react-router-dom"
+import { Link, useNavigate, useParams } from "react-router-dom"
 import { useTranslation } from "react-i18next"
 
 import { ErrorState } from "@/components/ErrorState"
@@ -18,7 +22,12 @@ import { listAdminRentalAssets, type AdminRentalAsset } from "@/features/rentals
 const STEPS = ["dados", "agenda", "fila", "regras", "precos", "publicacao"] as const
 type StepId = (typeof STEPS)[number]
 
-export function ProductAssistantPage() {
+export function ProductAssistantPage({ cadastro = false }: { cadastro?: boolean } = {}) {
+  const { step: cadastroStep, go } = useCadastroStep()
+  const navigate = useNavigate()
+  const [stepDirty, setStepDirty] = useState(false)
+  const [stepSaving, setStepSaving] = useState(false)
+  const permissions = useOptionalPermissions()
   const { id = "" } = useParams()
   const { t } = useTranslation()
   const wizard = useProductWizard(id)
@@ -61,23 +70,11 @@ export function ProductAssistantPage() {
   const status = itemStatus(product.isActive && model.menuItems !== null && catalogMenuIsActive(model.menuItems), steps)
   const firstMissing = (Object.keys(steps) as SetupStepId[]).find((step) => !steps[step])
 
-  return (
-    <div className="mx-auto w-full min-w-0 max-w-3xl space-y-4 pb-8">
-      <header className="space-y-3">
-        <p className="text-sm text-muted-foreground">{t("catalog.products.title")}</p>
-        <div className="flex flex-wrap items-center gap-2">
-          <h1 className="text-2xl font-semibold tracking-tight">{product.name}</h1>
-          <ItemStatusBadge status={status} />
-        </div>
-        {firstMissing ? (
-          <Button type="button" className="min-h-11 w-full sm:w-auto" onClick={() => setOpen(firstMissing)}>{t("assistant.continue", { step: t(`assistant.steps.${firstMissing}`) })}</Button>
-        ) : (
-          <Button type="button" className="min-h-11 w-full sm:w-auto" disabled={wizard.busy} onClick={() => void wizard.publishMenu()}>{t("assistant.publish")}</Button>
-        )}
-      </header>
+  const body = (
       <div className="space-y-3">
-        {STEPS.map((step, index) => (
+        {STEPS.filter((step) => !cadastro || step === cadastroStep).map((step, index) => (
           <section key={step} aria-label={t(`assistant.steps.${step}`)} className="rounded-xl border bg-card p-4 text-card-foreground">
+            {cadastro ? <h2 className="text-base font-semibold">{t(`assistant.steps.${step}`)}</h2> : (
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
                 <h2 className="text-base font-semibold">{index + 1}. {t(`assistant.steps.${step}`)}</h2>
@@ -89,14 +86,15 @@ export function ProductAssistantPage() {
                 {open === step ? t("assistant.close") : t("assistant.edit")}
               </Button>
             </div>
-            {open === step ? (
+            )}
+            {cadastro || open === step ? (
               <div className="mt-4 space-y-4">
                 {step === "dados" || step === "precos" ? (
-                  <ProductWizardOfferStep product={product} readOnly={!wizard.canManage} onSaved={() => wizard.reload()} />
+                  <ProductWizardOfferStep product={product} readOnly={!wizard.canManage} onDirtyChange={cadastro ? setStepDirty : undefined} onSavingChange={cadastro ? setStepSaving : undefined} onSaved={() => wizard.reload()} />
                 ) : null}
                 {step === "agenda" ? (
                   <>
-                    <CatalogProductResourceRequirements productId={product.id} readOnly={!wizard.canManage} onSaved={() => wizard.reload()} />
+                    <CatalogProductResourceRequirements productId={product.id} readOnly={!wizard.canManage} onDirtyChange={cadastro ? setStepDirty : undefined} onSavingChange={cadastro ? setStepSaving : undefined} onSaved={() => wizard.reload()} />
                     <ResourceLinks assets={linkedAssets.length > 0 ? linkedAssets : linkedIds.map((assetId) => ({ id: assetId, name: assetId, queueEnabled: false, queueOpeningTime: null }))} />
                   </>
                 ) : null}
@@ -111,6 +109,8 @@ export function ProductAssistantPage() {
                     wizardPath={wizard.wizardPath}
                     readOnly={!wizard.canManage}
                     canSearchCustomers={wizard.canSearchCustomers}
+                    onDirtyChange={cadastro ? setStepDirty : undefined}
+                    onSavingChange={cadastro ? setStepSaving : undefined}
                     onSaved={() => wizard.reload()}
                   />
                 ) : null}
@@ -125,6 +125,27 @@ export function ProductAssistantPage() {
           </section>
         ))}
       </div>
+  )
+
+  if (cadastro) return <CadastroShell title={product.name} step={cadastroStep} go={go} dirty={stepDirty} busy={wizard.busy || stepSaving} canPublish={firstMissing == null && Boolean(permissions?.can("core.module_menu.write")) && !wizard.readOnly && model.menuItems !== null} onPublish={() => void wizard.publishMenu()} onBack={() => navigate("/catalogo/produtos")}>
+    {cadastroStep === "categorias" ? <CadastroTaxonomyStep onDirtyChange={setStepDirty} onSavingChange={setStepSaving} product={product} canAssign={wizard.canManage} onSaved={() => wizard.reload()} /> : body}
+  </CadastroShell>
+
+  return (
+    <div className="mx-auto w-full min-w-0 max-w-3xl space-y-4 pb-8">
+      <header className="space-y-3">
+        <p className="text-sm text-muted-foreground">{t("catalog.products.title")}</p>
+        <div className="flex flex-wrap items-center gap-2">
+          <h1 className="text-2xl font-semibold tracking-tight">{product.name}</h1>
+          <ItemStatusBadge status={status} />
+        </div>
+        {firstMissing ? (
+          <Button type="button" className="min-h-11 w-full sm:w-auto" onClick={() => setOpen(firstMissing)}>{t("assistant.continue", { step: t(`assistant.steps.${firstMissing}`) })}</Button>
+        ) : (
+          <Button type="button" className="min-h-11 w-full sm:w-auto" disabled={wizard.busy} onClick={() => void wizard.publishMenu()}>{t("assistant.publish")}</Button>
+        )}
+      </header>
+      {body}
     </div>
   )
 }

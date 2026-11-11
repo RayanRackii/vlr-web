@@ -151,12 +151,13 @@ export function useResourceWizard(rentalAssetId: string) {
 
   async function run(action: NonNullable<typeof busyAction>, work: () => Promise<void>) {
     if (busyAction) {
-      return
+      return false
     }
     setBusyAction(action)
     try {
       await work()
       await load(true)
+      return true
     } catch (workError) {
       const message = workError instanceof ZodError
         ? t("rentals.resources.updateError")
@@ -164,6 +165,7 @@ export function useResourceWizard(rentalAssetId: string) {
           ? workError.message
           : t("rentals.resources.updateError")
       toast.error(message)
+      return false
     } finally {
       setBusyAction(null)
     }
@@ -233,12 +235,12 @@ export function useResourceWizard(rentalAssetId: string) {
     })
   }
 
-  function savePolicy(input: UpdateSchedulePolicyInput) {
+  async function savePolicy(input: UpdateSchedulePolicyInput) {
     const asset = model?.asset
     if (!asset) {
-      return Promise.resolve()
+      return
     }
-    return run("policy", async () => {
+    await run("policy", async () => {
       await updateRentalSchedulePolicy(asset.id, input)
       const savingTerms = input.minimumBookingLeadMinutes !== undefined || input.depositPercent !== undefined
       toast.success(t(savingTerms
@@ -264,7 +266,7 @@ export function useResourceWizard(rentalAssetId: string) {
     const asset = model?.asset
     const amount = parseWizardPrice(draft.amount)
     if (!asset || amount === null) {
-      return Promise.resolve()
+      return Promise.resolve(false)
     }
     return run("price", async () => {
       const rows = DAY_NAMES.map((dayOfWeek) => ({
@@ -287,12 +289,12 @@ export function useResourceWizard(rentalAssetId: string) {
     })
   }
 
-  function saveFields(patch: Partial<ReturnType<typeof buildRentalResourceFormValues>>) {
+  async function saveFields(patch: Partial<ReturnType<typeof buildRentalResourceFormValues>>) {
     const asset = model?.asset
     if (!asset) {
-      return Promise.resolve()
+      return
     }
-    return run("details", async () => {
+    await run("details", async () => {
       const values = { ...buildRentalResourceFormValues(asset, [], [], []), ...patch }
       const body = toCreateRentableRequest(values, {
         creating: false,
@@ -305,12 +307,12 @@ export function useResourceWizard(rentalAssetId: string) {
     })
   }
 
-  function saveQueue(enabled: boolean, openingTime: string) {
+  async function saveQueue(enabled: boolean, openingTime: string) {
     const asset = model?.asset
     if (!asset) {
-      return Promise.resolve()
+      return
     }
-    return run("queue", async () => {
+    await run("queue", async () => {
       const values = {
         ...buildRentalResourceFormValues(asset, [], [], []),
         queueEnabled: asset.type === "Location" && enabled,
