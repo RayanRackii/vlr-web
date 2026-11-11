@@ -9,6 +9,11 @@ import { matchModuleIntro, moduleIntroPath } from "./navigationIntros"
 import { BreadcrumbTitleContext } from "./useBreadcrumbTitle"
 import { ICON_STROKE_WIDTH } from "@/lib/icon"
 
+const createTitleKey: Record<string, string> = {
+  "/catalogo/grupos": "catalog.customerGroups.createTitle",
+  "/catalogo/produtos": "catalog.products.createTitle",
+}
+
 const narrowQuery = "(max-width: 639px)"
 function subscribeToViewport(onChange: () => void) {
   const media = window.matchMedia?.(narrowQuery)
@@ -40,13 +45,23 @@ export function Breadcrumb() {
       crumbs.push({ label: t(tab.labelKey), to: tab.to })
     }
     if (isDetail) {
-      crumbs.push({ label: title?.pathname === pathname ? title.value : t("nav.details") })
+      const path = pathname.replace(/\/+$/, "")
+      const destination = (child ?? item).to
+      const createKey = path.endsWith("/novo") ? createTitleKey[destination] : undefined
+      crumbs.push({
+        label: createKey
+          ? t(createKey)
+          : path.endsWith("/novo")
+            ? t("nav.newNamed", { name: t((child ?? item).labelKey) })
+            : title?.pathname === pathname ? title.value : t("nav.details"),
+      })
     }
   } else {
     crumbs.push({ label: t(getPageTitleKey(pathname)) })
   }
 
   const visibleCrumbs = narrow ? crumbs.slice(-2) : crumbs
+  if (visibleCrumbs.length < 2) return null
   return (
     <nav aria-label={t("nav.breadcrumbLabel")} className="mb-4 text-sm text-muted-foreground">
       <ol className="flex min-w-0 items-center gap-2">

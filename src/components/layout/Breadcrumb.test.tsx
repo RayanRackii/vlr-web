@@ -45,11 +45,9 @@ afterEach(async () => {
 })
 
 describe("staff breadcrumb", () => {
-  it("renders the list label as the current page", () => {
+  it("does not repeat a page title that has no parent", () => {
     renderBreadcrumb("/os")
-    const nav = screen.getByRole("navigation", { name: "Caminho de navegação" })
-    expect(within(nav).getByText("Ordens de serviço")).toHaveAttribute("aria-current", "page")
-    expect(within(nav).queryByRole("link")).not.toBeInTheDocument()
+    expect(screen.queryByRole("navigation", { name: "Caminho de navegação" })).not.toBeInTheDocument()
   })
 
   it.each([undefined, "Plano de climatização"])("renders a detail with title %s", (title) => {
@@ -124,9 +122,25 @@ describe("staff breadcrumb", () => {
     expect(media.removeEventListener).toHaveBeenCalledWith("change", onChange)
   })
 
-  it("uses the shared title metadata for staff pages outside the sidebar", () => {
+  it("does not repeat the profile title when it is the only crumb", () => {
     renderBreadcrumb("/perfil")
-    expect(screen.getByText(i18n.t("account.profile"))).toHaveAttribute("aria-current", "page")
+    expect(screen.queryByRole("navigation", { name: "Caminho de navegação" })).not.toBeInTheDocument()
+  })
+
+  it("names a create page Novo instead of Detalhes", () => {
+    render(
+      <MemoryRouter initialEntries={["/catalogo/grupos/novo"]}>
+        <TestPermissionProvider permissions={[...permissions, "catalog.products.read"]} activeModules={["pmoc", "os", "inventory", "rentals", "catalog"]}>
+          <BreadcrumbTitleProvider>
+            <Breadcrumb />
+          </BreadcrumbTitleProvider>
+        </TestPermissionProvider>
+      </MemoryRouter>,
+    )
+    const nav = screen.getByRole("navigation", { name: "Caminho de navegação" })
+    expect(within(nav).getByRole("link", { name: "Grupos" })).toHaveAttribute("href", "/catalogo/grupos")
+    expect(within(nav).getByText("Novo grupo")).toHaveAttribute("aria-current", "page")
+    expect(within(nav).queryByText("Detalhes")).not.toBeInTheDocument()
   })
 })
 

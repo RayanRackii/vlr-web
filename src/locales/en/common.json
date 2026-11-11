@@ -1216,7 +1216,7 @@
         "leave": "Discard and leave",
         "accessChanged": "changed access to an item"
       },
-      "title": "Customer groups",
+      "title": "Groups",
       "subtitle": "Group customers to unlock exclusive products.",
       "create": "New group",
       "createTitle": "New group",
@@ -1310,7 +1310,7 @@
       }
     },
     "requests": {
-      "title": "Product requests",
+      "title": "Requests",
       "subtitle": "Requests for items not yet in the catalog (read only).",
       "empty": "No requests.",
       "columns": {
@@ -1505,7 +1505,7 @@
       }
     },
     "policy": {
-      "title": "Catalog settings",
+      "title": "Sales",
       "description": "Choose when customers can cancel orders and requests in this catalog.",
       "ordersEnabled": "Customers can cancel orders",
       "ordersUpTo": "Cancel orders up to status (inclusive)",
@@ -2063,6 +2063,7 @@
     "customerBook": "Book",
     "customerActivities": "My activities",
     "breadcrumbLabel": "Breadcrumb",
+    "newNamed": "New {{name}}",
     "details": "Details",
     "backTo": "Back to {{page}}",
     "dashboard": "Home",
@@ -2079,18 +2080,18 @@
     "registrationFields": "Sign-up form",
     "moduleMenu": "Customer menu",
     "schedule": "Hours",
-    "layout": "Space map",
+    "layout": "Map",
     "reservations": "Bookings",
     "bookingPolicy": "Booking rules",
     "rentalsResources": "Resources",
     "catalog": "Sales",
     "catalogProducts": "Products",
-    "catalogCustomerGroups": "Customer groups",
+    "catalogCustomerGroups": "Groups",
     "catalogOrders": "Orders",
     "catalogRequests": "Requests",
     "catalogNotifications": "Sales alerts",
     "taxonomy": "Categories & tags",
-    "notifications": "General alerts",
+    "notifications": "Notifications",
     "peopleAccess": "People & access",
     "admin": "Super-Admin",
     "adminTenants": "Clients",
@@ -2115,7 +2116,7 @@
       "sales": "Sales"
     },
     "dashboardRedirectNotice": "You do not have access to the dashboard. This is the first page your access allows.",
-    "catalogSettings": "Sales settings",
+    "catalogSettings": "Sales",
     "pmocCustom": "Start custom plan",
     "pmocTooltip": "Maintenance plans",
     "catalogProductAgenda": "Product agenda",
@@ -4726,7 +4727,7 @@
       "noneOpen": "No open time on this date. Existing intervals are already reserved or are lessons."
     },
     "schedule": {
-      "title": "Schedule",
+      "title": "Hours",
       "description": "Operations for a specific day and recurring weekly setup for spaces.",
       "descriptionOperational": "View occupancy, adjust a single day, and configure weekly rules for spaces and goods.",
       "rentable": "Space / good",
@@ -5088,7 +5089,7 @@
       }
     },
     "layout": {
-      "title": "Layout",
+      "title": "Map",
       "description": "Arrange spaces on the map customers see when booking. Without a layout, the portal shows every space in a grid.",
       "select": "Layout",
       "empty": "No layouts yet",

@@ -1216,7 +1216,7 @@
         "leave": "Descartar y salir",
         "accessChanged": "cambió el acceso de un artículo"
       },
-      "title": "Grupos de clientes",
+      "title": "Grupos",
       "subtitle": "Agrupa clientes para habilitar productos exclusivos.",
       "create": "Nuevo grupo",
       "createTitle": "Nuevo grupo",
@@ -1310,7 +1310,7 @@
       }
     },
     "requests": {
-      "title": "Solicitudes de producto",
+      "title": "Solicitudes",
       "subtitle": "Pedidos de ítems que aún no están en el catálogo (solo lectura).",
       "empty": "Ninguna solicitud.",
       "columns": {
@@ -1505,7 +1505,7 @@
       }
     },
     "policy": {
-      "title": "Configuración del catálogo",
+      "title": "Ventas",
       "description": "Define cuándo los clientes pueden cancelar pedidos y solicitudes en este catálogo.",
       "ordersEnabled": "Los clientes pueden cancelar pedidos",
       "ordersUpTo": "Cancelar pedidos hasta el estado (inclusive)",
@@ -2064,6 +2064,7 @@
     "customerActivities": "Mis actividades",
     "breadcrumbLabel": "Ruta de navegación",
     "details": "Detalles",
+    "newNamed": "Nuevo {{name}}",
     "backTo": "Volver a {{page}}",
     "dashboard": "Inicio",
     "assets": "Equipos",
@@ -2079,18 +2080,18 @@
     "registrationFields": "Formulario de registro",
     "moduleMenu": "Menú del cliente",
     "schedule": "Horarios",
-    "layout": "Mapa del espacio",
+    "layout": "Mapa",
     "reservations": "Reservas",
     "bookingPolicy": "Reglas de reserva",
     "rentalsResources": "Recursos",
     "catalog": "Ventas",
     "catalogProducts": "Productos",
-    "catalogCustomerGroups": "Grupos de clientes",
+    "catalogCustomerGroups": "Grupos",
     "catalogOrders": "Pedidos",
     "catalogRequests": "Solicitudes",
     "catalogNotifications": "Avisos de ventas",
     "taxonomy": "Categorías y etiquetas",
-    "notifications": "Avisos generales",
+    "notifications": "Notificaciones",
     "peopleAccess": "Personas y acceso",
     "admin": "Super-Admin",
     "adminTenants": "Clientes",
@@ -2115,7 +2116,7 @@
       "sales": "Ventas"
     },
     "dashboardRedirectNotice": "No tiene acceso al panel. Abrimos la primera página permitida para su acceso.",
-    "catalogSettings": "Configuración de ventas",
+    "catalogSettings": "Ventas",
     "pmocCustom": "Empezar plan personalizado",
     "pmocTooltip": "Planes de mantenimiento",
     "catalogProductAgenda": "Agenda del producto",
@@ -4726,7 +4727,7 @@
       "noneOpen": "No hay horario abierto en esta fecha. Los intervalos existentes ya están reservados o son clases."
     },
     "schedule": {
-      "title": "Horarios / agenda",
+      "title": "Horarios",
       "description": "Operación de un día concreto y configuración semanal recurrente de los espacios.",
       "descriptionOperational": "Visualice la ocupación, ajuste un día y configure reglas semanales para espacios y bienes.",
       "rentable": "Espacio / bien",
@@ -5088,7 +5089,7 @@
       }
     },
     "layout": {
-      "title": "Layout",
+      "title": "Mapa",
       "description": "Organice los espacios en el mapa que ve el cliente al reservar. Sin layout, el portal muestra todos los espacios en una cuadrícula.",
       "select": "Layout",
       "empty": "Aún no hay layouts",
