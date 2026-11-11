@@ -13,6 +13,8 @@ import { CatalogOrderDetailPage } from "@/features/catalog/pages/CatalogOrderDet
 import { CatalogOrdersPage } from "@/features/catalog/pages/CatalogOrdersPage"
 import { CatalogPolicyPage } from "@/features/catalog/pages/CatalogPolicyPage"
 import { CatalogCustomerGroupsPage } from "@/features/catalog/pages/CatalogCustomerGroupsPage"
+import { CustomerGroupFormPage } from "@/features/catalog/pages/CustomerGroupFormPage"
+import { CustomerGroupsPage } from "@/features/catalog/pages/CustomerGroupsPage"
 import { CatalogProductCreatePage } from "@/features/catalog/pages/CatalogProductCreatePage"
 import { CatalogProductEditorPage } from "@/features/catalog/pages/CatalogProductEditorPage"
 import { ProductWizardPage } from "@/features/catalog/pages/ProductWizardPage"
@@ -182,6 +184,21 @@ export const catalogManifest = {
       {
         path: "/catalogo/grupos/:id",
         element: <CatalogCustomerGroupEditorPage />,
+        permission: "catalog.products.read",
+      },
+      {
+        path: "/grupos",
+        element: <CustomerGroupsPage />,
+        permission: "catalog.products.read",
+      },
+      {
+        path: "/grupos/novo",
+        element: <CustomerGroupFormPage />,
+        permission: "catalog.products.read",
+      },
+      {
+        path: "/grupos/:id",
+        element: <CustomerGroupFormPage />,
         permission: "catalog.products.read",
       },
       {

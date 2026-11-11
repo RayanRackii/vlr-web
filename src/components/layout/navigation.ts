@@ -1,7 +1,7 @@
 import { useMemo } from "react"
 import type { LucideIcon } from "lucide-react"
 import {
-  MenuSquare, ShoppingBag,
+  MenuSquare, ShoppingBag, Users,
 } from "lucide-react"
 
 import { filterNavigationTabs, type NavigationTab } from "@/components/layout/navigationTabs"
@@ -165,6 +165,14 @@ const pedidosItem: AppNavigationItem = {
   modules: ["catalog"], permissions: ["catalog.orders.read", "catalog.products.read"], anyOf: true,
 }
 
+const customerGroupsPageItem: AppNavigationItem = {
+  labelKey: "nav.catalogCustomerGroups",
+  to: "/grupos",
+  icon: Users,
+  modules: ["catalog"],
+  permission: "catalog.products.read",
+}
+
 const notificationsPageItem: AppNavigationItem = {
   ...notificationsManifest.navigationItems[0],
   to: "/notificacoes",
@@ -188,6 +196,7 @@ export const appNavigationItems: readonly AppNavigationItem[] = [
   ...maintenanceItems,
   ...salesItems,
   ...peoplePortalItems,
+  customerGroupsPageItem,
   notificationsPageItem,
 ]
 
@@ -213,7 +222,7 @@ const productNavigationSections: readonly AppNavigationSection[] = [
     "/configuracoes/recursos", "/catalogo/produtos",
     "/ativos", "/configuracoes/cadastro",
   ) },
-  { titleKey: "nav.sections.customers", items: navigationItemsAt("/pessoas-e-acesso", "/catalogo/grupos") },
+  { titleKey: "nav.sections.customers", items: navigationItemsAt("/pessoas-e-acesso", "/grupos") },
   { titleKey: "nav.sections.portal", items: navigationItemsAt("/configuracoes/menu", "/configuracoes/layout") },
   { titleKey: "nav.sections.settings", defaultCollapsed: true, items: navigationItemsAt(
     "/configuracoes/agenda", "/catalogo/configuracoes", "/notificacoes",
