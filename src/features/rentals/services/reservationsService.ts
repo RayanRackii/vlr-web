@@ -57,14 +57,20 @@ export type ListAdminReservationsQuery = {
   assetId?: string
 }
 
+/** DateOnly query values are yyyy-MM-dd. An ISO instant keeps only its civil date. */
+export function civilReservationDay(value: string | undefined): string | undefined {
+  const match = /^(\d{4}-\d{2}-\d{2})(?:$|T)/.exec(value?.trim() ?? "")
+  return match?.[1]
+}
+
 export async function listAdminReservations(
   query: ListAdminReservationsQuery = {},
 ): Promise<AdminReservation[]> {
   try {
     const response = await api.get("/api/reservations", {
       params: {
-        from: query.from || undefined,
-        to: query.to || undefined,
+        from: civilReservationDay(query.from),
+        to: civilReservationDay(query.to),
         status: query.status || undefined,
         assetId: query.assetId || undefined,
       },
