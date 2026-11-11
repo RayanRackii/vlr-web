@@ -1,7 +1,7 @@
 import { useMemo } from "react"
 import type { LucideIcon } from "lucide-react"
 import {
-  MenuSquare,
+  MenuSquare, ShoppingBag, Users,
 } from "lucide-react"
 
 import { filterNavigationTabs, type NavigationTab } from "@/components/layout/navigationTabs"
@@ -36,7 +36,11 @@ export type AppNavigationChildItem = {
     | "nav.adminAssetFamilies"
     | "nav.catalogProducts"
     | "nav.catalogCustomerGroups"
+    | "nav.pedidos"
     | "nav.catalogOrders"
+    | "nav.agendasOverview"
+    | "nav.agendasResources"
+    | "nav.agendasProduct"
     | "nav.catalogProductAgenda"
     | "nav.catalogResourceAgenda"
     | "nav.catalogRequests"
@@ -60,10 +64,12 @@ export type AppNavigationItem = {
   introKey?: ModuleIntroKey
   labelKey:
     | "nav.agenda"
+    | "nav.agendas"
     | "nav.dashboard"
     | "nav.peopleAccess"
     | "nav.assets"
     | "nav.pmoc"
+    | "nav.manutencao"
     | "nav.workOrders"
     | "nav.registrationFields"
     | "nav.moduleMenu"
@@ -77,7 +83,11 @@ export type AppNavigationItem = {
     | "nav.notifications"
     | "nav.taxonomy"
     | "nav.catalogProducts"
+    | "nav.pedidos"
     | "nav.catalogOrders"
+    | "nav.agendasOverview"
+    | "nav.agendasResources"
+    | "nav.agendasProduct"
     | "nav.catalogProductAgenda"
     | "nav.catalogResourceAgenda"
     | "nav.catalogRequests"
@@ -87,6 +97,7 @@ export type AppNavigationItem = {
   to: string
   tabs?: readonly NavigationTab[]
   icon: LucideIcon
+  accessAlternatives?: readonly { modules: readonly string[]; permissions: readonly string[]; anyOf?: boolean }[]
   children?: readonly AppNavigationChildItem[]
   /** Canonical tenant module keys that unlock this item. Empty = always visible. */
   modules?: readonly string[]
@@ -149,14 +160,44 @@ const salesItems: readonly AppNavigationItem[] = catalogManifest.navigationItems
   (item) => item.children.map((child) => ({ ...child, icon: child.icon ?? item.icon, modules: child.modules ?? item.modules })),
 )
 
+const pedidosItem: AppNavigationItem = {
+  labelKey: "nav.pedidos", to: "/pedidos", icon: ShoppingBag,
+  modules: ["catalog"], permissions: ["catalog.orders.read", "catalog.products.read"], anyOf: true,
+}
+
+const customerGroupsPageItem: AppNavigationItem = {
+  labelKey: "nav.catalogCustomerGroups",
+  to: "/grupos",
+  icon: Users,
+  modules: ["catalog"],
+  permission: "catalog.products.read",
+}
+
+const notificationsPageItem: AppNavigationItem = {
+  ...notificationsManifest.navigationItems[0],
+  to: "/notificacoes",
+}
+
+const maintenanceItem: AppNavigationItem = {
+  labelKey: "nav.manutencao", to: "/manutencao", icon: pmocManifest.navigationItems[0].icon,
+  accessAlternatives: [
+    { modules: ["pmoc"], permissions: ["pmoc.plans.read", "pmoc.templates.read"], anyOf: true },
+    { modules: ["os"], permissions: ["os.work_orders.read"] },
+  ],
+}
+
 /** Flat catalog used for title resolution and module filtering helpers. */
 export const appNavigationItems: readonly AppNavigationItem[] = [
   ...agendaManifest.navigationItems,
+  pedidosItem,
+  maintenanceItem,
   overviewItem,
   ...bookingsItems,
   ...maintenanceItems,
   ...salesItems,
   ...peoplePortalItems,
+  customerGroupsPageItem,
+  notificationsPageItem,
 ]
 
 const legacyNavigationSections: readonly AppNavigationSection[] = [
@@ -175,17 +216,16 @@ function navigationItemsAt(...paths: string[]): AppNavigationItem[] {
 const productNavigationSections: readonly AppNavigationSection[] = [
   { titleKey: "nav.sections.overview", standalone: true, items: [overviewItem] },
   { titleKey: "nav.sections.operations", items: navigationItemsAt(
-    "/agenda", "/catalogo/agenda-recursos", "/catalogo/agenda-produto", "/catalogo/pedidos",
-    "/catalogo/solicitacoes", "/configuracoes/reservas", "/os", "/pmoc",
+    "/agendas", "/pedidos", "/configuracoes/reservas", "/manutencao",
   ) },
   { titleKey: "nav.sections.registration", items: navigationItemsAt(
-    "/configuracoes/recursos", "/catalogo/produtos", "/configuracoes/categorias-tags",
+    "/configuracoes/recursos", "/catalogo/produtos",
     "/ativos", "/configuracoes/cadastro",
   ) },
-  { titleKey: "nav.sections.customers", items: navigationItemsAt("/pessoas-e-acesso", "/catalogo/grupos") },
+  { titleKey: "nav.sections.customers", items: navigationItemsAt("/pessoas-e-acesso", "/grupos") },
   { titleKey: "nav.sections.portal", items: navigationItemsAt("/configuracoes/menu", "/configuracoes/layout") },
   { titleKey: "nav.sections.settings", defaultCollapsed: true, items: navigationItemsAt(
-    "/configuracoes/agenda", "/catalogo/configuracoes", "/configuracoes/notificacoes",
+    "/configuracoes/agenda", "/catalogo/configuracoes", "/notificacoes",
   ) },
 ]
 
@@ -247,6 +287,9 @@ export function filterNavigationItemsByAccess(
   permissions: readonly string[],
 ): AppNavigationItem[] {
   return items.flatMap((item) => {
+    if (item.accessAlternatives) {
+      return item.accessAlternatives.some(rule => moduleIsEnabled(rule.modules, activeModules) && hasDeclaredAccess(rule, permissions)) ? [item] : []
+    }
     if (!moduleIsEnabled(item.modules, activeModules)) {
       return []
     }
@@ -383,13 +426,22 @@ export function getPageTitleKey(
   | AppNavigationItem["labelKey"]
   | AppNavigationChildItem["labelKey"]
   | ModuleIntro["titleKey"]
+  | "maintenance.newPlan"
+  | "maintenance.newOrder"
   | "nav.pmocTemplatePreview"
   | "nav.pmocPlanDetail"
   | NavigationTab["labelKey"]
   | "account.profile"
   | "nav.rentalsResourceWizard"
   | "nav.catalogProductWizard"
+  | "cadastro.title"
+  | "cadastro.productCreate"
+  | "cadastro.resourceCreate"
   | "app.name" {
+  if (pathname === "/catalogo/produtos/cadastro") return "cadastro.productCreate"
+  if (pathname === "/configuracoes/recursos/cadastro") return "cadastro.resourceCreate"
+  if (/^\/(catalogo\/produtos|configuracoes\/recursos)\/[^/]+\/cadastro\/?$/.test(pathname)) return "cadastro.title"
+
   const intro = matchModuleIntro([...legacyNavigationSections, platformNavigationSection], pathname)
   if (intro) return intro.titleKey
 
@@ -418,6 +470,8 @@ export function getPageTitleKey(
   }
 
   // Keep the custom-plan page title at its original URL.
+  if (pathname === "/manutencao/planos/novo") return "maintenance.newPlan"
+  if (pathname === "/manutencao/ordens/nova") return "maintenance.newOrder"
   if (pathname === "/pmoc/novo") return "nav.pmocNew"
 
   const match = matchNavigationPath(appNavigationItems, pathname)

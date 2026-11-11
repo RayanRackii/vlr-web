@@ -195,12 +195,12 @@ describe("CatalogProductsPage validity gate", () => {
     const user = userEvent.setup()
     renderPage()
     const create = await screen.findByRole("link", { name: i18n.t("catalog.products.create") })
-    expect(create).toHaveAttribute("href", "/catalogo/produtos/novo")
+    expect(create).toHaveAttribute("href", "/catalogo/produtos/cadastro")
     const quick = screen.getByRole("link", { name: new RegExp(`^${i18n.t("catalog.products.quickEdit")}`) })
     expect(quick).toHaveAttribute("href", `/catalogo/produtos/${PRODUCT.id}/assistente?passo=offer`)
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument()
     await user.click(create)
-    expect(screen.getByTestId("location")).toHaveTextContent("/catalogo/produtos/novo")
+    expect(screen.getByTestId("location")).toHaveTextContent("/catalogo/produtos/cadastro")
   })
 
   it("restores taxonomy filters from the URL and sends them with product requests", async () => {

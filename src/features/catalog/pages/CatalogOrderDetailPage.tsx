@@ -9,6 +9,8 @@ import { useParams } from "react-router-dom"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 
+import "./pedidos.css"
+import { useBreadcrumbTitle } from "@/components/layout/useBreadcrumbTitle"
 import { PageHeader } from "@/components/layout/PageHeader"
 import { PageContentSkeleton } from "@/components/loading/PageContentSkeleton"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
@@ -64,13 +66,14 @@ const USAGE_HISTORY_LABELS: Record<string, string> = {
   "usage.released": "catalog.orders.history.released",
 }
 
-export function CatalogOrderDetailPage() {
+export function CatalogOrderDetailPage({ unified = false }: { unified?: boolean }) {
   const { t, i18n } = useTranslation()
   const timeZoneId = useTenantTimeZone()
   const params = useParams()
   const orderId = params.orderId ?? ""
 
   const [order, setOrder] = useState<CatalogOrder | null>(null)
+  useBreadcrumbTitle(unified && order ? `#${order.orderNumber}` : null)
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState<string | null>(null)
   const [busyAction, setBusyAction] = useState<B2BOrderAction | null>(null)
@@ -262,17 +265,17 @@ export function CatalogOrderDetailPage() {
   })
 
   return (
-    <div className="staff-catalog staff-catalog-detail space-y-6">
+    <div className={unified ? "pedidos-page staff-catalog staff-catalog-detail mx-auto space-y-5" : "staff-catalog staff-catalog-detail space-y-6"}>
       <PageHeader
         className="min-w-0 [&_h1]:tabular-nums"
-        title={order.displayNumber}
+        title={unified ? t("pedidos.detailTitle") : order.displayNumber}
         description={<>{order.customerName}{order.customerEmail ? ` · ${order.customerEmail}` : ""}</>}
         actions={<span className="staff-catalog-status" data-tone={STAFF_ORDER_STATUS_TONE[order.status]}>
           {t(`catalog.status.${order.status}`)}
         </span>}
       />
 
-      <CatalogTabs active="orders" />
+      {!unified && <CatalogTabs active="orders" />}
 
       {inactiveNamesForApproval.length > 0 ? (
         <Alert variant="warning">

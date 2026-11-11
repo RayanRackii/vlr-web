@@ -394,7 +394,7 @@ export function CatalogProductsPage({ view = "products" }: { view?: "products" |
         description={t("catalog.products.subtitle")}
         actions={
           <Can permission="catalog.products.manage">
-            <Link className={buttonVariants()} to="/catalogo/produtos/novo">
+            <Link className={buttonVariants()} to="/catalogo/produtos/cadastro">
               <Plus data-icon="inline-start" />
               {t("catalog.products.create")}
             </Link>
@@ -414,7 +414,7 @@ export function CatalogProductsPage({ view = "products" }: { view?: "products" |
           <TaxonomyFilterHeader kind="tags" title={t("taxonomy.tags")} options={taxonomyOptions} filter={taxonomyFilter} onChange={updateTaxonomyFilter} />
         </div>
         {loading ? <span role="status" className="sr-only">{t("catalog.staff.loading")}</span> : null}
-        {!loading && !loadError && table.getRowModel().rows.length === 0 ? <CatalogEmptyState kind="products" action={<Can permission="catalog.products.manage"><Link className={buttonVariants()} to="/catalogo/produtos/novo"><Plus data-icon="inline-start" />{t("catalog.products.create")}</Link></Can>} filtered={products.length > 0 || !!search || columnFilters.length > 0 || !!taxonomyFilter.categoryId || taxonomyFilter.tagIds.length > 0} /> : (
+        {!loading && !loadError && table.getRowModel().rows.length === 0 ? <CatalogEmptyState kind="products" action={<Can permission="catalog.products.manage"><Link className={buttonVariants()} to="/catalogo/produtos/cadastro"><Plus data-icon="inline-start" />{t("catalog.products.create")}</Link></Can>} filtered={products.length > 0 || !!search || columnFilters.length > 0 || !!taxonomyFilter.categoryId || taxonomyFilter.tagIds.length > 0} /> : (
           <Table role="table" className="staff-catalog-table staff-catalog-products-table" aria-label={t("catalog.products.title")}>
             <TableHeader role="rowgroup">{table.getHeaderGroups().map((group) => (
               <TableRow role="row" key={group.id}>{group.headers.map((header) => (

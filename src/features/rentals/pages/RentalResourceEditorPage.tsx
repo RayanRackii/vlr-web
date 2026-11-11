@@ -1,3 +1,4 @@
+import "@/features/assistant/cadastro.css"
 import { useCallback, useContext, useEffect, useRef, useState } from "react"
 import { Link, UNSAFE_DataRouterContext as DataRouterContext, useBlocker, useNavigate, useParams } from "react-router-dom"
 import { useTranslation } from "react-i18next"
@@ -66,7 +67,7 @@ function RouterLeaveGuard({ dirty, saving }: { dirty: boolean; saving: boolean }
     onLeave={() => blocker.state === "blocked" && blocker.proceed()} />
 }
 
-export function RentalResourceEditorPage() {
+export function RentalResourceEditorPage({ cadastro = false }: { cadastro?: boolean } = {}) {
   const { t } = useTranslation()
   const { id } = useParams()
   const navigate = useNavigate()
@@ -157,6 +158,7 @@ export function RentalResourceEditorPage() {
     saveInFlight.current = true
     setBusy(true)
     try {
+      let destination = RESOURCES_PATH
       const body = toCreateRentableRequest(values, {
         creating: editing === null,
         stored: editing?.maxAdvanceBookingDays,
@@ -174,12 +176,13 @@ export function RentalResourceEditorPage() {
         }
         toast.success(t("rentals.resources.updateSuccess"))
       } else {
-        await createRentalAsset(body)
+        const created = await createRentalAsset(body)
+        if (cadastro) destination = `${RESOURCES_PATH}/${encodeURIComponent(created.id)}/cadastro`
         if (!currentLifetime.active) return false
         toast.success(t("rentals.resources.createSuccess"))
       }
       setSaved(true)
-      redirectTimer.current = setTimeout(() => navigate(RESOURCES_PATH), 3000)
+      redirectTimer.current = setTimeout(() => navigate(destination), 3000)
       return true
     } catch (error) {
       if (!currentLifetime.active) return false
@@ -197,7 +200,7 @@ export function RentalResourceEditorPage() {
     {hasDataRouter ? <RouterLeaveGuard dirty={dirty && !saved} saving={busy && !saved} /> : null}
     <LeaveConfirmation open={confirmCancel} onStay={() => setConfirmCancel(false)}
       onLeave={() => navigate(RESOURCES_PATH)} />
-    <RentalResourceEditorForm key={id ?? "new"} editing={editing} units={units} categories={categories} families={families}
+    <RentalResourceEditorForm cadastro={cadastro} key={id ?? "new"} editing={editing} units={units} categories={categories} families={families}
     busy={busy} readOnly={!canWrite} pricePerHour={price?.pricePerHour} pricingUnit={price?.pricingUnit}
     assistantHref={editing ? resourceWizardPath(editing.id) : undefined}
     onDirtyChange={setDirty}

@@ -14,8 +14,10 @@ describe("staff sales navigation", () => {
   })
 
   it("preserves every existing staff route and permission", () => {
-    expect(catalogManifest.routes.staff.filter((route) => route.path !== "/catalogo/solicitacoes").map(({ path, permission }) => ({ path, permission }))).toEqual([
+    expect(catalogManifest.routes.staff.filter((route) => route.path !== "/catalogo/solicitacoes" && !route.path.startsWith("/pedidos")).map(({ path, permission }) => ({ path, permission }))).toEqual([
       { path: "/catalogo/configuracoes", permission: "catalog.products.manage" },
+      { path: "/catalogo/produtos/cadastro", permission: "catalog.products.manage" },
+      { path: "/catalogo/produtos/:id/cadastro", permission: "catalog.products.read" },
       { path: "/catalogo/produtos/novo", permission: "catalog.products.manage" },
       { path: "/catalogo/produtos/:id/assistente", permission: "catalog.products.read" },
       { path: "/catalogo/produtos/:id/passos", permission: "catalog.products.read" },
@@ -24,6 +26,9 @@ describe("staff sales navigation", () => {
       { path: "/catalogo/grupos", permission: "catalog.products.read" },
       { path: "/catalogo/grupos/novo", permission: "catalog.products.read" },
       { path: "/catalogo/grupos/:id", permission: "catalog.products.read" },
+      { path: "/grupos", permission: "catalog.products.read" },
+      { path: "/grupos/novo", permission: "catalog.products.read" },
+      { path: "/grupos/:id", permission: "catalog.products.read" },
       { path: "/catalogo/pedidos", permission: "catalog.orders.read" },
       { path: "/catalogo/agenda-produto", permission: "catalog.orders.read" },
       { path: "/catalogo/agenda-recursos", permission: "rentals.schedule.read" },
@@ -46,5 +51,13 @@ describe("staff sales navigation", () => {
     expect(route?.permission).toBeUndefined()
     const labels: string[] = (catalogManifest.navigationItems[0]?.children ?? []).map((item) => item.labelKey)
     expect(labels).not.toContain("nav.catalogNotifications")
+  })
+})
+
+describe("unified Pedidos routes", () => {
+  it("adds module-gated staff routes with read permissions", () => {
+    expect(catalogManifest.routes.staff.find(route => route.path === "/pedidos")).toMatchObject({ permission: "catalog.orders.read", anyOf: ["catalog.products.read"], modules: ["catalog"] })
+    expect(catalogManifest.routes.staff.find(route => route.path === "/pedidos/:orderId")).toMatchObject({ permission: "catalog.orders.read", modules: ["catalog"] })
+    expect(catalogManifest.routes.staff.find(route => route.path === "/pedidos/solicitacoes/:requestId")).toMatchObject({ permission: "catalog.products.read", modules: ["catalog"] })
   })
 })

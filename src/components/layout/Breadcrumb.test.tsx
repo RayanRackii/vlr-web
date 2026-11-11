@@ -30,6 +30,7 @@ function renderBreadcrumb(path: string, title?: string) {
         <BreadcrumbTitleProvider>
           <Breadcrumb />
           <Routes>
+            <Route path="/pedidos/:orderId" element={<Detail title={title} />} />
             <Route path="/pmoc/:id" element={<Detail title={title} />} />
             <Route path="*" element={null} />
           </Routes>
@@ -165,4 +166,40 @@ describe("staff breadcrumb", () => {
 it("gives breadcrumb links 44px tap targets without increasing the line height", () => {
   renderBreadcrumb("/pmoc/plan-1", "Plano A")
   expect(screen.getByRole("link", { name: "Meus planos" })).toHaveClass("min-h-[44px]", "-my-3")
+})
+
+
+it.each(["/agendas", "/agendas/recursos", "/agendas/produto"])("does not repeat the top-level agenda heading in a breadcrumb at %s", (path) => {
+  renderBreadcrumb(path)
+  expect(screen.queryByRole("navigation", { name: "Caminho de navegação" })).not.toBeInTheDocument()
+})
+
+describe("Pedidos child breadcrumb", () => {
+  it("uses the parent back link and order number with a slash", () => {
+    renderBreadcrumb("/pedidos/order-1", "#7")
+    const nav = screen.getByRole("navigation", { name: i18n.t("nav.breadcrumbLabel") })
+    expect(within(nav).getByRole("link", { name: i18n.t("nav.pedidos") })).toHaveAttribute("href", "/pedidos")
+    expect(within(nav).getByText("#7")).toHaveAttribute("aria-current", "page")
+    expect(within(nav).getByText("/")).toBeInTheDocument()
+    expect(nav.querySelector("svg.lucide-chevron-right")).not.toBeInTheDocument()
+  })
+  it("does not repeat the unified list title", () => {
+    renderBreadcrumb("/pedidos")
+    expect(screen.queryByRole("navigation")).not.toBeInTheDocument()
+  })
+})
+
+it.each([
+  ["/manutencao/planos/novo", "Novo plano"],
+  ["/manutencao/ordens/nova", "Nova ordem"],
+])("links the new child breadcrumb back to maintenance at %s", (path, title) => {
+  renderBreadcrumb(path)
+  const nav = screen.getByRole("navigation", { name: i18n.t("nav.breadcrumbLabel") })
+  expect(within(nav).getByRole("link", { name: "Manutenção" })).toHaveAttribute("href", "/manutencao")
+  expect(within(nav).getByText(title)).toHaveAttribute("aria-current", "page")
+  expect(within(nav).getByText("/")).toBeInTheDocument()
+})
+it("does not repeat the maintenance list title in a breadcrumb", () => {
+  renderBreadcrumb("/manutencao")
+  expect(screen.queryByRole("navigation")).not.toBeInTheDocument()
 })

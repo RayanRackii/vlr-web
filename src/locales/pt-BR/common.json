@@ -71,6 +71,7 @@
       "missing_other": "Falta {{count}} passos"
     },
     "steps": {
+      "categorias": "Categorias e tags",
       "dados": "Dados",
       "agenda": "Agenda",
       "fila": "Fila",
@@ -1716,6 +1717,32 @@
         "rentals": "Aluguéis"
       }
     },
+    "page": {
+      "subtitle": "Defina por onde cada aviso é enviado e acompanhe as entregas.",
+      "tabs": { "channels": "Canais", "history": "Histórico" },
+      "channelsTitle": "Canais por evento",
+      "channelsSubtitle": "Marque os canais que avisam clientes e equipe em cada evento.",
+      "historyTitle": "Histórico de entregas",
+      "historySubtitle": "Avisos enviados, com canal, destinatário e resultado.",
+      "search": "Buscar por destinatário ou evento",
+      "filters": "Filtros",
+      "status": "Status",
+      "channel": "Canal",
+      "event": "Evento",
+      "period": "Período",
+      "all": "Todos",
+      "clear": "Limpar busca e filtros",
+      "emptyChannelsTitle": "Nenhum canal para configurar",
+      "emptyChannels": "Nenhum módulo com avisos está ativo neste ambiente.",
+      "emptyHistoryTitle": "Nenhuma entrega ainda",
+      "emptyHistory": "Os avisos enviados aparecem aqui, com o canal e o resultado.",
+      "noResultsTitle": "Nenhuma entrega encontrada",
+      "noResults": "Nada corresponde à busca ou aos filtros.",
+      "showing": "Mostrando {{shown}} de {{total}}",
+      "previous": "Página anterior",
+      "next": "Próxima página",
+      "modules": { "catalog": "Pedidos", "rentals": "Reservas" }
+    },
     "inbox": {
       "items": {
         "reservationConfirmed": "Reserva confirmada.",
@@ -2050,7 +2077,43 @@
       "contactPrompt": "Ainda com dúvidas?"
     }
   },
+  "grupos": {
+    "eyebrow": "Clientes",
+    "title": "Grupos de clientes",
+    "subtitle": "Agrupe clientes para liberar produtos e condições exclusivas.",
+    "create": "Novo grupo",
+    "search": "Buscar grupo",
+    "edit": "Editar",
+    "delete": "Excluir",
+    "deleteConfirm": "Excluir este grupo?",
+    "emptyTitle": "Nenhum grupo ainda",
+    "emptyBody": "Crie um grupo para reunir clientes e liberar produtos só para eles.",
+    "emptyAction": "Criar primeiro grupo",
+    "noResultsTitle": "Nenhum grupo encontrado",
+    "noResults": "Nenhum grupo corresponde à busca.",
+    "clear": "Limpar busca",
+    "noDescription": "Sem descrição",
+    "unused": "Sem uso",
+    "usedIn_one": "Em {{count}} produto",
+    "usedIn_other": "Em {{count}} produtos",
+    "createTitle": "Novo grupo",
+    "editTitle": "Editar grupo",
+    "createSubtitle": "Dê um nome ao grupo e, se quiser, já escolha os primeiros membros.",
+    "editSubtitle": "Atualize o nome e a descrição.",
+    "name": "Nome",
+    "namePlaceholder": "Ex.: Clientes frequentes",
+    "nameHelp": "Aparece para a equipe ao liberar produtos.",
+    "nameRequired": "Informe o nome do grupo.",
+    "description": "Descrição",
+    "descriptionPlaceholder": "Para que serve este grupo",
+    "members": "Membros iniciais",
+    "membersSearch": "Buscar cliente",
+    "membersEmpty": "Nenhum cliente encontrado.",
+    "membersHint": "Você pode adicionar ou remover membros depois.",
+    "save": "Salvar grupo"
+  },
   "nav": {
+    "manutencao": "Manutenção",
     "agenda": "Agenda",
     "sidebar": {
       "people": "Pessoas",
@@ -2123,7 +2186,12 @@
     "catalogProductAgenda": "Agenda do produto",
     "catalogResourceAgenda": "Agenda dos recursos",
     "rentalsResourceWizard": "Assistente do recurso",
-    "catalogProductWizard": "Assistente do produto"
+    "catalogProductWizard": "Assistente do produto",
+    "agendas": "Agendas",
+    "agendasOverview": "Visão geral",
+    "agendasResources": "Agenda de recursos",
+    "agendasProduct": "Agenda do produto",
+    "pedidos": "Pedidos"
   },
   "moduleIntro": {
     "title": "Apresentação",
@@ -5528,5 +5596,106 @@
       "portalRequests": "Ex.: um produto de limpeza para a recepção",
       "portalCatalog": "Ex.: materiais de uso diário para a recepção"
     }
+  },
+  "agendas": {
+    "eyebrow": "Operação · Agendas",
+    "overview": {
+      "title": "Visão geral das agendas",
+      "subtitle": "Tudo o que ocupa os recursos no período: reservas, pedidos, manutenções e bloqueios."
+    },
+    "resources": {
+      "title": "Agenda de recursos",
+      "subtitle": "Ocupação por recurso, com foco nos recursos escolhidos no filtro."
+    },
+    "product": {
+      "title": "Agenda do produto",
+      "subtitle": "Ocupação dos recursos utilizados pelo produto no período."
+    },
+    "chooseProduct": "Escolha um produto para consultar sua agenda.",
+    "prep": "Preparo",
+    "cleanup": "Limpeza",
+    "selectedProductOrders": "Pedidos do produto: {{count}}",
+    "otherUses": "Outros usos · {{kind}}: {{count}}"
+  },
+  "pedidos": {
+    "eyebrow": "Operação · Pedidos",
+    "subtitle": "Pedidos e solicitações dos clientes em uma lista só.",
+    "type": "Tipo",
+    "search": "Buscar por número, cliente ou descrição",
+    "filters": "Filtros",
+    "status": "Status",
+    "allStatuses": "Todos os status",
+    "emptyTitle": "Nada encontrado",
+    "emptyDescription": "Nenhum pedido ou solicitação corresponde à busca e aos filtros.",
+    "clear": "Limpar busca/filtros",
+    "loading": "Carregando pedidos…",
+    "quantity": "Quantidade: {{count}}",
+    "detailTitle": "Detalhes do pedido",
+    "requestTitle": "Detalhes da solicitação",
+    "notFound": "Solicitação não encontrada.",
+    "description": "Descrição",
+    "quantityLabel": "Quantidade",
+    "note": "Observação",
+    "createdAt": "Criada em",
+    "files": "Arquivos",
+    "customer": "Cliente",
+    "tabs": {
+      "todos": "Todos",
+      "pedidos": "Pedidos",
+      "solicitacoes": "Solicitações"
+    }
+  },
+  "maintenance": {
+    "planUnavailable": "Este plano está inativo e não pode gerar ordens.",
+    "eyebrow": "Operação · Manutenção",
+    "subtitle": "Planos recorrentes e ordens de serviço dos seus equipamentos, em um só lugar.",
+    "tabs": {
+      "hoje": "Hoje",
+      "ordens": "Ordens",
+      "planos": "Planos"
+    },
+    "sections": {
+      "hoje": "Planos com primeira data devida e ordens abertas, incluindo as próximas.",
+      "ordens": "Acompanhe as ordens de serviço e sua execução.",
+      "planos": "Organize os planos recorrentes de manutenção."
+    },
+    "newPlan": "Novo plano",
+    "newOrder": "Nova ordem",
+    "generate": "Gerar ordem",
+    "search": "Buscar por plano, ordem ou equipamento",
+    "filters": "Filtros",
+    "status": "Status",
+    "type": "Tipo",
+    "allStatuses": "Todos os status",
+    "allTypes": "Todos os tipos",
+    "due": "Primeira data devida",
+    "firstDue": "Primeiro vencimento: {{date}}",
+    "emptyTitle": "Nenhum item para mostrar",
+    "emptyDescription": "Os itens disponíveis aparecerão aqui. Ajuste os filtros ou crie um novo item.",
+    "clear": "Limpar busca/filtros",
+    "loading": "Carregando manutenção…",
+    "loadError": "Não foi possível carregar a manutenção.",
+    "generateDescription": "Escolha um equipamento elegível e uma data. A ordem usará o checklist do plano.",
+    "checklist": "Checklist do plano",
+    "sourcePlan": "Plano de origem: {{name}}"
+  },
+  "cadastro": {
+    "saveBeforeContinue": "Salve as alterações ou restaure os valores antes de trocar de etapa.",
+    "title": "Cadastro",
+    "productCreate": "Novo produto",
+    "resourceCreate": "Novo recurso",
+    "subtitle": "Passo {{count}} de {{total}} · {{step}}. Salve as alterações antes de continuar.",
+    "steps": "Etapas do cadastro",
+    "back": "Voltar",
+    "next": "Continuar",
+    "addCategory": "Categoria +",
+    "addTag": "Tag +",
+    "createCategory": "Adicionar categoria",
+    "createTag": "Adicionar tag",
+    "noParent": "Nenhuma",
+    "taxonomyHelp": "Selecione as categorias e tags deste produto e salve a etapa.",
+    "taxonomyLimit": "O limite é 20 categorias e 20 tags.",
+    "resourceTaxonomyHelp": "Categorias e tags compartilhadas podem ser criadas aqui, mas não são vinculadas a este recurso. O tipo operacional do recurso é configurado separadamente.",
+    "taxonomyNoRead": "Você precisa de permissão para consultar categorias e tags."
   }
 }

@@ -71,6 +71,7 @@
       "missing_other": "{{count}} steps left"
     },
     "steps": {
+      "categorias": "Categories and tags",
       "dados": "Details",
       "agenda": "Schedule",
       "fila": "Queue",
@@ -1716,6 +1717,32 @@
         "rentals": "Rentals"
       }
     },
+    "page": {
+      "subtitle": "Choose where each notice is sent and follow the deliveries.",
+      "tabs": { "channels": "Channels", "history": "History" },
+      "channelsTitle": "Channels by event",
+      "channelsSubtitle": "Choose the channels that notify customers and staff for each event.",
+      "historyTitle": "Delivery history",
+      "historySubtitle": "Notices sent, with channel, recipient, and result.",
+      "search": "Search by recipient or event",
+      "filters": "Filters",
+      "status": "Status",
+      "channel": "Channel",
+      "event": "Event",
+      "period": "Period",
+      "all": "All",
+      "clear": "Clear search and filters",
+      "emptyChannelsTitle": "No channels to configure",
+      "emptyChannels": "No module with notices is active in this workspace.",
+      "emptyHistoryTitle": "No deliveries yet",
+      "emptyHistory": "Sent notices show up here, with the channel and the result.",
+      "noResultsTitle": "No deliveries found",
+      "noResults": "Nothing matches the search or the filters.",
+      "showing": "Showing {{shown}} of {{total}}",
+      "previous": "Previous page",
+      "next": "Next page",
+      "modules": { "catalog": "Orders", "rentals": "Bookings" }
+    },
     "inbox": {
       "items": {
         "reservationConfirmed": "Reservation confirmed.",
@@ -2050,7 +2077,43 @@
       "contactPrompt": "Still have questions?"
     }
   },
+  "grupos": {
+    "eyebrow": "Customers",
+    "title": "Customer groups",
+    "subtitle": "Group customers to unlock products and exclusive terms.",
+    "create": "New group",
+    "search": "Search groups",
+    "edit": "Edit",
+    "delete": "Delete",
+    "deleteConfirm": "Delete this group?",
+    "emptyTitle": "No groups yet",
+    "emptyBody": "Create a group to bring customers together and unlock products just for them.",
+    "emptyAction": "Create the first group",
+    "noResultsTitle": "No groups found",
+    "noResults": "No group matches the search.",
+    "clear": "Clear search",
+    "noDescription": "No description",
+    "unused": "Not in use",
+    "usedIn_one": "In {{count}} product",
+    "usedIn_other": "In {{count}} products",
+    "createTitle": "New group",
+    "editTitle": "Edit group",
+    "createSubtitle": "Name the group and, if you want, choose the first members.",
+    "editSubtitle": "Update the name and the description.",
+    "name": "Name",
+    "namePlaceholder": "Ex.: Frequent customers",
+    "nameHelp": "Shown to the team when unlocking products.",
+    "nameRequired": "Enter the group name.",
+    "description": "Description",
+    "descriptionPlaceholder": "What this group is for",
+    "members": "Initial members",
+    "membersSearch": "Search customers",
+    "membersEmpty": "No customers found.",
+    "membersHint": "You can add or remove members later.",
+    "save": "Save group"
+  },
   "nav": {
+    "manutencao": "Maintenance",
     "agenda": "Agenda",
     "sidebar": {
       "people": "People",
@@ -2123,7 +2186,12 @@
     "catalogProductAgenda": "Product agenda",
     "catalogResourceAgenda": "Resource agenda",
     "rentalsResourceWizard": "Resource setup",
-    "catalogProductWizard": "Product setup"
+    "catalogProductWizard": "Product setup",
+    "agendas": "Agendas",
+    "agendasOverview": "Overview",
+    "agendasResources": "Resource agenda",
+    "agendasProduct": "Product agenda",
+    "pedidos": "Orders"
   },
   "moduleIntro": {
     "title": "Introduction",
@@ -5528,5 +5596,106 @@
       "portalRequests": "E.g.: a cleaning product for reception",
       "portalCatalog": "E.g.: everyday supplies for reception"
     }
+  },
+  "agendas": {
+    "eyebrow": "Operations · Agendas",
+    "overview": {
+      "title": "Agenda overview",
+      "subtitle": "Resource occupancy in this period: reservations, orders, maintenance and blocks."
+    },
+    "resources": {
+      "title": "Resource agenda",
+      "subtitle": "Occupancy by resource, focusing on the selected resources."
+    },
+    "product": {
+      "title": "Product agenda",
+      "subtitle": "Occupancy of the resources used by the product in this period."
+    },
+    "chooseProduct": "Choose a product to view its agenda.",
+    "prep": "Preparation",
+    "cleanup": "Cleanup",
+    "selectedProductOrders": "Product orders: {{count}}",
+    "otherUses": "Other uses · {{kind}}: {{count}}"
+  },
+  "pedidos": {
+    "eyebrow": "Operations · Orders",
+    "subtitle": "Customer orders and requests in one list.",
+    "type": "Type",
+    "search": "Search by number, customer or description",
+    "filters": "Filters",
+    "status": "Status",
+    "allStatuses": "All statuses",
+    "emptyTitle": "Nothing found",
+    "emptyDescription": "No orders or requests match your search and filters.",
+    "clear": "Clear search/filters",
+    "loading": "Loading orders…",
+    "quantity": "Quantity: {{count}}",
+    "detailTitle": "Order details",
+    "requestTitle": "Request details",
+    "notFound": "Request not found.",
+    "description": "Description",
+    "quantityLabel": "Quantity",
+    "note": "Note",
+    "createdAt": "Created on",
+    "files": "Files",
+    "customer": "Customer",
+    "tabs": {
+      "todos": "All",
+      "pedidos": "Orders",
+      "solicitacoes": "Requests"
+    }
+  },
+  "maintenance": {
+    "planUnavailable": "This plan is inactive and cannot generate work orders.",
+    "eyebrow": "Operations · Maintenance",
+    "subtitle": "Recurring plans and equipment work orders in one place.",
+    "tabs": {
+      "hoje": "Today",
+      "ordens": "Work orders",
+      "planos": "Plans"
+    },
+    "sections": {
+      "hoje": "Plans whose first date is due and open work orders, including upcoming ones.",
+      "ordens": "Track work orders and their execution.",
+      "planos": "Organize recurring maintenance plans."
+    },
+    "newPlan": "New plan",
+    "newOrder": "New work order",
+    "generate": "Generate work order",
+    "search": "Search plans, work orders or equipment",
+    "filters": "Filters",
+    "status": "Status",
+    "type": "Type",
+    "allStatuses": "All statuses",
+    "allTypes": "All types",
+    "due": "First date due",
+    "firstDue": "First due date: {{date}}",
+    "emptyTitle": "No items to display",
+    "emptyDescription": "Available items will appear here. Adjust the filters or create a new item.",
+    "clear": "Clear search/filters",
+    "loading": "Loading maintenance…",
+    "loadError": "Unable to load maintenance.",
+    "generateDescription": "Choose eligible equipment and a date. The work order will use the plan checklist.",
+    "checklist": "Plan checklist",
+    "sourcePlan": "Source plan: {{name}}"
+  },
+  "cadastro": {
+    "saveBeforeContinue": "Save changes or restore the values before changing steps.",
+    "title": "Registration",
+    "productCreate": "New product",
+    "resourceCreate": "New resource",
+    "subtitle": "Step {{count}} of {{total}} · {{step}}. Save changes before continuing.",
+    "steps": "Registration steps",
+    "back": "Back",
+    "next": "Continue",
+    "addCategory": "Category +",
+    "addTag": "Tag +",
+    "createCategory": "Add category",
+    "createTag": "Add tag",
+    "noParent": "None",
+    "taxonomyHelp": "Choose categories and tags for this product and save the step.",
+    "taxonomyLimit": "The limit is 20 categories and 20 tags.",
+    "resourceTaxonomyHelp": "You can create shared categories and tags here, but they are not assigned to this resource. The operational resource type is configured separately.",
+    "taxonomyNoRead": "You need permission to view categories and tags."
   }
 }

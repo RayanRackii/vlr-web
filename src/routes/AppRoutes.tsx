@@ -1,3 +1,5 @@
+import { MaintenancePage } from "@/features/maintenance/MaintenancePage"
+import { MaintenanceRoute, MaintenanceCreatePlanPage, MaintenanceCreateOrderPage } from "@/features/maintenance/MaintenanceRoutes"
 import { useMemo } from "react"
 import { Navigate, Route, Routes, useLocation, useParams } from "react-router-dom"
 
@@ -186,6 +188,15 @@ export function AppRoutes() {
               <Route path={route.path} element={route.element} />
             </Route>
           ))}
+          <Route element={<MaintenanceRoute />}>
+            <Route path="/manutencao" element={<MaintenancePage />} />
+          </Route>
+          <Route element={<PermissionRoute permission="pmoc.plans.write" modules={["pmoc"]} />}>
+            <Route path="/manutencao/planos/novo" element={<MaintenanceCreatePlanPage />} />
+          </Route>
+          <Route element={<PermissionRoute permission="os.work_orders.create" modules={["os"]} />}>
+            <Route path="/manutencao/ordens/nova" element={<MaintenanceCreateOrderPage />} />
+          </Route>
           {pmocManifest.routes.staff.map((route) => (
             <Route key={route.path} element={<PermissionRoute permission={route.permission} />}>
               <Route path={route.path} element={route.element} />
@@ -220,7 +231,7 @@ export function AppRoutes() {
             route.permission ? (
               <Route
                 key={route.path}
-                element={<PermissionRoute permission={route.permission} modules={route.modules} />}
+                element={<PermissionRoute permission={route.permission} anyOf={route.anyOf} modules={route.modules} />}
               >
                 <Route path={route.path} element={route.element} />
               </Route>

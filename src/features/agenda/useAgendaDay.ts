@@ -34,7 +34,7 @@ export type AgendaSourceId = (typeof agendaSourceIds)[number]
  * Staff day occupancy for `/agenda`. Work orders are not loaded: the list API
  * has an asset and a date, not a rental asset or a start and end.
  */
-export function useAgendaDay(state: AgendaState, zone: string, access: AgendaAccess, tenantId: string | null, enabled: boolean) {
+export function useAgendaDay(state: AgendaState, zone: string, access: AgendaAccess, tenantId: string | null, enabled: boolean, focusedProductId?: string | null) {
   const [sources, setSources] = useState<AgendaDaySources>(emptySources)
   const [orderLabels, setOrderLabels] = useState<AgendaOrderLabel[]>([])
   const [failedSources, setFailedSources] = useState<AgendaSourceId[]>([])
@@ -115,6 +115,8 @@ export function useAgendaDay(state: AgendaState, zone: string, access: AgendaAcc
   return {
     loading: canLoad && loadedKey !== requestKey,
     failedSources: canLoad && loadedKey === requestKey ? failedSources : [],
+    availableProducts: [...new Map(ready.catalog.items.map((item) => [item.productId, { id: item.productId, label: item.productName }])).values()],
+    focusedWeek: focusedProductId ? buildAgendaWeek(ready, { ...state, produto: focusedProductId, tipo: "pedido" }, zone, labels).rows : undefined,
     day: buildAgendaDay(ready, state, zone, labels),
     week: buildAgendaWeek(ready, state, zone, labels),
   }

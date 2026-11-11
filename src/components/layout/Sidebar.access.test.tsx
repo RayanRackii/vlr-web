@@ -100,10 +100,9 @@ describe("Sidebar access by role permissions", () => {
 })
 
 it.each([
-  ["/pmoc/plan-1", "Meus planos"],
-  ["/pmoc/plan-1/tasks", "Meus planos"],
-  ["/pmoc/novo", "Novo plano"],
-  ["/pmoc/biblioteca/template-1", "Novo plano"],
+  ["/manutencao", "Manutenção"],
+  ["/manutencao/planos/novo", "Manutenção"],
+  ["/manutencao/ordens/nova", "Manutenção"],
   ["/ativos/categorias", "Equipamentos"],
   ["/configuracoes/politica-reservas", "Reservas"],
   ["/configuracoes/cadastro", "Pessoas"],
@@ -116,14 +115,7 @@ it.each([
   const active = screen.getByRole("link", { name: label, current: "page" })
   expect(active).toHaveClass("text-primary")
   expect(screen.getAllByRole("link", { current: "page" })).toEqual([active])
-  if (path.startsWith("/pmoc/")) {
-    expect(screen.getByRole("link", { name: "Meus planos" })).toBeVisible()
-    expect(screen.getByRole("link", { name: "Novo plano" })).toBeVisible()
-    const maintenance = screen.getByText("Planos de manutenção")
-    expect(maintenance.parentElement).toHaveClass("text-foreground")
-    expect(maintenance).not.toHaveClass("truncate")
-    expect(maintenance).toHaveClass("break-words")
-  }
+
 })
 
 it("does not activate a sidebar entry for a partial segment", () => {
@@ -164,4 +156,25 @@ it("starts settings collapsed and toggles groups only through dedicated plus/min
   expect(screen.queryByRole("link", { name: "Reservas" })).not.toBeInTheDocument()
   await user.click(operations)
   expect(screen.getByRole("link", { name: "Reservas" })).toBeVisible()
+})
+
+
+it.each([
+  ["/agendas", "Visão geral"], ["/agendas/recursos", "Agenda de recursos"], ["/agendas/produto", "Agenda do produto"],
+])("marks exactly the new agenda child current at %s", (path, label) => {
+  renderSidebar(["rentals.schedule.read", "catalog.orders.read"], ["rentals", "catalog"], path)
+  expect(screen.getAllByRole("link", { current: "page" })).toHaveLength(1)
+  expect(screen.getByRole("link", { name: label })).toHaveAttribute("aria-current", "page")
+  const toggle = screen.getByRole("button", { name: "Recolher Agendas" })
+  expect(toggle.querySelector(".lucide-minus")).toBeInTheDocument()
+  const links = screen.getAllByRole("link").map((link) => link.getAttribute("href"))
+  for (const legacy of ["/agenda", "/catalogo/agenda-recursos", "/catalogo/agenda-produto"]) expect(links).not.toContain(legacy)
+})
+
+it.each(["/pmoc", "/pmoc/novo", "/pmoc/biblioteca", "/pmoc/plan-1", "/os", "/os/nova"])("keeps old %s out of the product menu", path => {
+  renderSidebar(["pmoc.plans.read", "pmoc.plans.write", "pmoc.templates.read", "os.work_orders.read"], ["pmoc", "os"], path)
+  expect(screen.getByRole("link", { name: "Manutenção" })).toHaveAttribute("href", "/manutencao")
+  expect(screen.queryByRole("link", { name: "Meus planos" })).not.toBeInTheDocument()
+  expect(screen.queryByRole("link", { name: "Novo plano" })).not.toBeInTheDocument()
+  expect(screen.queryByRole("link", { name: "Ordens de serviço" })).not.toBeInTheDocument()
 })

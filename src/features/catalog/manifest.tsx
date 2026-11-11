@@ -1,3 +1,6 @@
+import { ProductCadastroCreatePage } from "@/features/assistant/ProductCadastroCreatePage"
+import { PedidosPage } from "./pages/PedidosPage"
+import { PedidoRequestDetailPage } from "./pages/PedidoRequestDetailPage"
 import { CatalogCustomerGroupEditorPage } from "@/features/catalog/pages/CatalogCustomerGroupEditorPage"
 import type { ReactElement } from "react"
 import { CalendarDays, FileText, Package, Settings, ShoppingBag, Tag, Users } from "lucide-react"
@@ -10,6 +13,8 @@ import { CatalogOrderDetailPage } from "@/features/catalog/pages/CatalogOrderDet
 import { CatalogOrdersPage } from "@/features/catalog/pages/CatalogOrdersPage"
 import { CatalogPolicyPage } from "@/features/catalog/pages/CatalogPolicyPage"
 import { CatalogCustomerGroupsPage } from "@/features/catalog/pages/CatalogCustomerGroupsPage"
+import { CustomerGroupFormPage } from "@/features/catalog/pages/CustomerGroupFormPage"
+import { CustomerGroupsPage } from "@/features/catalog/pages/CustomerGroupsPage"
 import { CatalogProductCreatePage } from "@/features/catalog/pages/CatalogProductCreatePage"
 import { CatalogProductEditorPage } from "@/features/catalog/pages/CatalogProductEditorPage"
 import { ProductWizardPage } from "@/features/catalog/pages/ProductWizardPage"
@@ -28,6 +33,7 @@ type FeatureRoute = {
   path: string
   element: ReactElement
   permission?: string
+  anyOf?: readonly string[]
   /** Canonical tenant module keys that unlock this route. Absent = catalog only. */
   modules?: readonly string[]
 }
@@ -110,10 +116,31 @@ export const catalogManifest = {
     ] satisfies readonly FeatureRoute[],
     staff: [
       {
+        path: "/pedidos",
+        element: <PedidosPage />,
+        permission: "catalog.orders.read",
+        anyOf: ["catalog.products.read"],
+        modules: ["catalog"],
+      },
+      {
+        path: "/pedidos/solicitacoes/:requestId",
+        element: <PedidoRequestDetailPage />,
+        permission: "catalog.products.read",
+        modules: ["catalog"],
+      },
+      {
+        path: "/pedidos/:orderId",
+        element: <CatalogOrderDetailPage unified />,
+        permission: "catalog.orders.read",
+        modules: ["catalog"],
+      },
+      {
         path: "/catalogo/configuracoes",
         element: <CatalogPolicyPage />,
         permission: "catalog.products.manage",
       },
+      { path: "/catalogo/produtos/cadastro", element: <ProductCadastroCreatePage />, permission: "catalog.products.manage" },
+      { path: "/catalogo/produtos/:id/cadastro", element: <ProductAssistantPage cadastro />, permission: "catalog.products.read" },
       {
         path: "/catalogo/produtos/novo",
         element: <CatalogProductCreatePage />,
@@ -157,6 +184,21 @@ export const catalogManifest = {
       {
         path: "/catalogo/grupos/:id",
         element: <CatalogCustomerGroupEditorPage />,
+        permission: "catalog.products.read",
+      },
+      {
+        path: "/grupos",
+        element: <CustomerGroupsPage />,
+        permission: "catalog.products.read",
+      },
+      {
+        path: "/grupos/novo",
+        element: <CustomerGroupFormPage />,
+        permission: "catalog.products.read",
+      },
+      {
+        path: "/grupos/:id",
+        element: <CustomerGroupFormPage />,
         permission: "catalog.products.read",
       },
       {

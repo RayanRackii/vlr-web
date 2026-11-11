@@ -40,7 +40,7 @@ import { createPlan } from "@/features/pmoc/services/pmocService"
 import { isAxiosError } from "@/lib/api"
 import { useVisibleFormIssues } from "@/lib/useVisibleFormIssues"
 
-export function CreatePlanPage() {
+export function CreatePlanPage({ maintenance = false }: { maintenance?: boolean }) {
   const { t } = useTranslation()
   const { session } = useAuth()
   const navigate = useNavigate()
@@ -196,8 +196,9 @@ export function CreatePlanPage() {
     <div className="space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="space-y-1">
+          {maintenance && <p className="maintenance-eyebrow">{t("maintenance.eyebrow")}</p>}
           <h1 className="text-2xl font-semibold tracking-tight">
-            {t("pmoc.create.title")}
+            {t(maintenance ? "maintenance.newPlan" : "pmoc.create.title")}
           </h1>
           <p className="text-sm text-muted-foreground">
             {t("pmoc.create.description")}
@@ -239,7 +240,7 @@ export function CreatePlanPage() {
       ) : (
         <Form {...form}>
           <form
-            className="space-y-8"
+            className={maintenance ? "maintenance-card space-y-8 p-[18px]" : "space-y-8"}
             noValidate
             onKeyDown={(event) => {
               if (event.key === "Enter" && !event.nativeEvent.isComposing &&
@@ -462,9 +463,9 @@ export function CreatePlanPage() {
             <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
               <Button
                 type="button"
-                variant="outline"
+                variant={maintenance ? "ghost" : "outline"}
                 onClick={() => {
-                  void navigate("/pmoc")
+                  void navigate(maintenance ? "/manutencao?aba=planos" : "/pmoc")
                 }}
               >
                 {t("common.cancel")}
