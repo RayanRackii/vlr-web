@@ -31,10 +31,10 @@ const order = {
   orderVersion: "0", planningRevision: 0, productionSummary: "NotRequired" as const,
   estimatedReadyAt: null,
 }
-function renderDetail() {
-  return render(<MemoryRouter initialEntries={["/catalogo/pedidos/order-1"]}>
+function renderDetail(unified = false) {
+  return render(<MemoryRouter initialEntries={[unified ? "/pedidos/order-1" : "/catalogo/pedidos/order-1"]}>
     <TestPermissionProvider permissions={["catalog.orders.read", "catalog.orders.manage"]}>
-      <Routes><Route path="/catalogo/pedidos/:orderId" element={<CatalogOrderDetailPage />} /></Routes>
+      <Routes><Route path={unified ? "/pedidos/:orderId" : "/catalogo/pedidos/:orderId"} element={<CatalogOrderDetailPage unified={unified} />} /></Routes>
     </TestPermissionProvider>
   </MemoryRouter>)
 }
@@ -47,6 +47,14 @@ describe("staff order detail", () => {
     vi.mocked(listAdminRentalAssets).mockResolvedValue([])
   })
   afterEach(async () => { await i18n.changeLanguage("pt-BR") })
+  it("reuses order data with the new child chrome and no CatalogTabs", async () => {
+    renderDetail(true)
+    expect(await screen.findByRole("heading", { level: 1, name: i18n.t("pedidos.detailTitle") })).toBeInTheDocument()
+    expect(screen.queryByRole("link", { name: i18n.t("catalog.products.title") })).not.toBeInTheDocument()
+    expect(screen.queryByRole("tablist")).not.toBeInTheDocument()
+    expect(getCatalogOrder).toHaveBeenCalledWith("order-1")
+  })
+
   it.each(["reject", "cancel"] as const)("requires a nonblank %s reason before confirmation", async (action) => {
     const user = userEvent.setup()
     renderDetail()

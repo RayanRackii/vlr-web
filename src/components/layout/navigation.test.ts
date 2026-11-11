@@ -120,6 +120,7 @@ describe("filterNavigationItemsByAccess", () => {
     expect(visible.map((item) => item.to)).toEqual([
       "/agenda",
       "/agendas",
+      "/pedidos",
       "/catalogo/produtos",
       "/catalogo/grupos",
       "/catalogo/pedidos",
@@ -569,7 +570,7 @@ describe("staff sidebar groups", () => {
       "nav.sections.customers", "nav.sections.portal", "nav.sections.settings",
     ])
     expect(sections.slice(1).map((section) => section.items.map((item) => item.to))).toEqual([
-      ["/agendas", "/catalogo/pedidos", "/catalogo/solicitacoes", "/configuracoes/reservas", "/os", "/pmoc"],
+      ["/agendas", "/pedidos", "/configuracoes/reservas", "/os", "/pmoc"],
       ["/configuracoes/recursos", "/catalogo/produtos", "/configuracoes/categorias-tags", "/ativos"],
       ["/pessoas-e-acesso", "/catalogo/grupos"],
       ["/configuracoes/menu", "/configuracoes/layout"],
@@ -581,7 +582,7 @@ describe("staff sidebar groups", () => {
     expect(new Set(destinations).size).toBe(destinations.length)
     const oldDestinations = filterNavigationItemsByAccess(appNavigationItems, modules, permissions)
       .flatMap((item) => item.children ? item.children.map((child) => child.to) : [item.to])
-    const retainedLegacyAgendas = ["/agenda", "/catalogo/agenda-recursos", "/catalogo/agenda-produto"]
+    const retainedLegacyAgendas = ["/agenda", "/catalogo/agenda-recursos", "/catalogo/agenda-produto", "/catalogo/pedidos", "/catalogo/solicitacoes"]
     expect(oldDestinations.filter((path) => !destinations.includes(path)).sort()).toEqual(retainedLegacyAgendas.sort())
     expect(destinations.sort()).toEqual(oldDestinations.filter((path) => !retainedLegacyAgendas.includes(path)).sort())
   })
@@ -665,4 +666,22 @@ describe("new agendas group", () => {
     ["/agendas", "nav.agendasOverview"], ["/agendas/recursos", "nav.agendasResources"], ["/agendas/produto", "nav.agendasProduct"],
     ["/agenda", "nav.agenda"], ["/catalogo/agenda-recursos", "nav.catalogResourceAgenda"], ["/catalogo/agenda-produto", "nav.catalogProductAgenda"],
   ])("keeps the title at %s", (path, title) => expect(getPageTitleKey(path)).toBe(title))
+})
+
+ describe("unified Pedidos navigation", () => {
+  it.each([
+    [[], ["catalog.orders.read"], false],
+    [["catalog"], [], false],
+    [["catalog"], ["catalog.orders.read"], true],
+    [["catalog"], ["catalog.products.read"], true],
+  ])("gates the item by catalog and either read permission", (modules, permissions, visible) => {
+    const items = buildProductSections(modules as string[], permissions as string[]).flatMap(section => section.items)
+    expect(items.some(item => item.to === "/pedidos")).toBe(visible)
+    expect(items.some(item => ["/catalogo/pedidos", "/catalogo/solicitacoes"].includes(item.to))).toBe(false)
+  })
+  it("keeps old titles and registers the new title", () => {
+    expect(getPageTitleKey("/pedidos")).toBe("nav.pedidos")
+    expect(getPageTitleKey("/catalogo/pedidos")).toBe("nav.catalogOrders")
+    expect(getPageTitleKey("/catalogo/solicitacoes")).toBe("nav.catalogRequests")
+  })
 })

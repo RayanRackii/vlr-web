@@ -1,0 +1,21 @@
+[data-shell-part="main"]:has(.pedidos-page) > div { max-width: none; }
+.pedidos-page { max-width: 1240px; }
+.pedidos-eyebrow { color: var(--primary); font-size: .8125rem; font-weight: 600; letter-spacing: .025em; }
+.pedidos-tabs { display: flex; gap: 8px; overflow-x: auto; border-bottom: 1px solid var(--border); padding-top: 16px; }
+.pedidos-tabs button { flex: none; min-height: 46px; padding: 8px 14px; border-bottom: 2px solid transparent; font-size: .875rem; font-weight: 600; color: var(--muted-foreground); }
+.pedidos-tabs button[aria-selected="true"] { color: var(--primary); border-bottom-color: var(--primary); }
+.pedidos-card { min-width: 0; border: 1px solid var(--border); border-radius: 16px; background: var(--card); box-shadow: 0 2px 8px color-mix(in oklch, var(--foreground) 4%, transparent); overflow: hidden; }
+.pedidos-toolbar { display: flex; flex-wrap: wrap; gap: 8px; padding: 14px 18px; border-bottom: 1px solid var(--border); }
+.pedidos-search { flex: 1; min-width: 0; min-height: 44px; }
+.pedidos-mobile-filter { display: none; }
+.pedidos-row { display: block; padding: 18px; overflow-wrap: anywhere; }
+.pedidos-row:hover { background: color-mix(in oklch, var(--primary) 3%, var(--card)); }
+.pedidos-badge { display: inline-flex; flex: 0 0 auto; width: fit-content; max-width: 100%; border-radius: 999px; padding: 2px 8px; font-size: .6875rem; font-weight: 600; color: var(--primary); background: color-mix(in oklch, var(--primary) 10%, var(--card)); }
+.pedidos-badge[data-tone="danger"] { color: var(--destructive); background: color-mix(in oklch, var(--destructive) 10%, var(--card)); }
+.pedidos-page :is(button, input, a):focus-visible { outline: 1px solid var(--ring); outline-offset: 1px; box-shadow: 0 0 0 3px color-mix(in oklch, var(--ring) 28%, transparent); }
+@media (max-width: 639px) {
+  .pedidos-mobile-filter { display: inline-flex; min-height: 44px; }
+  .pedidos-filters { display: none; flex-basis: 100%; }
+  .pedidos-filters[data-expanded="true"] { display: block; }
+}
+.pedidos-page.staff-catalog { max-width: 1240px; }

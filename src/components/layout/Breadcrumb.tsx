@@ -40,7 +40,11 @@ export function Breadcrumb() {
   const crumbs: { label: string; to?: string }[] = []
   const intro = matchModuleIntro(sections, pathname)
 
-  if (intro) {
+  const pedidosChild = pathname.startsWith("/pedidos/")
+  if (pedidosChild) {
+    crumbs.push({ label: t("nav.pedidos"), to: "/pedidos" })
+    crumbs.push({ label: title?.pathname === pathname ? title.value : t("nav.details") })
+  } else if (intro) {
     crumbs.push({ label: t(intro.titleKey), to: moduleIntroPath(intro.key) })
     crumbs.push({ label: t("moduleIntro.title") })
   } else if (match) {
@@ -69,13 +73,13 @@ export function Breadcrumb() {
   const visibleCrumbs = narrow ? crumbs.slice(-2) : crumbs
   if (visibleCrumbs.length < 2) return null
   return (
-    <nav aria-label={t("nav.breadcrumbLabel")} className="mb-4 text-sm text-muted-foreground">
+    <nav aria-label={t("nav.breadcrumbLabel")} className={pedidosChild ? "mx-auto mb-4 max-w-[1240px] text-sm text-muted-foreground" : "mb-4 text-sm text-muted-foreground"}>
       <ol className="flex min-w-0 items-center gap-2">
         {visibleCrumbs.map((crumb, index) => {
           const current = index === visibleCrumbs.length - 1
           return (
             <li key={`${index}-${crumb.label}`} className="flex min-w-0 items-center gap-2">
-              {index > 0 && <ChevronRight className="size-4 shrink-0" strokeWidth={ICON_STROKE_WIDTH} aria-hidden="true" />}
+              {index > 0 && (pedidosChild ? <span aria-hidden="true">/</span> : <ChevronRight className="size-4 shrink-0" strokeWidth={ICON_STROKE_WIDTH} aria-hidden="true" />)}
               {current ? (
                 <span aria-current="page" className="truncate font-medium text-foreground">{crumb.label}</span>
               ) : crumb.to ? (
