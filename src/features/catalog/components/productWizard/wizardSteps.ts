@@ -35,6 +35,7 @@ export function productWizardPath(
   return withCadastroPasso(
     `/catalogo/produtos/${encodeURIComponent(productId)}/cadastro`,
     step,
+    "produtos",
   )
 }
 

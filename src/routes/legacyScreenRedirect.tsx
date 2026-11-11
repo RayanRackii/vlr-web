@@ -1,6 +1,7 @@
 import { Navigate, useLocation, useParams } from "react-router-dom"
 
 import { cadastroPassoFromLegacy } from "@/features/assistant/useCadastroStep"
+import { usePermissions } from "@/features/users/permissions/PermissionContext"
 
 function redirectTo(pathname: string, search: URLSearchParams, hash = "") {
   const query = search.toString()
@@ -56,10 +57,21 @@ export function NotificationsLegacyRedirect({ history = false }: { history?: boo
 export function CadastroLegacyRedirect({ area }: { area: "produtos" | "recursos" }) {
   const { id } = useParams()
   const { location, search } = useCurrentSearch()
-  const passo = cadastroPassoFromLegacy(search.get("passo"))
+  const passo = cadastroPassoFromLegacy(search.get("passo"), area)
   if (passo) search.set("passo", passo)
   else search.delete("passo")
   const base = area === "produtos" ? "/catalogo/produtos" : "/configuracoes/recursos"
   const pathname = id ? `${base}/${encodeURIComponent(id)}/cadastro` : `${base}/cadastro`
   return redirectTo(pathname, search, location.hash)
+}
+
+/** Writers continue into cadastro. Readers land on the resource page their permission already opens. */
+export function ResourceLegacyRedirect() {
+  const { id } = useParams()
+  const { can } = usePermissions()
+  if (!can("rentals.assets.write")) {
+    const pathname = id ? `/configuracoes/recursos/${encodeURIComponent(id)}` : "/configuracoes/recursos"
+    return <Navigate to={pathname} replace />
+  }
+  return <CadastroLegacyRedirect area="recursos" />
 }

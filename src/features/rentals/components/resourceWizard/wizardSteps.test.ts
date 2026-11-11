@@ -36,6 +36,9 @@ describe("resource wizard step navigation", () => {
     expect(resourceWizardPath(ID, "agenda")).toBe(
       `/configuracoes/recursos/${ID}/cadastro?passo=agenda`,
     )
+    expect(resourceWizardPath(ID, "rules")).toBe(
+      `/configuracoes/recursos/${ID}/cadastro?passo=agenda`,
+    )
   })
 
   it("reads a schedule deep link for one item", () => {

@@ -89,7 +89,7 @@ it("edits the durations and the cancel cutoff that already persist", async () =>
   await user.click(screen.getByRole("button", { name: "24 h" }))
   expect(saveFields).toHaveBeenCalledWith({ cancelCutoffMode: "hours", cancelCutoffHours: "24" })
   const audience = await screen.findByRole("link", { name: "Editar no produto" })
-  expect(audience).toHaveAttribute("href", `/catalogo/produtos/${productId}/cadastro?passo=publicacao`)
+  expect(audience).toHaveAttribute("href", `/catalogo/produtos/${productId}/cadastro?passo=regras`)
   expect(screen.queryByRole("dialog")).not.toBeInTheDocument()
 })
 

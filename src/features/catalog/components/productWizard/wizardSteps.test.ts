@@ -43,6 +43,7 @@ describe("product wizard steps", () => {
     expect(productWizardPath("a/b", "offer")).toBe(
       "/catalogo/produtos/a%2Fb/cadastro?passo=precos",
     )
+    expect(productWizardPath(ID, "access")).toBe(`/catalogo/produtos/${ID}/cadastro?passo=regras`)
   })
 
   it("builds a group link that returns to the wizard", () => {

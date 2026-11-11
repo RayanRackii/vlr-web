@@ -3,6 +3,7 @@ import { render, screen } from "@testing-library/react"
 import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom"
 import { expect, it } from "vitest"
 
+import { TestPermissionProvider } from "@/features/users/permissions/PermissionContext"
 import {
   CadastroLegacyRedirect,
   MaintenanceListLegacyRedirect,
@@ -10,6 +11,7 @@ import {
   OrdersListLegacyRedirect,
   RedirectKeepingLocation,
   RequestsListLegacyRedirect,
+  ResourceLegacyRedirect,
 } from "@/routes/legacyScreenRedirect"
 
 function LocationProbe() {
@@ -17,13 +19,15 @@ function LocationProbe() {
   return <span data-testid="location">{`${location.pathname}${location.search}${location.hash}`}</span>
 }
 
-function visit(entry: string, pattern: string, element: ReactElement) {
+function visit(entry: string, pattern: string, element: ReactElement, permissions = ["rentals.assets.write", "core.units.read"]) {
   render(<MemoryRouter initialEntries={[entry]}>
-    <Routes>
-      <Route path={pattern} element={element} />
-      <Route path="*" element={null} />
-    </Routes>
-    <LocationProbe />
+    <TestPermissionProvider permissions={permissions} activeModules={["rentals"]}>
+      <Routes>
+        <Route path={pattern} element={element} />
+        <Route path="*" element={null} />
+      </Routes>
+      <LocationProbe />
+    </TestPermissionProvider>
   </MemoryRouter>)
 }
 
@@ -47,12 +51,21 @@ it.each([
   ["/catalogo/notificacoes", "/catalogo/notificacoes", <NotificationsLegacyRedirect history />, "/notificacoes?aba=historico"],
   ["/catalogo/produtos/novo", "/catalogo/produtos/novo", <RedirectKeepingLocation to="/catalogo/produtos/cadastro" />, "/catalogo/produtos/cadastro"],
   ["/catalogo/produtos/p1/assistente?passo=offer", "/catalogo/produtos/:id/assistente", <CadastroLegacyRedirect area="produtos" />, "/catalogo/produtos/p1/cadastro?passo=precos"],
-  ["/catalogo/produtos/p1/passos?passo=access", "/catalogo/produtos/:id/passos", <CadastroLegacyRedirect area="produtos" />, "/catalogo/produtos/p1/cadastro?passo=publicacao"],
+  ["/catalogo/produtos/p1/passos?passo=access", "/catalogo/produtos/:id/passos", <CadastroLegacyRedirect area="produtos" />, "/catalogo/produtos/p1/cadastro?passo=regras"],
   ["/catalogo/produtos/p1/passos?passo=publicacao&origem=lista", "/catalogo/produtos/:id/passos", <CadastroLegacyRedirect area="produtos" />, "/catalogo/produtos/p1/cadastro?passo=publicacao&origem=lista"],
-  ["/configuracoes/recursos/novo", "/configuracoes/recursos/novo", <RedirectKeepingLocation to="/configuracoes/recursos/cadastro" />, "/configuracoes/recursos/cadastro"],
-  ["/configuracoes/recursos/r1/assistente?passo=rules", "/configuracoes/recursos/:id/assistente", <CadastroLegacyRedirect area="recursos" />, "/configuracoes/recursos/r1/cadastro?passo=regras"],
-  ["/configuracoes/recursos/r1/passos?passo=agenda", "/configuracoes/recursos/:id/passos", <CadastroLegacyRedirect area="recursos" />, "/configuracoes/recursos/r1/cadastro?passo=agenda"],
+  ["/configuracoes/recursos/novo", "/configuracoes/recursos/novo", <ResourceLegacyRedirect />, "/configuracoes/recursos/cadastro"],
+  ["/configuracoes/recursos/r1/assistente?passo=rules", "/configuracoes/recursos/:id/assistente", <ResourceLegacyRedirect />, "/configuracoes/recursos/r1/cadastro?passo=agenda"],
+  ["/configuracoes/recursos/r1/passos?passo=agenda", "/configuracoes/recursos/:id/passos", <ResourceLegacyRedirect />, "/configuracoes/recursos/r1/cadastro?passo=agenda"],
 ])("redirects %s to %s", (entry, pattern, element, to) => {
   visit(entry, pattern, element)
   expect(screen.getByTestId("location")).toHaveTextContent(to)
+})
+
+it.each([
+  ["/configuracoes/recursos/novo", "/configuracoes/recursos/novo", "/configuracoes/recursos"],
+  ["/configuracoes/recursos/r1/assistente?passo=rules", "/configuracoes/recursos/:id/assistente", "/configuracoes/recursos/r1"],
+  ["/configuracoes/recursos/r1/passos", "/configuracoes/recursos/:id/passos", "/configuracoes/recursos/r1"],
+])("sends a resource reader from %s to the page they can open", (entry, pattern, to) => {
+  visit(entry, pattern, <ResourceLegacyRedirect />, ["rentals.assets.read", "core.units.read"])
+  expect(screen.getByTestId("location").textContent).toBe(to)
 })

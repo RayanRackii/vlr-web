@@ -35,6 +35,7 @@ export function resourceWizardPath(
   return withCadastroPasso(
     `/configuracoes/recursos/${encodeURIComponent(rentalAssetId)}/cadastro`,
     step,
+    "recursos",
   )
 }
 
