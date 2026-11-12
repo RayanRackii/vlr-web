@@ -186,10 +186,11 @@ export function RentalResourceEditorPage({ cadastro = false }: { cadastro?: bool
       return true
     } catch (error) {
       if (!currentLifetime.active) return false
-      toast.error(error instanceof Error ? error.message : t(editing ? "rentals.resources.updateError" : "rentals.resources.createError"))
       saveInFlight.current = false
       setBusy(false)
-      return false
+      const message = error instanceof Error ? error.message : t(editing ? "rentals.resources.updateError" : "rentals.resources.createError")
+      if (!message.trim()) toast.error(t(editing ? "rentals.resources.updateError" : "rentals.resources.createError"))
+      throw error
     }
   }
 

@@ -43,10 +43,15 @@ const I18N_PASCAL_BY_KEY: Record<string, string> = {
   os: "OS",
   rentals: "Rentals",
   catalog: "Catalog",
+  "resource-planning": "ResourcePlanning",
+}
+
+function normalizedModuleKey(moduleKey: string): string {
+  return toCanonicalModuleName(moduleKey).replace(/[_\s]+/g, "-")
 }
 
 export function moduleNameI18nKey(moduleKey: string): string {
-  const pascal = I18N_PASCAL_BY_KEY[toCanonicalModuleName(moduleKey)]
+  const pascal = I18N_PASCAL_BY_KEY[normalizedModuleKey(moduleKey)]
   return pascal ? `admin.modules.${pascal}` : "admin.modules.unknown"
 }
 
@@ -57,7 +62,7 @@ export function presentCommercialModule(moduleKey: string): PresentedModule {
     key,
     category: CATEGORY_BY_KEY[key] ?? "operations",
     icon: ICON_BY_KEY[key] ?? Package,
-    nameKey: pascal ? `admin.modules.${pascal}` : key,
+    nameKey: moduleNameI18nKey(key),
     descriptionKey: pascal
       ? `admin.modules.${pascal}Description`
       : `${key}Description`,

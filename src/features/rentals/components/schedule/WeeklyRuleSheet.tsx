@@ -38,9 +38,9 @@ const RULE_OPEN_TIME = "08:00"
 const RULE_CLOSE_TIME = "22:00"
 const RULE_SLOT_MINUTES = 60
 
-function weeklyRuleBaseline(weekday: string, kindId: string): WeeklyRuleBaseline {
+function weeklyRuleBaseline(_weekday: string, kindId: string): WeeklyRuleBaseline {
   return {
-    days: [weekday],
+    days: [],
     openTime: RULE_OPEN_TIME,
     closeTime: RULE_CLOSE_TIME,
     slotMinutes: RULE_SLOT_MINUTES,
@@ -90,7 +90,7 @@ export function WeeklyRuleSheet({
   onRequestClose,
 }: WeeklyRuleSheetProps) {
   const { t } = useTranslation()
-  const [days, setDays] = useState<string[]>([weekday])
+  const [days, setDays] = useState<string[]>([])
   const [openTime, setOpenTime] = useState(RULE_OPEN_TIME)
   const [closeTime, setCloseTime] = useState(RULE_CLOSE_TIME)
   const [slotMinutes, setSlotMinutes] = useState(RULE_SLOT_MINUTES)

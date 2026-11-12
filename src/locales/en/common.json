@@ -3433,6 +3433,7 @@
         "unit": "Physical site for this resource (HQ, branch). Created automatically when the tenant is registered; unit management comes later.",
         "category": "Resource type (e.g. Outdoor area). Define types under Assets → Types.",
         "family": "Attribute family (spaces, goods, electrical…). Controls extra form fields.",
+        "voltage": "Voltage records the electrical supply this equipment accepts, so it is not connected to the wrong circuit.",
         "name": "Equipment or resource name shown in lists.",
         "tag": "Short unique code for the resource (e.g. EQ-01).",
         "location": "Where it is on site (block, wing). Optional.",
@@ -4651,6 +4652,8 @@
       "Catalog": "Catalog & Orders",
       "CatalogDescription": "Products, orders, and B2C notifications.",
       "unknown": "Module",
+      "ResourcePlanning": "Resource planning",
+      "ResourcePlanningDescription": "Organizes resource availability and use.",
       "loadFailed": "Could not load modules.",
       "retry": "Try again",
       "legacyMaintenanceNote": "This client still has the legacy Maintenance module. It stays active, but it cannot be selected or turned off here."
@@ -4712,6 +4715,7 @@
         "back": "Back",
         "backToDashboard": "Back to dashboard",
         "next": "Continue",
+        "missingTitle": "To continue, complete:",
         "finish": "Finish",
         "finishing": "Provisioning..."
       },
@@ -5028,6 +5032,7 @@
       "cutoffNotSaved": "The resource was saved, but the cancellation cutoff was not applied. Please try again.",
       "createError": "Could not create the resource.",
       "updateError": "Could not update the resource.",
+      "saveErrorSummary": "Could not save. Review the fields below.",
       "errorKinds": {
         "network": "No connection to the server. Check your internet and try again.",
         "permission": "You don't have permission for this action or your session expired.",
