@@ -156,6 +156,9 @@ describe("AssetWizard validity gate", () => {
     expect(screen.queryByText(i18n.t("assets.inventory.validation.nameRequired"))).not.toBeInTheDocument()
 
     await user.click(nextButton())
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      i18n.t("assets.inventory.validation.categoryRequired"),
+    )
     const category = screen.getByRole("combobox", { name: /^Tipo/ })
     expect(category).toHaveFocus()
     expect(category).toHaveAttribute("aria-required", "true")

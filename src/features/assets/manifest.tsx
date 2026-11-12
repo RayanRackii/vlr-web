@@ -3,6 +3,7 @@ import { Wrench } from "lucide-react"
 
 import type { AppNavigationItem } from "@/components/layout/navigation"
 import { equipmentTabs } from "@/features/assets/navigationTabs"
+import { AssetCreatePage } from "@/features/assets/pages/AssetCreatePage"
 import { EquipmentPage } from "@/features/assets/pages/EquipmentPage"
 
 type FeatureRoute = {
@@ -25,6 +26,11 @@ export const assetsManifest = {
   ] satisfies readonly AppNavigationItem[],
   routes: {
     staff: [
+      {
+        path: "/ativos/novo",
+        element: <AssetCreatePage />,
+        permission: "inventory.assets.write",
+      },
       {
         path: "/ativos",
         element: <EquipmentPage />,

@@ -118,6 +118,7 @@ export async function createWorkOrder(
         getAxiosErrorPayload(error),
         i18n.t("workOrders.create.errors.createFailed"),
       ),
+      { cause: error },
     )
   }
 }
@@ -202,6 +203,7 @@ export async function generateWorkOrderFromPlan(
           i18n.t("pmoc.plans.generate.errors.generateFailed"),
         ),
       ),
+      { cause: error },
     )
   }
 }

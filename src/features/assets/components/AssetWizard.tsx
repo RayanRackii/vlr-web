@@ -2,6 +2,7 @@ import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react"
 import { LoaderCircle } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
+import { readApiValidation } from "@/features/rentals/lib/readApiValidation"
 
 import { Button } from "@/components/ui/button"
 import { FormPrimaryButton } from "@/components/ui/form-primary-button"
@@ -34,7 +35,7 @@ import {
   type PricingEditorState,
 } from "@/features/assets/components/assetWizardPricing"
 import { AssetWizardPricingStep } from "@/features/assets/components/AssetWizardPricingStep"
-import { getAssetWizardStepInvalidFields, isAssetWizardStepValid } from "@/features/assets/components/assetWizardStepSchema"
+import { getAssetWizardStepInvalidFields } from "@/features/assets/components/assetWizardStepSchema"
 import type { AssetCategory } from "@/features/assets/schemas/assetCategorySchemas"
 import {
   attributesToPayload,
@@ -70,6 +71,7 @@ export type AssetWizardProps = {
   assetId?: string | null
   onCompleted: () => void
   readOnly?: boolean
+  asPage?: boolean
 }
 
 type WizardFormState = {
@@ -189,6 +191,7 @@ export function AssetWizard({
   assetId = null,
   onCompleted,
   readOnly = false,
+  asPage = false,
 }: AssetWizardProps) {
   const { t, i18n } = useTranslation()
   const [requestedStepIndex, setStepIndex] = useState(0)
@@ -231,10 +234,10 @@ export function AssetWizard({
     familyFields: selectedFamily?.fields ?? [],
     pricing,
   }
-  const isCurrentStepValid = isAssetWizardStepValid(currentStepId, stepInput)
   const fieldId = useId()
   const stepFieldsRef = useRef<HTMLDivElement>(null)
   const focusInvalidRef = useRef(false)
+  const [missing, setMissing] = useState<string[]>([])
 
   useEffect(() => {
     if (focusInvalidRef.current) {
@@ -409,12 +412,31 @@ export function AssetWizard({
     })
   }
 
+  function labelForField(key: string): string {
+    const labels: Record<string, string> = {
+      unitId: t("assets.inventory.validation.unitRequired"),
+      categoryId: t("assets.inventory.validation.categoryRequired"),
+      familyId: t("assets.inventory.validation.familyRequired"),
+      name: t("assets.inventory.validation.nameRequired"),
+      baseLocationName: t("assets.inventory.validation.baseLocationRequired"),
+      baseTag: t("assets.inventory.validation.baseTagRequired"),
+      startNumber: t("assets.inventory.validation.startNumberRequired"),
+      endNumber: t("assets.inventory.validation.endNumberRequired"),
+      totalQuantity: t("assets.inventory.validation.quantityRequired"),
+      queueOpeningTime: t("assets.inventory.validation.queueOpeningTimeRequired"),
+      pricing: t("assets.inventory.validation.pricingRequired"),
+    }
+    if (key.startsWith("attributes.")) return t("common.required")
+    return labels[key] ?? t("common.required")
+  }
+
   function markErrors(keys: FieldErrorKey[]) {
     setFieldErrors(
       Object.fromEntries(keys.map((key) => [key, true])) as Partial<
         Record<FieldErrorKey, boolean>
       >,
     )
+    setMissing(keys.map((key) => labelForField(key)))
   }
 
   function handleFamilyChange(familyId: string | null) {
@@ -485,6 +507,7 @@ export function AssetWizard({
       return
     }
     focusInvalidRef.current = false
+    setMissing([])
     setStepIndex((prev) => Math.min(prev + 1, steps.length - 1))
   }
 
@@ -607,10 +630,15 @@ export function AssetWizard({
       onCompleted()
       onOpenChange(false)
     } catch (error: unknown) {
+      const parsed = readApiValidation(error)
+      const known = Object.keys(parsed.fields).filter((key): key is FieldErrorKey => key in {
+        unitId: 1, categoryId: 1, familyId: 1, name: 1, tag: 1, pricing: 1, totalQuantity: 1, queueOpeningTime: 1,
+      })
+      if (known.length > 0) markErrors(known)
+      else if (parsed.summary.length > 0) setMissing(parsed.summary)
       toast.error(
-        error instanceof Error
-          ? error.message
-          : t("assets.inventory.errors.createFailed"),
+        parsed.summary[0]
+          ?? (error instanceof Error ? error.message : t("assets.inventory.errors.createFailed")),
       )
     } finally {
       setIsSubmitting(false)
@@ -626,23 +654,14 @@ export function AssetWizard({
     form.categoryId
   const familyLabel = selectedFamily?.label ?? form.familyId
 
-  return (
-    <Dialog
-      open={open}
-      disablePointerDismissal
-      onOpenChange={(next, details) => {
-        if (
-          !next &&
-          (details.reason === "outside-press" || details.reason === "focus-out")
-        ) {
-          return
-        }
-        onOpenChange(next)
-      }}
-    >
-      <DialogContent className="flex max-h-[90vh] w-[calc(100%-2rem)] flex-col gap-5 overflow-hidden border-border/80 bg-card sm:max-w-3xl">
+  const wizard = (
+    <>
         <DialogHeader className="shrink-0 space-y-1">
-          <DialogTitle className="text-xl tracking-tight">{t(titleKey)}</DialogTitle>
+          {asPage ? (
+            <h1 className="text-xl font-semibold tracking-tight">{t(titleKey)}</h1>
+          ) : (
+            <DialogTitle className="text-xl tracking-tight">{t(titleKey)}</DialogTitle>
+          )}
         </DialogHeader>
 
         <div className="hidden shrink-0 sm:block">
@@ -676,6 +695,14 @@ export function AssetWizard({
           </div>
         ) : (
           <div ref={stepFieldsRef} className="min-h-0 flex-1 space-y-4 overflow-y-auto scroll-pb-24 pr-1 pb-6">
+            {missing.length > 0 ? (
+              <div role="alert" className="rounded-md border border-destructive/40 bg-destructive/5 p-3 text-sm">
+                <p className="font-medium">{t("assets.wizard.missingTitle")}</p>
+                <ul className="mt-1 list-disc pl-5">
+                  {missing.map((item) => <li key={item}>{item}</li>)}
+                </ul>
+              </div>
+            ) : null}
             <fieldset disabled={readOnly} className="contents">
             {currentStepId === "general" ? (
               <div className="space-y-4">
@@ -1701,7 +1728,7 @@ export function AssetWizard({
             <FormPrimaryButton
               type="button"
               className="w-full sm:w-auto"
-              isValid={isCurrentStepValid}
+              isValid
               loading={isSubmitting}
               disabled={isLoading || readOnly}
               onClick={() => {
@@ -1721,6 +1748,24 @@ export function AssetWizard({
             </Button>
           )}
         </DialogFooter>
+    </>
+  )
+
+  if (asPage) {
+    return <section className="mx-auto flex w-full min-w-0 max-w-3xl flex-col gap-5">{wizard}</section>
+  }
+
+  return (
+    <Dialog
+      open={open}
+      disablePointerDismissal
+      onOpenChange={(next, details) => {
+        if (!next && (details.reason === "outside-press" || details.reason === "focus-out")) return
+        onOpenChange(next)
+      }}
+    >
+      <DialogContent className="flex max-h-[90vh] w-[calc(100%-2rem)] flex-col gap-5 overflow-hidden border-border/80 bg-card sm:max-w-3xl">
+        {wizard}
       </DialogContent>
     </Dialog>
   )
