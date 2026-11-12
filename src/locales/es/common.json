@@ -68,7 +68,13 @@
       "published": "Publicado",
       "draft": "Borrador",
       "missing_one": "Falta {{count}} paso",
-      "missing_other": "Faltan {{count}} pasos"
+      "missing_other": "Faltan {{count}} pasos",
+      "gap": {
+        "dados": "Falta el nombre",
+        "horarios": "Falta definir horarios",
+        "preco": "Falta una oferta con precio",
+        "fila": "Falta el horario de la fila"
+      }
     },
     "steps": {
       "categorias": "Categorías y tags",
@@ -78,6 +84,30 @@
       "regras": "Reglas",
       "precos": "Precios",
       "publicacao": "Publicación"
+    },
+    "firstSteps": {
+      "title": "Primeros pasos",
+      "description": "Lo que falta para la primera reserva. Cada sello se calcula ahora, sin progreso guardado.",
+      "preview": "Ver como cliente",
+      "company": "Datos de la empresa",
+      "pricedOffer": "Oferta con precio que alcanza un recurso",
+      "hours": "Horarios definidos",
+      "resource": "Recurso publicado",
+      "admin": "Admin invitado",
+      "previewItem": "Ver como cliente",
+      "state": {
+        "published": "Publicado",
+        "draft": "Borrador",
+        "missing": "Falta completar"
+      },
+      "detail": {
+        "company": "Nombre y documento que aparecen en la página pública.",
+        "pricedOffer": "Una oferta con precio, o el alquiler directo del recurso.",
+        "hours": "Ningún horario viene lleno. Elija un modelo o arme el suyo.",
+        "resource": "El recurso queda publicado solo cuando el cliente puede encontrarlo.",
+        "admin": "Una invitación aceptada, u otro usuario activo en la empresa.",
+        "previewItem": "La vista previa queda disponible cuando hay un recurso publicado. Abrirla no guarda nada."
+      }
     },
     "edit": "Editar",
     "close": "Cerrar",
@@ -4936,6 +4966,15 @@
         "durationMinutesHint": "Separe los valores con comas. Ejemplo: 60, 120, 240.",
         "durationMinutesInvalid": "Ingrese duraciones positivas en minutos enteros, separadas por comas.",
         "slotGridDurationsHint": "Opcional. Duraciones (en minutos) que el cliente puede reservar uniendo horarios consecutivos, p. ej. 30,60,90. Vacío = franjas múltiples desactivadas."
+      },
+      "presets": {
+        "legend": "Modelo de horario",
+        "commercial": "Laboral lun–vie",
+        "everyday": "Todos los días",
+        "custom": "Personalizado",
+        "help": "Nada viene lleno. El modelo solo vale después de elegirlo.",
+        "customHelp": "Para cambiar un día, use Personalizado. Ningún día empieza marcado.",
+        "required": "Elija el horario antes de generar la grilla."
       },
       "weeklyRule": {
         "title": "Crear regla semanal",

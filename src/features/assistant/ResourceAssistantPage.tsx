@@ -11,12 +11,13 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Skeleton } from "@/components/ui/skeleton"
 import { ItemStatusBadge } from "@/features/assistant/ItemStatusBadge"
-import { itemStatus, resourceSetupSteps, type SetupStepId } from "@/features/assistant/itemStatus"
+import { itemStatus, resourceSetupSteps, statusFromServer, type ItemStatus, type SetupStepId } from "@/features/assistant/itemStatus"
 import { getCatalogProductResourceRequirements, listCatalogProducts } from "@/features/catalog/services/catalogService"
 import type { CatalogProduct } from "@/features/catalog/schemas/catalogSchemas"
 import { productWizardPath } from "@/features/catalog/components/productWizard/wizardSteps"
 import { productAssistantPath } from "@/features/assistant/paths"
 import { menuCoversAsset } from "@/features/rentals/components/resourceWizard/bookableChecklist"
+import { getSetupStatus } from "@/features/rentals/services/setupStatusService"
 import { ResourceWizardPricesStep } from "@/features/rentals/components/resourceWizard/ResourceWizardPricesStep"
 import { ResourceWizardRulesStep } from "@/features/rentals/components/resourceWizard/ResourceWizardRulesStep"
 import { useResourceWizard } from "@/features/rentals/components/resourceWizard/useResourceWizard"
@@ -41,6 +42,7 @@ export function ResourceAssistantPage({ cadastro = false }: { cadastro?: boolean
   const wizard = useResourceWizard(id)
   const [open, setOpen] = useState<AssistantStepId | null>("dados")
   const [products, setProducts] = useState<CatalogProduct[]>([])
+  const [serverStatus, setServerStatus] = useState<ItemStatus | null>(null)
 
   useEffect(() => {
     let active = true
@@ -56,6 +58,15 @@ export function ResourceAssistantPage({ cadastro = false }: { cadastro?: boolean
       }
       if (active) setProducts(matches)
     }).catch(() => { if (active) setProducts([]) })
+    return () => { active = false }
+  }, [id])
+
+  useEffect(() => {
+    let active = true
+    void getSetupStatus().then((status) => {
+      const row = status.resources.find((item) => item.id === id)
+      if (active) setServerStatus(row ? statusFromServer(row.state, row.missing) : null)
+    }).catch(() => { if (active) setServerStatus(null) })
     return () => { active = false }
   }, [id])
 
@@ -228,7 +239,7 @@ export function ResourceAssistantPage({ cadastro = false }: { cadastro?: boolean
         <p className="text-sm text-muted-foreground">{t("rentals.resources.eyebrow")}</p>
         <div className="flex flex-wrap items-center gap-2">
           <h1 className="text-2xl font-semibold tracking-tight">{asset.name}</h1>
-          <ItemStatusBadge status={status} />
+          <ItemStatusBadge status={serverStatus ?? status} />
         </div>
         {firstMissing ? (
           <Button type="button" className="min-h-11 w-full sm:w-auto" onClick={() => setOpen(firstMissing)}>{t("assistant.continue", { step: t(`assistant.steps.${firstMissing}`) })}</Button>

@@ -68,7 +68,13 @@
       "published": "Publicado",
       "draft": "Rascunho",
       "missing_one": "Falta {{count}} passo",
-      "missing_other": "Falta {{count}} passos"
+      "missing_other": "Falta {{count}} passos",
+      "gap": {
+        "dados": "Falta o nome",
+        "horarios": "Falta definir horários",
+        "preco": "Falta oferta com preço",
+        "fila": "Falta o horário da fila"
+      }
     },
     "steps": {
       "categorias": "Categorias e tags",
@@ -78,6 +84,30 @@
       "regras": "Regras",
       "precos": "Preços",
       "publicacao": "Publicação"
+    },
+    "firstSteps": {
+      "title": "Primeiros passos",
+      "description": "O que falta para receber a primeira reserva. Cada selo é calculado agora, sem progresso salvo.",
+      "preview": "Ver como cliente",
+      "company": "Dados da empresa",
+      "pricedOffer": "Oferta com preço que alcança um recurso",
+      "hours": "Horários definidos",
+      "resource": "Recurso publicado",
+      "admin": "Admin convidado",
+      "previewItem": "Ver como cliente",
+      "state": {
+        "published": "Publicado",
+        "draft": "Rascunho",
+        "missing": "Falta concluir"
+      },
+      "detail": {
+        "company": "Nome e documento que aparecem na página pública.",
+        "pricedOffer": "Uma oferta com preço, ou o aluguel direto do recurso.",
+        "hours": "Nenhum horário vem preenchido. Escolha um modelo ou monte o seu.",
+        "resource": "O recurso só fica publicado quando o cliente consegue encontrá-lo.",
+        "admin": "Um convite aceito, ou outro usuário ativo na empresa.",
+        "previewItem": "A prévia fica disponível quando existe um recurso publicado. Abrir a prévia não grava nada."
+      }
     },
     "edit": "Editar",
     "close": "Fechar",
@@ -4936,6 +4966,15 @@
         "durationMinutesHint": "Separe os valores por vírgula. Exemplo: 60, 120, 240.",
         "durationMinutesInvalid": "Informe durações em minutos inteiros positivos, separadas por vírgula.",
         "slotGridDurationsHint": "Opcional. Durações (em minutos) que o cliente pode reservar juntando horários seguidos, ex.: 30,60,90. Vazio = várias faixas desligado."
+      },
+      "presets": {
+        "legend": "Modelo de horário",
+        "commercial": "Comercial seg–sex",
+        "everyday": "Todos os dias",
+        "custom": "Personalizado",
+        "help": "Nada vem preenchido. O modelo só vale depois que você escolhe.",
+        "customHelp": "Para mudar um dia específico, use Personalizado. Nenhum dia começa marcado.",
+        "required": "Escolha o horário antes de gerar a grade. Nada é preenchido com 08:00–22:00."
       },
       "weeklyRule": {
         "title": "Criar regra semanal",

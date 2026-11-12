@@ -672,9 +672,16 @@ function AdminSchedulePage() {
     if (selectedRentalAssetIds.length === 0) {
       return
     }
+    const selected = assets.filter((asset) => selectedRentalAssetIds.includes(asset.id))
+    const openTime = selected.find((asset) => asset.openTime && asset.closeTime)?.openTime
+    const closeTime = selected.find((asset) => asset.openTime && asset.closeTime)?.closeTime
+    if (!openTime || !closeTime || selected.some((asset) => !asset.openTime || !asset.closeTime)) {
+      toast.error(t("rentals.schedule.presets.required"))
+      return
+    }
     beginBusy("seed")
     try {
-      const created = await seedDefaultHourlyTemplates(selectedRentalAssetIds)
+      const created = await seedDefaultHourlyTemplates(selectedRentalAssetIds, { openTime, closeTime })
       toast.success(t("rentals.schedule.seedSuccess", { count: created }))
       await Promise.all([
         refreshWeeklyTemplates(),

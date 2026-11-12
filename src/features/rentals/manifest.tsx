@@ -14,6 +14,7 @@ import { RentalResourceEditorPage } from "@/features/rentals/pages/RentalResourc
 import { RentalResourcesPage } from "@/features/rentals/pages/RentalResourcesPage"
 import { ResourceAssistantPage } from "@/features/assistant/ResourceAssistantPage"
 import { ResourceLegacyRedirect } from "@/routes/legacyScreenRedirect"
+import { FirstStepsPage } from "@/features/rentals/pages/FirstStepsPage"
 import { SchedulePage } from "@/features/rentals/pages/SchedulePage"
 
 type FeatureRoute = {
@@ -108,6 +109,11 @@ export const rentalsManifest = {
       {
         path: "/configuracoes/recursos/:id/passos",
         element: <ResourceLegacyRedirect />,
+        permissions: RENTAL_RESOURCES_PERMISSIONS,
+      },
+      {
+        path: "/primeiros-passos",
+        element: <FirstStepsPage />,
         permissions: RENTAL_RESOURCES_PERMISSIONS,
       },
       {

@@ -13,7 +13,7 @@ import { RentalResourceDetails } from "@/features/rentals/components/RentalResou
 import { menuCoversAsset } from "@/features/rentals/components/resourceWizard/bookableChecklist"
 import { resourceWizardPath } from "@/features/rentals/components/resourceWizard/wizardSteps"
 import { ItemStatusBadge } from "@/features/assistant/ItemStatusBadge"
-import { resourceItemStatus } from "@/features/assistant/itemStatus"
+import { resourceItemStatus, statusFromServer } from "@/features/assistant/itemStatus"
 import { ScheduleEmptyState } from "@/features/rentals/components/schedule/ScheduleEmptyState"
 import { getAssetPricings, type RentalPricing } from "@/features/assets/services/rentalPricingService"
 import {
@@ -24,6 +24,7 @@ import {
 } from "@/features/rentals/services/scheduleService"
 import { listTenantModuleMenuItems } from "@/features/tenantPortal/services/tenantPortalService"
 import type { ModuleMenuItem } from "@/features/tenantPortal/schemas/tenantPortalSchemas"
+import { getSetupStatus, type SetupStatus } from "@/features/rentals/services/setupStatusService"
 import { useTrialStatus } from "@/features/users/hooks/useTrialStatus"
 import { Can } from "@/features/users/permissions/Can"
 import { usePermissions } from "@/features/users/permissions/PermissionContext"
@@ -38,6 +39,7 @@ export function RentalResourcesPage() {
   const { isTrialReadOnly } = useTrialStatus()
 
   const [assets, setAssets] = useState<AdminRentalAsset[]>([])
+  const [serverStatus, setServerStatus] = useState<SetupStatus | null>(null)
   const [templates, setTemplates] = useState<ScheduleTemplate[] | null>(null)
   const [menuItems, setMenuItems] = useState<ModuleMenuItem[] | null>(null)
   const [priceByAssetId, setPriceByAssetId] = useState<Record<string, ResourcePrice>>({})
@@ -97,6 +99,16 @@ export function RentalResourcesPage() {
     void Promise.resolve().then(() => { if (current) return load() })
     return () => { current = false }
   }, [load])
+
+  useEffect(() => {
+    let current = true
+    void getSetupStatus().then((next) => {
+      if (current) setServerStatus(next)
+    }).catch(() => {
+      if (current) setServerStatus(null)
+    })
+    return () => { current = false }
+  }, [])
 
   function openCreate() {
     navigate("/configuracoes/recursos/cadastro")
@@ -182,7 +194,10 @@ export function RentalResourcesPage() {
                 <div className="resource-info">
                   <div className="resource-title">
                     <p>{asset.name}</p>
-                    <ItemStatusBadge status={resourceItemStatus({
+                    <ItemStatusBadge status={statusFromServer(
+                      serverStatus?.resources.find((item) => item.id === asset.id)?.state ?? "",
+                      serverStatus?.resources.find((item) => item.id === asset.id)?.missing ?? [],
+                    ) ?? resourceItemStatus({
                       name: asset.name,
                       isActive: asset.isActive,
                       type: asset.type,

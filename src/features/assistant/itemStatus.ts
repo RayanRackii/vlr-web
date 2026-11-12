@@ -11,7 +11,14 @@ export type SetupStepId = (typeof setupStepIds)[number]
 export type ItemStatus =
   | { kind: "published" }
   | { kind: "draft" }
-  | { kind: "missing"; count: number }
+  | { kind: "missing"; count: number; gap?: string }
+
+export function statusFromServer(state: string, missing: readonly string[]): ItemStatus | null {
+  if (state === "published") return { kind: "published" }
+  if (state === "draft") return { kind: "draft" }
+  if (state === "missing") return { kind: "missing", count: Math.max(missing.length, 1), gap: missing[0] }
+  return null
+}
 
 export function statusFromMissing(published: boolean, missingCount: number): ItemStatus {
   if (missingCount > 0) return { kind: "missing", count: missingCount }

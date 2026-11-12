@@ -68,7 +68,13 @@
       "published": "Published",
       "draft": "Draft",
       "missing_one": "{{count}} step left",
-      "missing_other": "{{count}} steps left"
+      "missing_other": "{{count}} steps left",
+      "gap": {
+        "dados": "Name missing",
+        "horarios": "Hours missing",
+        "preco": "Priced offer missing",
+        "fila": "Queue opening missing"
+      }
     },
     "steps": {
       "categorias": "Categories and tags",
@@ -78,6 +84,30 @@
       "regras": "Rules",
       "precos": "Prices",
       "publicacao": "Publishing"
+    },
+    "firstSteps": {
+      "title": "First steps",
+      "description": "What is left before the first booking. Each badge is calculated now, with no saved progress.",
+      "preview": "View as customer",
+      "company": "Company details",
+      "pricedOffer": "Priced offer that reaches a resource",
+      "hours": "Hours defined",
+      "resource": "Published resource",
+      "admin": "Invited admin",
+      "previewItem": "View as customer",
+      "state": {
+        "published": "Published",
+        "draft": "Draft",
+        "missing": "Still missing"
+      },
+      "detail": {
+        "company": "Name and document shown on the public page.",
+        "pricedOffer": "A priced offer, or the resource's direct rental.",
+        "hours": "No hours are filled in. Choose a preset or build your own.",
+        "resource": "A resource is published only when a customer can find it.",
+        "admin": "An accepted invite, or another active user in the company.",
+        "previewItem": "The preview is available once a resource is published. Opening it saves nothing."
+      }
     },
     "edit": "Edit",
     "close": "Close",
@@ -4936,6 +4966,15 @@
         "durationMinutesHint": "Separate values with commas. Example: 60, 120, 240.",
         "durationMinutesInvalid": "Enter positive whole-minute durations separated by commas.",
         "slotGridDurationsHint": "Optional. Durations (in minutes) customers can reserve by combining consecutive time slots, e.g. 30,60,90. Empty = multi-slot off."
+      },
+      "presets": {
+        "legend": "Hours preset",
+        "commercial": "Weekdays",
+        "everyday": "Every day",
+        "custom": "Custom",
+        "help": "Nothing is filled in until you choose a preset.",
+        "customHelp": "Switch to Custom to change one day. No day starts selected.",
+        "required": "Choose the hours before generating the grid."
       },
       "weeklyRule": {
         "title": "Create weekly rule",
