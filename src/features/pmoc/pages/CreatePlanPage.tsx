@@ -283,12 +283,12 @@ export function CreatePlanPage({ maintenance = false }: { maintenance?: boolean 
                 </p>
               </div>
 
-              <div className="grid gap-4 sm:grid-cols-2">
+              <div className="flex flex-col gap-4">
                 <FormField
                   control={form.control}
                   name="name"
                   render={({ field }) => (
-                    <FormItem className="sm:col-span-2">
+                    <FormItem>
                       <FormLabel>{t("pmoc.create.form.name")}</FormLabel>
                       <FormControl>
                         <Input
@@ -306,7 +306,7 @@ export function CreatePlanPage({ maintenance = false }: { maintenance?: boolean 
                   control={form.control}
                   name="description"
                   render={({ field }) => (
-                    <FormItem className="sm:col-span-2">
+                    <FormItem>
                       <FormLabel>{t("pmoc.create.form.description")}</FormLabel>
                       <FormControl>
                         <Textarea

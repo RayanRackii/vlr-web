@@ -99,7 +99,10 @@ describe("feature manifests", () => {
       "/ativos/tipos/:typeId",
       "/ativos/tipos",
       "/ativos/categorias/novo",
+      "/ativos/categorias/novo/",
       "/ativos/categorias",
+      "/ativos/categorias/",
+      "/ativos/categorias/*",
     ])
     expect(pmocManifest.modules).toEqual(["pmoc"])
     expect(pmocManifest.routes.staff.map((route) => route.path)).toEqual([

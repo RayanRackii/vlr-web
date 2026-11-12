@@ -30,7 +30,7 @@ export function PlanSchedulingFields<T extends FieldValues>({
       <legend className="text-sm font-medium">
         {t("pmoc.scheduling.title")}
       </legend>
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="grid gap-4">
         <FormField
           control={control}
           name={"intervalDays" as Path<T>}
