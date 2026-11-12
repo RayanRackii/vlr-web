@@ -158,6 +158,17 @@ export function isPersistedSlotId(id: string | null | undefined): boolean {
   return Boolean(id && id !== EMPTY_SLOT_ID)
 }
 
+export async function setDirectRental(rentalAssetId: string, directRental: boolean) {
+  try {
+    const response = await api.put<unknown>(`/api/rental-assets/${rentalAssetId}/direct-rental`, { directRental })
+    const parsed = rentalAssetSchema.safeParse(response.data)
+    if (!parsed.success) throw new Error(i18n.t("apiErrors.invalidResponse"))
+    return parsed.data
+  } catch (error) {
+    throw new Error(parseApiError(getAxiosErrorPayload(error), i18n.t("rentals.resources.errors.save")), { cause: error })
+  }
+}
+
 export const rentalAssetSchema = z.object({
   tag: z.string().nullable().optional(),
   id: z.string().uuid(),
@@ -187,6 +198,7 @@ export const rentalAssetSchema = z.object({
   /** Stored override. Null inherits. This percent is not applied to a charge. */
   depositPercent: z.number().int().min(0).max(100).nullable().optional(),
   effectiveDepositPercent: z.number().int().min(0).max(100).nullable().optional(),
+  directRental: z.boolean().optional(),
   /** Stored override. Null inherits the tenant policy. Absent means not sent. */
   maxAdvanceBookingDays: z
     .number()

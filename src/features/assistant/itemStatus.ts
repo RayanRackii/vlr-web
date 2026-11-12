@@ -49,6 +49,9 @@ export type ResourceStatusInput = {
   /** True when this SlotGrid resource has an active weekly template. Ignored for open hours. */
   hasActiveTemplate: boolean
   hasPrice: boolean
+  /** False when the price lives on a catalog offer. Omitted means direct rental. */
+  directRental?: boolean
+  hasPricedOffer?: boolean
 }
 
 export function resourceSetupSteps(input: ResourceStatusInput): Record<SetupStepId, boolean> {
@@ -62,7 +65,7 @@ export function resourceSetupSteps(input: ResourceStatusInput): Record<SetupStep
     agenda,
     fila,
     regras,
-    precos: input.hasPrice,
+    precos: input.directRental === false ? Boolean(input.hasPricedOffer) : input.hasPrice,
   }
 }
 
