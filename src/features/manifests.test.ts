@@ -95,6 +95,8 @@ describe("feature manifests", () => {
     expect(assetsManifest.routes.staff.map((route) => route.path)).toEqual([
       "/ativos/novo",
       "/ativos",
+      "/ativos/tipos/novo",
+      "/ativos/tipos/:typeId",
       "/ativos/tipos",
       "/ativos/categorias",
     ])

@@ -4,6 +4,7 @@ import { MemoryRouter } from "react-router-dom"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 
 import { ResourceTypesPage } from "@/features/assets/pages/ResourceTypesPage"
+import { TestPermissionProvider } from "@/features/users/permissions/PermissionContext"
 
 const listResourceTypes = vi.fn()
 
@@ -41,11 +42,13 @@ const records = [
   },
 ]
 
-function renderPage() {
+function renderPage(permissions = ["inventory.categories.read", "inventory.categories.write"]) {
   return render(
-    <MemoryRouter>
-      <ResourceTypesPage />
-    </MemoryRouter>,
+    <TestPermissionProvider permissions={permissions} activeModules={["inventory"]}>
+      <MemoryRouter>
+        <ResourceTypesPage />
+      </MemoryRouter>
+    </TestPermissionProvider>,
   )
 }
 
@@ -68,6 +71,13 @@ describe("ResourceTypesPage", () => {
       "/ativos/tipos/22222222-2222-4222-8222-222222222222",
     ])
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument()
+  })
+
+  it("hides new and edit without permission to change types", async () => {
+    renderPage(["inventory.categories.read"])
+    await screen.findByRole("heading", { name: "Quadra" })
+    expect(screen.queryByRole("link", { name: "Novo tipo" })).not.toBeInTheDocument()
+    expect(screen.queryByRole("link", { name: "Editar" })).not.toBeInTheDocument()
   })
 
   it("filters by capability", async () => {

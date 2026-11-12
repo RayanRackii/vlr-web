@@ -54,8 +54,8 @@ export type ResourceTypeWrite = {
   fields: ResourceTypeRecord["fields"]
 }
 
-function throwTypeError(error: unknown): never {
-  throw new Error(parseApiError(getAxiosErrorPayload(error), i18n.t("assets.resourceTypes.errors.load")), { cause: error })
+function throwTypeError(error: unknown, fallback: string): never {
+  throw new Error(parseApiError(getAxiosErrorPayload(error), fallback), { cause: error })
 }
 
 export async function listResourceTypes(): Promise<ResourceTypeRecord[]> {
@@ -63,7 +63,16 @@ export async function listResourceTypes(): Promise<ResourceTypeRecord[]> {
     const response = await api.get<unknown>("/api/rentals/resource-types")
     return z.array(resourceTypeRecordSchema).parse(response.data)
   } catch (error: unknown) {
-    throwTypeError(error)
+    throwTypeError(error, i18n.t("assets.resourceTypes.errors.load"))
+  }
+}
+
+export async function getResourceType(id: string): Promise<ResourceTypeRecord> {
+  try {
+    const response = await api.get<unknown>(`/api/rentals/resource-types/${id}`)
+    return resourceTypeRecordSchema.parse(response.data)
+  } catch (error: unknown) {
+    throwTypeError(error, i18n.t("assets.resourceTypes.errors.load"))
   }
 }
 
@@ -72,7 +81,7 @@ export async function createResourceType(body: ResourceTypeWrite): Promise<Resou
     const response = await api.post<unknown>("/api/rentals/resource-types", body)
     return resourceTypeRecordSchema.parse(response.data)
   } catch (error: unknown) {
-    throwTypeError(error)
+    throwTypeError(error, i18n.t("assets.resourceTypes.errors.save"))
   }
 }
 
@@ -81,6 +90,6 @@ export async function updateResourceType(id: string, body: ResourceTypeWrite): P
     const response = await api.put<unknown>(`/api/rentals/resource-types/${id}`, body)
     return resourceTypeRecordSchema.parse(response.data)
   } catch (error: unknown) {
-    throwTypeError(error)
+    throwTypeError(error, i18n.t("assets.resourceTypes.errors.save"))
   }
 }
