@@ -86,9 +86,9 @@ function planToFormValues(plan: MaintenancePlan): CreatePlanFormValues {
     description: plan.description ?? "",
     intervalDays: plan.intervalDays,
     firstDueDate: plan.firstDueDate,
-    target: plan.rentalAssetId ? "asset" : "type",
+    target: plan.assetId ? "asset" : "type",
     assetCategoryId: plan.assetCategoryId ?? "",
-    rentalAssetId: plan.rentalAssetId ?? "",
+    assetId: plan.assetId ?? "",
     isActive: plan.isActive,
     tasks:
       [...plan.tasks]
@@ -157,7 +157,7 @@ export function PmocPlanDetailPage() {
       firstDueDate: "",
       target: "type",
       assetCategoryId: "",
-      rentalAssetId: "",
+      assetId: "",
       isActive: true,
       tasks: [emptyTask()],
     },
@@ -216,10 +216,10 @@ export function PmocPlanDetailPage() {
       setPlan(planData)
       setUnits(unitsData)
       setCategories(categoriesData)
-      if (planData.rentalAssetId) {
+      if (planData.assetId) {
         const registry = await listWorkOrderAssets()
-        const match = registry.find((asset) => asset.id === planData.rentalAssetId)
-        setAssetLabel(match ? `${match.tag} — ${match.name}` : planData.rentalAssetId)
+        const match = registry.find((asset) => asset.id === planData.assetId)
+        setAssetLabel(match ? `${match.tag} — ${match.name}` : planData.assetId)
       } else {
         setAssetLabel(null)
       }
@@ -253,7 +253,7 @@ export function PmocPlanDetailPage() {
 
   const categoryName = useMemo(() => {
     if (!plan) return t("pmoc.plans.emptyValue")
-    if (plan.rentalAssetId) return assetLabel ?? plan.rentalAssetId
+    if (plan.assetId) return assetLabel ?? plan.assetId
     return (
       categories.find((category) => category.id === plan.assetCategoryId)?.name ??
       t("pmoc.plans.emptyValue")
@@ -487,7 +487,7 @@ export function PmocPlanDetailPage() {
           </div>
           <div className="space-y-0.5">
             <dt className="text-xs text-muted-foreground">
-              {plan?.rentalAssetId ? t("pmoc.create.form.asset") : t("pmoc.create.form.category")}
+              {plan?.assetId ? t("pmoc.create.form.asset") : t("pmoc.create.form.category")}
             </dt>
             <dd className="text-sm">{categoryName}</dd>
           </div>
@@ -735,7 +735,7 @@ export function PmocPlanDetailPage() {
             planId={plan.id}
             unitId={plan.unitId}
             assetCategoryId={plan.assetCategoryId}
-            rentalAssetId={plan.rentalAssetId}
+            assetId={plan.assetId}
             onGenerated={() => {
               setRelatedRefreshKey((current) => current + 1)
             }}

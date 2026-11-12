@@ -85,7 +85,7 @@ export function CreatePlanPage({ maintenance = false }: { maintenance?: boolean 
       firstDueDate: "",
       target: "type",
       assetCategoryId: "",
-      rentalAssetId: "",
+      assetId: "",
       isActive: true,
       tasks: [
         {
@@ -375,7 +375,7 @@ export function CreatePlanPage({ maintenance = false }: { maintenance?: boolean 
                             aria-pressed={field.value !== "asset"}
                             onClick={() => {
                               field.onChange("type")
-                              form.setValue("rentalAssetId", "")
+                              form.setValue("assetId", "")
                             }}
                           >
                             {t("pmoc.create.form.targetType")}
@@ -402,7 +402,7 @@ export function CreatePlanPage({ maintenance = false }: { maintenance?: boolean 
                 {watchedValues.target === "asset" ? (
                 <FormField
                   control={form.control}
-                  name="rentalAssetId"
+                  name="assetId"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>{t("pmoc.create.form.asset")}</FormLabel>
@@ -429,7 +429,7 @@ export function CreatePlanPage({ maintenance = false }: { maintenance?: boolean 
                           ))}
                         </div>
                       </FormControl>
-                      <LiveFieldMessage message={issueMessageAt(planError, ["rentalAssetId"])} />
+                      <LiveFieldMessage message={issueMessageAt(planError, ["assetId"])} />
                     </FormItem>
                   )}
                 />

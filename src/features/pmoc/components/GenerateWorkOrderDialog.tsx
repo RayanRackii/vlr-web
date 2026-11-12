@@ -59,7 +59,7 @@ function eligibleAssetsForPlan(
   assets: WorkOrderRegistryAsset[],
   unitId: string,
   assetCategoryId: string | null | undefined,
-  rentalAssetId: string | null | undefined,
+  assetId: string | null | undefined,
 ): WorkOrderRegistryAsset[] {
   return assets.filter((asset) => {
     const scheduledDeletionAt = asset.scheduledDeletionAt
@@ -67,7 +67,7 @@ function eligibleAssetsForPlan(
       typeof scheduledDeletionAt === "string" &&
       scheduledDeletionAt.trim().length > 0
     if (asset.unitId !== unitId || asset.status !== "Active" || scheduledForDeletion) return false
-    if (rentalAssetId) return asset.id === rentalAssetId
+    if (assetId) return asset.id === assetId
     return Boolean(assetCategoryId) && asset.categoryId === assetCategoryId
   })
 }
@@ -78,7 +78,7 @@ export function GenerateWorkOrderDialog({
   planId,
   unitId,
   assetCategoryId,
-  rentalAssetId = null,
+  assetId = null,
   onGenerated,
 }: {
   open: boolean
@@ -86,7 +86,7 @@ export function GenerateWorkOrderDialog({
   planId: string
   unitId: string
   assetCategoryId?: string | null
-  rentalAssetId?: string | null
+  assetId?: string | null
   onGenerated: (workOrder: WorkOrder) => void
 }) {
   const { t, i18n } = useTranslation()
@@ -129,7 +129,7 @@ export function GenerateWorkOrderDialog({
 
     try {
       const assetData = await listWorkOrderAssets()
-      const eligible = eligibleAssetsForPlan(assetData, unitId, assetCategoryId, rentalAssetId)
+      const eligible = eligibleAssetsForPlan(assetData, unitId, assetCategoryId, assetId)
       setAssets(eligible)
       if (eligible.length === 1 && eligible[0]) {
         form.setValue("assetId", eligible[0].id)
@@ -157,7 +157,7 @@ export function GenerateWorkOrderDialog({
     } finally {
       setIsLoadingLookups(false)
     }
-  }, [assetCategoryId, form, rentalAssetId, t, unitId])
+  }, [assetCategoryId, form, assetId, t, unitId])
 
   useEffect(() => {
     if (!open) {
@@ -253,7 +253,7 @@ export function GenerateWorkOrderDialog({
         <DialogHeader>
           <DialogTitle>{t("pmoc.plans.generate.dialogTitle")}</DialogTitle>
           <DialogDescription>
-            {rentalAssetId
+            {assetId
               ? t("pmoc.plans.generate.assetTarget")
               : t("pmoc.plans.generate.dialogDescription")}
           </DialogDescription>
@@ -297,7 +297,7 @@ export function GenerateWorkOrderDialog({
                       value={field.value}
                       onValueChange={field.onChange}
                       items={assetItems}
-                      disabled={isPending || Boolean(rentalAssetId)}
+                      disabled={isPending || Boolean(assetId)}
                     >
                       <FormControl>
                         <SelectTrigger className="w-full">

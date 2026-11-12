@@ -102,7 +102,7 @@ export const maintenancePlanSchema = z.object({
   intervalDays: z.number().int().min(PMOC_MIN_INTERVAL_DAYS).max(PMOC_MAX_INTERVAL_DAYS),
   firstDueDate: civilDateSchema,
   assetCategoryId: z.string().uuid().nullish(),
-  rentalAssetId: z.string().uuid().nullish(),
+  assetId: z.string().uuid().nullish(),
   isActive: z.boolean(),
   originKind: maintenancePlanOriginKindResponseSchema,
   sourceTemplateId: z.string().uuid().nullable(),
@@ -128,11 +128,11 @@ export const createPlanTaskRequestSchema = z.object({
 export type CreatePlanTaskRequest = z.infer<typeof createPlanTaskRequestSchema>
 
 function exactlyOnePlanTarget(
-  value: { assetCategoryId?: string | null; rentalAssetId?: string | null },
+  value: { assetCategoryId?: string | null; assetId?: string | null },
   ctx: z.RefinementCtx,
 ) {
   const hasCategory = Boolean(value.assetCategoryId)
-  const hasAsset = Boolean(value.rentalAssetId)
+  const hasAsset = Boolean(value.assetId)
   if (hasCategory === hasAsset) {
     ctx.addIssue({
       code: "custom",
@@ -149,7 +149,7 @@ export const createMaintenancePlanRequestSchema = z.object({
   intervalDays: z.number().int().min(PMOC_MIN_INTERVAL_DAYS).max(PMOC_MAX_INTERVAL_DAYS),
   firstDueDate: civilDateSchema,
   assetCategoryId: z.string().uuid().nullable(),
-  rentalAssetId: z.string().uuid().nullish(),
+  assetId: z.string().uuid().nullish(),
   isActive: z.boolean(),
   tasks: z.array(createPlanTaskRequestSchema).min(1),
 }).superRefine(exactlyOnePlanTarget)
@@ -165,7 +165,7 @@ export const updateMaintenancePlanRequestSchema = z.object({
   intervalDays: z.number().int().min(PMOC_MIN_INTERVAL_DAYS).max(PMOC_MAX_INTERVAL_DAYS),
   firstDueDate: civilDateSchema,
   assetCategoryId: z.string().uuid().nullable(),
-  rentalAssetId: z.string().uuid().nullish(),
+  assetId: z.string().uuid().nullish(),
   isActive: z.boolean(),
   autoGenerateEnabled: z.boolean(),
 }).superRefine(exactlyOnePlanTarget)
@@ -292,11 +292,11 @@ export function createPlanFormSchema(messages: {
     z.object({
       target: z.literal("type"),
       assetCategoryId: z.string().min(1, messages.categoryRequired).uuid(messages.categoryRequired),
-      rentalAssetId: z.string().optional(),
+      assetId: z.string().optional(),
     }),
     z.object({
       target: z.literal("asset"),
-      rentalAssetId: z.string().min(1, messages.assetRequired).uuid(messages.assetRequired),
+      assetId: z.string().min(1, messages.assetRequired).uuid(messages.assetRequired),
       assetCategoryId: z.string().optional(),
     }),
   ])
@@ -320,7 +320,7 @@ export function buildCreatePlanRequest(
     intervalDays: values.intervalDays,
     firstDueDate: values.firstDueDate,
     assetCategoryId: values.target === "asset" ? null : values.assetCategoryId,
-    ...(values.target === "asset" ? { rentalAssetId: values.rentalAssetId } : {}),
+    ...(values.target === "asset" ? { assetId: values.assetId } : {}),
     isActive: values.isActive,
     tasks: values.tasks.map((task, index) => ({
       title: task.title,
@@ -344,8 +344,8 @@ export function buildHeaderUpdateFromPlan(
     description: plan.description ?? null,
     intervalDays: plan.intervalDays,
     firstDueDate: plan.firstDueDate,
-    assetCategoryId: plan.rentalAssetId ? null : plan.assetCategoryId ?? null,
-    ...(plan.rentalAssetId ? { rentalAssetId: plan.rentalAssetId } : {}),
+    assetCategoryId: plan.assetId ? null : plan.assetCategoryId ?? null,
+    ...(plan.assetId ? { assetId: plan.assetId } : {}),
     isActive: patch.isActive ?? plan.isActive,
     autoGenerateEnabled: patch.autoGenerateEnabled ?? plan.autoGenerateEnabled,
   })

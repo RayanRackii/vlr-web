@@ -193,7 +193,7 @@ describe("createMaintenancePlanRequestSchema", () => {
 
     const parsed = createMaintenancePlanRequestSchema.parse(request)
     expect("autoGenerateEnabled" in parsed).toBe(false)
-    expect(parsed.rentalAssetId).toBeUndefined()
+    expect(parsed.assetId).toBeUndefined()
   })
 
   it("sends one resource and no type", () => {
@@ -205,15 +205,15 @@ describe("createMaintenancePlanRequestSchema", () => {
       intervalDays: 30,
       firstDueDate: "2026-10-01",
       target: "asset",
-      rentalAssetId: "12121212-1212-4121-8121-121212121212",
+      assetId: "12121212-1212-4121-8121-121212121212",
       isActive: true,
       tasks: [{ title: "Tarefa", inputType: "Checkbox", isMandatory: true, min: null, max: null, unit: null }],
     })
     const request = buildCreatePlanRequest(values)
     expect(request.assetCategoryId).toBeNull()
-    expect(request.rentalAssetId).toBe("12121212-1212-4121-8121-121212121212")
-    expect(createMaintenancePlanRequestSchema.parse({ ...request, assetCategoryId: request.assetCategoryId, rentalAssetId: request.rentalAssetId }).rentalAssetId).toBe("12121212-1212-4121-8121-121212121212")
-    expect(maintenancePlanSchema.parse({ ...basePlanJson, assetCategoryId: null, rentalAssetId: "12121212-1212-4121-8121-121212121212" }).rentalAssetId).toBe("12121212-1212-4121-8121-121212121212")
+    expect(request.assetId).toBe("12121212-1212-4121-8121-121212121212")
+    expect(createMaintenancePlanRequestSchema.parse({ ...request, assetCategoryId: request.assetCategoryId, assetId: request.assetId }).assetId).toBe("12121212-1212-4121-8121-121212121212")
+    expect(maintenancePlanSchema.parse({ ...basePlanJson, assetCategoryId: null, assetId: "12121212-1212-4121-8121-121212121212" }).assetId).toBe("12121212-1212-4121-8121-121212121212")
   })
 })
 

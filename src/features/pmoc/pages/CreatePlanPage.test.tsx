@@ -469,7 +469,7 @@ describe("CreatePlanPage validity gate", () => {
     await user.type(screen.getByLabelText(i18n.t("pmoc.create.tasks.title")), "Limpar filtro")
     await user.click(screen.getByRole("button", { name: i18n.t("pmoc.create.actions.save") }))
     await waitFor(() => expect(createPlanMock).toHaveBeenCalledWith(expect.objectContaining({
-      rentalAssetId: assetId,
+      assetId: assetId,
       assetCategoryId: null,
     })))
   })
