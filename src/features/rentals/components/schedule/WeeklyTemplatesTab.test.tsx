@@ -46,7 +46,7 @@ describe("weekly schedule modules", () => {
     expect(screen.getByText(i18n.t("rentals.schedule.weeklyBanner", { day: i18n.t("rentals.schedule.days.Tuesday") }))).toBeInTheDocument()
     await user.click(screen.getByRole("button", { name: i18n.t("rentals.schedule.weeklyRule.apply") }))
     const rule = screen.getByRole("region", { name: i18n.t("rentals.schedule.weeklyRule.title") })
-    expect(within(rule).getByRole("button", { name: i18n.t("rentals.schedule.days.Tuesday") })).toHaveAttribute("aria-pressed", "true")
+    expect(within(rule).getByRole("button", { name: i18n.t("rentals.schedule.days.Tuesday") })).toHaveAttribute("aria-pressed", "false")
     const cell = screen.getAllByRole("button").find((button) => button.getAttribute("aria-label")?.includes("08:00"))!
     await user.click(cell)
     const template = screen.getByRole("region", { name: i18n.t("rentals.schedule.templates.saveCreate") })

@@ -3433,6 +3433,7 @@
         "unit": "Sitio físico de este recurso (sede, sucursal). Se crea automáticamente al registrar el cliente; la gestión de unidades vendrá después.",
         "category": "Tipo del recurso (ej.: Área exterior). Defina tipos en Activos → Tipos.",
         "family": "Familia de atributos (espacios, bienes, eléctricos…). Controla campos extra del formulario.",
+        "voltage": "El voltaje indica la red eléctrica que este equipo acepta, para no conectarlo a la instalación incorrecta.",
         "name": "Nombre del equipo o recurso mostrado en las listas.",
         "tag": "Código corto único para identificar el recurso (ej.: EQ-01).",
         "location": "Dónde está en el sitio (bloque, ala). Opcional.",
@@ -4651,6 +4652,8 @@
       "Catalog": "Catálogo y pedidos",
       "CatalogDescription": "Productos, pedidos y notificaciones B2C.",
       "unknown": "Módulo",
+      "ResourcePlanning": "Planificación de recursos",
+      "ResourcePlanningDescription": "Organiza la disponibilidad y el uso de los recursos.",
       "loadFailed": "No se pudieron cargar los módulos.",
       "retry": "Intentar de nuevo",
       "legacyMaintenanceNote": "Este cliente aún tiene el módulo legado Mantenimiento. Permanece activo, pero no se puede seleccionar ni desactivar aquí."
@@ -4712,6 +4715,7 @@
         "back": "Volver",
         "backToDashboard": "Volver al panel",
         "next": "Continuar",
+        "missingTitle": "Para continuar, falta:",
         "finish": "Finalizar",
         "finishing": "Aprovisionando..."
       },
@@ -5028,6 +5032,7 @@
       "cutoffNotSaved": "El recurso se guardó, pero el plazo de cancelación no se aplicó. Inténtalo de nuevo.",
       "createError": "No se pudo crear el recurso.",
       "updateError": "No se pudo actualizar el recurso.",
+      "saveErrorSummary": "No se pudo guardar. Revise los campos indicados.",
       "errorKinds": {
         "network": "Sin conexión con el servidor. Verifica tu internet e inténtalo de nuevo.",
         "permission": "No tienes permiso para esta acción o tu sesión expiró.",

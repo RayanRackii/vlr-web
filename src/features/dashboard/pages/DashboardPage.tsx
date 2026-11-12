@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react"
+import { usePermissions } from "@/features/users/permissions/PermissionContext"
 import { BarChart3, Layers } from "lucide-react"
 import { useTranslation } from "react-i18next"
 
@@ -132,10 +133,20 @@ export function DashboardPage() {
   return <TenantAdminDashboard />
 }
 
+function isForbidden(error: unknown): boolean {
+  if (isAxiosError(error) && error.response?.status === 403) return true
+  const message = error instanceof Error ? error.message : ""
+  return /forbidden/i.test(message)
+}
+
 export function TenantAdminDashboard() {
   const { t } = useTranslation()
+  const { can, activeModules } = usePermissions()
   const { session } = useAuth()
   const userId = session?.user?.id ?? null
+  const showAgenda = activeModules.includes("catalog") && (
+    can("catalog.orders.read") || (activeModules.includes("rentals") && can("rentals.schedule.read"))
+  )
 
   const [metrics, setMetrics] = useState<DashboardMetrics | null>(null)
   const [isLoading, setIsLoading] = useState(true)
@@ -174,11 +185,16 @@ export function TenantAdminDashboard() {
         }
 
         if (!cancelled) {
-          setLoadError(
-            error instanceof Error
-              ? error.message
-              : t("dashboard.errors.loadFailed"),
-          )
+          if (isForbidden(error)) {
+            setMetrics(null)
+            setLoadError(null)
+          } else {
+            setLoadError(
+              error instanceof Error
+                ? error.message
+                : t("dashboard.errors.loadFailed"),
+            )
+          }
         }
       } finally {
         if (!cancelled) {
@@ -203,7 +219,7 @@ export function TenantAdminDashboard() {
     <div aria-busy={isLoading} className="staff-dashboard">
       <DashboardHero metrics={visibleMetrics} />
       <div className="staff-dashboard-readiness"><RentalsReadinessCard /></div>
-      <div className="staff-dashboard-today-agenda"><TodayAgendaCard /></div>
+      {showAgenda ? <div className="staff-dashboard-today-agenda"><TodayAgendaCard /></div> : null}
 
       {loadError !== null ? (
         <Alert variant="destructive"><AlertDescription>{loadError}</AlertDescription></Alert>

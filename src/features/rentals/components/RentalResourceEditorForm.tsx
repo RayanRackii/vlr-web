@@ -43,6 +43,7 @@ import {
   RESOURCE_CAPACITY_PEOPLE_MAX, createRentalResourceFormSchema, type RegistryCategoryListItem, type RentalResourceFormValues, type ResourceHorizonMode } from "@/features/rentals/schemas/rentalResourceSchemas"
 import type { AdminRentalAsset } from "@/features/rentals/services/scheduleService"
 import { listPickerTags, listVisualTemplates, type VisualTag, type VisualTemplate } from "@/features/rentals/services/resourceVisualService"
+import { readApiValidation } from "@/features/rentals/lib/readApiValidation"
 import { listRentalAssetCategories } from "@/features/rentals/services/rentalResourcesService"
 import { InlineCreateCategoryForm, InlineCreateUnitForm, InlineCreateVisualTemplateForm } from "@/features/rentals/components/ResourceDependencyInlineCreateForms"
 import {
@@ -87,11 +88,36 @@ type ResourceChoiceGroupProps = Pick<ComponentProps<"div">, "id" | "aria-describ
 }
 
 function ResourceChoiceGroup({ name, label, value, options, onChange, onBlur, disabled, segmented = false, ...props }: ResourceChoiceGroupProps) {
+  function move(from: string, delta: number) {
+    const index = Math.max(0, options.findIndex((option) => option.value === from))
+    const next = options[(index + delta + options.length) % options.length]
+    if (!next) return
+    onChange(next.value)
+    queueMicrotask(() => {
+      document.querySelector<HTMLInputElement>(`input[name="${name}"][value="${next.value}"]`)?.focus()
+    })
+  }
+
   return (
-    <div {...props} role="radiogroup" aria-label={label} className={segmented ? "resource-choices resource-choices-segmented" : "resource-choices"}>
+    <div {...props} role="radiogroup" aria-label={label} className={segmented ? "resource-choices resource-choices-segmented" : "resource-choices"}
+      onKeyDown={(event) => {
+        if (disabled) return
+        if (event.key === "ArrowRight" || event.key === "ArrowDown") {
+          event.preventDefault()
+          move(value, 1)
+        } else if (event.key === "ArrowLeft" || event.key === "ArrowUp") {
+          event.preventDefault()
+          move(value, -1)
+        } else if (event.key === " ") {
+          event.preventDefault()
+          const current = (event.target as HTMLInputElement).value
+          if (current) onChange(current)
+        }
+      }}>
       {options.map((option) => (
         <label key={option.value} className="resource-choice" data-checked={value === option.value}>
           <input type="radio" name={name} value={option.value} checked={value === option.value}
+            tabIndex={value === option.value ? 0 : -1}
             disabled={disabled} onChange={() => onChange(option.value)} onBlur={onBlur}
             aria-describedby={props["aria-describedby"]} aria-invalid={props["aria-invalid"]} />
           <span>{option.label}</span>
@@ -131,6 +157,7 @@ export function RentalResourceEditorForm({
   const [selectedTagIds, setSelectedTagIds] = useState<string[]>([])
   const [tagsExpanded, setTagsExpanded] = useState(false)
   const [activeModule, setActiveModule] = useState("basic")
+  const [saveSummary, setSaveSummary] = useState<string[]>([])
   const editedTemplateFieldsRef = useRef<Set<TemplateDefaultField>>(new Set())
   const TAG_COLLAPSE_COUNT = 6
 
@@ -320,11 +347,27 @@ export function RentalResourceEditorForm({
                 return
               }
               void form.handleSubmit(async (values) => {
-                // Template defaults are already shown above, so submit precisely these form values.
-                await onSubmit(values)
+                setSaveSummary([])
+                try {
+                  await onSubmit(values)
+                } catch (error) {
+                  const parsed = readApiValidation(error)
+                  for (const [field, message] of Object.entries(parsed.fields)) {
+                    form.setError(field as keyof RentalResourceFormValues, { type: "server", message })
+                  }
+                  setSaveSummary(parsed.summary.length > 0 ? parsed.summary : [t("rentals.resources.saveErrorSummary")])
+                }
               })(event)
             }}
           >
+            {saveSummary.length > 0 ? (
+              <div role="alert" className="rounded-lg border border-destructive/40 bg-destructive/5 p-3 text-sm text-destructive">
+                <p className="font-medium">{t("rentals.resources.saveErrorSummary")}</p>
+                <ul className="mt-1 list-disc space-y-1 pl-5">
+                  {saveSummary.map((message) => <li key={message}>{message}</li>)}
+                </ul>
+              </div>
+            ) : null}
             <nav className="resource-editor-segments" aria-label={t("rentals.resources.editor.sections")}>
               {(["basic", "pricing", "visual"] as const).map((module) => (
                 <Button key={module} type="button" variant={activeModule === module ? "default" : "ghost"}
