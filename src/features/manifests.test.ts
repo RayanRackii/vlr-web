@@ -93,6 +93,7 @@ describe("feature manifests", () => {
   it("keeps assets and PMOC routes and navigation in their manifests", () => {
     expect(assetsManifest.modules).toEqual(["inventory"])
     expect(assetsManifest.routes.staff.map((route) => route.path)).toEqual([
+      "/ativos/novo",
       "/ativos",
       "/ativos/categorias",
     ])
