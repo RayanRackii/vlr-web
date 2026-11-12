@@ -22,6 +22,7 @@ const formMessages = {
   firstDueRequired: "firstDue",
   firstDueInvalid: "invalidDate",
   categoryRequired: "category",
+  assetRequired: "asset",
   taskTitleRequired: "task",
   tasksRequired: "tasks",
   numberMinRequired: "min",
@@ -122,6 +123,7 @@ describe("Phase 3 scheduling validation", () => {
       intervalDays: Number.NaN,
       firstDueDate: "",
       assetCategoryId: basePlanJson.assetCategoryId,
+      target: "type",
       isActive: true,
       tasks: [
         {
@@ -140,6 +142,7 @@ describe("Phase 3 scheduling validation", () => {
       unitId: basePlanJson.unitId,
       name: "Custom",
       assetCategoryId: basePlanJson.assetCategoryId,
+      target: "type",
       isActive: true,
       tasks: [
         {
@@ -171,6 +174,7 @@ describe("createMaintenancePlanRequestSchema", () => {
       intervalDays: 30,
       firstDueDate: "2026-10-01",
       assetCategoryId: basePlanJson.assetCategoryId,
+      target: "type",
       isActive: true,
       tasks: [
         {
@@ -189,6 +193,27 @@ describe("createMaintenancePlanRequestSchema", () => {
 
     const parsed = createMaintenancePlanRequestSchema.parse(request)
     expect("autoGenerateEnabled" in parsed).toBe(false)
+    expect(parsed.rentalAssetId).toBeUndefined()
+  })
+
+  it("sends one resource and no type", () => {
+    const formSchema = createPlanFormSchema(formMessages)
+    const values = formSchema.parse({
+      unitId: basePlanJson.unitId,
+      name: "Custom",
+      description: "",
+      intervalDays: 30,
+      firstDueDate: "2026-10-01",
+      target: "asset",
+      rentalAssetId: "12121212-1212-4121-8121-121212121212",
+      isActive: true,
+      tasks: [{ title: "Tarefa", inputType: "Checkbox", isMandatory: true, min: null, max: null, unit: null }],
+    })
+    const request = buildCreatePlanRequest(values)
+    expect(request.assetCategoryId).toBeNull()
+    expect(request.rentalAssetId).toBe("12121212-1212-4121-8121-121212121212")
+    expect(createMaintenancePlanRequestSchema.parse({ ...request, assetCategoryId: request.assetCategoryId, rentalAssetId: request.rentalAssetId }).rentalAssetId).toBe("12121212-1212-4121-8121-121212121212")
+    expect(maintenancePlanSchema.parse({ ...basePlanJson, assetCategoryId: null, rentalAssetId: "12121212-1212-4121-8121-121212121212" }).rentalAssetId).toBe("12121212-1212-4121-8121-121212121212")
   })
 })
 
@@ -201,6 +226,7 @@ describe("updateMaintenancePlanRequestSchema", () => {
       intervalDays: 30,
       firstDueDate: "2026-10-01",
       assetCategoryId: basePlanJson.assetCategoryId,
+      target: "type",
       isActive: true,
       autoGenerateEnabled: false,
     })
@@ -252,6 +278,7 @@ describe("createFromTemplateRequestSchema", () => {
       templateId: "6f1c2a0e-4b9d-4f3a-9c7e-1d2a3b4c5d6e",
       unitId: basePlanJson.unitId,
       assetCategoryId: basePlanJson.assetCategoryId,
+      target: "type",
       intervalDays: 30,
       firstDueDate: "2026-01-15",
       name: "Clone",
@@ -270,6 +297,7 @@ describe("task configuration", () => {
     intervalDays: 30,
     firstDueDate: "2026-10-01",
     assetCategoryId: basePlanJson.assetCategoryId,
+    target: "type" as const,
     isActive: true,
   }
 

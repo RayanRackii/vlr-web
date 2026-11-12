@@ -37,6 +37,8 @@ import {
   type CreatePlanFormValues,
 } from "@/features/pmoc/schemas/maintenancePlanSchemas"
 import { createPlan } from "@/features/pmoc/services/pmocService"
+import { listWorkOrderAssets } from "@/features/workOrders/services/workOrdersService"
+import type { WorkOrderRegistryAsset } from "@/features/workOrders/schemas/workOrderSchemas"
 import { isAxiosError } from "@/lib/api"
 import { useVisibleFormIssues } from "@/lib/useVisibleFormIssues"
 
@@ -47,6 +49,7 @@ export function CreatePlanPage({ maintenance = false }: { maintenance?: boolean 
 
   const [units, setUnits] = useState<Unit[]>([])
   const [categories, setCategories] = useState<RegistryCategoryListItem[]>([])
+  const [assets, setAssets] = useState<WorkOrderRegistryAsset[]>([])
   const [isLoadingLookups, setIsLoadingLookups] = useState(true)
   const [loadError, setLoadError] = useState<string | null>(null)
   const [submitError, setSubmitError] = useState<string | null>(null)
@@ -61,6 +64,7 @@ export function CreatePlanPage({ maintenance = false }: { maintenance?: boolean 
         firstDueRequired: t("pmoc.scheduling.firstDueRequired"),
         firstDueInvalid: t("common.datePicker.invalid"),
         categoryRequired: t("pmoc.create.validation.categoryRequired"),
+        assetRequired: t("pmoc.create.validation.assetRequired"),
         taskTitleRequired: t("pmoc.create.validation.taskTitleRequired"),
         tasksRequired: t("pmoc.create.validation.tasksRequired"),
         numberMinRequired: t("pmoc.create.validation.numberMinRequired"),
@@ -79,7 +83,9 @@ export function CreatePlanPage({ maintenance = false }: { maintenance?: boolean 
       description: "",
       intervalDays: Number.NaN,
       firstDueDate: "",
+      target: "type",
       assetCategoryId: "",
+      rentalAssetId: "",
       isActive: true,
       tasks: [
         {
@@ -119,12 +125,14 @@ export function CreatePlanPage({ maintenance = false }: { maintenance?: boolean 
     setLoadError(null)
 
     try {
-      const [unitsData, categoriesData] = await Promise.all([
+      const [unitsData, categoriesData, assetsData] = await Promise.all([
         getUnits(),
         listPlanAssetCategories(),
+        listWorkOrderAssets(),
       ])
       setUnits(unitsData)
       setCategories(categoriesData)
+      setAssets(assetsData)
     } catch (error: unknown) {
       console.error("CreatePlanPage loadLookups failed", error)
       if (isAxiosError(error)) {
@@ -182,6 +190,17 @@ export function CreatePlanPage({ maintenance = false }: { maintenance?: boolean 
         label: category.name,
       })),
     [categories],
+  )
+
+  const assetItems = useMemo(
+    () =>
+      assets
+        .filter((asset) => asset.unitId === watchedValues.unitId && asset.status === "Active" && !asset.scheduledDeletionAt)
+        .map((asset) => ({
+          value: asset.id,
+          label: `${asset.tag} — ${asset.name}`,
+        })),
+    [assets, watchedValues.unitId],
   )
 
   const statusItems = useMemo(
@@ -343,6 +362,80 @@ export function CreatePlanPage({ maintenance = false }: { maintenance?: boolean 
 
                 <FormField
                   control={form.control}
+                  name="target"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{t("pmoc.create.form.target")}</FormLabel>
+                      <FormControl>
+                        <div role="radiogroup" aria-label={t("pmoc.create.form.target")} className="flex flex-wrap gap-2">
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant={field.value !== "asset" ? "default" : "outline"}
+                            aria-pressed={field.value !== "asset"}
+                            onClick={() => {
+                              field.onChange("type")
+                              form.setValue("rentalAssetId", "")
+                            }}
+                          >
+                            {t("pmoc.create.form.targetType")}
+                          </Button>
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant={field.value === "asset" ? "default" : "outline"}
+                            aria-pressed={field.value === "asset"}
+                            onClick={() => {
+                              field.onChange("asset")
+                              form.setValue("assetCategoryId", "")
+                            }}
+                          >
+                            {t("pmoc.create.form.targetAsset")}
+                          </Button>
+                        </div>
+                      </FormControl>
+                      <p className="text-sm text-muted-foreground">{t("pmoc.create.form.targetHelp")}</p>
+                    </FormItem>
+                  )}
+                />
+
+                {watchedValues.target === "asset" ? (
+                <FormField
+                  control={form.control}
+                  name="rentalAssetId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{t("pmoc.create.form.asset")}</FormLabel>
+                      <FormControl>
+                        <div
+                          role="radiogroup"
+                          aria-label={t("pmoc.create.form.asset")}
+                          className="flex flex-wrap gap-2"
+                        >
+                          {assetItems.map((asset) => (
+                            <Button
+                              key={asset.value}
+                              type="button"
+                              size="sm"
+                              variant={field.value === asset.value ? "default" : "outline"}
+                              aria-pressed={field.value === asset.value}
+                              onClick={() => {
+                                field.onChange(asset.value)
+                                field.onBlur()
+                              }}
+                            >
+                              {asset.label}
+                            </Button>
+                          ))}
+                        </div>
+                      </FormControl>
+                      <LiveFieldMessage message={issueMessageAt(planError, ["rentalAssetId"])} />
+                    </FormItem>
+                  )}
+                />
+                ) : (
+                <FormField
+                  control={form.control}
                   name="assetCategoryId"
                   render={({ field }) => (
                     <FormItem>
@@ -379,6 +472,7 @@ export function CreatePlanPage({ maintenance = false }: { maintenance?: boolean 
                     </FormItem>
                   )}
                 />
+                )}
 
                 <PlanSchedulingFields
                   control={form.control}

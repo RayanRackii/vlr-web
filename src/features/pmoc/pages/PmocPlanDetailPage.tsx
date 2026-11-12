@@ -50,6 +50,7 @@ import {
 } from "@/features/pmoc/schemas/maintenancePlanSchemas"
 import type { RegistryCategoryListItem } from "@/features/pmoc/schemas/registryCategorySchemas"
 import { listPlanAssetCategories } from "@/features/pmoc/services/pmocPlanCategoriesService"
+import { listWorkOrderAssets } from "@/features/workOrders/services/workOrdersService"
 import {
   deletePlan,
   getPlan,
@@ -85,7 +86,9 @@ function planToFormValues(plan: MaintenancePlan): CreatePlanFormValues {
     description: plan.description ?? "",
     intervalDays: plan.intervalDays,
     firstDueDate: plan.firstDueDate,
-    assetCategoryId: plan.assetCategoryId,
+    target: plan.rentalAssetId ? "asset" : "type",
+    assetCategoryId: plan.assetCategoryId ?? "",
+    rentalAssetId: plan.rentalAssetId ?? "",
     isActive: plan.isActive,
     tasks:
       [...plan.tasks]
@@ -111,6 +114,7 @@ export function PmocPlanDetailPage() {
   const [plan, setPlan] = useState<MaintenancePlan | null>(null)
   const [units, setUnits] = useState<Unit[]>([])
   const [categories, setCategories] = useState<RegistryCategoryListItem[]>([])
+  const [assetLabel, setAssetLabel] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [loadError, setLoadError] = useState<string | null>(null)
   useBreadcrumbTitle(!isLoading && !loadError ? plan?.name : undefined)
@@ -132,6 +136,7 @@ export function PmocPlanDetailPage() {
         firstDueRequired: t("pmoc.scheduling.firstDueRequired"),
         firstDueInvalid: t("common.datePicker.invalid"),
         categoryRequired: t("pmoc.create.validation.categoryRequired"),
+        assetRequired: t("pmoc.create.validation.assetRequired"),
         taskTitleRequired: t("pmoc.create.validation.taskTitleRequired"),
         tasksRequired: t("pmoc.create.validation.tasksRequired"),
         numberMinRequired: t("pmoc.create.validation.numberMinRequired"),
@@ -150,7 +155,9 @@ export function PmocPlanDetailPage() {
       description: "",
       intervalDays: 30,
       firstDueDate: "",
+      target: "type",
       assetCategoryId: "",
+      rentalAssetId: "",
       isActive: true,
       tasks: [emptyTask()],
     },
@@ -209,6 +216,13 @@ export function PmocPlanDetailPage() {
       setPlan(planData)
       setUnits(unitsData)
       setCategories(categoriesData)
+      if (planData.rentalAssetId) {
+        const registry = await listWorkOrderAssets()
+        const match = registry.find((asset) => asset.id === planData.rentalAssetId)
+        setAssetLabel(match ? `${match.tag} — ${match.name}` : planData.rentalAssetId)
+      } else {
+        setAssetLabel(null)
+      }
       reset(planToFormValues(planData))
     } catch (error: unknown) {
       console.error("PmocPlanDetailPage loadPage failed", error)
@@ -238,14 +252,13 @@ export function PmocPlanDetailPage() {
   }, [plan, t, units])
 
   const categoryName = useMemo(() => {
-    if (!plan) {
-      return t("pmoc.plans.emptyValue")
-    }
+    if (!plan) return t("pmoc.plans.emptyValue")
+    if (plan.rentalAssetId) return assetLabel ?? plan.rentalAssetId
     return (
       categories.find((category) => category.id === plan.assetCategoryId)?.name ??
       t("pmoc.plans.emptyValue")
     )
-  }, [categories, plan, t])
+  }, [assetLabel, categories, plan, t])
 
   async function patchHeader(
     patch: Partial<Pick<MaintenancePlan, "isActive" | "autoGenerateEnabled">>,
@@ -474,7 +487,7 @@ export function PmocPlanDetailPage() {
           </div>
           <div className="space-y-0.5">
             <dt className="text-xs text-muted-foreground">
-              {t("pmoc.create.form.category")}
+              {plan?.rentalAssetId ? t("pmoc.create.form.asset") : t("pmoc.create.form.category")}
             </dt>
             <dd className="text-sm">{categoryName}</dd>
           </div>
@@ -722,6 +735,7 @@ export function PmocPlanDetailPage() {
             planId={plan.id}
             unitId={plan.unitId}
             assetCategoryId={plan.assetCategoryId}
+            rentalAssetId={plan.rentalAssetId}
             onGenerated={() => {
               setRelatedRefreshKey((current) => current + 1)
             }}

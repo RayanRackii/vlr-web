@@ -3828,6 +3828,7 @@
       "generate": {
         "dialogTitle": "Gerar OS",
         "dialogDescription": "Escolha o ativo e a data. O técnico é opcional.",
+        "assetTarget": "Este plano vale só para este recurso. A ordem usa esse recurso.",
         "submit": "Gerar OS",
         "success": "Ordem de serviço gerada.",
         "viewWorkOrder": "Abrir OS",
@@ -3914,6 +3915,11 @@
         "unitPlaceholder": "Selecione a unidade",
         "category": "Categoria do ativo",
         "categoryPlaceholder": "Selecione a categoria",
+        "target": "Alvo",
+        "targetType": "Um tipo",
+        "targetAsset": "Um recurso",
+        "targetHelp": "O plano vale para um tipo ou para um recurso. O plano de um recurso vale mais que o plano do tipo. A geração continua uma ordem por recurso e período.",
+        "asset": "Recurso",
         "status": "Status"
       },
       "tasks": {
@@ -3936,6 +3942,7 @@
         "unitRequired": "A unidade é obrigatória.",
         "nameRequired": "O nome é obrigatório.",
         "categoryRequired": "A categoria é obrigatória.",
+        "assetRequired": "O recurso é obrigatório.",
         "taskTitleRequired": "O título da tarefa é obrigatório.",
         "tasksRequired": "Adicione pelo menos uma tarefa.",
         "numberMinRequired": "Informe o valor mínimo.",

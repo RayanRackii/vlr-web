@@ -3828,6 +3828,7 @@
       "generate": {
         "dialogTitle": "Generate WO",
         "dialogDescription": "Choose the asset and date. The technician is optional.",
+        "assetTarget": "This plan covers only this resource. The order uses that resource.",
         "submit": "Generate WO",
         "success": "Work order generated.",
         "viewWorkOrder": "Open WO",
@@ -3914,6 +3915,11 @@
         "unitPlaceholder": "Select a unit",
         "category": "Asset category",
         "categoryPlaceholder": "Select a category",
+        "target": "Target",
+        "targetType": "A type",
+        "targetAsset": "One resource",
+        "targetHelp": "A plan covers a type or one resource. A resource plan wins over the type plan. Generation stays one order per resource and period.",
+        "asset": "Resource",
         "status": "Status"
       },
       "tasks": {
@@ -3936,6 +3942,7 @@
         "unitRequired": "Unit is required.",
         "nameRequired": "Name is required.",
         "categoryRequired": "Category is required.",
+        "assetRequired": "Resource is required.",
         "taskTitleRequired": "Task title is required.",
         "tasksRequired": "Add at least one task.",
         "numberMinRequired": "Enter the minimum value.",

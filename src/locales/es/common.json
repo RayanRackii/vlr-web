@@ -3828,6 +3828,7 @@
       "generate": {
         "dialogTitle": "Generar OT",
         "dialogDescription": "Elija el activo y la fecha. El técnico es opcional.",
+        "assetTarget": "Este plan vale solo para este recurso. La orden usa ese recurso.",
         "submit": "Generar OT",
         "success": "Orden de trabajo generada.",
         "viewWorkOrder": "Abrir OT",
@@ -3914,6 +3915,11 @@
         "unitPlaceholder": "Seleccione la unidad",
         "category": "Categoría del activo",
         "categoryPlaceholder": "Seleccione la categoría",
+        "target": "Objetivo",
+        "targetType": "Un tipo",
+        "targetAsset": "Un recurso",
+        "targetHelp": "El plan vale para un tipo o para un recurso. El plan de un recurso vale más que el plan del tipo. La generación sigue siendo una orden por recurso y período.",
+        "asset": "Recurso",
         "status": "Estado"
       },
       "tasks": {
@@ -3936,6 +3942,7 @@
         "unitRequired": "La unidad es obligatoria.",
         "nameRequired": "El nombre es obligatorio.",
         "categoryRequired": "La categoría es obligatoria.",
+        "assetRequired": "El recurso es obligatorio.",
         "taskTitleRequired": "El título de la tarea es obligatorio.",
         "tasksRequired": "Agregue al menos una tarea.",
         "numberMinRequired": "Ingrese el valor mínimo.",
