@@ -1,3 +1,4 @@
+import { Navigate } from "react-router-dom"
 import type { ReactElement } from "react"
 import { Wrench } from "lucide-react"
 
@@ -53,8 +54,13 @@ export const assetsManifest = {
         permission: "inventory.categories.read",
       },
       {
+        path: "/ativos/categorias/novo",
+        element: <Navigate to="/ativos/tipos/novo" replace />,
+        permission: "inventory.categories.write",
+      },
+      {
         path: "/ativos/categorias",
-        element: <EquipmentPage />,
+        element: <Navigate to="/ativos/tipos" replace />,
         permission: "inventory.categories.read",
       },
     ] satisfies readonly FeatureRoute[],

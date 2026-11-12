@@ -431,7 +431,7 @@ describe("firstPermittedProductPath", () => {
   it("uses the first allowed child when the parent path is not permitted", () => {
     expect(
       firstPermittedProductPath(["inventory"], ["inventory.categories.read"]),
-    ).toBe("/ativos/categorias")
+    ).toBe("/ativos/tipos")
   })
 
   it("returns null when no module and permission pair is visible", () => {
@@ -597,7 +597,7 @@ describe("staff sidebar groups", () => {
   })
 
   it.each([
-    ["inventory", "inventory.categories.read", "nav.assets", "/ativos/categorias"],
+    ["inventory", "inventory.categories.read", "nav.assets", "/ativos/tipos"],
     ["rentals", "rentals.booking_policy.read", "nav.reservations", "/configuracoes/politica-reservas"],
     ["catalog", "core.registration_fields.read", "nav.peopleAccess", "/configuracoes/cadastro"],
   ])("keeps %s alternate-tab access without granting the main tab", (module, permission, label, path) => {

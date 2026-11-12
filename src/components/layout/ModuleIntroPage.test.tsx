@@ -59,7 +59,7 @@ afterEach(async () => {
 describe("module introductions", () => {
   it.each([
     ["bookings", "Reservas", "Recursos", "/configuracoes/recursos"],
-    ["maintenance", "Manutenção", "Tipos de equipamento", "/ativos/categorias"],
+    ["maintenance", "Manutenção", "Tipos de recurso", "/ativos/tipos"],
     ["pmoc", "Planos de manutenção", "Biblioteca Rolvix", "/pmoc/biblioteca"],
   ])("renders %s from navigation metadata", (key, title, shortcut, href) => {
     renderIntro(`/modulos/${key}`)
@@ -85,7 +85,7 @@ describe("module introductions", () => {
     renderIntro("/modulos/maintenance", { permissions: allPermissions, modules: ["inventory"] })
     const shortcuts = screen.getByRole("region", { name: "Atalhos" })
     expect(within(shortcuts).getByRole("link", { name: "Equipamentos" })).toHaveAttribute("href", "/ativos")
-    expect(within(shortcuts).getByRole("link", { name: "Tipos de equipamento" })).toBeInTheDocument()
+    expect(within(shortcuts).getByRole("link", { name: "Tipos de recurso" })).toBeInTheDocument()
     expect(within(shortcuts).queryByRole("link", { name: "Meus planos" })).not.toBeInTheDocument()
     expect(within(shortcuts).queryByRole("link", { name: "Ordens de serviço" })).not.toBeInTheDocument()
     expect(screen.queryByRole("link", { name: "Reservas" })).not.toBeInTheDocument()
