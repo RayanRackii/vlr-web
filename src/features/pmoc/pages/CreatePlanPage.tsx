@@ -345,6 +345,7 @@ export function CreatePlanPage({ maintenance = false }: { maintenance?: boolean 
                               aria-pressed={field.value === unit.value}
                               onClick={() => {
                                 field.onChange(unit.value)
+                                form.setValue("assetId", "")
                                 field.onBlur()
                               }}
                             >
