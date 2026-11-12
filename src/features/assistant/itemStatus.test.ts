@@ -69,6 +69,11 @@ describe("resource item status", () => {
       hasActiveTemplate: true,
     }).kind).toBe("published")
   })
+
+  it("uses a priced offer when the resource is not a direct rental", () => {
+    expect(resourceItemStatus({ ...readyResource, hasPrice: false, directRental: false, hasPricedOffer: false })).toEqual({ kind: "missing", count: 1 })
+    expect(resourceItemStatus({ ...readyResource, hasPrice: false, directRental: false, hasPricedOffer: true }).kind).toBe("published")
+  })
 })
 
 describe("product item status", () => {

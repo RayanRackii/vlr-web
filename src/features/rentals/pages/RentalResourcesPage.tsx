@@ -211,6 +211,7 @@ export function RentalResourcesPage() {
                       menuPublished: menuItems === null ? null : menuItems.some((item) => menuCoversAsset(item, asset.id)),
                       hasActiveTemplate: (templates ?? []).some((template) => template.rentalAssetId === asset.id && template.isActive),
                       hasPrice: priceByAssetId[asset.assetId] != null,
+                      directRental: asset.directRental !== false,
                     })} />
                     {asset.scheduledDeletionAt ? (
                       <Badge variant="destructive" className="resource-deletion-badge">
