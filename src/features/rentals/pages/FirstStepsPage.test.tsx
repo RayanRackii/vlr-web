@@ -18,6 +18,27 @@ describe("FirstStepsPage", () => {
     getSetupStatusMock.mockReset()
   })
 
+  it("waits for the server before showing a missing badge", async () => {
+    let resolveStatus: (value: Awaited<ReturnType<typeof getSetupStatus>>) => void = () => {}
+    getSetupStatusMock.mockReturnValue(new Promise((resolve) => {
+      resolveStatus = resolve
+    }))
+
+    render(
+      <MemoryRouter>
+        <FirstStepsPage />
+      </MemoryRouter>,
+    )
+
+    expect(screen.getByRole("status")).toHaveTextContent(i18n.t("common.loading"))
+    expect(screen.queryByText(i18n.t("assistant.firstSteps.state.missing"))).not.toBeInTheDocument()
+    resolveStatus({
+      checklist: [{ key: "hours", state: "missing" }],
+      resources: [],
+    })
+    expect(await screen.findByRole("heading", { name: i18n.t("assistant.firstSteps.hours") })).toBeInTheDocument()
+  })
+
   it("shows the server state for each row", async () => {
     getSetupStatusMock.mockResolvedValue({
       checklist: [

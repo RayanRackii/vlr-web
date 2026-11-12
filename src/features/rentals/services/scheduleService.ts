@@ -650,6 +650,20 @@ function toSchedulePolicyBody(body: UpdateSchedulePolicyInput) {
   return payload
 }
 
+export function groupAssetsByHours(
+  assets: readonly { id: string; openTime?: string | null; closeTime?: string | null }[],
+): { openTime: string; closeTime: string; ids: string[] }[] | null {
+  const groups = new Map<string, { openTime: string; closeTime: string; ids: string[] }>()
+  for (const asset of assets) {
+    if (!asset.openTime || !asset.closeTime) return null
+    const key = `${asset.openTime}\n${asset.closeTime}`
+    const group = groups.get(key) ?? { openTime: asset.openTime, closeTime: asset.closeTime, ids: [] }
+    group.ids.push(asset.id)
+    groups.set(key, group)
+  }
+  return [...groups.values()]
+}
+
 /**
  * Seeds hourly Open templates for an explicit interval. Callers must choose the hours.
  */

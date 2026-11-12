@@ -15,7 +15,6 @@ const continueHref: Partial<Record<(typeof checklistKeys)[number], string>> = {
   hours: "/configuracoes/agenda",
   resource: "/configuracoes/recursos",
   pricedOffer: "/catalogo/produtos",
-  company: "/configuracoes",
 }
 
 export function FirstStepsPage() {
@@ -41,7 +40,8 @@ export function FirstStepsPage() {
     <div className="mx-auto w-full min-w-0 max-w-3xl space-y-6">
       <PageHeader title={t("assistant.firstSteps.title")} description={t("assistant.firstSteps.description")} />
       {error ? <p role="alert" className="text-sm text-destructive">{t("assets.inventory.errors.loadFailed")}</p> : null}
-      <section className="space-y-3 rounded-xl border border-border bg-card p-4" aria-label={t("assistant.firstSteps.title")}>
+      {status === null && !error ? <p role="status">{t("common.loading")}</p> : null}
+      {status ? <section className="space-y-3 rounded-xl border border-border bg-card p-4" aria-label={t("assistant.firstSteps.title")}>
         {checklistKeys.map((key) => {
           const apiKey = key === "previewItem" ? "preview" : key
           const state = byKey.get(apiKey) ?? "missing"
@@ -63,7 +63,7 @@ export function FirstStepsPage() {
             </div>
           )
         })}
-      </section>
+      </section> : null}
     </div>
   )
 }
