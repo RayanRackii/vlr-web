@@ -29,6 +29,10 @@ vi.mock("@/features/pmoc/services/pmocPlanCategoriesService", () => ({
   listPlanAssetCategories: vi.fn(),
 }))
 
+vi.mock("@/features/workOrders/services/workOrdersService", () => ({
+  listWorkOrderAssets: vi.fn(async () => []),
+}))
+
 vi.mock("sonner", () => ({
   toast: {
     success: vi.fn(),
@@ -46,6 +50,7 @@ vi.mock("@/features/pmoc/services/pmocService", () => ({
 import { getUnits } from "@/features/assets/services/unitsService"
 import { listPlanAssetCategories } from "@/features/pmoc/services/pmocPlanCategoriesService"
 import { createPlan } from "@/features/pmoc/services/pmocService"
+import { listWorkOrderAssets } from "@/features/workOrders/services/workOrdersService"
 import { toast } from "sonner"
 
 const getUnitsMock = vi.mocked(getUnits)
@@ -437,5 +442,35 @@ describe("CreatePlanPage validity gate", () => {
       expect(input).not.toHaveAttribute("aria-describedby")
       expect(input).toHaveAttribute("aria-invalid", "false")
     }
+  })
+
+  it("saves a plan for one resource and leaves the type empty", async () => {
+    const assetId = "12121212-1212-4121-8121-121212121212"
+    vi.mocked(listWorkOrderAssets).mockResolvedValue([
+      {
+        id: assetId,
+        name: "Split 1",
+        tag: "AC-1",
+        unitId: UNIT_ID,
+        categoryId: CATEGORY_ID,
+        status: "Active",
+        scheduledDeletionAt: null,
+      },
+    ])
+    createPlanMock.mockResolvedValue({ id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa" } as Awaited<ReturnType<typeof createPlan>>)
+    const user = userEvent.setup()
+    renderPage()
+    await user.type(await screen.findByLabelText(i18n.t("pmoc.create.form.name")), "PMOC Split")
+    await user.click(screen.getByRole("button", { name: "Sede" }))
+    await user.click(screen.getByRole("button", { name: i18n.t("pmoc.create.form.targetAsset") }))
+    await user.click(screen.getByRole("button", { name: "AC-1 — Split 1" }))
+    await user.type(screen.getByRole("spinbutton", { name: i18n.t("pmoc.scheduling.interval") }), "30")
+    await user.type(screen.getByLabelText(i18n.t("pmoc.scheduling.firstDue")), "14/10/2026")
+    await user.type(screen.getByLabelText(i18n.t("pmoc.create.tasks.title")), "Limpar filtro")
+    await user.click(screen.getByRole("button", { name: i18n.t("pmoc.create.actions.save") }))
+    await waitFor(() => expect(createPlanMock).toHaveBeenCalledWith(expect.objectContaining({
+      assetId: assetId,
+      assetCategoryId: null,
+    })))
   })
 })
