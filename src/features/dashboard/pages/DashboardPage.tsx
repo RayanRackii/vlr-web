@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react"
+import { Link } from "react-router-dom"
 import { usePermissions } from "@/features/users/permissions/PermissionContext"
 import { BarChart3, Layers } from "lucide-react"
 import { useTranslation } from "react-i18next"
@@ -218,6 +219,13 @@ export function TenantAdminDashboard() {
   return (
     <div aria-busy={isLoading} className="staff-dashboard">
       <DashboardHero metrics={visibleMetrics} />
+      {activeModules.includes("rentals") && can("rentals.assets.read") && can("core.units.read") ? (
+        <p className="text-sm">
+          <Link className="inline-flex min-h-11 items-center font-medium text-primary underline-offset-4 hover:underline" to="/primeiros-passos">
+            {t("assistant.firstSteps.title")}
+          </Link>
+        </p>
+      ) : null}
       <div className="staff-dashboard-readiness"><RentalsReadinessCard /></div>
       {showAgenda ? <div className="staff-dashboard-today-agenda"><TodayAgendaCard /></div> : null}
 

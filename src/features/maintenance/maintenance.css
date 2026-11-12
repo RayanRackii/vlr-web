@@ -27,6 +27,10 @@
 .maintenance-form > div { max-width: none; }
 .maintenance-form form { max-width: 640px; }
 .maintenance-form form .grid { grid-template-columns: minmax(0, 1fr); }
+.maintenance-form form :is([data-slot="form-label"], [data-slot="form-item"], legend) {
+  overflow-wrap: normal;
+  word-break: normal;
+}
 .maintenance-form h1 { font-size: 1.25rem; }
 @media (min-width: 640px) { .maintenance-form h1 { font-size: 1.5rem; } }
 
