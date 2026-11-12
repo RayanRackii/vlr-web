@@ -675,9 +675,9 @@ export function AssetsPage() {
       action={columnFilters.length ? (
         <Button onClick={() => setColumnFilters([])}>{t("emptyStates.clearFilters")}</Button>
       ) : categories.length === 0 && !categoriesDenied && canWriteCategories ? (
-        <Button onClick={() => { void navigate("/ativos/categorias") }}>{t("assets.inventory.emptyNoTypesCta")}</Button>
+        <Button onClick={() => { void navigate("/ativos/tipos") }}>{t("assets.inventory.emptyNoTypesCta")}</Button>
       ) : categories.length > 0 && canWriteAssets ? (
-        <Button disabled={!canOpenWizard} onClick={() => openWizard("create")}>{t("assets.inventory.emptyWithTypesCta")}</Button>
+        <Button disabled={!canOpenWizard} onClick={() => { void navigate("/ativos/novo") }}>{t("assets.inventory.emptyWithTypesCta")}</Button>
       ) : undefined}
     />
   )
@@ -699,7 +699,7 @@ export function AssetsPage() {
             <Button
               type="button"
               onClick={() => {
-                openWizard("create")
+                void navigate("/ativos/novo")
               }}
               disabled={!canOpenWizard}
             >

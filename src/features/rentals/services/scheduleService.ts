@@ -158,6 +158,17 @@ export function isPersistedSlotId(id: string | null | undefined): boolean {
   return Boolean(id && id !== EMPTY_SLOT_ID)
 }
 
+export async function setDirectRental(rentalAssetId: string, directRental: boolean) {
+  try {
+    const response = await api.put<unknown>(`/api/rental-assets/${rentalAssetId}/direct-rental`, { directRental })
+    const parsed = rentalAssetSchema.safeParse(response.data)
+    if (!parsed.success) throw new Error(i18n.t("apiErrors.invalidResponse"))
+    return parsed.data
+  } catch (error) {
+    throw new Error(parseApiError(getAxiosErrorPayload(error), i18n.t("rentals.resources.errors.save")), { cause: error })
+  }
+}
+
 export const rentalAssetSchema = z.object({
   tag: z.string().nullable().optional(),
   id: z.string().uuid(),
@@ -187,6 +198,7 @@ export const rentalAssetSchema = z.object({
   /** Stored override. Null inherits. This percent is not applied to a charge. */
   depositPercent: z.number().int().min(0).max(100).nullable().optional(),
   effectiveDepositPercent: z.number().int().min(0).max(100).nullable().optional(),
+  directRental: z.boolean().optional(),
   /** Stored override. Null inherits the tenant policy. Absent means not sent. */
   maxAdvanceBookingDays: z
     .number()
@@ -650,14 +662,28 @@ function toSchedulePolicyBody(body: UpdateSchedulePolicyInput) {
   return payload
 }
 
+export function groupAssetsByHours(
+  assets: readonly { id: string; openTime?: string | null; closeTime?: string | null }[],
+): { openTime: string; closeTime: string; ids: string[] }[] | null {
+  const groups = new Map<string, { openTime: string; closeTime: string; ids: string[] }>()
+  for (const asset of assets) {
+    if (!asset.openTime || !asset.closeTime) return null
+    const key = `${asset.openTime}\n${asset.closeTime}`
+    const group = groups.get(key) ?? { openTime: asset.openTime, closeTime: asset.closeTime, ids: [] }
+    group.ids.push(asset.id)
+    groups.set(key, group)
+  }
+  return [...groups.values()]
+}
+
 /**
- * Seeds Sun–Sat hourly Open templates (default 08:00–22:00) in one API call.
+ * Seeds hourly Open templates for an explicit interval. Callers must choose the hours.
  */
 export async function seedDefaultHourlyTemplates(
   rentalAssetIds: string | readonly string[],
-  options?: {
-    openTime?: string
-    closeTime?: string
+  options: {
+    openTime: string
+    closeTime: string
     slotMinutes?: number
   },
 ): Promise<number> {
@@ -666,13 +692,9 @@ export async function seedDefaultHourlyTemplates(
     const response = await api.post("/api/schedule/templates/seed-default", {
       rentalAssetId: ids.length === 1 ? ids[0] : undefined,
       rentalAssetIds: ids,
-      openTime: options?.openTime
-        ? normalizeScheduleTime(options.openTime).slice(0, 8)
-        : "08:00:00",
-      closeTime: options?.closeTime
-        ? normalizeScheduleTime(options.closeTime).slice(0, 8)
-        : "22:00:00",
-      slotMinutes: options?.slotMinutes ?? 60,
+      openTime: normalizeScheduleTime(options.openTime).slice(0, 8),
+      closeTime: normalizeScheduleTime(options.closeTime).slice(0, 8),
+      slotMinutes: options.slotMinutes ?? 60,
     })
     const parsed = z
       .object({ created: z.number(), skipped: z.number() })

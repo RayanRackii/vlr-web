@@ -93,7 +93,7 @@ describe("pmocService Phase 1 methods", () => {
       description: basePlanJson.description,
       intervalDays: basePlanJson.intervalDays,
       firstDueDate: basePlanJson.firstDueDate,
-      assetCategoryId: basePlanJson.assetCategoryId,
+      assetCategoryId: basePlanJson.assetCategoryId ?? null,
       isActive: true,
       autoGenerateEnabled: true,
     })
@@ -104,7 +104,7 @@ describe("pmocService Phase 1 methods", () => {
       description: basePlanJson.description,
       intervalDays: basePlanJson.intervalDays,
       firstDueDate: basePlanJson.firstDueDate,
-      assetCategoryId: basePlanJson.assetCategoryId,
+      assetCategoryId: basePlanJson.assetCategoryId ?? null,
       isActive: true,
       autoGenerateEnabled: true,
     })
@@ -156,7 +156,7 @@ describe("pmocService Phase 1 methods", () => {
     await createFromTemplate({
       templateId: TEMPLATE_ID,
       unitId: basePlanJson.unitId,
-      assetCategoryId: basePlanJson.assetCategoryId,
+      assetCategoryId: basePlanJson.assetCategoryId ?? "dddddddd-dddd-4ddd-8ddd-dddddddddddd",
       intervalDays: 30,
       firstDueDate: "2026-01-15",
       name: "Clone",
@@ -168,7 +168,7 @@ describe("pmocService Phase 1 methods", () => {
       expect.objectContaining({
         templateId: TEMPLATE_ID,
         unitId: basePlanJson.unitId,
-        assetCategoryId: basePlanJson.assetCategoryId,
+        assetCategoryId: basePlanJson.assetCategoryId ?? "dddddddd-dddd-4ddd-8ddd-dddddddddddd",
         name: "Clone",
       }),
     )

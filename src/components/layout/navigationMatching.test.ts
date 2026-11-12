@@ -18,7 +18,7 @@ describe("navigation route matching", () => {
     ["/pmoc/biblioteca/template-1", "nav.pmoc", "nav.pmocNew", "nav.pmocLibrary", true],
     ["/ativos", "nav.assets", undefined, "nav.assetsInventory", false],
     ["/ativos/asset-1", "nav.assets", undefined, "nav.assetsInventory", true],
-    ["/ativos/categorias/", "nav.assets", undefined, "nav.assetsCategories", false],
+    ["/ativos/tipos/", "nav.assets", undefined, "nav.assetsResourceTypes", false],
     ["/configuracoes/politica-reservas", "nav.reservations", undefined, "nav.bookingPolicy", false],
     ["/configuracoes/cadastro", "nav.peopleAccess", undefined, "nav.registrationFields", false],
     ["/os/order-1", "nav.workOrders", undefined, undefined, true],
@@ -38,7 +38,7 @@ describe("navigation route matching", () => {
 
   it("matches a permitted tab when it is the parent's first available destination", () => {
     const items = filterNavigationItemsByAccess(appNavigationItems, ["inventory"], ["inventory.categories.read"])
-    expect(matchNavigationPath(items, "/ativos/categorias")?.item.labelKey).toBe("nav.assets")
+    expect(matchNavigationPath(items, "/ativos/tipos")?.item.labelKey).toBe("nav.assets")
     expect(matchNavigationPath(items, "/ativos/private-asset")).toBeUndefined()
   })
 })

@@ -34,15 +34,17 @@ type WeeklyRuleBaseline = {
   occupancyKindId: string
 }
 
-const RULE_OPEN_TIME = "08:00"
-const RULE_CLOSE_TIME = "22:00"
+const PRESET_OPEN = "09:00"
+const PRESET_CLOSE = "18:00"
 const RULE_SLOT_MINUTES = 60
+const COMMERCIAL_DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
+type HourPreset = "commercial" | "everyday" | "custom"
 
-function weeklyRuleBaseline(_weekday: string, kindId: string): WeeklyRuleBaseline {
+function weeklyRuleBaseline(kindId: string): WeeklyRuleBaseline {
   return {
     days: [],
-    openTime: RULE_OPEN_TIME,
-    closeTime: RULE_CLOSE_TIME,
+    openTime: "",
+    closeTime: "",
     slotMinutes: RULE_SLOT_MINUTES,
     occupancyKindId: kindId,
   }
@@ -79,7 +81,6 @@ export function WeeklyRuleSheet({
   open,
   onOpenChange,
   selectedRentalAssetIds,
-  weekday,
   kinds,
   defaultKindId,
   busy,
@@ -91,11 +92,12 @@ export function WeeklyRuleSheet({
 }: WeeklyRuleSheetProps) {
   const { t } = useTranslation()
   const [days, setDays] = useState<string[]>([])
-  const [openTime, setOpenTime] = useState(RULE_OPEN_TIME)
-  const [closeTime, setCloseTime] = useState(RULE_CLOSE_TIME)
+  const [preset, setPreset] = useState<HourPreset | null>(null)
+  const [openTime, setOpenTime] = useState("")
+  const [closeTime, setCloseTime] = useState("")
   const [slotMinutes, setSlotMinutes] = useState(RULE_SLOT_MINUTES)
   const [occupancyKindId, setOccupancyKindId] = useState(defaultKindId)
-  const [baseline, setBaseline] = useState<WeeklyRuleBaseline>(() => weeklyRuleBaseline(weekday, defaultKindId))
+  const [baseline, setBaseline] = useState<WeeklyRuleBaseline>(() => weeklyRuleBaseline(defaultKindId))
   const hasValidTimes = HH_MM.test(openTime) && HH_MM.test(closeTime)
 
   let currentDays = days
@@ -108,13 +110,14 @@ export function WeeklyRuleSheet({
   if (wasOpen !== open) {
     setWasOpen(open)
     if (open) {
-      const next = weeklyRuleBaseline(weekday, defaultKindId)
+      const next = weeklyRuleBaseline(defaultKindId)
       currentDays = [...next.days]
       currentOpen = next.openTime
       currentClose = next.closeTime
       currentSlot = next.slotMinutes
       currentKind = next.occupancyKindId
       currentBaseline = next
+      setPreset(null)
       setDays(currentDays)
       setOpenTime(currentOpen)
       setCloseTime(currentClose)
@@ -158,6 +161,38 @@ export function WeeklyRuleSheet({
       }}
     >
       <div className="flex flex-col gap-4">
+        <fieldset>
+          <legend className="mb-2 text-sm font-medium">{t("rentals.schedule.presets.legend")}</legend>
+          <div className="flex flex-wrap gap-2" role="radiogroup" aria-label={t("rentals.schedule.presets.legend")}>
+            {(["commercial", "everyday", "custom"] as const).map((id) => (
+              <button
+                key={id}
+                type="button"
+                role="radio"
+                aria-checked={preset === id}
+                disabled={busy || readOnly}
+                className={scheduleChipClassName(preset === id)}
+                onClick={() => {
+                  setPreset(id)
+                  if (id === "commercial") {
+                    setDays([...COMMERCIAL_DAYS])
+                    setOpenTime(PRESET_OPEN)
+                    setCloseTime(PRESET_CLOSE)
+                  } else if (id === "everyday") {
+                    setDays([...DAY_NAMES])
+                    setOpenTime(PRESET_OPEN)
+                    setCloseTime(PRESET_CLOSE)
+                  }
+                }}
+              >
+                {t(`rentals.schedule.presets.${id}`)}
+              </button>
+            ))}
+          </div>
+          <p className="mt-2 text-xs text-muted-foreground">
+            {t(preset === "custom" ? "rentals.schedule.presets.customHelp" : "rentals.schedule.presets.help")}
+          </p>
+        </fieldset>
         <fieldset>
           <legend className="mb-2 text-sm font-medium">
             {t("rentals.schedule.weeklyRule.days")}
@@ -242,6 +277,7 @@ export function WeeklyRuleSheet({
           disabled={
             busy ||
             readOnly ||
+            preset === null ||
             selectedRentalAssetIds.length === 0 ||
             days.length === 0 ||
             !ruleKindId ||

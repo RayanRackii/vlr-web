@@ -70,7 +70,7 @@ function renderHome() {
           <Route
             element={<PermissionRoute permission="inventory.categories.read" />}
           >
-            <Route path="/ativos/categorias" element={<h1>Categorias</h1>} />
+            <Route path="/ativos/tipos" element={<h1>Tipos de recurso</h1>} />
           </Route>
         </Routes>
       </PermissionProvider>
@@ -122,7 +122,7 @@ describe("DashboardHomeRoute", () => {
     renderHome()
 
     expect(
-      await screen.findByRole("heading", { name: "Categorias" }),
+      await screen.findByRole("heading", { name: "Tipos de recurso" }),
     ).toBeInTheDocument()
     expect(screen.queryByRole("heading", { name: "Acesso negado" })).not.toBeInTheDocument()
   })

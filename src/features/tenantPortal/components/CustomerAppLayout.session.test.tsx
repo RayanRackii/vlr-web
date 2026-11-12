@@ -154,6 +154,7 @@ describe("CustomerAppLayout session tenant", () => {
     window.history.pushState({}, "", "/")
     fetchBranding.mockReset()
     fetchMenu.mockReset()
+    fetchMenu.mockResolvedValue([])
     await i18n.changeLanguage("pt-BR")
   })
 

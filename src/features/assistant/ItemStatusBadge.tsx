@@ -10,7 +10,9 @@ const tone: Record<ItemStatus["kind"], string> = {
 export function ItemStatusBadge({ status }: { status: ItemStatus }) {
   const { t } = useTranslation()
   const label = status.kind === "missing"
-    ? t("assistant.status.missing", { count: status.count })
+    ? status.gap
+      ? t(`assistant.status.gap.${status.gap}`)
+      : t("assistant.status.missing", { count: status.count })
     : t(`assistant.status.${status.kind}`)
   return (
     <span className={`inline-flex min-h-6 items-center rounded-full border px-2 text-xs font-medium ${tone[status.kind]}`}>

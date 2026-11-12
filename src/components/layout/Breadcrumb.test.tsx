@@ -59,7 +59,7 @@ describe("staff breadcrumb", () => {
   })
 
   it.each([
-    ["/ativos/categorias", "Equipamentos", "Tipos de equipamento", "/ativos"],
+    ["/ativos/tipos", "Equipamentos", "Tipos de recurso", "/ativos"],
     ["/configuracoes/politica-reservas", "Reservas", "Regras de reserva", "/configuracoes/reservas"],
     ["/configuracoes/cadastro", "Pessoas e acesso", "Formulário de cadastro", "/pessoas-e-acesso"],
     ["/pmoc/biblioteca", "Novo plano", "Biblioteca Rolvix", "/pmoc/novo"],
@@ -71,12 +71,12 @@ describe("staff breadcrumb", () => {
   })
 
   it.each([
-    ["pt-BR", "Caminho de navegação", "Equipamentos", "Tipos de equipamento", "Detalhes"],
-    ["en", "Breadcrumb", "Equipment", "Equipment types", "Details"],
-    ["es", "Ruta de navegación", "Equipos", "Tipos de equipo", "Detalles"],
+    ["pt-BR", "Caminho de navegação", "Equipamentos", "Tipos de recurso", "Detalhes"],
+    ["en", "Breadcrumb", "Equipment", "Resource types", "Details"],
+    ["es", "Ruta de navegación", "Equipos", "Tipos de recurso", "Detalles"],
   ])("translates navigation, tabs and fallback in %s", async (locale, label, parent, tab, details) => {
     await i18n.changeLanguage(locale)
-    const view = renderBreadcrumb("/ativos/categorias")
+    const view = renderBreadcrumb("/ativos/tipos")
     const nav = screen.getByRole("navigation", { name: label })
     expect(within(nav).getByRole("link", { name: parent })).toBeInTheDocument()
     expect(within(nav).getByText(tab)).toHaveAttribute("aria-current", "page")
@@ -151,7 +151,7 @@ describe("staff breadcrumb", () => {
     ["/pmoc/novo", "Planos de manutenção", "", "Novo plano", [], []],
     ["/pessoas-e-acesso/funcoes/nova", "Pessoas e acesso", "/pessoas-e-acesso", "Nova função", [], []],
     ["/ativos/novo", "Equipamentos", "/ativos", "Novo equipamento", [], []],
-    ["/ativos/categorias/novo", "Tipos de equipamento", "/ativos/categorias", "Novo tipo", [], []],
+    ["/ativos/tipos/novo", "Tipos de recurso", "/ativos/tipos", "Novo tipo", [], []],
   ] as const)("names %s with a singular create label", (path, parent, href, label, extraPermissions, extraModules) => {
     render(
       <MemoryRouter initialEntries={[path]}>

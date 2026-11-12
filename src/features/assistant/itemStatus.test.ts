@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest"
-import { productItemStatus, resourceItemStatus, type ResourceStatusInput } from "./itemStatus"
+import { productItemStatus, resourceItemStatus, statusFromServer, type ResourceStatusInput } from "./itemStatus"
 
 const readyResource: ResourceStatusInput = {
   name: "Estúdio A",
@@ -15,6 +15,17 @@ const readyResource: ResourceStatusInput = {
   hasActiveTemplate: false,
   hasPrice: true,
 }
+
+describe("server item status", () => {
+  it("uses the first missing key from the server", () => {
+    expect(statusFromServer("missing", ["horarios", "preco"])).toEqual({
+      kind: "missing",
+      count: 2,
+      gap: "horarios",
+    })
+    expect(statusFromServer("published", [])).toEqual({ kind: "published" })
+  })
+})
 
 describe("resource item status", () => {
   it("is published only when every step is done and the menu is on", () => {
@@ -57,6 +68,11 @@ describe("resource item status", () => {
       schedulePolicy: "SlotGrid",
       hasActiveTemplate: true,
     }).kind).toBe("published")
+  })
+
+  it("uses a priced offer when the resource is not a direct rental", () => {
+    expect(resourceItemStatus({ ...readyResource, hasPrice: false, directRental: false, hasPricedOffer: false })).toEqual({ kind: "missing", count: 1 })
+    expect(resourceItemStatus({ ...readyResource, hasPrice: false, directRental: false, hasPricedOffer: true }).kind).toBe("published")
   })
 })
 

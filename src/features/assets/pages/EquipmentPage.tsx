@@ -1,7 +1,7 @@
 import { FeatureRouteTabs } from "@/components/layout/FeatureRouteTabs"
 import { equipmentTabs } from "@/features/assets/navigationTabs"
 import { AssetsPage } from "@/features/assets/pages/AssetsPage"
-import { AssetCategoriesPage } from "@/features/assets/pages/AssetCategoriesPage"
+import { ResourceTypesPage } from "@/features/assets/pages/ResourceTypesPage"
 
 export function EquipmentPage() {
   return (
@@ -10,7 +10,7 @@ export function EquipmentPage() {
       tabs={equipmentTabs}
       content={{
         "/ativos": <AssetsPage />,
-        "/ativos/categorias": <AssetCategoriesPage />,
+        "/ativos/tipos": <ResourceTypesPage />,
       }}
     />
   )

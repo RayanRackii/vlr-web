@@ -256,8 +256,15 @@ export function useResourceWizard(rentalAssetId: string) {
     if (!asset) {
       return
     }
+    if (!asset.openTime || !asset.closeTime) {
+      toast.error(t("rentals.schedule.presets.required"))
+      return
+    }
     void run("seed", async () => {
-      const created = await seedDefaultHourlyTemplates(asset.id)
+      const created = await seedDefaultHourlyTemplates(asset.id, {
+        openTime: asset.openTime!,
+        closeTime: asset.closeTime!,
+      })
       toast.success(t("rentals.schedule.seedSuccess", { count: created }))
     })
   }

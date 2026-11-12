@@ -101,7 +101,8 @@ export const maintenancePlanSchema = z.object({
   description: z.string().nullish(),
   intervalDays: z.number().int().min(PMOC_MIN_INTERVAL_DAYS).max(PMOC_MAX_INTERVAL_DAYS),
   firstDueDate: civilDateSchema,
-  assetCategoryId: z.string().uuid(),
+  assetCategoryId: z.string().uuid().nullish(),
+  assetId: z.string().uuid().nullish(),
   isActive: z.boolean(),
   originKind: maintenancePlanOriginKindResponseSchema,
   sourceTemplateId: z.string().uuid().nullable(),
@@ -126,16 +127,32 @@ export const createPlanTaskRequestSchema = z.object({
 
 export type CreatePlanTaskRequest = z.infer<typeof createPlanTaskRequestSchema>
 
+function exactlyOnePlanTarget(
+  value: { assetCategoryId?: string | null; assetId?: string | null },
+  ctx: z.RefinementCtx,
+) {
+  const hasCategory = Boolean(value.assetCategoryId)
+  const hasAsset = Boolean(value.assetId)
+  if (hasCategory === hasAsset) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["assetCategoryId"],
+      message: "A plan targets a type or one resource.",
+    })
+  }
+}
+
 export const createMaintenancePlanRequestSchema = z.object({
   unitId: z.string().uuid(),
   name: z.string().trim().min(1).max(200),
   description: z.string().trim().nullish(),
   intervalDays: z.number().int().min(PMOC_MIN_INTERVAL_DAYS).max(PMOC_MAX_INTERVAL_DAYS),
   firstDueDate: civilDateSchema,
-  assetCategoryId: z.string().uuid(),
+  assetCategoryId: z.string().uuid().nullable(),
+  assetId: z.string().uuid().nullish(),
   isActive: z.boolean(),
   tasks: z.array(createPlanTaskRequestSchema).min(1),
-})
+}).superRefine(exactlyOnePlanTarget)
 
 export type CreateMaintenancePlanRequest = z.infer<
   typeof createMaintenancePlanRequestSchema
@@ -147,10 +164,11 @@ export const updateMaintenancePlanRequestSchema = z.object({
   description: z.string().trim().nullish(),
   intervalDays: z.number().int().min(PMOC_MIN_INTERVAL_DAYS).max(PMOC_MAX_INTERVAL_DAYS),
   firstDueDate: civilDateSchema,
-  assetCategoryId: z.string().uuid(),
+  assetCategoryId: z.string().uuid().nullable(),
+  assetId: z.string().uuid().nullish(),
   isActive: z.boolean(),
   autoGenerateEnabled: z.boolean(),
-})
+}).superRefine(exactlyOnePlanTarget)
 
 export type UpdateMaintenancePlanRequest = z.infer<
   typeof updateMaintenancePlanRequestSchema
@@ -207,6 +225,7 @@ export function createPlanFormSchema(messages: {
   firstDueRequired: string
   firstDueInvalid: string
   categoryRequired: string
+  assetRequired: string
   taskTitleRequired: string
   tasksRequired: string
   numberMinRequired: string
@@ -257,7 +276,7 @@ export function createPlanFormSchema(messages: {
       }
     })
 
-  return z.object({
+  const shared = z.object({
     unitId: z
       .string()
       .min(1, messages.unitRequired)
@@ -266,13 +285,22 @@ export function createPlanFormSchema(messages: {
     description: z.string().trim().optional(),
     intervalDays: intervalDaysSchema(messages.intervalInvalid),
     firstDueDate: civilDateFormSchema(messages.firstDueRequired, messages.firstDueInvalid),
-    assetCategoryId: z
-      .string()
-      .min(1, messages.categoryRequired)
-      .uuid(messages.categoryRequired),
     isActive: z.boolean(),
     tasks: z.array(taskSchema).min(1, messages.tasksRequired),
   })
+  const target = z.discriminatedUnion("target", [
+    z.object({
+      target: z.literal("type"),
+      assetCategoryId: z.string().min(1, messages.categoryRequired).uuid(messages.categoryRequired),
+      assetId: z.string().optional(),
+    }),
+    z.object({
+      target: z.literal("asset"),
+      assetId: z.string().min(1, messages.assetRequired).uuid(messages.assetRequired),
+      assetCategoryId: z.string().optional(),
+    }),
+  ])
+  return shared.and(target)
 }
 
 export type CreatePlanFormValues = z.infer<
@@ -291,7 +319,8 @@ export function buildCreatePlanRequest(
         : null,
     intervalDays: values.intervalDays,
     firstDueDate: values.firstDueDate,
-    assetCategoryId: values.assetCategoryId,
+    assetCategoryId: values.target === "asset" ? null : values.assetCategoryId,
+    ...(values.target === "asset" ? { assetId: values.assetId } : {}),
     isActive: values.isActive,
     tasks: values.tasks.map((task, index) => ({
       title: task.title,
@@ -315,7 +344,8 @@ export function buildHeaderUpdateFromPlan(
     description: plan.description ?? null,
     intervalDays: plan.intervalDays,
     firstDueDate: plan.firstDueDate,
-    assetCategoryId: plan.assetCategoryId,
+    assetCategoryId: plan.assetId ? null : plan.assetCategoryId ?? null,
+    ...(plan.assetId ? { assetId: plan.assetId } : {}),
     isActive: patch.isActive ?? plan.isActive,
     autoGenerateEnabled: patch.autoGenerateEnabled ?? plan.autoGenerateEnabled,
   })
