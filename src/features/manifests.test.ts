@@ -98,6 +98,7 @@ describe("feature manifests", () => {
       "/ativos/tipos/novo",
       "/ativos/tipos/:typeId",
       "/ativos/tipos",
+      "/ativos/categorias/novo",
       "/ativos/categorias",
     ])
     expect(pmocManifest.modules).toEqual(["pmoc"])

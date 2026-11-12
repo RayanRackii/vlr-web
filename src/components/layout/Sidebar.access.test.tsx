@@ -103,7 +103,7 @@ it.each([
   ["/manutencao", "Manutenção"],
   ["/manutencao/planos/novo", "Manutenção"],
   ["/manutencao/ordens/nova", "Manutenção"],
-  ["/ativos/categorias", "Equipamentos"],
+  ["/ativos/tipos", "Equipamentos"],
   ["/configuracoes/politica-reservas", "Reservas"],
   ["/configuracoes/cadastro", "Pessoas"],
 ])("keeps only the owning sidebar entry active at %s", (path, label) => {

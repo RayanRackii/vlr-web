@@ -17,7 +17,7 @@ vi.mock("@/features/admin/hooks/usePlatformTenantSession", () => ({
   usePlatformTenantSession: () => ({ isPlatformAdmin: false, isInTenantEnvironment: true }),
 }))
 vi.mock("@/features/assets/pages/AssetsPage", () => ({ AssetsPage: () => <div>equipment content</div> }))
-vi.mock("@/features/assets/pages/AssetCategoriesPage", () => ({ AssetCategoriesPage: () => <div>equipment types content</div> }))
+vi.mock("@/features/assets/pages/ResourceTypesPage", () => ({ ResourceTypesPage: () => <div>resource types content</div> }))
 vi.mock("@/features/rentals/pages/ReservationsPage", () => ({ ReservationsPage: () => <div>reservations content</div> }))
 vi.mock("@/features/rentals/pages/BookingPolicyPage", () => ({ BookingPolicyPage: () => <div>booking rules content</div> }))
 vi.mock("@/features/pmoc/pages/CreatePlanPage", () => ({ CreatePlanPage: () => <div>custom plan content</div> }))
@@ -61,7 +61,7 @@ function renderRoute(path: string, permissions: string[], modules: string[] = ["
 }
 
 const legacyTabs = [
-  { path: "/ativos/categorias", permission: "inventory.categories.read", content: "equipment types content", tab: "nav.assetsCategories", hidden: "nav.assetsInventory", module: "inventory" },
+  { path: "/ativos/categorias", permission: "inventory.categories.read", content: "resource types content", tab: "nav.assetsResourceTypes", hidden: "nav.assetsInventory", module: "inventory" },
   { path: "/configuracoes/politica-reservas", permission: "rentals.booking_policy.read", content: "booking rules content", tab: "nav.bookingPolicy", hidden: "nav.reservations", module: "rentals" },
   { path: "/pmoc/biblioteca", permission: "pmoc.templates.read", content: "library content", tab: "nav.pmocLibrary", hidden: "nav.pmocCustom", module: "pmoc" },
 ]
@@ -69,7 +69,7 @@ const legacyTabs = [
 describe("legacy sidebar URLs rendered inside their new screens", () => {
   it.each([
     ["/ativos/", "inventory.assets.read", "equipment content"],
-    ["/ativos/categorias/", "inventory.categories.read", "equipment types content"],
+    ["/ativos/categorias/", "inventory.categories.read", "resource types content"],
     ["/configuracoes/reservas/", "rentals.reservations.read", "reservations content"],
     ["/configuracoes/politica-reservas/", "rentals.booking_policy.read", "booking rules content"],
     ["/pmoc/novo/", "pmoc.plans.write", "custom plan content"],
