@@ -27,10 +27,20 @@ describe("weekly inline editors", () => {
     expect(container).toContainElement(editor)
     const user = userEvent.setup()
     expect(within(editor).getByRole("button", { name: i18n.t("rentals.schedule.days.Monday") })).toHaveAttribute("aria-pressed", "false")
+    expect(within(editor).getByRole("radio", { name: i18n.t("rentals.schedule.presets.commercial") })).toHaveAttribute("aria-checked", "false")
+    expect(within(editor).getByRole("button", { name: i18n.t("rentals.schedule.weeklyRule.apply") })).toBeDisabled()
+    await user.click(within(editor).getByRole("radio", { name: i18n.t("rentals.schedule.presets.custom") }))
     await user.click(within(editor).getByRole("button", { name: i18n.t("rentals.schedule.days.Tuesday") }))
+    await user.type(within(editor).getByLabelText(i18n.t("rentals.schedule.policy.openTime")), "10:00")
+    await user.type(within(editor).getByLabelText(i18n.t("rentals.schedule.policy.closeTime")), "19:00")
     await user.click(within(editor).getByRole("button", { name: "Manutenção" }))
     await user.click(within(editor).getByRole("button", { name: i18n.t("rentals.schedule.weeklyRule.apply") }))
-    expect(onApply).toHaveBeenCalledWith(expect.objectContaining({ daysOfWeek: ["Tuesday"], occupancyKindId: "maintenance" }))
+    expect(onApply).toHaveBeenCalledWith(expect.objectContaining({
+      daysOfWeek: ["Tuesday"],
+      openTime: "10:00",
+      closeTime: "19:00",
+      occupancyKindId: "maintenance",
+    }))
     expect(editor.querySelector('[role="combobox"], .lucide-chevron-down, .lucide-chevron-up')).toBeNull()
     expect(shared.onOpenChange).not.toHaveBeenCalled()
   })
@@ -81,11 +91,16 @@ describe("weekly inline editors", () => {
     render(<WeeklyRuleSheet {...shared} selectedRentalAssetIds={["room"]} weekday="Monday" onApply={onApply} />)
     const user = userEvent.setup()
     expect(screen.getByRole("button", { name: i18n.t("rentals.schedule.days.Monday") })).toHaveAttribute("aria-pressed", "false")
-    expect(screen.getByRole("button", { name: i18n.t("rentals.schedule.weeklyRule.apply") })).toBeDisabled()
+    const apply = screen.getByRole("button", { name: i18n.t("rentals.schedule.weeklyRule.apply") })
+    expect(apply).toBeDisabled()
     await user.click(screen.getByRole("button", { name: i18n.t("rentals.schedule.days.Monday") }))
-    expect(screen.getByRole("button", { name: i18n.t("rentals.schedule.weeklyRule.apply") })).toBeEnabled()
-    await user.click(screen.getByRole("button", { name: i18n.t("rentals.schedule.days.Monday") }))
-    expect(screen.getByRole("button", { name: i18n.t("rentals.schedule.weeklyRule.apply") })).toBeDisabled()
+    expect(apply).toBeDisabled()
+    await user.click(screen.getByRole("radio", { name: i18n.t("rentals.schedule.presets.commercial") }))
+    expect(apply).toBeEnabled()
+    for (const day of ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]) {
+      await user.click(screen.getByRole("button", { name: i18n.t(`rentals.schedule.days.${day}`) }))
+    }
+    expect(apply).toBeDisabled()
     await user.click(screen.getByRole("button", { name: i18n.t("common.cancel") }))
     expect(shared.onOpenChange).toHaveBeenCalledWith(false)
     expect(onApply).not.toHaveBeenCalled()

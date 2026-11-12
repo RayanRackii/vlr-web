@@ -68,6 +68,10 @@ vi.mock("@/features/tenantPortal/services/tenantPortalService", () => ({
   listTenantModuleMenuItems: vi.fn().mockResolvedValue([]),
 }))
 
+vi.mock("@/features/rentals/services/setupStatusService", () => ({
+  getSetupStatus: vi.fn(async () => ({ checklist: [], resources: [] })),
+}))
+
 vi.mock("@/features/rentals/services/rentalResourcesService", () => ({
   listRentalAssetCategories: vi.fn(),
   listRentalAssetFamilies: vi.fn(),

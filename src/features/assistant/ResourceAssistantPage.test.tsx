@@ -13,6 +13,9 @@ vi.mock("@/features/catalog/services/catalogService", () => ({
   listCatalogProducts: vi.fn(),
   getCatalogProductResourceRequirements: vi.fn(),
 }))
+vi.mock("@/features/rentals/services/setupStatusService", () => ({
+  getSetupStatus: vi.fn(async () => ({ checklist: [], resources: [] })),
+}))
 
 const rentalId = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"
 const productId = "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb"

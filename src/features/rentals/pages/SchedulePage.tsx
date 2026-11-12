@@ -50,6 +50,7 @@ import {
   listOccupancyKinds,
   listScheduleTemplates,
   publishScheduleDay,
+  groupAssetsByHours,
   seedDefaultHourlyTemplates,
   updateOccupancyKind,
   updateRentalSchedulePolicyBulk,
@@ -672,9 +673,21 @@ function AdminSchedulePage() {
     if (selectedRentalAssetIds.length === 0) {
       return
     }
+    const selected = assets.filter((asset) => selectedRentalAssetIds.includes(asset.id))
+    const groups = groupAssetsByHours(selected)
+    if (!groups) {
+      toast.error(t("rentals.schedule.presets.required"))
+      return
+    }
     beginBusy("seed")
     try {
-      const created = await seedDefaultHourlyTemplates(selectedRentalAssetIds)
+      let created = 0
+      for (const group of groups) {
+        created += await seedDefaultHourlyTemplates(group.ids, {
+          openTime: group.openTime,
+          closeTime: group.closeTime,
+        })
+      }
       toast.success(t("rentals.schedule.seedSuccess", { count: created }))
       await Promise.all([
         refreshWeeklyTemplates(),
