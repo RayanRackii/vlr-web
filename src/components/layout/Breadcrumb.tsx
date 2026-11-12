@@ -11,6 +11,7 @@ import { ICON_STROKE_WIDTH } from "@/lib/icon"
 
 const createTitleKey: Record<string, string> = {
   "/ativos/novo": "nav.createEquipment",
+  "/ativos/tipos/novo": "assets.resourceTypes.new",
   "/ativos/categorias/novo": "assets.categories.actions.new",
   "/catalogo/grupos/novo": "catalog.customerGroups.createTitle",
   "/catalogo/produtos/novo": "catalog.products.createTitle",

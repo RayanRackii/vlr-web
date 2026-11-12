@@ -28,6 +28,7 @@ export type AppNavigationChildItem = {
   labelKey:
     | "nav.assetsInventory"
     | "nav.assetsCategories"
+    | "nav.assetsResourceTypes"
     | "nav.pmocPlans"
     | "nav.pmocLibrary"
     | "nav.pmocNew"

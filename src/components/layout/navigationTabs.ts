@@ -5,6 +5,7 @@ export type NavigationTab = {
   labelKey:
     | "nav.assetsInventory"
     | "nav.assetsCategories"
+    | "nav.assetsResourceTypes"
     | "nav.reservations"
     | "nav.bookingPolicy"
     | "nav.pmocLibrary"

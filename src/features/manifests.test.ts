@@ -95,6 +95,7 @@ describe("feature manifests", () => {
     expect(assetsManifest.routes.staff.map((route) => route.path)).toEqual([
       "/ativos/novo",
       "/ativos",
+      "/ativos/tipos",
       "/ativos/categorias",
     ])
     expect(pmocManifest.modules).toEqual(["pmoc"])
