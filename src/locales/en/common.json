@@ -2166,6 +2166,7 @@
     "assets": "Equipment",
     "assetsInventory": "Equipment",
     "assetsCategories": "Equipment types",
+    "assetsResourceTypes": "Resource types",
     "pmoc": "Maintenance plans",
     "pmocPlans": "My plans",
     "pmocLibrary": "Rolvix library",
@@ -3194,6 +3195,27 @@
       "deleting": "Deleting...",
       "scheduledSuccess": "Deletion scheduled successfully for 30 days from now.",
       "permanentSuccess": "Item permanently deleted."
+    },
+    "resourceTypes": {
+      "title": "Resource types",
+      "subtitle": "Families of what your company books. Behavior comes from capabilities, not from the name.",
+      "search": "Search types",
+      "capability": "Capability",
+      "new": "New type",
+      "edit": "Edit",
+      "seeded": "Seeded",
+      "company": "Company",
+      "clientSees": "Customer sees: “{{singular}}”",
+      "ready": "ships ready with Rolvix",
+      "fields": "{{count}} custom fields",
+      "fieldsPublic": "{{count}} custom fields, {{publicCount}} public",
+      "resources_one": "{{count}} resource",
+      "resources_other": "{{count}} resources",
+      "bookable": "By the hour",
+      "deliverable": "Deliverable",
+      "maintenance": "Maintenance",
+      "empty": "No types found.",
+      "errors": { "load": "Could not load resource types." }
     },
     "categories": {
       "title": {

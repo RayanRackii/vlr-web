@@ -37,6 +37,11 @@ export const assetsManifest = {
         permission: "inventory.assets.read",
       },
       {
+        path: "/ativos/tipos",
+        element: <EquipmentPage />,
+        permission: "inventory.categories.read",
+      },
+      {
         path: "/ativos/categorias",
         element: <EquipmentPage />,
         permission: "inventory.categories.read",

@@ -2166,6 +2166,7 @@
     "assets": "Equipos",
     "assetsInventory": "Equipos",
     "assetsCategories": "Tipos de equipo",
+    "assetsResourceTypes": "Tipos de recurso",
     "pmoc": "Planes de mantenimiento",
     "pmocPlans": "Mis planes",
     "pmocLibrary": "Biblioteca Rolvix",
@@ -3194,6 +3195,27 @@
       "deleting": "Eliminando...",
       "scheduledSuccess": "Eliminación programada con éxito para dentro de 30 días.",
       "permanentSuccess": "Elemento eliminado permanentemente."
+    },
+    "resourceTypes": {
+      "title": "Tipos de recurso",
+      "subtitle": "Familias de lo que su empresa reserva. El comportamiento viene de las capacidades, no del nombre.",
+      "search": "Buscar tipo",
+      "capability": "Capacidad",
+      "new": "Nuevo tipo",
+      "edit": "Editar",
+      "seeded": "Sembrado",
+      "company": "De la empresa",
+      "clientSees": "El cliente ve: “{{singular}}”",
+      "ready": "viene listo con Rolvix",
+      "fields": "{{count}} campos personalizados",
+      "fieldsPublic": "{{count}} campos personalizados, {{publicCount}} públicos",
+      "resources_one": "{{count}} recurso",
+      "resources_other": "{{count}} recursos",
+      "bookable": "Por horario",
+      "deliverable": "Entregable",
+      "maintenance": "Mantenimiento",
+      "empty": "Ningún tipo encontrado.",
+      "errors": { "load": "No se pudieron cargar los tipos de recurso." }
     },
     "categories": {
       "title": {
