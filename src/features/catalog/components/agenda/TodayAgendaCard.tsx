@@ -142,6 +142,7 @@ function TodayAgendaCardContent() {
   const [items, setItems] = useState<CatalogAgendaItem[]>([])
   const [resources, setResources] = useState<{ id: string; name: string }[]>([])
   const [error, setError] = useState<string | null>(null)
+  const [denied, setDenied] = useState(false)
   const [attempt, setAttempt] = useState(0)
 
   const requestKey = mode ? `${mode}|${range.from}|${attempt}` : null
@@ -169,7 +170,10 @@ function TodayAgendaCardContent() {
     void load
       .catch((caught: unknown) => {
         if (!cancelled) {
-          setError(caught instanceof Error ? caught.message : t("apiErrors.loadCatalogAgenda"))
+          const message = caught instanceof Error ? caught.message : t("apiErrors.loadCatalogAgenda")
+          const forbidden = /forbidden/i.test(message)
+          setDenied(forbidden)
+          setError(forbidden ? null : message)
         }
       })
       .finally(() => {
@@ -272,6 +276,8 @@ function TodayAgendaCardContent() {
   }
 
   const visibleRows = sortedRows.slice(0, MAX_ROWS)
+
+  if (denied) return null
 
   return (
     <Card className="min-w-0">

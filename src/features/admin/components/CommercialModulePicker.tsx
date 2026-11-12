@@ -66,7 +66,7 @@ export function CommercialModulePicker({
           )
           const name = i18n.exists(presented.nameKey)
             ? t(presented.nameKey)
-            : presented.key
+            : t("admin.modules.unknown")
           const description = i18n.exists(presented.descriptionKey)
             ? t(presented.descriptionKey)
             : null
@@ -75,6 +75,7 @@ export function CommercialModulePicker({
             <button
               key={presented.key}
               type="button"
+              data-wizard-focus="activeModules"
               aria-pressed={selected}
               disabled={disabled}
               onClick={() => {

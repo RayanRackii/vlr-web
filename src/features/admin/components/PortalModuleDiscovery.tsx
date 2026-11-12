@@ -19,7 +19,7 @@ function ModuleCard({
 }) {
   const { t, i18n } = useTranslation()
   const Icon = entry.icon
-  const name = i18n.exists(entry.nameKey) ? t(entry.nameKey) : entry.key
+  const name = i18n.exists(entry.nameKey) ? t(entry.nameKey) : t("admin.modules.unknown")
   const description = i18n.exists(entry.exploreDescriptionKey)
     ? t(entry.exploreDescriptionKey)
     : null

@@ -3433,6 +3433,7 @@
         "unit": "Local físico deste recurso (sede, filial). Criada automaticamente no cadastro do cliente; gestão de unidades virá depois.",
         "category": "Tipo/classificação do recurso (ex.: Área externa). Defina tipos em Ativos → Tipos.",
         "family": "Família de atributos (espaços, bens, elétricos…). Controla campos extras do formulário.",
+        "voltage": "A voltagem diz qual rede elétrica este equipamento aceita, para não ligá-lo na instalação errada.",
         "name": "Nome do equipamento ou recurso exibido nas listas.",
         "tag": "Código curto único para identificar o recurso (ex.: EQ-01).",
         "location": "Onde fica no site (bloco, ala, referência). Opcional.",
@@ -4651,6 +4652,8 @@
       "Catalog": "Catálogo & Pedidos",
       "CatalogDescription": "Produtos, pedidos e notificações B2C.",
       "unknown": "Módulo",
+      "ResourcePlanning": "Planejamento de recursos",
+      "ResourcePlanningDescription": "Organiza a disponibilidade e o uso dos recursos.",
       "loadFailed": "Não foi possível carregar os módulos.",
       "retry": "Tentar novamente",
       "legacyMaintenanceNote": "Este cliente ainda tem o módulo legado Manutenção. Ele permanece ativo, mas não pode ser selecionado ou desativado aqui."
@@ -4712,6 +4715,7 @@
         "back": "Voltar",
         "backToDashboard": "Voltar ao painel",
         "next": "Continuar",
+        "missingTitle": "Para continuar, falta:",
         "finish": "Finalizar",
         "finishing": "Provisionando..."
       },
@@ -5028,6 +5032,7 @@
       "cutoffNotSaved": "O recurso foi salvo, mas o prazo de cancelamento não foi aplicado. Tente novamente.",
       "createError": "Não foi possível criar o recurso.",
       "updateError": "Não foi possível atualizar o recurso.",
+      "saveErrorSummary": "Não foi possível salvar. Revise os campos indicados.",
       "errorKinds": {
         "network": "Sem conexão com o servidor. Verifique sua internet e tente novamente.",
         "permission": "Você não tem permissão para esta ação ou sua sessão expirou.",

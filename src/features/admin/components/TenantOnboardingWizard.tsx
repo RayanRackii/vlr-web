@@ -58,8 +58,6 @@ import { formatLocaleCurrency } from "@/lib/localeFormat"
 import { cn } from "@/lib/utils"
 import { toast } from "sonner"
 
-const SUCCESS_REDIRECT_MS = 5000
-
 const STEP_COUNT = 6
 
 const FAMILY_ICONS: Record<string, LucideIcon> = {
@@ -93,6 +91,7 @@ export function TenantOnboardingWizard() {
   const { t, i18n } = useTranslation()
   const navigate = useNavigate()
   const [step, setStep] = useState(1)
+  const [missing, setMissing] = useState<string[]>([])
   const [isSubmitSuccess, setIsSubmitSuccess] = useState(false)
   const [isFinishing, setIsFinishing] = useState(false)
   const [families, setFamilies] = useState<AssetFamily[]>([])
@@ -104,7 +103,6 @@ export function TenantOnboardingWizard() {
     retry: retryModules,
     modulesAvailable,
   } = useAdminModuleCatalog()
-  const redirectTimeoutRef = useRef<number | null>(null)
   const finishInFlightRef = useRef(false)
   const portalUrlPlaceholder = useMemo(() => tenantPortalHrefPlaceholder(), [])
 
@@ -173,20 +171,30 @@ export function TenantOnboardingWizard() {
   }, [t])
 
   useEffect(() => {
-    return () => {
-      if (redirectTimeoutRef.current !== null) {
-        window.clearTimeout(redirectTimeoutRef.current)
-      }
-    }
-  }, [])
-
-  useEffect(() => {
     if (step !== 4) {
       return
     }
 
     void form.trigger("assetFamilyKeys")
   }, [step, form])
+
+  function showMissing(issues: readonly { path: PropertyKey[]; message: string }[], extra?: string) {
+    const messages: string[] = []
+    let field: string | undefined
+    for (const issue of issues) {
+      if (!field && issue.path.length > 0) field = String(issue.path[0])
+      if (issue.message && !messages.includes(issue.message)) messages.push(issue.message)
+    }
+    if (extra && !messages.includes(extra)) messages.unshift(extra)
+    setMissing(messages)
+    queueMicrotask(() => {
+      if (field === "activeModules" || field === "assetFamilyKeys") {
+        document.querySelector<HTMLElement>(`[data-wizard-focus="${field}"]`)?.focus()
+        return
+      }
+      if (field) void form.setFocus(field as keyof TenantOnboardingFormValues)
+    })
+  }
 
   async function handleNext() {
     if (isSubmitSuccess || isFinishing) {
@@ -201,9 +209,11 @@ export function TenantOnboardingWizard() {
 
       if (!parsed.success) {
         await form.trigger(["legalName", "taxId"])
+        showMissing(parsed.error.issues)
         return
       }
 
+      setMissing([])
       setStep(2)
       return
     }
@@ -225,19 +235,18 @@ export function TenantOnboardingWizard() {
           "accentColor",
           "welcomeTagline",
         ])
+        showMissing(parsed.error.issues)
         return
       }
 
+      setMissing([])
       setStep(3)
       return
     }
 
     if (step === 3) {
       if (!modulesAvailable) {
-        toast.error(t("admin.wizard.errorTitle"), {
-          description:
-            modulesError ?? t("admin.modules.loadFailed"),
-        })
+        showMissing([], modulesError ?? t("admin.modules.loadFailed"))
         return
       }
 
@@ -247,20 +256,18 @@ export function TenantOnboardingWizard() {
 
       if (!parsed.success) {
         await form.trigger(["activeModules"])
+        showMissing(parsed.error.issues)
         return
       }
 
+      setMissing([])
       setStep(4)
       return
     }
 
     if (step === 4) {
       if (families.length === 0) {
-        toast.error(t("admin.wizard.errorTitle"), {
-          description:
-            familiesError
-            ?? t("admin.wizard.errors.familiesLoadFailed"),
-        })
+        showMissing([], familiesError ?? t("admin.wizard.errors.familiesLoadFailed"))
         return
       }
 
@@ -270,9 +277,11 @@ export function TenantOnboardingWizard() {
 
       if (!parsed.success) {
         await form.trigger(["assetFamilyKeys"])
+        showMissing(parsed.error.issues)
         return
       }
 
+      setMissing([])
       setStep(5)
       return
     }
@@ -285,9 +294,11 @@ export function TenantOnboardingWizard() {
 
       if (!parsed.success) {
         await form.trigger(["adminFullName", "adminEmail"])
+        showMissing(parsed.error.issues)
         return
       }
 
+      setMissing([])
       setStep(6)
     }
   }
@@ -337,6 +348,8 @@ export function TenantOnboardingWizard() {
     const isValid = await form.trigger()
 
     if (!isValid) {
+      const parsed = schemas.tenantOnboardingSchema.safeParse(form.getValues())
+      if (!parsed.success) showMissing(parsed.error.issues)
       finishInFlightRef.current = false
       setIsFinishing(false)
       return
@@ -345,17 +358,14 @@ export function TenantOnboardingWizard() {
     const payload = toCreateTenantAdminRequest(form.getValues())
 
     try {
-      await createAdminTenant(payload)
+      const created = await createAdminTenant(payload)
 
       toast.success(t("admin.wizard.successTitle"), {
         description: t("admin.wizard.success"),
       })
 
       setIsSubmitSuccess(true)
-
-      redirectTimeoutRef.current = window.setTimeout(() => {
-        void navigate("/admin/dashboard", { replace: true })
-      }, SUCCESS_REDIRECT_MS)
+      void navigate(`/admin/tenants/${created.id}/edit`, { replace: true })
     } catch (error: unknown) {
       const message =
         error instanceof Error && error.message.trim().length > 0
@@ -442,6 +452,14 @@ export function TenantOnboardingWizard() {
         >
           <Card className="gap-0 py-0 shadow-sm">
             <CardContent className="space-y-6 px-6 py-6 md:px-8 md:py-8">
+          {missing.length > 0 ? (
+            <div role="alert">
+              <p className="text-sm font-medium text-destructive">{t("admin.wizard.actions.missingTitle")}</p>
+              <ul className="mt-1 list-disc space-y-1 pl-5 text-sm text-destructive">
+                {missing.map((message) => <li key={message}>{message}</li>)}
+              </ul>
+            </div>
+          ) : null}
           {step === 1 ? (
             <div className="space-y-4">
               <FormField
@@ -671,6 +689,7 @@ export function TenantOnboardingWizard() {
                         <button
                           key={family.id}
                           type="button"
+                          data-wizard-focus="assetFamilyKeys"
                           onClick={() => {
                             toggleFamily(family.key)
                           }}
@@ -861,7 +880,7 @@ export function TenantOnboardingWizard() {
               {step < STEP_COUNT ? (
                 <FormPrimaryButton
                   type="button"
-                  isValid={isCurrentStepValid}
+                  isValid
                   disabled={isActionLocked}
                   onClick={() => void handleNext()}
                 >

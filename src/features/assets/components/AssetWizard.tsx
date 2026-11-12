@@ -1172,6 +1172,9 @@ export function AssetWizard({
                             }}
                           />
                         )}
+                        {familyField.key === "voltage" || familyField.key === "volts" ? (
+                          <p id={`${idForField(key)}-help`} className="text-xs text-muted-foreground">{t("assets.wizard.help.voltage")}</p>
+                        ) : null}
                         {fieldErrors[key] ? (
                           <p id={`${idForField(key)}-error`} className="text-xs text-destructive">
                             {t(form.attributes[familyField.key]?.trim()

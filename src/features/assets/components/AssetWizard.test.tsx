@@ -183,6 +183,7 @@ describe("AssetWizard validity gate", () => {
       { key: "model", type: "text", required: false, label: "Modelo" },
     ] }])
     const voltage = screen.getByRole("spinbutton", { name: /^Voltagem/ })
+    expect(screen.getByText(i18n.t("assets.wizard.help.voltage"))).toBeInTheDocument()
     expect(voltage).toHaveAttribute("aria-required", "true")
     expect((voltage as HTMLInputElement).labels?.[0]).toHaveTextContent("*")
     expect(voltage).not.toHaveAttribute("aria-invalid", "true")

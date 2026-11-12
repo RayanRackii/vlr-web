@@ -1,4 +1,4 @@
-import { render, screen, within } from "@testing-library/react"
+import { render, screen, waitFor, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { MemoryRouter } from "react-router-dom"
 import { beforeEach, describe, expect, it, vi } from "vitest"
@@ -40,6 +40,14 @@ describe("staff dashboard states", () => {
     expect(screen.getByRole("link", { name: /Manutenção.*Abrir/ })).toHaveAttribute("href", "/manutencao")
     expect(screen.queryByRole("link", { name: /Reservas/ })).not.toBeInTheDocument()
     expect(screen.getByRole("heading", { level: 2, name: "Clientes no portal" })).toBeInTheDocument()
+  })
+
+  it("hides widgets when the tenant answers FORBIDDEN instead of showing the error", async () => {
+    vi.mocked(getDashboardMetrics).mockRejectedValue(new Error("FORBIDDEN"))
+    renderDashboard(["core.dashboard.read"], ["catalog", "rentals"])
+    await waitFor(() => expect(getDashboardMetrics).toHaveBeenCalled())
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument()
+    expect(screen.queryByText("FORBIDDEN")).not.toBeInTheDocument()
   })
 
   it("offers a retry after a failed load and then displays the recovered indicators", async () => {

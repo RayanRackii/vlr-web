@@ -219,6 +219,27 @@ describe("RentalResourcesPage", () => {
     expect(screen.getByRole("heading", { name: "Cadastro salvo" })).toBeVisible()
   })
 
+  it("moves Espaço/Bem with the keyboard and shows API validation on the field and in a summary", async () => {
+    const { AxiosError } = await import("axios")
+    const error = new AxiosError("Request failed")
+    error.response = { status: 400, data: { errors: { Name: ["Informe um nome válido."] } } } as never
+    createMock.mockRejectedValue(error)
+    const user = userEvent.setup()
+    renderPage(WRITE_PERMS, "/configuracoes/recursos/novo")
+    const space = await screen.findByRole("radio", { name: i18n.t("rentals.resources.typeLocation") })
+    space.focus()
+    await user.keyboard("{ArrowRight}")
+    expect(screen.getByRole("radio", { name: i18n.t("rentals.resources.typeGood") })).toBeChecked()
+    await user.keyboard(" ")
+    expect(screen.getByRole("radio", { name: i18n.t("rentals.resources.typeGood") })).toBeChecked()
+    await user.type(screen.getByRole("textbox", { name: i18n.t("rentals.resources.form.name") }), "Sala")
+    await user.click(screen.getByRole("button", { name: i18n.t("rentals.resources.saveCreate") }))
+    const summary = await screen.findByRole("alert")
+    expect(summary).toHaveTextContent(i18n.t("rentals.resources.saveErrorSummary"))
+    expect(summary).toHaveTextContent("Informe um nome válido.")
+    expect(screen.getAllByText("Informe um nome válido.")).toHaveLength(2)
+  })
+
   it("opens the create page directly with the footer save gated by validity", async () => {
     renderPage(WRITE_PERMS, "/configuracoes/recursos/novo")
     expect(await screen.findByRole("heading", { name: i18n.t("rentals.resources.add"), level: 1 })).toBeVisible()

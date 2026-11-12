@@ -1,6 +1,6 @@
 import { render, screen, waitFor } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
-import { MemoryRouter } from "react-router-dom"
+import { MemoryRouter, Route, Routes } from "react-router-dom"
 import { toast } from "sonner"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 
@@ -194,46 +194,36 @@ describe("TenantOnboardingWizard", () => {
     expect(screen.getByText("Cadastrar nova empresa")).toBeInTheDocument()
   })
 
-  it("starts with Continuar disabled and shows legalNameMin after touch", async () => {
+  it("keeps Continuar clickable and lists the missing company fields", async () => {
     const user = userEvent.setup()
     renderWizard()
 
-    expect(nextButton()).toBeDisabled()
+    expect(nextButton()).toBeEnabled()
     expect(cancelButton()).toBeEnabled()
     expect(backButton()).toBeDisabled()
 
-    const legalName = screen.getByLabelText(
-      i18n.t("admin.wizard.fields.legalName"),
-    )
-    await user.click(legalName)
-    await user.tab()
+    await user.click(nextButton())
 
-    expect(
-      await screen.findByText(i18n.t("admin.wizard.validation.legalNameMin")),
-    ).toBeInTheDocument()
+    const hint = await screen.findByRole("alert")
+    expect(hint).toHaveTextContent(i18n.t("admin.wizard.actions.missingTitle"))
+    expect(hint).toHaveTextContent(i18n.t("admin.wizard.validation.legalNameMin"))
     expect(screen.queryByText("Invalid input")).not.toBeInTheDocument()
-    expect(nextButton()).toBeDisabled()
+    expect(screen.getByLabelText(i18n.t("admin.wizard.fields.legalName"))).toHaveFocus()
+    expect(nextButton()).toBeEnabled()
   })
 
-  it("enables Continuar when step 1 is valid and disables it again if a field becomes invalid", async () => {
+  it("advances when step 1 is valid and lists the gap if a field is cleared", async () => {
     const user = userEvent.setup()
     renderWizard()
 
-    expect(nextButton()).toBeDisabled()
-
+    expect(nextButton()).toBeEnabled()
     await fillCompanyStep(user)
-
-    await waitFor(() => {
-      expect(nextButton()).toBeEnabled()
-    })
-
-    await user.clear(
-      screen.getByLabelText(i18n.t("admin.wizard.fields.legalName")),
-    )
-
-    await waitFor(() => {
-      expect(nextButton()).toBeDisabled()
-    })
+    await user.click(nextButton())
+    expect(await screen.findByLabelText(i18n.t("admin.wizard.fields.subdomain"))).toBeInTheDocument()
+    await user.click(backButton())
+    await user.clear(screen.getByLabelText(i18n.t("admin.wizard.fields.legalName")))
+    await user.click(nextButton())
+    expect(await screen.findByRole("alert")).toHaveTextContent(i18n.t("admin.wizard.validation.legalNameMin"))
   })
 
   it("keeps Back and Cancel enabled on an invalid step after the first", async () => {
@@ -246,7 +236,7 @@ describe("TenantOnboardingWizard", () => {
     expect(
       await screen.findByLabelText(i18n.t("admin.wizard.fields.subdomain")),
     ).toBeInTheDocument()
-    expect(nextButton()).toBeDisabled()
+    expect(nextButton()).toBeEnabled()
     expect(backButton()).toBeEnabled()
     expect(cancelButton()).toBeEnabled()
   })
@@ -268,7 +258,20 @@ describe("TenantOnboardingWizard", () => {
       await screen.findByText(i18n.t("admin.wizard.validation.subdomainFormat")),
     ).toBeInTheDocument()
     expect(screen.queryByText("Invalid input")).not.toBeInTheDocument()
-    expect(nextButton()).toBeDisabled()
+    expect(nextButton()).toBeEnabled()
+    await user.click(nextButton())
+    expect(await screen.findByRole("alert")).toHaveTextContent(i18n.t("admin.wizard.validation.subdomainFormat"))
+    expect(screen.getByLabelText(i18n.t("admin.wizard.fields.subdomain"))).toHaveFocus()
+  })
+
+  it("lists the missing module choice when Continuar is clicked", async () => {
+    const user = userEvent.setup()
+    renderWizard()
+    await fillToModulesStep(user)
+    await user.click(nextButton())
+    expect(await screen.findByRole("alert")).toHaveTextContent(i18n.t("admin.wizard.validation.modulesMin"))
+    expect(screen.getByRole("button", { name: new RegExp(i18n.t("admin.modules.Inventory")) })).toHaveFocus()
+    expect(screen.getByText(i18n.t("admin.wizard.steps.modules"))).toBeInTheDocument()
   })
 
   it("disables Continuar on Recursos until a family is selected and shows familiesMin", async () => {
@@ -297,19 +300,14 @@ describe("TenantOnboardingWizard", () => {
     expect(
       await screen.findByText(i18n.t("admin.wizard.validation.familiesMin")),
     ).toBeInTheDocument()
-    expect(nextButton()).toBeDisabled()
+    expect(nextButton()).toBeEnabled()
+    await user.click(nextButton())
+    expect(await screen.findByRole("alert")).toHaveTextContent(i18n.t("admin.wizard.validation.familiesMin"))
+    expect(screen.getByRole("button", { name: /Espaços/ })).toHaveFocus()
 
     await user.click(await screen.findByRole("button", { name: /Espaços/ }))
-
-    await waitFor(() => {
-      expect(nextButton()).toBeEnabled()
-    })
-
-    await user.click(screen.getByRole("button", { name: /Espaços/ }))
-
-    await waitFor(() => {
-      expect(nextButton()).toBeDisabled()
-    })
+    await user.click(nextButton())
+    expect(await screen.findByText(i18n.t("admin.wizard.steps.admin"))).toBeInTheDocument()
   })
 
   it("keeps Continuar disabled on Recursos when the family catalog is empty", async () => {
@@ -336,7 +334,9 @@ describe("TenantOnboardingWizard", () => {
     expect(
       await screen.findByText(i18n.t("admin.wizard.validation.familiesMin")),
     ).toBeInTheDocument()
-    expect(nextButton()).toBeDisabled()
+    expect(nextButton()).toBeEnabled()
+    await user.click(nextButton())
+    expect(await screen.findByRole("alert")).toHaveTextContent(i18n.t("admin.wizard.errors.familiesLoadFailed"))
   })
 
   it("disables Finalizar while the create request is in flight", async () => {
@@ -469,7 +469,9 @@ describe("TenantOnboardingWizard", () => {
     expect(await screen.findByRole("alert")).toHaveTextContent(
       "falha do catálogo",
     )
-    expect(nextButton()).toBeDisabled()
+    expect(nextButton()).toBeEnabled()
+    await user.click(nextButton())
+    expect(screen.getAllByRole("alert").some((node) => node.textContent?.includes("falha do catálogo"))).toBe(true)
 
     await user.click(
       screen.getByRole("button", { name: i18n.t("admin.modules.retry") }),
@@ -480,6 +482,43 @@ describe("TenantOnboardingWizard", () => {
         name: new RegExp(i18n.t("admin.modules.Rentals")),
       }),
     ).toBeInTheDocument()
+  })
+
+  it("opens the new tenant page after Finalizar", async () => {
+    createAdminTenantMock.mockResolvedValue({
+      id: "11111111-1111-4111-8111-111111111111",
+      legalName: "Clube Acme",
+      taxId: "123456789",
+      subdomain: "acme",
+      isActive: true,
+      createdAt: "2026-09-04T00:00:00.000Z",
+      activeModules: [{ moduleName: "rentals", isActive: true }],
+      assetFamilyKeys: ["spaces"],
+    })
+    const user = userEvent.setup()
+    render(<MemoryRouter initialEntries={["/admin/tenants/new"]}>
+      <Routes>
+        <Route path="/admin/tenants/new" element={<TenantOnboardingWizard />} />
+        <Route path="/admin/tenants/:id/edit" element={<h1>Tenant page</h1>} />
+      </Routes>
+    </MemoryRouter>)
+    await fillThroughAdminInvite(user)
+    await continueWhenEnabled(user)
+    await user.click(finishButton())
+    expect(await screen.findByRole("heading", { name: "Tenant page" })).toBeInTheDocument()
+    expect(toast.success).toHaveBeenCalled()
+  })
+
+  it("labels resource-planning instead of showing the raw key", async () => {
+    listModulesMock.mockResolvedValue([
+      ...FIVE_COMMERCIAL_MODULES,
+      commercialModule("resource-planning"),
+    ])
+    const user = userEvent.setup()
+    renderWizard()
+    await fillToModulesStep(user)
+    expect(await screen.findByRole("button", { name: new RegExp(i18n.t("admin.modules.ResourcePlanning")) })).toBeInTheDocument()
+    expect(screen.queryByText("resource-planning")).not.toBeInTheDocument()
   })
 
   it("never renders asset-registry as a module button even if the payload includes it", async () => {
