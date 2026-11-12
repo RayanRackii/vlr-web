@@ -125,6 +125,9 @@ export function RentalResourcesPage() {
           <p className="resources-eyebrow">{t("rentals.resources.eyebrow")}</p>
           <h1>{t("rentals.resources.title")}</h1>
           <p className="resources-description">{t("rentals.resources.description")}</p>
+          <Link className="inline-flex min-h-11 items-center text-sm font-medium text-primary underline-offset-4 hover:underline" to="/primeiros-passos">
+            {t("assistant.firstSteps.title")}
+          </Link>
         </div>
           <Can permission="rentals.assets.write">
             <Button

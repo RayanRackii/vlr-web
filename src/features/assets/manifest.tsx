@@ -5,6 +5,7 @@ import { Wrench } from "lucide-react"
 import type { AppNavigationItem } from "@/components/layout/navigation"
 import { equipmentTabs } from "@/features/assets/navigationTabs"
 import { AssetCreatePage } from "@/features/assets/pages/AssetCreatePage"
+import { CategoryLegacyRedirect } from "@/features/assets/pages/CategoryLegacyRedirect"
 import { EquipmentPage } from "@/features/assets/pages/EquipmentPage"
 import { ResourceTypeWizardPage } from "@/features/assets/pages/ResourceTypeWizardPage"
 
@@ -59,8 +60,23 @@ export const assetsManifest = {
         permission: "inventory.categories.write",
       },
       {
+        path: "/ativos/categorias/novo/",
+        element: <Navigate to="/ativos/tipos/novo" replace />,
+        permission: "inventory.categories.write",
+      },
+      {
         path: "/ativos/categorias",
         element: <Navigate to="/ativos/tipos" replace />,
+        permission: "inventory.categories.read",
+      },
+      {
+        path: "/ativos/categorias/",
+        element: <Navigate to="/ativos/tipos" replace />,
+        permission: "inventory.categories.read",
+      },
+      {
+        path: "/ativos/categorias/*",
+        element: <CategoryLegacyRedirect />,
         permission: "inventory.categories.read",
       },
     ] satisfies readonly FeatureRoute[],

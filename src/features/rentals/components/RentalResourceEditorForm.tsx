@@ -57,6 +57,7 @@ import { usePermissions } from "@/features/users/permissions/PermissionContext"
 import { RentalResourceDetails } from "@/features/rentals/components/RentalResourceDetails"
 import { useVisibleFormIssues } from "@/lib/useVisibleFormIssues"
 import { ICON_STROKE_WIDTH } from "@/lib/icon"
+import { DirectRentalField } from "@/features/rentals/components/DirectRentalField"
 import { VISUAL_ICON_MAP } from "@/features/rentals/components/layout/resourceVisualIconMap"
 import "./rentalResources.css"
 
@@ -337,6 +338,11 @@ export function RentalResourceEditorForm({
         ) : null}
       </header>
       )}
+      {editing && !cadastro ? (
+        <div className="px-1 pb-4">
+          <DirectRentalField assetId={editing.id} directRental={editing.directRental} canWrite={!readOnly && !busy} />
+        </div>
+      ) : null}
         <Form {...form}>
           <form
             id="rental-resource-form"
