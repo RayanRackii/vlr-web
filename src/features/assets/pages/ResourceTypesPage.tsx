@@ -13,7 +13,7 @@ const CAPABILITY_KEYS = ["bookable", "deliverable", "maintenance"] as const
 
 function clientLine(type: ResourceTypeView, t: (key: string, options?: Record<string, unknown>) => string) {
   const sees = t("assets.resourceTypes.clientSees", { singular: type.singular })
-  if (!type.vocabularyKnown && type.fields.length === 0 && type.seeded) {
+  if (type.seeded && type.fields.length === 0) {
     return `${sees} · ${t("assets.resourceTypes.ready")}`
   }
   if (type.fields.some((field) => field.visibility === "internal") || type.publicFieldCount !== type.fields.length) {

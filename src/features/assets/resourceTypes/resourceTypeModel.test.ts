@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest"
 
 import { toResourceTypeView } from "@/features/assets/resourceTypes/resourceTypeModel"
+import { resourceTypeRecordSchema } from "@/features/assets/resourceTypes/resourceTypesService"
 
 describe("resource type view", () => {
   it("marks Quadra and Caçamba as seeded and keeps other names as company types", () => {
@@ -41,5 +42,25 @@ describe("resource type view", () => {
     expect(custom.publicFieldCount).toBe(1)
     expect(custom.internalFieldCount).toBe(1)
     expect(custom.fields[1]?.filterable).toBe(false)
+  })
+
+  it("treats null vocabulary and fields as empty", () => {
+    const parsed = resourceTypeRecordSchema.parse({
+      id: "11111111-1111-4111-8111-111111111111",
+      key: "quadra",
+      name: "Quadra",
+      singular: null,
+      plural: null,
+      article: null,
+      seeded: null,
+      resourceCount: null,
+      capabilities: null,
+      fields: null,
+    })
+    const view = toResourceTypeView(parsed)
+    expect(view.seeded).toBe(true)
+    expect(view.singular).toBe("quadra")
+    expect(view.fields).toEqual([])
+    expect(view.resourceCount).toBe(0)
   })
 })

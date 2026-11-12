@@ -60,6 +60,7 @@ describe("ResourceTypesPage", () => {
     expect(screen.getByRole("status")).toHaveTextContent("Carregando")
     expect(await screen.findByRole("heading", { name: "Quadra" })).toBeInTheDocument()
     expect(screen.getByText("Semeado")).toBeInTheDocument()
+    expect(screen.getByText(/vem pronto com a Rolvix/)).toBeInTheDocument()
     expect(screen.getByText("Da empresa")).toBeInTheDocument()
     expect(screen.getByRole("link", { name: "Novo tipo" })).toHaveAttribute("href", "/ativos/tipos/novo")
     expect(screen.getAllByRole("link", { name: "Editar" }).map((link) => link.getAttribute("href"))).toEqual([

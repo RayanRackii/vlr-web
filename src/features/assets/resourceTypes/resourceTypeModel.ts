@@ -26,22 +26,26 @@ export type ResourceTypeSource = {
   id: string
   key: string
   name: string
-  singular?: string
-  plural?: string
-  article?: ResourceTypeArticle
-  seeded?: boolean
-  resourceCount?: number
-  capabilities?: Partial<ResourceTypeCapabilities>
-  bookable?: boolean
-  deliverable?: boolean
-  maintenance?: boolean
+  singular?: string | null
+  plural?: string | null
+  article?: ResourceTypeArticle | null
+  seeded?: boolean | null
+  resourceCount?: number | null
+  capabilities?: {
+    bookable?: boolean | null
+    deliverable?: boolean | null
+    maintenance?: boolean | null
+  } | null
+  bookable?: boolean | null
+  deliverable?: boolean | null
+  maintenance?: boolean | null
   fields: Array<AssetFamilyField & {
-    name?: string
-    visibility?: ResourceTypeVisibility
-    filterable?: boolean
-    askOnBooking?: boolean
-    options?: string[]
-    responseType?: string
+    name?: string | null
+    visibility?: ResourceTypeVisibility | null
+    filterable?: boolean | null
+    askOnBooking?: boolean | null
+    options?: string[] | null
+    responseType?: string | null
   }>
 }
 
@@ -67,13 +71,13 @@ function fold(value: string): string {
   return value.normalize("NFD").replace(/\p{M}/gu, "").toLowerCase()
 }
 
-function responseType(value: string | undefined): ResourceTypeResponseType {
+function responseType(value: string | null | undefined): ResourceTypeResponseType {
   if (value === "number" || value === "numero" || value === "número") return "number"
   if (value === "list" || value === "lista") return "list"
   return "text"
 }
 
-export function isSeededResourceType(key: string, name: string, seeded?: boolean): boolean {
+export function isSeededResourceType(key: string, name: string, seeded?: boolean | null): boolean {
   if (seeded === true) return true
   const folded = fold(key || name)
   return SEEDED_KEYS.has(folded)

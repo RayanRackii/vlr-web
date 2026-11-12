@@ -14,32 +14,32 @@ import i18n from "@/lib/i18n"
  * PUT /api/rentals/resource-types/:id
  */
 const fieldSchema = assetFamilyFieldSchema.extend({
-  name: z.string().optional(),
-  visibility: z.enum(["public", "internal"]).optional(),
-  filterable: z.boolean().optional(),
-  askOnBooking: z.boolean().optional(),
-  options: z.array(z.string()).optional(),
-  responseType: z.string().optional(),
+  name: z.string().nullish(),
+  visibility: z.enum(["public", "internal"]).nullish(),
+  filterable: z.boolean().nullish(),
+  askOnBooking: z.boolean().nullish(),
+  options: z.array(z.string()).nullish(),
+  responseType: z.string().nullish(),
 })
 
 export const resourceTypeRecordSchema = z.object({
   id: guidLikeIdSchema,
   key: z.string().min(1),
   name: z.string().min(1),
-  singular: z.string().optional(),
-  plural: z.string().optional(),
-  article: z.enum(["um", "uma"]).optional(),
-  seeded: z.boolean().optional(),
-  resourceCount: z.number().int().nonnegative().optional(),
+  singular: z.string().nullish(),
+  plural: z.string().nullish(),
+  article: z.enum(["um", "uma"]).nullish(),
+  seeded: z.boolean().nullish(),
+  resourceCount: z.number().int().nonnegative().nullish(),
   capabilities: z.object({
-    bookable: z.boolean().optional(),
-    deliverable: z.boolean().optional(),
-    maintenance: z.boolean().optional(),
-  }).optional(),
-  bookable: z.boolean().optional(),
-  deliverable: z.boolean().optional(),
-  maintenance: z.boolean().optional(),
-  fields: z.array(fieldSchema).default([]),
+    bookable: z.boolean().nullish(),
+    deliverable: z.boolean().nullish(),
+    maintenance: z.boolean().nullish(),
+  }).nullish(),
+  bookable: z.boolean().nullish(),
+  deliverable: z.boolean().nullish(),
+  maintenance: z.boolean().nullish(),
+  fields: z.array(fieldSchema).nullish().transform((fields) => fields ?? []),
 })
 
 export type ResourceTypeRecord = z.infer<typeof resourceTypeRecordSchema>
