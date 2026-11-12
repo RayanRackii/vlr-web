@@ -8,6 +8,7 @@ import { Button, buttonVariants } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { toResourceTypeView, type ResourceTypeView } from "@/features/assets/resourceTypes/resourceTypeModel"
 import { listResourceTypes } from "@/features/assets/resourceTypes/resourceTypesService"
+import { usePermissions } from "@/features/users/permissions/PermissionContext"
 
 const CAPABILITY_KEYS = ["bookable", "deliverable", "maintenance"] as const
 
@@ -30,6 +31,8 @@ function clientLine(type: ResourceTypeView, t: (key: string, options?: Record<st
 
 export function ResourceTypesPage() {
   const { t } = useTranslation()
+  const { can } = usePermissions()
+  const canWrite = can("inventory.categories.write")
   const [types, setTypes] = useState<ResourceTypeView[] | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [query, setQuery] = useState("")
@@ -70,10 +73,12 @@ export function ResourceTypesPage() {
           <h1 className="text-2xl font-semibold tracking-tight">{t("assets.resourceTypes.title")}</h1>
           <p className="mt-1 max-w-xl text-sm text-muted-foreground">{t("assets.resourceTypes.subtitle")}</p>
         </div>
-        <Link className={buttonVariants()} to="/ativos/tipos/novo">
-          <Plus data-icon="inline-start" aria-hidden="true" />
-          {t("assets.resourceTypes.new")}
-        </Link>
+        {canWrite ? (
+          <Link className={buttonVariants()} to="/ativos/tipos/novo">
+            <Plus data-icon="inline-start" aria-hidden="true" />
+            {t("assets.resourceTypes.new")}
+          </Link>
+        ) : null}
       </header>
 
       <div className="flex flex-wrap items-center gap-2">
@@ -111,7 +116,7 @@ export function ResourceTypesPage() {
       {types === null ? <p role="status">{t("common.loading")}</p> : null}
 
       <ul className="divide-y rounded-lg border">
-        {types !== null && visible.length === 0 ? (
+      {types !== null && error === null && visible.length === 0 ? (
           <li className="px-4 py-6 text-sm text-muted-foreground">{t("assets.resourceTypes.empty")}</li>
         ) : null}
         {visible.map((type) => (
@@ -132,9 +137,11 @@ export function ResourceTypesPage() {
             </div>
             <div className="flex items-center gap-3 text-sm">
               <span>{t("assets.resourceTypes.resources", { count: type.resourceCount })}</span>
-              <Link className={buttonVariants({ variant: "ghost" })} to={`/ativos/tipos/${type.id}`}>
-                {t("assets.resourceTypes.edit")}
-              </Link>
+              {canWrite ? (
+                <Link className={buttonVariants({ variant: "ghost" })} to={`/ativos/tipos/${type.id}`}>
+                  {t("assets.resourceTypes.edit")}
+                </Link>
+              ) : null}
             </div>
           </li>
         ))}
