@@ -101,7 +101,7 @@ export function ResourceAssistantPage({ cadastro = false }: { cadastro?: boolean
     hasActiveTemplate: (model.templates ?? []).some((template) => template.isActive),
     hasPrice: (model.prices ?? []).some((price) => price.pricePerHour > 0),
     directRental: asset.directRental !== false,
-    hasPricedOffer: products.some((product) => (product.price ?? 0) > 0),
+    hasPricedOffer: products.some((product) => product.isActive && (product.price ?? 0) > 0),
   })
   const status = itemStatus(asset.isActive && model.menuItems !== null && model.menuItems.some((item) => menuCoversAsset(item, asset.id)), steps)
   const firstMissing = (Object.keys(steps) as SetupStepId[]).find((step) => !steps[step])
