@@ -131,6 +131,7 @@ export async function updateAsset(
         getAxiosErrorPayload(error),
         i18n.t("assets.inventory.errors.updateFailed"),
       ),
+      { cause: error },
     )
   }
 }

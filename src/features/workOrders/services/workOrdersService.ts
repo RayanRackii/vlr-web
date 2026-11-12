@@ -203,6 +203,7 @@ export async function generateWorkOrderFromPlan(
           i18n.t("pmoc.plans.generate.errors.generateFailed"),
         ),
       ),
+      { cause: error },
     )
   }
 }
