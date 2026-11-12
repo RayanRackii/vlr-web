@@ -45,6 +45,7 @@ import {
   generateWorkOrderFromPlan,
   listWorkOrderAssets,
 } from "@/features/workOrders/services/workOrdersService"
+import { readApiValidation } from "@/features/rentals/lib/readApiValidation"
 
 const UNASSIGNED_VALUE = "unassigned"
 
@@ -57,6 +58,7 @@ export function CreateWorkOrderPage({ maintenance = false, sourcePlan }: { maint
   const [isLoadingLookups, setIsLoadingLookups] = useState(true)
   const [loadError, setLoadError] = useState<string | null>(null)
   const [submitError, setSubmitError] = useState<string | null>(null)
+  const [missing, setMissing] = useState<string[]>([])
   const [isSubmitted, setIsSubmitted] = useState(false)
 
   const formSchema = useMemo(
@@ -81,8 +83,7 @@ export function CreateWorkOrderPage({ maintenance = false, sourcePlan }: { maint
     },
   })
 
-  const watchedValues = useWatch({ control: form.control })
-  const isCreateValid = formSchema.safeParse(watchedValues).success
+  useWatch({ control: form.control })
 
   const loadLookups = useCallback(async () => {
     setIsLoadingLookups(true)
@@ -144,6 +145,7 @@ export function CreateWorkOrderPage({ maintenance = false, sourcePlan }: { maint
 
   async function onSubmit(values: CreateWorkOrderFormValues) {
     setSubmitError(null)
+    setMissing([])
 
     try {
       const created = sourcePlan ? await generateWorkOrderFromPlan({
@@ -172,12 +174,28 @@ export function CreateWorkOrderPage({ maintenance = false, sourcePlan }: { maint
         void navigate(`/os/${created.id}`)
       }, 4000)
     } catch (error: unknown) {
+      const parsed = readApiValidation(error)
+      const fields = parsed.fields
+      for (const [name, message] of Object.entries(fields)) {
+        if (name === "assetId" || name === "scheduledDate" || name === "taskTitle" || name === "notes") {
+          form.setError(name, { message })
+        }
+      }
       const message =
-        error instanceof Error
-          ? error.message
-          : t("workOrders.create.errors.createFailed")
+        parsed.summary[0]
+        ?? (error instanceof Error ? error.message : t("workOrders.create.errors.createFailed"))
       setSubmitError(message)
       toast.error(message)
+    }
+  }
+
+  function onInvalid() {
+    const parsed = formSchema.safeParse(form.getValues())
+    const messages = parsed.success ? [] : [...new Set(parsed.error.issues.map((issue) => issue.message))]
+    setMissing(messages)
+    const first = parsed.success ? undefined : parsed.error.issues[0]?.path[0]
+    if (typeof first === "string") {
+      form.setFocus(first as keyof CreateWorkOrderFormValues)
     }
   }
 
@@ -221,7 +239,7 @@ export function CreateWorkOrderPage({ maintenance = false, sourcePlan }: { maint
           <Form {...form}>
             <form
               className="min-w-0 space-y-5"
-              onSubmit={form.handleSubmit(onSubmit)}
+              onSubmit={form.handleSubmit(onSubmit, onInvalid)}
             >
               <div className="grid min-w-0 gap-5 sm:grid-cols-2 [&>*]:min-w-0">
                 <FormField
@@ -365,11 +383,19 @@ export function CreateWorkOrderPage({ maintenance = false, sourcePlan }: { maint
                 )}
               />}
 
+              {missing.length > 0 && submitError === null ? (
+                <div role="alert" className="rounded-md border border-destructive/40 bg-destructive/5 p-3 text-sm">
+                  <p className="font-medium">{t("assets.wizard.missingTitle")}</p>
+                  <ul className="mt-1 list-disc pl-5">
+                    {missing.map((item) => <li key={item}>{item}</li>)}
+                  </ul>
+                </div>
+              ) : null}
               <div className="flex flex-wrap gap-3 justify-end border-t border-border pt-5 [&>button]:w-full sm:[&>button]:w-auto">
                 {maintenance && <Button type="button" variant="ghost" onClick={() => { void navigate("/manutencao?aba=ordens") }}>{t("common.cancel")}</Button>}
                 <FormPrimaryButton
                   type="submit"
-                  isValid={isCreateValid}
+                  isValid
                   loading={form.formState.isSubmitting}
                   disabled={isLoadingLookups || isSubmitted}
                 >

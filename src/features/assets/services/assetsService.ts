@@ -100,6 +100,7 @@ export async function createAsset(data: CreateAssetRequest): Promise<Asset> {
         getAxiosErrorPayload(error),
         i18n.t("assets.inventory.errors.createFailed"),
       ),
+      { cause: error },
     )
   }
 }

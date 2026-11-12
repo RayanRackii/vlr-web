@@ -118,6 +118,7 @@ export async function createWorkOrder(
         getAxiosErrorPayload(error),
         i18n.t("workOrders.create.errors.createFailed"),
       ),
+      { cause: error },
     )
   }
 }

@@ -137,7 +137,7 @@ describe("CreateWorkOrderPage validity gate", () => {
     await user.click(await screen.findByRole("option", { name: ASSET_LABEL }))
   }
 
-  it("keeps Criar OS disabled until the form schema is valid", async () => {
+  it("keeps Criar OS clickable and lists what is missing", async () => {
     const user = userEvent.setup()
     renderPage()
 
@@ -145,27 +145,16 @@ describe("CreateWorkOrderPage validity gate", () => {
       name: i18n.t("workOrders.create.submit"),
     })
     expect(screen.queryByRole("button", { name: i18n.t("common.back") })).not.toBeInTheDocument()
-    expect(submit).toBeDisabled()
-
-    const task = screen.getByLabelText(i18n.t("workOrders.create.form.task"))
-    await user.type(task, "   ")
-    expect(submit).toBeDisabled()
+    await waitFor(() => expect(submit).toBeEnabled())
+    await user.click(submit)
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      i18n.t("workOrders.create.validation.assetRequired"),
+    )
     expect(createWorkOrderMock).not.toHaveBeenCalled()
 
-    await user.clear(task)
+    const task = screen.getByLabelText(i18n.t("workOrders.create.form.task"))
     await user.type(task, "Inspecionar equipamento")
-    expect(submit).toBeDisabled()
-
     await selectAsset(user)
-    expect(submit).toBeEnabled()
-
-    const date = screen.getByLabelText(
-      i18n.t("workOrders.create.form.scheduledDate"),
-    )
-    await user.clear(date)
-    expect(submit).toBeDisabled()
-
-    await user.type(date, "14/10/2026")
     expect(submit).toBeEnabled()
     expect(createWorkOrderMock).not.toHaveBeenCalled()
   })
