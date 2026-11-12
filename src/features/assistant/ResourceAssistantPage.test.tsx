@@ -1,5 +1,5 @@
 import { TestPermissionProvider } from "@/features/users/permissions/PermissionContext"
-import { render, screen, within } from "@testing-library/react"
+import { render, screen, waitFor, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { MemoryRouter, Route, Routes } from "react-router-dom"
 import { beforeEach, expect, it, vi } from "vitest"
@@ -244,7 +244,7 @@ it("disables Continuar while the price draft is open and enables it after a succ
   await user.type(screen.getByRole("textbox", { name: "Valor" }), "50")
   expect(continuar).toBeDisabled()
   await user.click(screen.getByRole("button", { name: "Substituir preços da semana" }))
-  expect(continuar).toBeEnabled()
+  await waitFor(() => expect(continuar).toBeEnabled())
 })
 
 it("disables Continuar while lead or deposit is edited and enables it when the stored value matches", async () => {
