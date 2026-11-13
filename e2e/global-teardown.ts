@@ -2,10 +2,17 @@ import { adminClient, b2bClient } from "./clients"
 import { deleteE2eOwnedResources, restoreSnapshotExact } from "./cleanup"
 import { readSnapshot } from "./context"
 import { writeJson } from "./context"
-import { CACHE_DIR } from "./env"
+import { CACHE_DIR, SNAPSHOT_PATH } from "./env"
+import fs from "node:fs"
 import path from "node:path"
 
 export default async function globalTeardown(): Promise<void> {
+  // globalSetup failed before snapshotting the tenant, so it changed nothing: skip restore
+  // instead of throwing ENOENT on top of the real setup error.
+  if (!fs.existsSync(SNAPSHOT_PATH)) {
+    console.warn("E2E teardown skipped: no tenant snapshot (globalSetup did not finish).")
+    return
+  }
   const snapshot = readSnapshot()
   const admin = adminClient()
   const b2b = b2bClient()

@@ -1,4 +1,5 @@
 import { chromium } from "@playwright/test"
+import fs from "node:fs"
 
 import { ApiClient, expectStatus, type AdminTenant, type CurrentUser } from "./api-client"
 import { loginB2b, loginCustomerUi } from "./auth-ui"
@@ -6,6 +7,7 @@ import {
   commercialOnly,
   canonicalModules,
   ensureAuthDirs,
+  unmanagedModules,
   writeJson,
   type E2eContext,
   type TenantSnapshot,
@@ -39,6 +41,8 @@ export default async function globalSetup(): Promise<void> {
     )
   }
   ensureAuthDirs()
+  // A snapshot left by an earlier run must never be "restored" if this run fails early.
+  fs.rmSync(SNAPSHOT_PATH, { force: true })
 
   const runId = new Date().toISOString().replace(/[:.]/g, "-")
   const browser = await chromium.launch()
@@ -74,6 +78,20 @@ export default async function globalSetup(): Promise<void> {
     await expectStatus(tenant, 200, "snapshot GET tenant")
     if (!tenant.body) {
       throw new Error("E2E_CONFIG_REQUIRED: target tenant not found")
+    }
+
+    // The suite replaces the target tenant's whole module set many times. A module it does
+    // not manage (e.g. resource-planning) would be switched off, or block every switch, so
+    // refuse such a tenant before changing anything. Use a dedicated e2e tenant instead.
+    const unmanaged = unmanagedModules(
+      canonicalModules(
+        tenant.body.activeModules.filter((module) => module.isActive),
+      ),
+    )
+    if (unmanaged.length > 0) {
+      throw new Error(
+        `E2E_TARGET_UNSUITABLE: tenant ${tenant.body.subdomain} has modules the suite does not manage (${unmanaged.join(", ")}). Point E2E_TARGET_TENANT_SLUG/ID at a dedicated e2e tenant without them.`,
+      )
     }
 
     const tenantSlug =
