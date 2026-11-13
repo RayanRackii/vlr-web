@@ -3,13 +3,12 @@ import fs from "node:fs"
 import path from "node:path"
 
 const REQUIRED_WEB = "https://vlr-web-git-develop-vlr-solutions.vercel.app"
-const REQUIRED_API = "https://vlr-api-development.up.railway.app"
+const REQUIRED_API = "https://rolvix-api-dev.fly.dev"
 
 const PROD_HOST_MARKERS = [
   "rolvix.com.br",
   "www.rolvix.com.br",
-  "vlr-api-production",
-  "railway.app/production",
+  "rolvix-api-prod",
 ]
 
 export type E2eEnv = {
@@ -72,7 +71,7 @@ export function loadE2eEnv(): E2eEnv {
   }
 
   if (apiUrl !== REQUIRED_API) {
-    throw new Error("E2E_PROD_GUARD_BLOCKED: E2E_API_URL is not the Railway DEV API")
+    throw new Error("E2E_PROD_GUARD_BLOCKED: E2E_API_URL is not the Fly DEV API")
   }
 
   if (isProductionTarget(webUrl) || isProductionTarget(apiUrl)) {
