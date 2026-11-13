@@ -2,7 +2,6 @@ import { ApiClient, expectStatus, type AdminTenant } from "./api-client"
 import {
   canonicalModules,
   commercialOnly,
-  preservedOnly,
   type TenantSnapshot,
 } from "./context"
 
@@ -10,12 +9,6 @@ export const MATRIX_FAMILIES = ["spaces", "electrical", "generic"] as const
 
 export function tenantCommercialModules(tenant: AdminTenant): string[] {
   return commercialOnly(
-    canonicalModules(tenant.activeModules.filter((module) => module.isActive)),
-  )
-}
-
-export function tenantPreservedModules(tenant: AdminTenant): string[] {
-  return preservedOnly(
     canonicalModules(tenant.activeModules.filter((module) => module.isActive)),
   )
 }
@@ -44,7 +37,6 @@ export async function updateAdminTenant(
   admin: ApiClient,
   snapshot: Pick<
     TenantSnapshot,
-    | "id"
     | "legalName"
     | "taxId"
     | "subdomain"
@@ -52,16 +44,11 @@ export async function updateAdminTenant(
     | "primaryColor"
     | "accentColor"
     | "welcomeTagline"
-    | "preservedModules"
   >,
   tenantId: string,
   modules: readonly string[],
   familyKeys: readonly string[],
 ): Promise<{ status: number; tenant: AdminTenant | null; text: string }> {
-  // The PUT replaces the whole module set. Always resend the modules the suite does not
-  // manage, so it can never switch one off (the API then accepts the set or rejects it whole).
-  const preserved = tenantId === snapshot.id ? (snapshot.preservedModules ?? []) : []
-  const activeModules = [...new Set([...modules, ...preserved])]
   const result = await admin.put<AdminTenant>(`/api/admin/tenants/${tenantId}`, {
     legalName: snapshot.legalName,
     taxId: snapshot.taxId,
@@ -70,7 +57,7 @@ export async function updateAdminTenant(
     primaryColor: snapshot.primaryColor,
     accentColor: snapshot.accentColor,
     welcomeTagline: snapshot.welcomeTagline,
-    activeModules,
+    activeModules: [...modules],
     assetFamilyKeys: [...familyKeys],
   })
   return {

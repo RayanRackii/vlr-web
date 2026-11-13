@@ -6,7 +6,6 @@ import {
   restoreTenant,
   sameStringSet,
   tenantCommercialModules,
-  tenantPreservedModules,
 } from "./tenant"
 
 const E2E_PREFIX = "E2E"
@@ -240,14 +239,11 @@ export async function restoreSnapshotExact(
         module.isActive &&
         module.moduleName.trim().toLowerCase() === "maintenance",
     ) === snapshot.hasLegacyMaintenance
-  const preservedMatch =
-    snapshot.preservedModules === undefined ||
-    sameStringSet(tenantPreservedModules(reloaded), snapshot.preservedModules)
 
-  if (!modulesMatch || !familiesMatch || !maintenanceMatch || !preservedMatch) {
+  if (!modulesMatch || !familiesMatch || !maintenanceMatch) {
     return {
       match: false,
-      detail: `modules actual=${tenantCommercialModules(reloaded).join(",")} expected=${snapshot.commercialModules.join(",")} preserved actual=${tenantPreservedModules(reloaded).join(",")} expected=${(snapshot.preservedModules ?? []).join(",")} families actual=${reloaded.assetFamilyKeys.join(",")} expected=${snapshot.familyKeys.join(",")} maintenanceMatch=${maintenanceMatch}`,
+      detail: `modules actual=${tenantCommercialModules(reloaded).join(",")} expected=${snapshot.commercialModules.join(",")} families actual=${reloaded.assetFamilyKeys.join(",")} expected=${snapshot.familyKeys.join(",")} maintenanceMatch=${maintenanceMatch}`,
     }
   }
 

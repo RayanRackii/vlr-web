@@ -7,7 +7,7 @@ import {
   commercialOnly,
   canonicalModules,
   ensureAuthDirs,
-  preservedOnly,
+  unmanagedModules,
   writeJson,
   type E2eContext,
   type TenantSnapshot,
@@ -80,6 +80,20 @@ export default async function globalSetup(): Promise<void> {
       throw new Error("E2E_CONFIG_REQUIRED: target tenant not found")
     }
 
+    // The suite replaces the target tenant's whole module set many times. A module it does
+    // not manage (e.g. resource-planning) would be switched off, or block every switch, so
+    // refuse such a tenant before changing anything. Use a dedicated e2e tenant instead.
+    const unmanaged = unmanagedModules(
+      canonicalModules(
+        tenant.body.activeModules.filter((module) => module.isActive),
+      ),
+    )
+    if (unmanaged.length > 0) {
+      throw new Error(
+        `E2E_TARGET_UNSUITABLE: tenant ${tenant.body.subdomain} has modules the suite does not manage (${unmanaged.join(", ")}). Point E2E_TARGET_TENANT_SLUG/ID at a dedicated e2e tenant without them.`,
+      )
+    }
+
     const tenantSlug =
       env.targetTenantSlug ?? tenant.body.subdomain ?? ""
     if (!tenantSlug) {
@@ -121,11 +135,6 @@ export default async function globalSetup(): Promise<void> {
       ),
       familyKeys: [...tenant.body.assetFamilyKeys],
       hasLegacyMaintenance: hasLegacyMaintenance(tenant.body),
-      preservedModules: preservedOnly(
-        canonicalModules(
-          tenant.body.activeModules.filter((module) => module.isActive),
-        ),
-      ),
       menuItems: menu.body ?? [],
       registrationFields: fields.body ?? [],
     }
