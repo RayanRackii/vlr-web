@@ -1,12 +1,17 @@
-import type { LucideIcon } from "lucide-react"
+import { ChevronLeft, type LucideIcon } from "lucide-react"
 import type { ReactNode } from "react"
+import { Link } from "react-router-dom"
 
-import { ICON_STROKE_WIDTH } from "@/lib/icon"
+import { ICON_SIZE, ICON_STROKE_WIDTH } from "@/lib/icon"
 import { cn } from "@/lib/utils"
 
 export type PageHeaderProps = {
   /** Primary page title. Rendered as the page's single <h1>. */
   title: ReactNode
+  /** Optional small line above the title. */
+  eyebrow?: ReactNode
+  /** Optional link above the title back to the parent screen. */
+  back?: { to: string; label: string }
   /** Optional supporting copy shown under the title. */
   description?: ReactNode
   /** Optional lucide icon shown in a soft badge beside the title. */
@@ -23,6 +28,8 @@ export type PageHeaderProps = {
  */
 export function PageHeader({
   title,
+  eyebrow,
+  back,
   description,
   icon: Icon,
   actions,
@@ -42,6 +49,18 @@ export function PageHeader({
           </div>
         ) : null}
         <div className="min-w-0 space-y-1">
+          {back ? (
+            <Link
+              to={back.to}
+              className="inline-flex min-h-11 items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
+            >
+              <ChevronLeft className={ICON_SIZE.sm} strokeWidth={ICON_STROKE_WIDTH} aria-hidden />
+              {back.label}
+            </Link>
+          ) : null}
+          {eyebrow ? (
+            <p className="text-sm font-semibold tracking-wide text-primary">{eyebrow}</p>
+          ) : null}
           <h1 className="text-xl font-semibold tracking-tight text-foreground sm:text-2xl">
             {title}
           </h1>

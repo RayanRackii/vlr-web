@@ -1,5 +1,6 @@
 import { useTranslation } from "react-i18next"
 import { useSearchParams } from "react-router-dom"
+import { Page } from "@/components/layout/Page"
 import { Button } from "@/components/ui/button"
 import { useTenantTimeZone } from "@/contexts/TenantTimeZoneContext"
 import { addCivilDays, civilToday, formatDayLabel, startOfCivilWeek } from "@/features/catalog/components/agenda/agendaLayout"
@@ -38,12 +39,10 @@ export function AgendasPage({ view }: { view: AgendasView }) {
 
 
   return (
-    <div className={`agendas-page agendas-${view} mx-auto min-w-0 space-y-5`}>
-      <header className="space-y-1">
-        <p className="agendas-eyebrow">{t("agendas.eyebrow")}</p>
-        <h1 className="text-xl font-semibold tracking-tight sm:text-2xl">{t(`agendas.${view}.title`)}</h1>
-        <p className="text-sm text-muted-foreground">{t(`agendas.${view}.subtitle`)}</p>
-      </header>
+    <Page
+      className={`agendas-page agendas-${view}`}
+      header={{ eyebrow: t("agendas.eyebrow"), title: t(`agendas.${view}.title`), description: t(`agendas.${view}.subtitle`) }}
+    >
       <div role="group" aria-label={t("staffAgenda.dateNavigation")} className="flex flex-wrap items-center gap-2">
         <Button variant="outline" onClick={() => update({ date: addCivilDays(state.date, state.visao === "dia" ? -1 : -7) })}>{t("staffAgenda.previous")}</Button>
         <Button variant="outline" onClick={() => update({ date: today })}>{t("staffAgenda.today")}</Button>
@@ -66,6 +65,6 @@ export function AgendasPage({ view }: { view: AgendasView }) {
             : <AgendaWeek loading={isLoading || day.loading} failedSources={day.failedSources} days={day.week.days} rows={day.week.rows} focusedRows={day.focusedWeek} today={today} onOpenDay={(date) => update({ visao: "dia", date })} />}
         </div>
       </section>
-    </div>
+    </Page>
   )
 }

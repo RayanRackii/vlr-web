@@ -36,6 +36,22 @@ export default defineConfig([
     },
   },
   {
+    files: ["src/features/**/*.{ts,tsx}"],
+    ignores: ["**/*.test.{ts,tsx}", "**/__tests__/**"],
+    rules: {
+      "no-restricted-syntax": ["error",
+        {
+          selector: "JSXOpeningElement[name.name='h1']",
+          message: "Use PageHeader/Page from @/components/layout for the page title (docs/plans/active/2026-11-13-ui-standard-patterns.md).",
+        },
+        {
+          selector: "JSXAttribute[name.name='className'] :matches(Literal[value=/^(?=.*mx-auto)(?=.*max-w-)/], TemplateElement[value.raw=/^(?=.*mx-auto)(?=.*max-w-)/])",
+          message: "Use Page width instead of hand-set page widths.",
+        },
+      ],
+    },
+  },
+  {
     files: ["e2e/**/*.ts", "playwright.config.ts"],
     extends: [js.configs.recommended, tseslint.configs.recommended],
     languageOptions: {
