@@ -1,4 +1,5 @@
 import { render, screen } from "@testing-library/react"
+import { MemoryRouter } from "react-router-dom"
 import { describe, expect, it } from "vitest"
 
 import { PageHeader } from "@/components/layout/PageHeader"
@@ -35,5 +36,17 @@ describe("PageHeader", () => {
     expect(
       screen.getByRole("button", { name: "Nova reserva" }),
     ).toBeInTheDocument()
+  })
+
+  it("renders a back link and eyebrow", () => {
+    render(
+      <MemoryRouter>
+        <PageHeader title="Reservas" eyebrow="Operação" back={{ to: "/agendas", label: "Voltar" }} />
+      </MemoryRouter>,
+    )
+
+    expect(screen.getByRole("link", { name: "Voltar" })).toHaveAttribute("href", "/agendas")
+    expect(screen.getByText("Operação")).toBeInTheDocument()
+    expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1)
   })
 })
