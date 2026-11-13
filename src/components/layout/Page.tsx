@@ -10,35 +10,40 @@ const WIDTH_CLASS = {
   form: "w-full max-w-3xl",
 } as const
 
-export type PageProps = {
+type PageBaseProps = {
   header: PageHeaderProps
   /** wide = lists/grids, form = single-column forms. */
   width?: keyof typeof WIDTH_CLASS
-  state?: "ready" | "loading" | "error"
-  /** Message shown by the error state. */
-  error?: ReactNode
-  onRetry?: () => void
   className?: string
   children: ReactNode
 }
+
+export type PageProps = PageBaseProps &
+  (
+    | { state?: "ready" | "loading"; error?: undefined; onRetry?: undefined }
+    | {
+        state: "error"
+        /** Message shown by the error state. */
+        error: string
+        onRetry: () => void
+      }
+  )
 
 /** Shared page frame: width, header and loading/error body states. */
 export function Page({
   header,
   width = "wide",
-  state = "ready",
-  error,
-  onRetry,
   className,
   children,
+  ...rest
 }: PageProps) {
   return (
     <div className={cn("mx-auto min-w-0 space-y-5", WIDTH_CLASS[width], className)}>
       <PageHeader {...header} className={cn("mb-0 sm:mb-0", header.className)} />
-      {state === "loading" ? (
+      {rest.state === "loading" ? (
         <PageContentSkeleton />
-      ) : state === "error" ? (
-        <ErrorState message={typeof error === "string" ? error : ""} onRetry={onRetry ?? (() => {})} />
+      ) : rest.state === "error" ? (
+        <ErrorState message={rest.error} onRetry={rest.onRetry} />
       ) : (
         children
       )}
