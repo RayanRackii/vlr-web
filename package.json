@@ -10,6 +10,7 @@
     "check:api": "node scripts/generate-api.mjs --check",
     "tokens:build": "node scripts/build-tokens.mjs",
     "tokens:check": "node scripts/build-tokens.mjs --check",
+    "seed:agenda:dev": "node scripts/seed-agenda-dev.mjs",
     "lint": "eslint .",
     "lint:baseline": "node scripts/lint-ratchet.mjs --write-baseline",
     "lint:ratchet": "node scripts/lint-ratchet.mjs",
