@@ -42,5 +42,5 @@ O primeiro cliente é um **clube** cuja necessidade central é: avisar clientes 
 
 - **Este repo (`vlr-web`):** React + Vite, deploy na **Vercel** (SPA rewrite em `vercel.json`).
 - **Hosts:** `rolvix.com.br` / `www` → landing + app B2B. `{subdomain}.rolvix.com.br` → portal B2C branded. Em apex/dev, path `/t/:subdomain` também funciona.
-- **API (`vlr-api`):** repo Git **separado**, .NET 10 no **Railway** (`VITE_API_URL`).
+- **API (`vlr-api`):** repo Git **separado**, .NET 10 no **Fly.io** (`VITE_API_URL`).
 - **Supabase:** somente autenticação B2B no frontend (JWT); dados sempre via API .NET. B2C usa JWT `Customer` da API.
