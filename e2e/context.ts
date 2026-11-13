@@ -32,6 +32,11 @@ export type TenantSnapshot = {
   commercialModules: string[]
   familyKeys: string[]
   hasLegacyMaintenance: boolean
+  /**
+   * Active modules the suite does not manage (e.g. resource-planning). They are sent with
+   * every module update so the suite never switches them off. Missing in old snapshots.
+   */
+  preservedModules?: string[]
   menuItems: unknown
   registrationFields: unknown
 }
@@ -83,6 +88,12 @@ export function canonicalModules(modules: readonly unknown[]): string[] {
 export function commercialOnly(modules: readonly string[]): string[] {
   const allowed = new Set<string>(COMMERCIAL_MODULES)
   return [...new Set(modules.filter((key) => allowed.has(key)))]
+}
+
+/** Active modules outside the commercial set and the legacy "maintenance" flag. */
+export function preservedOnly(modules: readonly string[]): string[] {
+  const managed = new Set<string>([...COMMERCIAL_MODULES, "maintenance"])
+  return [...new Set(modules.filter((key) => !managed.has(key)))]
 }
 
 export function ensureAuthDirs(): void {

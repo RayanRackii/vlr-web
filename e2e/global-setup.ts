@@ -1,4 +1,5 @@
 import { chromium } from "@playwright/test"
+import fs from "node:fs"
 
 import { ApiClient, expectStatus, type AdminTenant, type CurrentUser } from "./api-client"
 import { loginB2b, loginCustomerUi } from "./auth-ui"
@@ -6,6 +7,7 @@ import {
   commercialOnly,
   canonicalModules,
   ensureAuthDirs,
+  preservedOnly,
   writeJson,
   type E2eContext,
   type TenantSnapshot,
@@ -39,6 +41,8 @@ export default async function globalSetup(): Promise<void> {
     )
   }
   ensureAuthDirs()
+  // A snapshot left by an earlier run must never be "restored" if this run fails early.
+  fs.rmSync(SNAPSHOT_PATH, { force: true })
 
   const runId = new Date().toISOString().replace(/[:.]/g, "-")
   const browser = await chromium.launch()
@@ -117,6 +121,11 @@ export default async function globalSetup(): Promise<void> {
       ),
       familyKeys: [...tenant.body.assetFamilyKeys],
       hasLegacyMaintenance: hasLegacyMaintenance(tenant.body),
+      preservedModules: preservedOnly(
+        canonicalModules(
+          tenant.body.activeModules.filter((module) => module.isActive),
+        ),
+      ),
       menuItems: menu.body ?? [],
       registrationFields: fields.body ?? [],
     }
