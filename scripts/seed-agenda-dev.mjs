@@ -25,8 +25,11 @@
 import { chromium } from "@playwright/test"
 import { existsSync, readFileSync } from "node:fs"
 import path from "node:path"
+import { fileURLToPath } from "node:url"
 
 const TENANT = "zzr14locacao"
+const TENANT_ID = "c3968131-86c3-4ca3-9dee-c0d49df8d328" // zzr14locacao on DEV
+const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..")
 const REQUIRED_API = "https://rolvix-api-dev.fly.dev"
 const TAG = "[seed-agenda]"
 const START_DAY = "2026-11-13"
@@ -49,7 +52,7 @@ const PATTERN = [
 const NOTES = ["Peça de reposição", "Protótipo cliente", "Brinde evento", "Suporte para bancada", "Lote de teste"]
 
 function loadEnv() {
-  const file = [path.resolve(process.cwd(), ".env.e2e.local"), "C:/Users/rayan/Rolvix/vlr-web/.env.e2e.local"].find(existsSync)
+  const file = [process.env.SEED_ENV_FILE, path.join(REPO_ROOT, ".env.e2e.local")].find((f) => f && existsSync(f))
   if (!file) throw new Error("SEED_CONFIG_REQUIRED: .env.e2e.local not found")
   const env = {}
   for (const line of readFileSync(file, "utf8").split(/\r?\n/)) {
@@ -63,6 +66,10 @@ function loadEnv() {
   env.E2E_WEB_URL = env.E2E_WEB_URL.replace(/\/$/, "")
   if (new URL(env.E2E_API_URL).host !== new URL(REQUIRED_API).host) {
     throw new Error("SEED_GUARD_BLOCKED: E2E_API_URL is not the DEV API")
+  }
+  const webHost = new URL(env.E2E_WEB_URL).host
+  if (webHost.endsWith("rolvix.com.br") || !/^[a-z0-9-]+-vlr-solutions\.vercel\.app$/.test(webHost)) {
+    throw new Error("SEED_GUARD_BLOCKED: E2E_WEB_URL is not a vlr-solutions DEV preview host")
   }
   return env
 }
@@ -209,7 +216,7 @@ async function main() {
   const customer = client(env, tokens.customerToken, { "X-Tenant-Subdomain": TENANT })
 
   const me = must(await staff("GET", "/api/users/me"), "users/me")
-  if (me.tenantLegalName !== "ZZ-R14 Locacao") throw new Error("SEED_GUARD_BLOCKED: staff user is not on the zzr14locacao test tenant")
+  if (me.tenantId !== TENANT_ID) throw new Error("SEED_GUARD_BLOCKED: staff user is not on the zzr14locacao test tenant")
   const units = must(await staff("GET", "/api/units"), "list units")
   const unit = units.find((u) => u.name === "Matriz")
   if (!unit) throw new Error("SEED_SETUP: unit Matriz not found")
