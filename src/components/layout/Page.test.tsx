@@ -50,6 +50,12 @@ describe("Page", () => {
     expect(container.firstElementChild).toHaveClass("max-w-3xl")
 
     rerender(<Page header={{ title: "A" }}>x</Page>)
-    expect(container.firstElementChild).toHaveClass("max-w-7xl")
+    expect(container.firstElementChild).toHaveClass("max-w-7xl", "min-[2000px]:max-w-[1820px]")
+  })
+
+  it("does not cap the full width", () => {
+    const { container } = render(<Page header={{ title: "A" }} width="full">x</Page>)
+    expect(container.firstElementChild).not.toHaveClass("max-w-7xl")
+    expect(container.firstElementChild?.className).not.toContain("1820px")
   })
 })

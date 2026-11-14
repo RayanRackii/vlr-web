@@ -1,14 +1,10 @@
 .reservations-layout {
   --reservations-primary: var(--primary);
   width: 100%;
-  max-width: 80rem; /* staff content width, same as AppShell max-w-7xl */
   min-width: 0;
   margin-inline: auto;
   color: var(--foreground);
 }
-
-/* Let this screen use its approved wide layout inside the existing staff shell. */
-[data-shell-part="main"]:has(.reservations-screen) > div { max-width: none; }
 
 .reservations-page { display: grid; min-width: 0; gap: 16px; }
 .reservations-timezone { display: flex; align-items: center; gap: 6px; margin-top: 6px; color: var(--muted-foreground); font-size: 12.5px; }
@@ -25,10 +21,6 @@
 .reservations-cancel-dialog button { min-height: 44px; }
 .reservations-page :is(button, input):focus-visible { outline: 3px solid color-mix(in srgb, var(--brand-primary) 60%, transparent); outline-offset: 2px; }
 
-
-@media (min-width: 2000px) {
-  .reservations-layout { max-width: 1820px; }
-}
 
 @media (prefers-reduced-motion: reduce) {
   .reservations-layout *, .reservations-layout *::before, .reservations-layout *::after { animation: none !important; transition: none !important; }
