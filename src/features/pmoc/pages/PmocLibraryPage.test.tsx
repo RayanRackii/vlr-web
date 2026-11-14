@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react"
+import { render, screen, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import type { ReactNode } from "react"
 import { MemoryRouter, Route, Routes } from "react-router-dom"
@@ -72,7 +72,7 @@ describe("PmocLibraryPage", () => {
     expect(await screen.findByRole("alert")).toHaveTextContent("boom")
   })
 
-  it("lists published templates and navigates to preview on click", async () => {
+  it("lists published templates in columns and opens the preview from the name link", async () => {
     getGlobalTemplatesMock.mockResolvedValue([
       {
         ...baseTemplateJson,
@@ -89,10 +89,62 @@ describe("PmocLibraryPage", () => {
     renderLibrary()
     const user = userEvent.setup()
 
-    expect(await screen.findByText(baseTemplateJson.name)).toBeInTheDocument()
+    const table = await screen.findByRole("table")
+    expect(within(table).getAllByRole("columnheader").map((h) => h.textContent)).toEqual([
+      "Modelo",
+      "Versão",
+      "Categoria",
+      "Tarefas",
+      "Ações",
+    ])
+    expect(within(table).getByText(baseTemplateJson.name)).toBeInTheDocument()
+    expect(within(table).getByText(i18n.t("pmoc.library.version", { version: baseTemplateJson.version }))).toBeInTheDocument()
+    expect(within(table).getByText(i18n.t("pmoc.library.tasksCount", { count: baseTemplateJson.tasks.length }))).toBeInTheDocument()
     expect(screen.queryByText("Old edition")).not.toBeInTheDocument()
 
-    await user.click(screen.getByText(baseTemplateJson.name))
+    await user.click(within(table).getByRole("link", { name: baseTemplateJson.name }))
     expect(await screen.findByText("preview-page")).toBeInTheDocument()
+  })
+
+  it("opens the preview from the use-template action", async () => {
+    getGlobalTemplatesMock.mockResolvedValue([{ ...baseTemplateJson, status: "Published" }])
+
+    renderLibrary()
+    const user = userEvent.setup()
+
+    const table = await screen.findByRole("table")
+    const action = within(table).getByRole("link", { name: "Usar modelo" })
+    expect(action).toHaveAttribute("href", `/pmoc/biblioteca/${baseTemplateJson.id}`)
+    await user.click(action)
+    expect(await screen.findByText("preview-page")).toBeInTheDocument()
+  })
+
+  it("renders cards below md", async () => {
+    getGlobalTemplatesMock.mockResolvedValue([{ ...baseTemplateJson, status: "Published" }])
+
+    renderLibrary()
+
+    const list = await screen.findByRole("list", { name: i18n.t("pmoc.library.title") })
+    const items = within(list).getAllByRole("listitem")
+    expect(items).toHaveLength(1)
+    expect(within(items[0]).getByText(baseTemplateJson.name)).toBeInTheDocument()
+    expect(within(items[0]).getByRole("link", { name: "Usar modelo" })).toBeInTheDocument()
+  })
+
+  it("retries loading from the error state", async () => {
+    let failing = true
+    getGlobalTemplatesMock.mockImplementation(() =>
+      failing
+        ? Promise.reject(new Error("boom"))
+        : Promise.resolve([{ ...baseTemplateJson, status: "Published" }]),
+    )
+
+    renderLibrary()
+    const user = userEvent.setup()
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("boom")
+    failing = false
+    await user.click(await screen.findByRole("button", { name: i18n.t("common.retry") }))
+    expect(await screen.findByRole("table")).toBeInTheDocument()
   })
 })

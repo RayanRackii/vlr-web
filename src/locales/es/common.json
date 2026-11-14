@@ -3211,6 +3211,12 @@
       "permanentSuccess": "Elemento eliminado permanentemente."
     },
     "resourceTypes": {
+      "colType": "Tipo",
+      "colCapabilities": "Capacidades",
+      "colResources": "Recursos",
+      "colActions": "Acciones",
+      "rowMenu": "Acciones de {{name}}",
+      "all": "Todos",
       "title": "Tipos de recurso",
       "subtitle": "Familias de lo que su empresa reserva. El comportamiento viene de las capacidades, no del nombre.",
       "search": "Buscar tipo",
@@ -3883,6 +3889,12 @@
       }
     },
     "library": {
+      "colModel": "Modelo",
+      "colVersion": "Versión",
+      "colCategory": "Categoría",
+      "colTasks": "Tareas",
+      "colActions": "Acciones",
+      "tasksCount": "{{count}} tareas",
       "title": "Biblioteca Rolvix",
       "description": "Modelos estándar de la plataforma. Clónelos en su tenant y personalice el checklist.",
       "loading": "Cargando biblioteca...",
