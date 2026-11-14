@@ -1,3 +1,4 @@
+import { CalendarDays } from "lucide-react"
 import { render, screen } from "@testing-library/react"
 import { MemoryRouter } from "react-router-dom"
 import { describe, expect, it } from "vitest"
@@ -60,6 +61,20 @@ describe("PageHeader under the staff shell", () => {
       </ShellContext.Provider>,
     )
     expect(screen.queryByText("Operacao")).not.toBeInTheDocument()
+  })
+
+  it("hides the title icon when the breadcrumb lives in the header", () => {
+    const { container } = render(
+      <ShellContext.Provider value={{ breadcrumbInHeader: true }}>
+        <PageHeader title="Reservas" icon={CalendarDays} />
+      </ShellContext.Provider>,
+    )
+    expect(container.querySelector("svg")).toBeNull()
+  })
+
+  it("shows the title icon without the context", () => {
+    const { container } = render(<PageHeader title="Reservas" icon={CalendarDays} />)
+    expect(container.querySelector("svg")).not.toBeNull()
   })
 
   it("shows the eyebrow without the context", () => {

@@ -13,6 +13,7 @@ const createTitleKey: Record<string, string> = {
   "/ativos/novo": "nav.createEquipment",
   "/ativos/tipos/novo": "assets.resourceTypes.new",
   "/catalogo/grupos/novo": "catalog.customerGroups.createTitle",
+  "/grupos/novo": "catalog.customerGroups.createTitle",
   "/catalogo/produtos/novo": "catalog.products.createTitle",
   "/configuracoes/recursos/novo": "nav.createResource",
   "/os/nova": "workOrders.create.title",
@@ -51,7 +52,7 @@ export function Breadcrumb({ variant = "page", fallback = null }: BreadcrumbProp
 
   const normalized = pathname.replace(/\/+$/, "") || "/"
   if (/^\/(?:catalogo\/produtos|configuracoes\/recursos)\/(?:[^/]+\/)?cadastro$/.test(normalized)) return <>{fallback}</>
-  if (/^\/grupos\/[^/]+$/.test(normalized)) return <>{fallback}</>
+  if (/^\/grupos\/[^/]+$/.test(normalized) && !(inHeader && normalized === "/grupos/novo")) return <>{fallback}</>
 
   const maintenanceChild = pathname.startsWith("/manutencao/")
   const pedidosChild = pathname.startsWith("/pedidos/")
@@ -91,7 +92,11 @@ export function Breadcrumb({ variant = "page", fallback = null }: BreadcrumbProp
   // /agendas or the settings pages, so complete the trail from the shell navigation.
   if (inHeader && crumbs.length < 2) {
     const shellMatch = matchNavigationPath(shellSections.flatMap((section) => section.items), pathname)
-    if (shellMatch && !shellMatch.isDetail) {
+    const shellCreateKey = createTitleKey[normalized]
+    if (shellMatch && shellMatch.isDetail && shellCreateKey && !shellMatch.child && !shellMatch.tab) {
+      // Create routes of a top-level item (e.g. /grupos/novo): item crumb plus the create title.
+      crumbs.splice(0, crumbs.length, { label: t(shellMatch.item.labelKey), to: shellMatch.item.to }, { label: t(shellCreateKey) })
+    } else if (shellMatch && !shellMatch.isDetail) {
       const { item, child, tab } = shellMatch
       const section = shellSections.find((candidate) => candidate.items.includes(item))
       const current = t((tab ?? child ?? item).labelKey)

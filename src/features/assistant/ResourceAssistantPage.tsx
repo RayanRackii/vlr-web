@@ -235,14 +235,13 @@ export function ResourceAssistantPage({ cadastro = false }: { cadastro?: boolean
       </div>
   )
 
-  if (cadastro) return <CadastroShell area="resources" title={asset.name} step={cadastroStep} go={go} dirty={stepDirty} busy={wizard.busy || stepSaving} canPublish={firstMissing == null && wizard.access.menuWrite} onPublish={() => void wizard.publishMenu()} onBack={() => navigate("/configuracoes/recursos")}>
+  if (cadastro) return <CadastroShell title={asset.name} step={cadastroStep} go={go} dirty={stepDirty} busy={wizard.busy || stepSaving} canPublish={firstMissing == null && wizard.access.menuWrite} onPublish={() => void wizard.publishMenu()} onBack={() => navigate("/configuracoes/recursos")}>
     {cadastroStep === "categorias" ? <CadastroTaxonomyStep onDirtyChange={setStepDirty} onSavingChange={setStepSaving} /> : body}
   </CadastroShell>
 
   return (
     <div className="mx-auto w-full min-w-0 max-w-3xl space-y-4 pb-8">
       <header className="space-y-3">
-        <p className="text-sm text-muted-foreground">{t("rentals.resources.eyebrow")}</p>
         <div className="flex flex-wrap items-center gap-2">
           <h1 className="text-2xl font-semibold tracking-tight">{asset.name}</h1>
           <ItemStatusBadge status={serverStatus ?? status} />

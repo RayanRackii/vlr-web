@@ -211,6 +211,21 @@ describe("header breadcrumb parent crumb", () => {
     expect(within(items[items.length - 1]).getByText(page)).toHaveAttribute("aria-current", "page")
   })
 
+  it("shows the create title for a new customer group", () => {
+    render(
+      <MemoryRouter initialEntries={["/grupos/novo"]}>
+        <TestPermissionProvider permissions={[...permissions, "catalog.products.read"]} activeModules={["catalog"]}>
+          <BreadcrumbTitleProvider>
+            <Breadcrumb variant="header" />
+          </BreadcrumbTitleProvider>
+        </TestPermissionProvider>
+      </MemoryRouter>,
+    )
+    const items = crumbItems()
+    expect(items[0]).toHaveTextContent("Grupos")
+    expect(within(items[items.length - 1]).getByText("Novo grupo")).toHaveAttribute("aria-current", "page")
+  })
+
   it("keeps the overview as a single title", () => {
     renderBreadcrumb("/", undefined, "header")
     expect(screen.queryByRole("navigation", { name: "Caminho de navegação" })).not.toBeInTheDocument()
