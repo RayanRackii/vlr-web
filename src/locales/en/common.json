@@ -163,7 +163,11 @@
   },
   "app": {
     "name": "Rolvix",
-    "authenticatedArea": "Authenticated area"
+    "authenticatedArea": "Authenticated area",
+    "errorBoundary": {
+      "title": "Something went wrong on this screen",
+      "home": "Back to home"
+    }
   },
   "common": {
     "close": "Close",
@@ -317,7 +321,8 @@
     "loadTaxonomy": "Could not load categories and tags.",
     "saveTaxonomy": "Could not save categories and tags.",
     "deleteTaxonomy": "Could not delete the category or tag.",
-    "loadCatalogAgenda": "Could not load the agenda."
+    "loadCatalogAgenda": "Could not load the agenda.",
+    "timeout": "The connection took too long. Please try again."
   },
   "trial": {
     "banner": {

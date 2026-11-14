@@ -1,4 +1,5 @@
 import { catalogPolicySchema, type CatalogPolicy } from "@/features/catalog/schemas/catalogPolicySchemas"
+import { API_UPLOAD_TIMEOUT_MS } from "@/lib/apiTimeouts"
 import i18n from "@/lib/i18n"
 import { api, getAxiosErrorPayload, isAxiosError } from "@/lib/api"
 import { localizeCatalogApiError } from "@/features/catalog/lib/catalogApiErrors"
@@ -238,7 +239,7 @@ export async function uploadCatalogProductFile(
     const response = await api.post(
       `/api/catalog/products/${productId}/files`,
       formData,
-      { headers: { "Content-Type": "multipart/form-data" } },
+      { headers: { "Content-Type": "multipart/form-data" }, timeout: API_UPLOAD_TIMEOUT_MS },
     )
     return parseOrThrow(catalogProductFileSchema.safeParse(response.data))
   } catch (error) {

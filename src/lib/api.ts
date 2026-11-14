@@ -11,6 +11,7 @@ import {
   readJwtExpiresAt,
   requestPathWithoutQuery,
 } from "@/lib/authSessionLog"
+import { API_REQUEST_TIMEOUT_MS } from "@/lib/apiTimeouts"
 import { assignBrowserLocation } from "@/lib/browserLocation"
 import {
   noteTransportFailure,
@@ -85,13 +86,30 @@ export function getApiBaseUrl(): string {
   return DEFAULT_API_BASE_URL
 }
 
+export function isRequestTimeoutError(error: unknown): boolean {
+  return (
+    error instanceof AxiosError &&
+    !error.response &&
+    (error.code === AxiosError.ECONNABORTED || error.code === AxiosError.ETIMEDOUT)
+  )
+}
+
 function createApiClient() {
-  return axios.create({
+  const client = axios.create({
     baseURL: getApiBaseUrl(),
+    timeout: API_REQUEST_TIMEOUT_MS,
     headers: {
       "Content-Type": "application/json",
     },
   })
+  // Replace axios' English "timeout of 30000ms exceeded" with the friendly text.
+  client.interceptors.response.use(undefined, (error: unknown) => {
+    if (isRequestTimeoutError(error)) {
+      ;(error as AxiosError).message = i18n.t("apiErrors.timeout")
+    }
+    return Promise.reject(error)
+  })
+  return client
 }
 
 function noteTransportFromSettled(error: unknown): void {
