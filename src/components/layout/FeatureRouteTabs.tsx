@@ -28,7 +28,10 @@ export function FeatureRouteTabs({ labelKey, tabs, content, header }: FeatureRou
   if (!visible.some((tab) => tab.to === tabPath)) return <AccessDeniedPage />
 
   return (
-    <Tabs value={tabPath} onValueChange={(value) => { void navigate(String(value)) }} className="space-y-4">
+    <Tabs value={tabPath} onValueChange={(value) => {
+      const tab = visible.find((candidate) => candidate.to === value)
+      void navigate(`${String(value)}${tab?.search ?? ""}`)
+    }} className="space-y-4">
       {header}
       <TabsList variant="line" aria-label={t(labelKey)}>
         {visible.map((tab) => (
