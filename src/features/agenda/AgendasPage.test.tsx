@@ -216,6 +216,19 @@ describe("agenda filter panel", () => {
     expect(localStorage.getItem("rolvix.agenda.filters.collapsed")).toBe("0")
   })
 
+  it("keeps keyboard focus on the toggle when collapsing and expanding", async () => {
+    setup()
+    await userEvent.click(await screen.findByRole("button", { name: "Recolher filtros" }))
+    expect(screen.getByRole("button", { name: "Mostrar filtros" })).toHaveFocus()
+    await userEvent.click(screen.getByRole("button", { name: "Mostrar filtros" }))
+    expect(screen.getByRole("button", { name: "Recolher filtros" })).toHaveFocus()
+  })
+
+  it("treats an unknown legacy recurso as all resources", async () => {
+    setup("?visao=dia&date=2026-11-10&recurso=nope")
+    expect(await screen.findByRole("heading", { name: "Recursos · 3 de 3" })).toBeInTheDocument()
+  })
+
   it("still works when localStorage throws", async () => {
     vi.spyOn(Storage.prototype, "getItem").mockImplementation(() => { throw new Error("blocked") })
     vi.spyOn(Storage.prototype, "setItem").mockImplementation(() => { throw new Error("blocked") })

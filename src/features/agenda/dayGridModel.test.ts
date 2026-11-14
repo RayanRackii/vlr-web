@@ -64,3 +64,21 @@ it("filters by selected resource ids and by free time", () => {
   // A tipo filter must not change what counts as free time.
   expect(buildAgendaDay(data, state("livres=1&tipo=reserva"), "America/Sao_Paulo").rows.map((r) => r.id)).toEqual([asset.id])
 })
+
+it("decides the free-time filter once for the whole week and keeps every block of kept resources", () => {
+  const busy = { ...asset, id: "busy", name: "Estúdio B", openTime: "09:00:00", closeTime: "12:00:00" }
+  const full = { ...asset, id: "full", name: "Estúdio C", openTime: "09:00:00", closeTime: "12:00:00" }
+  const days = ["2026-11-09", "2026-11-10", "2026-11-11", "2026-11-12", "2026-11-13", "2026-11-14", "2026-11-15"]
+  const slots = [
+    slot({ id: "busy-tue", date: "2026-11-10", rentalAssetId: "busy", startTime: "09:00:00", endTime: "12:00:00", occupancyKindKey: "maintenance" }),
+    ...days.map((date) => slot({ id: `full-${date}`, date, rentalAssetId: "full", startTime: "09:00:00", endTime: "12:00:00", occupancyKindKey: "maintenance" })),
+  ]
+  const week = buildAgendaWeek(sources({ assets: [busy, full], slots }), state("livres=1"), "America/Sao_Paulo")
+  expect(week.rows.map((row) => row.id)).toEqual(["busy"])
+  expect(week.rows[0].cells.map((cell) => cell.counts.manutencao)).toEqual([0, 1, 0, 0, 0, 0, 0])
+})
+
+it("ignores recursos ids that match no resource or category", () => {
+  const data = sources({ assets: [asset] })
+  expect(buildAgendaDay(data, state("recurso=unknown"), "America/Sao_Paulo").rows.map((r) => r.id)).toEqual([asset.id])
+})

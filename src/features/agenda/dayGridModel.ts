@@ -173,11 +173,13 @@ export function buildAgendaDay(
   }
   const start = hours.length ? Math.floor(Math.min(...hours) / 60) * 60 : null
   const end = hours.length ? Math.ceil(Math.max(...hours) / 60) * 60 : null
-  const selected = new Set(state.recursos)
+  // A selected id may also be a category id (legacy `recurso` links carried one).
+  const picked = (row: AgendaRow) => state.recursos.includes(row.id) || (!!row.categoryId && state.recursos.includes(row.categoryId))
+  // Ids that match nothing (stale links) are ignored instead of hiding every row.
+  const selecting = [...rows.values()].some(picked)
   return {
     rows: [...rows.values()].filter((row) => {
-      // A selected id may also be a category id (legacy `recurso` links carried one).
-      if (selected.size > 0 && !selected.has(row.id) && !(row.categoryId && selected.has(row.categoryId))) return false
+      if (selecting && !picked(row)) return false
       return !state.livres || hasFreeTime(row, allBlocks.get(row.id) ?? [], start, end)
     }),
     start,
@@ -219,10 +221,13 @@ export function buildAgendaWeek(
   labels: ReadonlyMap<string, AgendaOrderLabel> = new Map(),
 ) {
   const days = Array.from({ length: 7 }, (_, index) => addCivilDays(startOfCivilWeek(state.date), index))
-  const byDay = days.map((date) => buildAgendaDay(data, { ...state, visao: "dia", date }, zone, labels))
+  // "Only free" is decided once for the range: keep a resource when any day has free time, then show all its blocks.
+  const byDay = days.map((date) => buildAgendaDay(data, { ...state, livres: false, visao: "dia", date }, zone, labels))
+  const keep = state.livres ? new Set(days.flatMap((date) => buildAgendaDay(data, { ...state, visao: "dia", date }, zone, labels).rows.map((row) => row.id))) : null
   const rows = new Map<string, AgendaWeekRow>()
   for (const day of byDay) {
     for (const row of day.rows) {
+      if (keep && !keep.has(row.id)) continue
       if (!rows.has(row.id)) {
         rows.set(row.id, {
           id: row.id,
@@ -238,6 +243,7 @@ export function buildAgendaWeek(
   }
   byDay.forEach((day, index) => {
     for (const row of day.rows) {
+      if (keep && !keep.has(row.id)) continue
       const cell = rows.get(row.id)?.cells[index]
       if (!cell) continue
       for (const block of row.blocks) cell.counts[block.kind] += 1

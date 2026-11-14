@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { addCivilDays, startOfCivilWeek } from "@/features/catalog/components/agenda/agendaLayout"
 import { listCatalogOrders, listCatalogResourceAgenda } from "@/features/catalog/services/catalogService"
 import { listAdminReservations } from "@/features/rentals/services/reservationsService"
@@ -110,26 +110,36 @@ export function useAgendaDay(state: AgendaState, zone: string, access: AgendaAcc
     }
   }, [access.assets, access.orders, access.reservations, access.schedule, canLoad, rangeDays, rangeStart, requestKey, zone])
 
-  const ready = canLoad && loadedKey === requestKey ? sources : emptySources()
-  const labels = new Map((canLoad && loadedKey === requestKey ? orderLabels : []).map((order) => [order.id, order]))
-  // Chip counts ignore the type filter itself; resources ignore every filter so the tree stays complete.
-  const countState = { ...state, tipo: null }
-  const typeCounts: Record<(typeof agendaTypes)[number], number> = { reserva: 0, pedido: 0, manutencao: 0, bloqueio: 0 }
-  if (state.visao === "semana") {
-    for (const row of buildAgendaWeek(ready, countState, zone, labels).rows) for (const cell of row.cells) for (const kind of agendaTypes) typeCounts[kind] += cell.counts[kind]
-  } else {
-    for (const row of buildAgendaDay(ready, countState, zone, labels).rows) for (const block of row.blocks) typeCounts[block.kind] += 1
-  }
-  const resources = buildAgendaDay(ready, { ...state, recursos: [], livres: false, tipo: null, produto: null, pedido: null }, zone, labels).rows
-    .map(({ id, name, categoryId, categoryName }) => ({ id, name, categoryId, categoryName }))
+  const loaded = canLoad && loadedKey === requestKey
+  const none = useMemo(() => emptySources(), [])
+  const ready = loaded ? sources : none
+  const labels = useMemo(() => new Map((loaded ? orderLabels : []).map((order) => [order.id, order])), [loaded, orderLabels])
+  const stateKey = JSON.stringify([state.visao, state.date, state.recursos, state.produto, state.pedido, state.tipo, state.livres, state.fechadas])
+  const derived = useMemo(() => {
+    const current = JSON.parse(stateKey) as [AgendaState["visao"], string, string[], string | null, string | null, AgendaState["tipo"], boolean, boolean]
+    const view: AgendaState = { visao: current[0], date: current[1], recursos: current[2], produto: current[3], pedido: current[4], tipo: current[5], livres: current[6], fechadas: current[7] }
+    // Chip counts ignore the type filter itself; resources ignore every filter so the tree stays complete.
+    const countState = { ...view, tipo: null }
+    const typeCounts: Record<(typeof agendaTypes)[number], number> = { reserva: 0, pedido: 0, manutencao: 0, bloqueio: 0 }
+    if (view.visao === "semana") {
+      for (const row of buildAgendaWeek(ready, countState, zone, labels).rows) for (const cell of row.cells) for (const kind of agendaTypes) typeCounts[kind] += cell.counts[kind]
+    } else {
+      for (const row of buildAgendaDay(ready, countState, zone, labels).rows) for (const block of row.blocks) typeCounts[block.kind] += 1
+    }
+    const resources = buildAgendaDay(ready, { ...view, recursos: [], livres: false, tipo: null, produto: null, pedido: null }, zone, labels).rows
+      .map(({ id, name, categoryId, categoryName }) => ({ id, name, categoryId, categoryName }))
+    return {
+      typeCounts,
+      resources,
+      focusedWeek: focusedProductId ? buildAgendaWeek(ready, { ...view, produto: focusedProductId, tipo: "pedido" }, zone, labels).rows : undefined,
+      day: buildAgendaDay(ready, view, zone, labels),
+      week: buildAgendaWeek(ready, view, zone, labels),
+    }
+  }, [ready, labels, stateKey, zone, focusedProductId])
   return {
-    typeCounts,
-    resources,
+    ...derived,
     loading: canLoad && loadedKey !== requestKey,
-    failedSources: canLoad && loadedKey === requestKey ? failedSources : [],
+    failedSources: loaded ? failedSources : [],
     availableProducts: [...new Map(ready.catalog.items.map((item) => [item.productId, { id: item.productId, label: item.productName }])).values()],
-    focusedWeek: focusedProductId ? buildAgendaWeek(ready, { ...state, produto: focusedProductId, tipo: "pedido" }, zone, labels).rows : undefined,
-    day: buildAgendaDay(ready, state, zone, labels),
-    week: buildAgendaWeek(ready, state, zone, labels),
   }
 }

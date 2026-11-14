@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useRef, useState } from "react"
 import { Filter, PanelLeftClose, Search } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { Button } from "@/components/ui/button"
@@ -30,7 +30,7 @@ function ResourceTree({ state, resources, onChange }: Pick<AgendaFilterFieldsPro
   // `recursos` empty = every resource; a stored id may also be a legacy category id.
   const byCategory = (id: string) => resources.filter((resource) => resource.categoryId === id).map((resource) => resource.id)
   const stored = new Set(state.recursos.flatMap((id) => (resources.some((resource) => resource.id === id) ? [id] : byCategory(id))))
-  const checked = state.recursos.length === 0 ? new Set(resources.map((resource) => resource.id)) : stored
+  const checked = state.recursos.length === 0 || stored.size === 0 ? new Set(resources.map((resource) => resource.id)) : stored
   const total = resources.length
   const needle = fold(query.trim())
   const visible = resources.filter((resource) => !needle || fold(resource.name).includes(needle))
@@ -142,12 +142,20 @@ export function AgendaFilterPanel(props: AgendaFilterFieldsProps) {
   const { t } = useTranslation()
   const [collapsed, setCollapsed] = useState(readCollapsed)
   const count = activeFilterCount(props.state)
-  const set = (value: boolean) => { setCollapsed(value); writeCollapsed(value) }
+  const refocus = useRef(false)
+  const set = (value: boolean) => { refocus.current = true; setCollapsed(value); writeCollapsed(value) }
+  // The toggle is a different button in each state; move focus to the new one after a user toggle.
+  const focusToggle = (element: HTMLButtonElement | null) => {
+    if (element && refocus.current) {
+      refocus.current = false
+      element.focus()
+    }
+  }
 
   if (collapsed) {
     return (
       <aside aria-label={t("agendas.filters.title")} className="shrink-0">
-        <Button type="button" variant="outline" size="icon" className="touch-target relative size-11" aria-label={t("agendas.filters.open")} aria-expanded={false} onClick={() => set(false)}>
+        <Button type="button" variant="outline" size="icon" className="touch-target relative size-11" ref={focusToggle} aria-label={t("agendas.filters.open")} aria-expanded={false} onClick={() => set(false)}>
           <Filter className={ICON_SIZE.md} strokeWidth={ICON_STROKE_WIDTH} aria-hidden />
           {count > 0 && <span className="absolute -right-1 -top-1"><CountBadge count={count} /></span>}
         </Button>
@@ -161,7 +169,7 @@ export function AgendaFilterPanel(props: AgendaFilterFieldsProps) {
           {t("agendas.filters.title")}
           <CountBadge count={count} />
         </h2>
-        <Button type="button" variant="ghost" size="icon" className="touch-target size-11" aria-label={t("agendas.filters.collapse")} aria-expanded onClick={() => set(true)}>
+        <Button type="button" variant="ghost" size="icon" className="touch-target size-11" aria-label={t("agendas.filters.collapse")} ref={focusToggle} aria-expanded onClick={() => set(true)}>
           <PanelLeftClose className={ICON_SIZE.md} strokeWidth={ICON_STROKE_WIDTH} aria-hidden />
         </Button>
       </div>
