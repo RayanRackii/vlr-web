@@ -4598,6 +4598,8 @@
       "searchPlaceholder": "Buscar por nombre o subdominio...",
       "searchEmptyTitle": "No se encontraron clientes",
       "searchEmptyDescription": "Ajuste la búsqueda por nombre o subdominio.",
+      "filterAll": "Todos",
+      "columns": { "client": "Cliente", "modules": "Módulos", "status": "Estado", "actions": "Acciones" },
       "metrics": {
         "totalTenants": "Total de tenants",
         "activeTenants": "Tenants activos",
@@ -4607,7 +4609,11 @@
         "edit": "Editar cliente",
         "delete": "Eliminar cliente",
         "openEnvironment": "Entrar",
-        "visualResources": "Recursos visuales"
+        "visualResources": "Recursos visuales",
+        "copyUrl": "Copiar URL",
+        "copyUrlDone": "URL copiada.",
+        "copyUrlFailed": "No se pudo copiar la URL.",
+        "rowMenu": "Acciones para {{name}}"
       },
       "delete": {
         "title": "Eliminar cliente",

@@ -12,7 +12,6 @@ const pageLegacy = [
   "src/features/admin/components/PortalModuleDiscovery.tsx",
   "src/features/admin/components/TenantEditForm.tsx",
   "src/features/admin/components/TenantOnboardingWizard.tsx",
-  "src/features/admin/pages/AdminDashboardPage.tsx",
   "src/features/admin/pages/AdminUsersPage.tsx",
   "src/features/admin/pages/EditTenantPage.tsx",
   "src/features/admin/pages/NewTenantPage.tsx",
