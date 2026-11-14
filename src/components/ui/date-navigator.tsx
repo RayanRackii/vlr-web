@@ -88,7 +88,7 @@ export function DateNavigator<V extends string>({
   if (layout === "toolbar") {
     return (
       <div className="flex min-w-0 flex-wrap items-center justify-between gap-x-4 gap-y-3">
-        <div className="flex min-w-0 flex-wrap items-center gap-2">
+        <div className="flex min-w-0 flex-nowrap items-center gap-2">
           <Button type="button" variant="outline" className="touch-target min-h-11" onClick={() => onDateChange(today)}>
             {labels.today}
           </Button>
@@ -105,10 +105,10 @@ export function DateNavigator<V extends string>({
               type="button"
               aria-label={`${labels.pickDate}: ${label}`}
               onClick={openPicker}
-              className="touch-target flex min-h-11 min-w-0 cursor-pointer items-baseline gap-2 rounded-lg px-2 text-left outline-none transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring"
+              className="touch-target flex min-h-11 min-w-0 cursor-pointer flex-col items-start gap-0 rounded-lg leading-tight sm:flex-row sm:items-baseline sm:gap-2 sm:leading-normal px-2 text-left outline-none transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring"
             >
-              <span aria-hidden="true" className="text-base font-medium tabular-nums text-foreground first-letter:uppercase">{label}</span>
-              {secondaryLabel ? <span aria-hidden="true" className="text-sm text-muted-foreground first-letter:uppercase">{secondaryLabel}</span> : null}
+              <span aria-hidden="true" className="truncate text-sm font-medium tabular-nums text-foreground first-letter:uppercase sm:text-base">{label}</span>
+              {secondaryLabel ? <span aria-hidden="true" className="truncate text-xs text-muted-foreground first-letter:uppercase sm:text-sm">{secondaryLabel}</span> : null}
             </button>
             <span aria-live="polite" className="sr-only">
               {secondaryLabel ? `${label}, ${secondaryLabel}` : label}

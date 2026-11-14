@@ -119,6 +119,13 @@ describe("DateNavigator", () => {
     const order = screen.getAllByRole("button").map((button) => button.getAttribute("aria-label") ?? button.textContent)
     expect(order).toEqual(["Hoje", "Anterior", "Próximo", "Escolher data: 14 de novembro, 2026"])
     expect(screen.getByText("sábado")).toBeInTheDocument()
+    const dateButton = screen.getByRole("button", { name: "Escolher data: 14 de novembro, 2026" })
+    expect(dateButton).toContainElement(screen.getByText("14 de novembro, 2026", { selector: "span[aria-hidden]" }))
+    expect(dateButton).toContainElement(screen.getByText("sábado", { selector: "span[aria-hidden]" }))
+    expect(dateButton).toHaveClass("flex-col", "sm:flex-row")
+    const leftGroup = screen.getByRole("button", { name: "Hoje" }).parentElement
+    expect(leftGroup).toHaveClass("flex-nowrap")
+    expect(leftGroup).not.toHaveClass("flex-wrap")
     await user.click(screen.getByRole("button", { name: "Hoje" }))
     expect(onDateChange).toHaveBeenLastCalledWith("2026-11-10")
     await user.click(screen.getByRole("button", { name: "Próximo" }))
