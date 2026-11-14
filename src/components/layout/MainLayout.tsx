@@ -224,6 +224,10 @@ function MainLayoutShell({ children }: { children?: ReactNode }) {
       }}
     >
       <WorkOrderSyncHost />
+      {/* Below lg the breadcrumb stays in the content (with its narrow back-arrow mode). */}
+      <div data-shell-part="content-breadcrumb" className="lg:hidden">
+        <Breadcrumb />
+      </div>
       <AppErrorBoundary key={location.pathname}>
         <Suspense fallback={<PageContentSkeleton rows={3} />}>
           {children ?? <Outlet />}

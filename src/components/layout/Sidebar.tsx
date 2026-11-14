@@ -338,13 +338,13 @@ function SettingsGroup({
   activeIntroKey?: ModuleIntroKey
 }) {
   const { t } = useTranslation()
-  const [expanded, setExpanded] = useState(!section.defaultCollapsed)
-  const [flyoutOpen, setFlyoutOpen] = useState(false)
-  const itemsId = useId()
-  const label = t(section.titleKey)
   const hasActiveItem = section.items.some(
     (item) => match?.item === item || (item.introKey !== undefined && item.introKey === activeIntroKey),
   )
+  const [expanded, setExpanded] = useState(hasActiveItem || !section.defaultCollapsed)
+  const [flyoutOpen, setFlyoutOpen] = useState(false)
+  const itemsId = useId()
+  const label = t(section.titleKey)
   const toggleLabel = t(
     (collapsed ? flyoutOpen : expanded) ? "moduleIntro.collapse" : "moduleIntro.expand",
     { module: label },

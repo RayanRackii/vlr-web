@@ -33,6 +33,12 @@ describe("AppShell target layout", () => {
     expect(within(main).queryByRole("navigation", { name: "Crumbs" })).not.toBeInTheDocument()
   })
 
+  it("shows the header breadcrumb from lg up only", () => {
+    const { container } = renderShell()
+    const wrapper = container.querySelector('[data-shell-part="header-start"]')
+    expect(wrapper).toHaveClass("hidden", "lg:block")
+  })
+
   it("has no theme toggle in the staff header and hides the page eyebrow", () => {
     const { container } = renderShell()
     const header = container.querySelector('[data-shell-part="header"]') as HTMLElement

@@ -234,7 +234,9 @@ export function AppShell({
                 {pageTitle}
               </p>
               {variant === "staff" ? (
-                headerStart
+                <div data-shell-part="header-start" className="hidden min-w-0 lg:block">
+                  {headerStart}
+                </div>
               ) : (
                 <p className="hidden truncate text-xs text-muted-foreground sm:block lg:text-sm lg:font-medium lg:text-foreground">
                   {contextLabel ?? t("app.authenticatedArea")}

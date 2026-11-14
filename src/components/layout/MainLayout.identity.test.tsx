@@ -110,6 +110,7 @@ describe("MainLayout header identity", () => {
     renderShell("/modulos/bookings")
 
     expect(await screen.findByRole("heading", { level: 1, name: title })).toBeInTheDocument()
+    expect(document.querySelector('[data-shell-part="content-breadcrumb"]')).toHaveClass("lg:hidden")
     expect(
       within(screen.getAllByRole("banner")[0])
         .getAllByText(title)

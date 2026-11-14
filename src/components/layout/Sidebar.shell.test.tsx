@@ -56,6 +56,13 @@ describe("Sidebar target layout", () => {
     expect(container.querySelector(".rounded-r-full")).toBeNull()
   })
 
+  it("expands settings when the active route is one of its items", () => {
+    renderSidebar({}, "/configuracoes/agenda")
+    const active = screen.getByRole("link", { name: "Horários", current: "page" })
+    expect(active).toBeVisible()
+    expect(within(screen.getByTestId("sidebar-bottom")).getByRole("button", { name: /Configurações/ })).toHaveAttribute("aria-expanded", "true")
+  })
+
   it("renders no separators between sections", () => {
     renderSidebar()
     expect(screen.getByRole("navigation", { name: i18n.t("nav.menu") }).querySelector('[data-slot="separator"]')).toBeNull()
