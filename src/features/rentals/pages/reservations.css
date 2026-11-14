@@ -22,27 +22,6 @@
 .dark .reservations-screen [role="tab"][aria-selected="true"] { color: var(--foreground); border-bottom-color: color-mix(in srgb, var(--brand-primary) 60%, var(--foreground)); }
 .reservations-screen [data-slot="tabs"] > [role="tabpanel"] { min-width: 0; margin-top: 0; }
 .reservations-trial { border-radius: 14px; font-size: 14px; }
-.reservations-segment { display: inline-flex; padding: 4px; background: color-mix(in oklch, var(--muted-foreground) 12%, transparent); border-radius: 12px; }
-.reservations-segment button { min-height: 44px; border-radius: 9px; padding: 7px 14px; color: var(--muted-foreground); font-size: 14px; font-weight: 600; transition: background var(--motion-duration-base), color var(--motion-duration-base); }
-.reservations-segment button[aria-pressed="true"] { color: var(--foreground); background: var(--card); box-shadow: var(--shadow-xs); }
-.reservations-date { display: inline-flex; min-width: 0; align-items: center; gap: 4px; padding: 0 4px; min-height: 44px; border: 1px solid var(--border); border-radius: 12px; background: var(--card); }
-.reservations-date > button { width: 44px; height: 44px; border-radius: 9px; color: var(--muted-foreground); }
-.reservations-date-icon { color: var(--muted-foreground); flex-shrink: 0; }
-.reservations-date-input { width: 116px; min-width: 0; }
-.reservations-date-input > div:first-child, .reservations-date-input > div:first-child > span, .reservations-date-input input { height: 44px; }
-.reservations-date-input > div:first-child > span { justify-content: center; border: 0; padding-inline: 4px; font-weight: 600; }
-.reservations-date-input button { min-height: 44px; }
-.reservations-today { min-height: 44px; padding-inline: 14px; border-radius: 12px; font-weight: 600; }
-.reservations-chips { display: flex; flex-wrap: wrap; min-width: 0; width: 100%; gap: 6px; }
-.reservations-chips button { display: inline-flex; align-items: center; justify-content: center; gap: 7px; min-height: 44px; padding: 0 14px; border: 1px solid var(--border); border-radius: 999px; background: var(--card); color: var(--muted-foreground); font-size: 13px; font-weight: 600; transition: background var(--motion-duration-base), color var(--motion-duration-base), border-color var(--motion-duration-base); }
-.reservations-chips button:hover { background: var(--muted); color: var(--foreground); }
-.reservations-chips button[aria-pressed="true"] { background: var(--reservations-primary, var(--brand-primary)); border-color: var(--reservations-primary, var(--brand-primary)); color: var(--primary-foreground); }
-.reservation-filter-dot { display: inline-block; width: 7px; height: 7px; flex-shrink: 0; border-radius: 50%; background: currentColor; }
-.reservation-filter-dot[data-status="PendingDeposit"] { color: var(--warning); }
-.reservation-filter-dot[data-status="Confirmed"] { color: var(--info); }
-.reservation-filter-dot[data-status="Completed"] { color: var(--success); }
-.reservation-filter-dot[data-status="Canceled"] { color: var(--destructive); }
-.reservations-chips [aria-pressed="true"] .reservation-filter-dot { color: inherit; }
 .reservations-results { display: grid; min-width: 0; gap: 16px; }
 .reservation-actions button { min-height: 44px; padding-inline: 14px; border-radius: 10px; font-size: 13.5px; font-weight: 650; transition: transform 250ms cubic-bezier(.34,1.56,.64,1), background var(--motion-duration-base); }
 .reservation-actions button:not(.reservation-cancel) { background: var(--primary); color: var(--primary-foreground); }
@@ -57,15 +36,6 @@
 
 @media (min-width: 2000px) {
   .reservations-layout { max-width: 1820px; }
-}
-@media (max-width: 760px) {
-  .reservations-segment { width: 100%; }
-  .reservations-segment button { flex: 1; }
-  .reservations-date { flex: 1; }
-  .reservations-date-input { flex: 1; width: 90px; }
-  .reservations-date-icon { display: none; }
-  .reservations-chips { flex-wrap: wrap; padding-block: 3px; }
-  .reservations-chips button { flex-shrink: 0; }
 }
 
 @media (prefers-reduced-motion: reduce) {

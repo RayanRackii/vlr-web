@@ -2,7 +2,7 @@ import type { ReactNode } from "react"
 import { useTranslation } from "react-i18next"
 
 import { DataList, type DataListColumn } from "@/components/data-table/DataList"
-import { Badge } from "@/components/ui/badge"
+import { StatusBadge } from "@/components/ui/status"
 import type { EmptyStateProps } from "@/components/ui/empty-state"
 import { useTenantTimeZone } from "@/contexts/TenantTimeZoneContext"
 import {
@@ -10,16 +10,9 @@ import {
   formatReservationAssets,
   formatReservationRange,
   type AdminReservation,
-  type ReservationStatus,
 } from "@/features/rentals/services/reservationsService"
+import { reservationStatusTone } from "@/features/rentals/lib/reservationStatusTone"
 import { formatTenantDate, formatTenantTime, tenantCivilDaySpan } from "@/lib/tenantTimeZone"
-
-const statusVariant = {
-  PendingDeposit: "warning",
-  Confirmed: "info",
-  Completed: "success",
-  Canceled: "destructive",
-} as const satisfies Record<ReservationStatus, string>
 
 type ReservationsListProps = {
   rows: readonly AdminReservation[]
@@ -58,12 +51,7 @@ export function ReservationsList({ rows, dateLabel, showDates, actions, toolbar,
   }
 
   function statusBadge(row: AdminReservation) {
-    return (
-      <Badge variant={statusVariant[row.status]} className="h-auto min-h-6 gap-1.5 px-2.5 py-0.5 text-xs font-semibold">
-        <span className="inline-block size-1.5 shrink-0 rounded-full bg-current" aria-hidden="true" />
-        {t(`rentals.reservations.statuses.${row.status}`)}
-      </Badge>
-    )
+    return <StatusBadge tone={reservationStatusTone[row.status]}>{t(`rentals.reservations.statuses.${row.status}`)}</StatusBadge>
   }
 
   function actionsNode(row: AdminReservation, labelled: boolean) {

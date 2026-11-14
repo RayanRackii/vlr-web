@@ -1,9 +1,8 @@
-import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { useTranslation } from "react-i18next"
-import { LocaleDateInput } from "@/components/LocaleDateInput"
 import { toast } from "sonner"
 
-import { AlertTriangle, CalendarDays, CalendarRange, ChevronLeft, ChevronRight } from "lucide-react"
+import { AlertTriangle, CalendarRange } from "lucide-react"
 
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import {
@@ -17,10 +16,13 @@ import {
 } from "@/components/ui/alert-dialog"
 import { Button } from "@/components/ui/button"
 import { FilterBar } from "@/components/data-table/FilterBar"
+import { StatusChips } from "@/components/data-table/StatusChips"
+import { DateNavigator } from "@/components/ui/date-navigator"
 import { useModuleIntroLink } from "@/hooks/useModuleIntroLink"
 import { LoadingButton } from "@/components/ui/loading-button"
 import { ReservationsHeader } from "@/features/rentals/components/ReservationsHeader"
 import { ReservationsList } from "@/features/rentals/components/ReservationsList"
+import { reservationStatusTone } from "@/features/rentals/lib/reservationStatusTone"
 import "./reservations.css"
 import { useTrialStatus } from "@/features/users/hooks/useTrialStatus"
 import { usePermissions } from "@/features/users/permissions/PermissionContext"
@@ -75,6 +77,33 @@ function endOfMonth(iso: string): string {
   return toIso(date)
 }
 
+function countByStatus(rows: readonly AdminReservation[]): Record<ReservationStatus, number> {
+  const counts = Object.fromEntries(reservationStatuses.map((value) => [value, 0])) as Record<ReservationStatus, number>
+  for (const row of rows) counts[row.status] += 1
+  return counts
+}
+
+function addDays(iso: string, delta: number): string {
+  const date = new Date(`${iso}T12:00:00`)
+  date.setDate(date.getDate() + delta)
+  return toIso(date)
+}
+
+/** Adds months clamping the day to the target month length (31 Jan + 1 month = 28/29 Feb). */
+function addMonths(iso: string, delta: number): string {
+  const [year, month, day] = iso.split("-").map(Number)
+  const target = new Date(year, month - 1 + delta, 1, 12)
+  const lastDay = new Date(target.getFullYear(), target.getMonth() + 1, 0, 12).getDate()
+  target.setDate(Math.min(day, lastDay))
+  return toIso(target)
+}
+
+function stepDate(iso: string, view: ReservationsView, direction: -1 | 1): string {
+  if (view === "week") return addDays(iso, 7 * direction)
+  if (view === "month") return addMonths(iso, direction)
+  return addDays(iso, direction)
+}
+
 type ReservationsPageProps = {
   showHeader?: boolean
   onDateChange?: (date: string) => void
@@ -95,17 +124,10 @@ export function ReservationsPage({ showHeader = true, onDateChange }: Reservatio
   const [cancelTarget, setCancelTarget] = useState<AdminReservation | null>(null)
 
   const requestSeq = useRef(0)
-  const dateId = useId()
   const [loadError, setLoadError] = useState(false)
   const sortedRows = useMemo(() => [...rows].sort((a, b) => Date.parse(a.startDateTime) - Date.parse(b.startDateTime)), [rows])
 
   useEffect(() => { onDateChange?.(date) }, [date, onDateChange])
-
-  function shiftDay(delta: number) {
-    const anchor = new Date(`${date || tenantTodayIsoDate(timeZoneId)}T12:00:00`)
-    anchor.setDate(anchor.getDate() + delta)
-    setDate(toIso(anchor))
-  }
 
   const range = useMemo(() => {
     if (!date) {
@@ -239,46 +261,55 @@ export function ReservationsPage({ showHeader = true, onDateChange }: Reservatio
     ? `${new Intl.DateTimeFormat(i18n.language).format(new Date(`${range.from}T12:00:00`))} – ${new Intl.DateTimeFormat(i18n.language).format(new Date(`${range.to}T12:00:00`))}`
     : ""
 
+  const today = tenantTodayIsoDate(timeZoneId)
+  const navigatorLabel = !date
+    ? ""
+    : view === "day"
+      ? dateLabel
+      : view === "month"
+        ? new Intl.DateTimeFormat(i18n.language, { month: "long", year: "numeric" }).format(new Date(`${date}T12:00:00`))
+        : listDateLabel
+  // Rows are filtered server-side, so per-status counts are only meaningful while no status is selected.
+  const statusCounts = status === "" ? countByStatus(rows) : null
+
   const filterBar = (
     <FilterBar
       label={t("rentals.reservations.filters")}
-      actions={
-        <Button variant="outline" className="reservations-today" onClick={() => setDate(tenantTodayIsoDate(timeZoneId))}>
-          {t("rentals.reservations.today")}
-        </Button>
-      }
       filters={
         <>
-          <div role="group" aria-label={t("rentals.reservations.period")} className="reservations-segment">
-            {(["day", "week", "month"] as const).map((value) => (
-              <button className="touch-target" key={value} type="button" aria-pressed={view === value} onClick={() => setView(value)}>
-                {t(`rentals.reservations.view${value[0].toUpperCase()}${value.slice(1)}`)}
-              </button>
-            ))}
-          </div>
-          <div className="reservations-date">
-            <Button variant="ghost" size="icon" aria-label={t("rentals.reservations.previousDay")} onClick={() => shiftDay(-1)}>
-              <ChevronLeft aria-hidden="true" />
-            </Button>
-            <CalendarDays size={20} aria-hidden="true" className="reservations-date-icon" />
-            <label htmlFor={dateId} className="sr-only">{t("rentals.reservations.date")}</label>
-            <LocaleDateInput id={dateId} value={date} locale={i18n.language} today={tenantTodayIsoDate(timeZoneId)} className="reservations-date-input tabular-nums" onChange={setDate} />
-            <Button variant="ghost" size="icon" aria-label={t("rentals.reservations.nextDay")} onClick={() => shiftDay(1)}>
-              <ChevronRight aria-hidden="true" />
-            </Button>
-          </div>
-          <fieldset className="reservations-chips">
-            <legend className="sr-only">{t("rentals.reservations.status")}</legend>
-            {[
-              { value: "" as const, label: t("rentals.reservations.statusAll") },
-              ...reservationStatuses.map((value) => ({ value, label: t(`rentals.reservations.statuses.${value}`) })),
-            ].map((option) => (
-              <button className="touch-target" key={option.value || "all"} type="button" aria-pressed={status === option.value} onClick={() => setStatus(option.value)}>
-                {option.value && <span className="reservation-filter-dot" data-status={option.value} aria-hidden="true" />}
-                {option.label}
-              </button>
-            ))}
-          </fieldset>
+          <DateNavigator
+            date={date}
+            onDateChange={setDate}
+            view={view}
+            views={[
+              { value: "day", label: t("rentals.reservations.viewDay") },
+              { value: "week", label: t("rentals.reservations.viewWeek") },
+              { value: "month", label: t("rentals.reservations.viewMonth") },
+            ]}
+            onViewChange={setView}
+            step={stepDate}
+            today={today}
+            label={navigatorLabel}
+            labels={{
+              previous: t("rentals.reservations.previousDay"),
+              next: t("rentals.reservations.nextDay"),
+              today: t("rentals.reservations.today"),
+              view: t("rentals.reservations.period"),
+            }}
+          />
+          <StatusChips
+            label={t("rentals.reservations.status")}
+            allLabel={t("rentals.reservations.statusAll")}
+            value={status === "" ? null : status}
+            onChange={(value) => setStatus(value ?? "")}
+            allCount={statusCounts ? rows.length : undefined}
+            options={reservationStatuses.map((value) => ({
+              value,
+              label: t(`rentals.reservations.statuses.${value}`),
+              tone: reservationStatusTone[value],
+              count: statusCounts?.[value],
+            }))}
+          />
         </>
       }
     />
@@ -323,7 +354,7 @@ export function ReservationsPage({ showHeader = true, onDateChange }: Reservatio
             action: hasActiveFilters ? (
               <Button onClick={() => { setDate(tenantTodayIsoDate(timeZoneId)); setStatus(""); setView("day") }}>{t("emptyStates.clearFilters")}</Button>
             ) : (
-              <Button className="reservations-today" onClick={() => setView("week")}>{t("rentals.reservations.showWeek")}</Button>
+              <Button className="min-h-11" onClick={() => setView("week")}>{t("rentals.reservations.showWeek")}</Button>
             ),
           }}
         />

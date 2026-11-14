@@ -1,9 +1,9 @@
 import type { ReactNode } from "react"
 import { ModuleIntroLinksProvider } from "@/components/layout/ModuleIntroLinksContext"
 import { AuthProvider } from "@/contexts/AuthContext"
-import { fireEvent, render as testingRender, screen, waitFor, within } from "@testing-library/react"
+import { render as testingRender, screen, waitFor, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
-import { beforeEach, describe, expect, it, vi } from "vitest"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { MemoryRouter } from "react-router-dom"
 
 import { TestPermissionProvider } from "@/features/users/permissions/PermissionContext"
@@ -65,6 +65,8 @@ const confirmMock = vi.mocked(confirmAdminReservation)
 const cancelMock = vi.mocked(cancelAdminReservation)
 const completeMock = vi.mocked(completeAdminReservation)
 const toastSuccess = vi.mocked(toast.success)
+
+afterEach(() => { vi.useRealTimers() })
 
 beforeEach(() => { trialState.readOnly = false })
 
@@ -363,7 +365,7 @@ describe("ReservationsPage filters and states", () => {
     const user = userEvent.setup()
     renderPage()
     await user.click(await screen.findByRole("button", { name: "Ver a semana" }))
-    expect(screen.getByRole("button", { name: "Semana" })).toHaveAttribute("aria-pressed", "true")
+    expect(screen.getByRole("radio", { name: "Semana" })).toBeChecked()
     await waitFor(() => {
       const query = listMock.mock.lastCall?.[0]
       expect(query?.from).not.toBe(query?.to)
@@ -371,27 +373,39 @@ describe("ReservationsPage filters and states", () => {
   })
 
   it("moves between civil days, keeps the existing week/month/status queries and returns to today", async () => {
+    vi.useFakeTimers({ toFake: ["Date"] })
+    vi.setSystemTime(new Date("2026-10-31T15:00:00Z"))
     const user = userEvent.setup()
     renderPage()
     await screen.findByText("Nenhuma reserva neste filtro.")
-    const date = screen.getByLabelText("Data")
-    const today = (date as HTMLInputElement).value
-    fireEvent.change(date, { target: { value: "2026-10-31" } })
-    await waitFor(() => expect(listMock).toHaveBeenLastCalledWith({ from: "2026-10-31", to: "2026-10-31", status: "" }))
+    const q = (from: string, to: string, status = "") => ({ from, to, status })
     await user.click(screen.getByRole("button", { name: "Próximo dia" }))
-    await waitFor(() => expect(listMock).toHaveBeenLastCalledWith({ from: "2026-11-01", to: "2026-11-01", status: "" }))
+    await waitFor(() => expect(listMock).toHaveBeenLastCalledWith(q("2026-11-01", "2026-11-01")))
     await user.click(screen.getByRole("button", { name: "Dia anterior" }))
-    expect(date).toHaveValue("2026-10-31")
-    await user.click(screen.getByRole("button", { name: "Semana" }))
-    await waitFor(() => expect(listMock).toHaveBeenLastCalledWith({ from: "2026-10-26", to: "2026-11-01", status: "" }))
-    await user.click(screen.getByRole("button", { name: "Mês" }))
-    await waitFor(() => expect(listMock).toHaveBeenLastCalledWith({ from: "2026-10-01", to: "2026-10-31", status: "" }))
-    await user.click(within(screen.getByRole("group", { name: "Status" })).getByRole("button", { name: "Confirmada" }))
-    await waitFor(() => expect(listMock).toHaveBeenLastCalledWith({ from: "2026-10-01", to: "2026-10-31", status: "Confirmed" }))
-    expect(screen.getByRole("button", { name: "Confirmada" })).toHaveAttribute("aria-pressed", "true")
+    await waitFor(() => expect(listMock).toHaveBeenLastCalledWith(q("2026-10-31", "2026-10-31")))
+    await user.click(screen.getByRole("radio", { name: "Semana" }))
+    await waitFor(() => expect(listMock).toHaveBeenLastCalledWith(q("2026-10-26", "2026-11-01")))
+    await user.click(screen.getByRole("button", { name: "Próximo dia" }))
+    await waitFor(() => expect(listMock).toHaveBeenLastCalledWith(q("2026-11-02", "2026-11-08")))
+    await user.click(screen.getByRole("radio", { name: "Mês" }))
+    await waitFor(() => expect(listMock).toHaveBeenLastCalledWith(q("2026-11-01", "2026-11-30")))
+    await user.click(screen.getByRole("button", { name: "Dia anterior" }))
+    await waitFor(() => expect(listMock).toHaveBeenLastCalledWith(q("2026-10-01", "2026-10-31")))
+    await user.click(within(screen.getByRole("group", { name: "Status" })).getByRole("button", { name: /Confirmada/ }))
+    await waitFor(() => expect(listMock).toHaveBeenLastCalledWith(q("2026-10-01", "2026-10-31", "Confirmed")))
+    expect(screen.getByRole("button", { name: /Confirmada/ })).toHaveAttribute("aria-pressed", "true")
     await user.click(screen.getByRole("button", { name: "Hoje" }))
-    expect(date).toHaveValue(today)
-    expect(screen.getByRole("button", { name: "Mês" })).toHaveAttribute("aria-pressed", "true")
+    await waitFor(() => expect(listMock).toHaveBeenLastCalledWith(q("2026-10-01", "2026-10-31", "Confirmed")))
+    expect(screen.getByRole("radio", { name: "Mês" })).toBeChecked()
+  })
+
+  it("shows per-status counts from the loaded rows on the status chips", async () => {
+    listMock.mockResolvedValue([makeReservation("PendingDeposit"), makeReservation("Confirmed"), makeReservation("Confirmed")])
+    renderPage()
+    const group = await screen.findByRole("group", { name: "Status" })
+    await waitFor(() => expect(within(group).getByRole("button", { name: /^Todos/ })).toHaveTextContent("3"))
+    expect(within(group).getByRole("button", { name: /Confirmada/ })).toHaveTextContent("2")
+    expect(within(group).getAllByRole("button")[0]).toHaveTextContent("Todos")
   })
 
   it("clears an empty filtered view and restores the example", async () => {
@@ -399,14 +413,14 @@ describe("ReservationsPage filters and states", () => {
     renderPage(["rentals.reservations.read"])
     expect(await screen.findByText(i18n.t("emptyStates.examples.bookings"))).toBeVisible()
     expect(screen.getByRole("link", { name: i18n.t("emptyStates.learnMore") })).toHaveAttribute("href", "/modulos/bookings")
-    await user.click(screen.getByRole("button", { name: "Semana" }))
-    await user.click(screen.getByRole("button", { name: "Confirmada" }))
+    await user.click(screen.getByRole("radio", { name: "Semana" }))
+    await user.click(screen.getByRole("button", { name: /Confirmada/ }))
     const clear = await screen.findByRole("button", { name: i18n.t("emptyStates.clearFilters") })
     expect(screen.queryByText(i18n.t("emptyStates.examples.bookings"))).not.toBeInTheDocument()
     await user.click(clear)
     expect(await screen.findByText(i18n.t("emptyStates.examples.bookings"))).toBeVisible()
-    expect(screen.getByRole("button", { name: "Dia" })).toHaveAttribute("aria-pressed", "true")
-    expect(screen.getByRole("button", { name: "Todos" })).toHaveAttribute("aria-pressed", "true")
+    expect(screen.getByRole("radio", { name: "Dia" })).toBeChecked()
+    expect(screen.getByRole("button", { name: /^Todos/ })).toHaveAttribute("aria-pressed", "true")
   })
 
   it("confirms a pending deposit and refreshes the existing list", async () => {
@@ -427,7 +441,7 @@ describe("ReservationsPage filters and states", () => {
     const table = await screen.findByRole("table")
     expect(screen.getByText(i18n.t("trial.readOnlyHint"))).toBeInTheDocument()
     for (const action of within(table).getAllByRole("button")) expect(action).toBeDisabled()
-    expect(screen.getByRole("button", { name: "Semana" })).toBeEnabled()
+    expect(screen.getByRole("radio", { name: "Semana" })).toBeEnabled()
     expect(confirmMock).not.toHaveBeenCalled()
     expect(cancelMock).not.toHaveBeenCalled()
     expect(completeMock).not.toHaveBeenCalled()
@@ -442,7 +456,7 @@ describe("ReservationsPage filters and states", () => {
     rejectLoad(new Error("Network unavailable"))
     expect(await screen.findByRole("alert")).toHaveTextContent("Não foi possível carregar as reservas.")
     expect(screen.queryByText("Nenhuma reserva neste filtro.")).not.toBeInTheDocument()
-    await userEvent.click(screen.getByRole("button", { name: "Semana" }))
+    await userEvent.click(screen.getByRole("radio", { name: "Semana" }))
     expect(await screen.findByText("Nenhuma reserva neste filtro.")).toBeInTheDocument()
     expect(screen.getByText(i18n.t("emptyStates.filterDescription"))).toBeInTheDocument()
     expect(screen.queryByRole("alert")).not.toBeInTheDocument()
@@ -455,7 +469,7 @@ describe("ReservationsPage filters and states", () => {
     ])
     renderPage()
     await screen.findByRole("table")
-    await userEvent.click(screen.getByRole("button", { name: "Semana" }))
+    await userEvent.click(screen.getByRole("radio", { name: "Semana" }))
     const table = await screen.findByRole("table")
     expect(within(table).getByText("06/09/2026")).toBeInTheDocument()
     expect(within(table).getByText(/07\/09.*08\/09.*2 dias/)).toBeInTheDocument()
@@ -500,7 +514,7 @@ describe("ReservationsPage filters and states", () => {
     expect(screen.getByRole("tablist", { name: "Reservas" })).toBeInTheDocument()
     expect(screen.getByRole("tab", { name: "Reservas" })).toHaveAttribute("aria-selected", "true")
     expect(screen.queryByRole("tab", { name: "Regras de reserva" })).not.toBeInTheDocument()
-    expect(screen.getByLabelText("Data")).toBeInTheDocument()
+    expect(screen.getByRole("radiogroup", { name: "Período" })).toBeInTheDocument()
     expect(screen.getAllByTestId("tenant-tz-label")).toHaveLength(1)
   })
 })
