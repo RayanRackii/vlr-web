@@ -22,7 +22,6 @@ import {
   RENTAL_RESOURCES_PERMISSIONS,
   useAppNavigationSections,
 } from "@/components/layout/navigation"
-import { Button } from "@/components/ui/button"
 import { useAuth } from "@/contexts/AuthContext"
 import { TenantTimeZoneProvider } from "@/contexts/TenantTimeZoneProvider"
 import {
@@ -114,6 +113,13 @@ function MainLayoutShell({ children }: { children?: ReactNode }) {
   )
   const pageTitle = t(getPageTitleKey(location.pathname))
   const initials = getUserInitials(currentUser?.fullName, user?.email)
+  const onPlatformPanel = isPlatformAdmin && location.pathname.startsWith("/admin")
+  // The first tenant role name labels the user card; the platform panel has no tenant role.
+  const roleLabel = onPlatformPanel ? undefined : currentUser?.roles?.[0]?.name
+  const workspaceName = staffHeaderContextLabel(
+    currentUser,
+    activeTenantLabel ?? t("app.authenticatedArea"),
+  )
 
   async function handleExitEnvironment() {
     if (isExiting) {
@@ -151,7 +157,13 @@ function MainLayoutShell({ children }: { children?: ReactNode }) {
   return (
     <ModuleIntroLinksProvider keys={introKeys}>
     <AppShell
-      sidebar={(opts) => <Sidebar {...opts} />}
+      sidebar={(opts) => (
+        <Sidebar
+          {...opts}
+          workspaceName={workspaceName}
+          platformWorkspace={onPlatformPanel}
+        />
+      )}
       pageTitle={pageTitle}
       userLabel={userLabel}
       initials={initials}
@@ -159,40 +171,47 @@ function MainLayoutShell({ children }: { children?: ReactNode }) {
       collapsible
       constrainContent
       enlargeHeaderTargets
-      contextLabel={staffHeaderContextLabel(
-        currentUser,
-        t("app.authenticatedArea"),
-      )}
+      userEmail={currentUser?.email ?? user?.email ?? undefined}
+      userRoleLabel={roleLabel}
+      headerStart={
+        <Breadcrumb
+          variant="header"
+          fallback={
+            <p className="hidden min-w-0 truncate text-sm font-medium text-foreground lg:block">
+              {pageTitle}
+            </p>
+          }
+        />
+      }
       banner={
         <>
           <StaffHomeRedirectNotice />
           <TrialBanner informational={!isPlatformAdmin && location.pathname === "/dashboard"} />
-          {isPlatformAdmin && location.pathname.startsWith("/admin") ? (
-            <div className="border-b border-primary/20 bg-primary/5 px-4 py-2 text-sm text-foreground">
-              {t("admin.support.platformPanel")}
-            </div>
-          ) : isInTenantEnvironment ? (
-          <div className="flex min-w-0 max-w-full flex-col gap-2 border-b border-amber-500/30 bg-amber-500/10 px-4 py-2 text-sm text-amber-950 sm:flex-row sm:items-center sm:justify-between dark:text-amber-100">
-            <p className="min-w-0 break-words [overflow-wrap:anywhere]">
-              {t("admin.support.banner", {
-                tenant: activeTenantLabel ?? t("admin.support.tenantFallback"),
-              })}
-            </p>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              disabled={isExiting}
-              className="w-full shrink-0 border-amber-600/40 bg-background/80 sm:w-auto"
-              onClick={() => {
-                void handleExitEnvironment()
-              }}
+          {onPlatformPanel || isInTenantEnvironment ? (
+            <div
+              data-testid="super-admin-banner"
+              className="flex items-center justify-between gap-3 border-b border-border bg-muted/50 px-4 py-1.5 text-xs text-muted-foreground lg:px-8"
             >
-              {isExiting
-                ? t("admin.support.exiting")
-                : t("admin.support.exit")}
-            </Button>
-          </div>
+              <p className="min-w-0 truncate">
+                {onPlatformPanel
+                  ? t("admin.support.platformPanel")
+                  : t("admin.support.bannerSlim")}
+              </p>
+              {onPlatformPanel ? null : (
+                <button
+                  type="button"
+                  disabled={isExiting}
+                  className="touch-target shrink-0 text-xs font-medium text-primary hover:underline disabled:opacity-60"
+                  onClick={() => {
+                    void handleExitEnvironment()
+                  }}
+                >
+                  {isExiting
+                    ? t("admin.support.exiting")
+                    : t("admin.support.exitShort")}
+                </button>
+              )}
+            </div>
           ) : null}
         </>
       }
@@ -205,7 +224,10 @@ function MainLayoutShell({ children }: { children?: ReactNode }) {
       }}
     >
       <WorkOrderSyncHost />
-      <Breadcrumb />
+      {/* Below lg the breadcrumb stays in the content (with its narrow back-arrow mode). */}
+      <div data-shell-part="content-breadcrumb" className="lg:hidden">
+        <Breadcrumb />
+      </div>
       <AppErrorBoundary key={location.pathname}>
         <Suspense fallback={<PageContentSkeleton rows={3} />}>
           {children ?? <Outlet />}

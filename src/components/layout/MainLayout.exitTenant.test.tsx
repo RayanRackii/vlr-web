@@ -1,6 +1,6 @@
 import type { ReactNode } from "react"
 import { AuthError } from "@supabase/supabase-js"
-import { render, screen, waitFor } from "@testing-library/react"
+import { render, screen, waitFor, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom"
 import { beforeEach, describe, expect, it, vi } from "vitest"
@@ -92,7 +92,7 @@ function renderInsideTenant() {
   )
 }
 
-const bannerText = i18n.t("admin.support.banner", { tenant: "Clube FICC" })
+const bannerText = i18n.t("admin.support.bannerSlim")
 
 describe("Voltar à plataforma", () => {
   beforeEach(() => {
@@ -126,7 +126,7 @@ describe("Voltar à plataforma", () => {
     renderInsideTenant()
 
     const exit = await screen.findByRole("button", {
-      name: i18n.t("admin.support.exit"),
+      name: i18n.t("admin.support.exitShort"),
     })
     await user.click(exit)
 
@@ -151,7 +151,7 @@ describe("Voltar à plataforma", () => {
     renderInsideTenant()
 
     await user.click(
-      await screen.findByRole("button", { name: i18n.t("admin.support.exit") }),
+      await screen.findByRole("button", { name: i18n.t("admin.support.exitShort") }),
     )
 
     await waitFor(() => {
@@ -169,7 +169,7 @@ describe("Voltar à plataforma", () => {
     renderInsideTenant()
 
     await user.click(
-      await screen.findByRole("button", { name: i18n.t("admin.support.exit") }),
+      await screen.findByRole("button", { name: i18n.t("admin.support.exitShort") }),
     )
 
     await waitFor(() => {
@@ -179,5 +179,31 @@ describe("Voltar à plataforma", () => {
     expect(screen.getByText(bannerText)).toBeInTheDocument()
     expect(readActiveTenantLabel()).toBe("Clube FICC")
     expect(readPlatformTenantExitedUserId()).toBeNull()
+  })
+
+  it("shows one slim bar with the exit action while inside a tenant", async () => {
+    renderInsideTenant()
+
+    const banner = await screen.findByTestId("super-admin-banner")
+    expect(banner).toHaveTextContent(bannerText)
+    expect(banner).toHaveClass("text-xs", "py-1.5")
+    expect(banner.querySelector("p")).toHaveClass("truncate")
+    expect(within(banner).getByRole("button", { name: i18n.t("admin.support.exitShort") })).toBeInTheDocument()
+  })
+
+  it("shows the platform panel text without the exit button on /admin", async () => {
+    render(
+      <MemoryRouter initialEntries={["/admin/dashboard"]}>
+        <Routes>
+          <Route element={<MainLayout />}>
+            <Route path="/admin/dashboard" element={<LocationProbe />} />
+          </Route>
+        </Routes>
+      </MemoryRouter>,
+    )
+
+    const banner = await screen.findByTestId("super-admin-banner")
+    expect(banner).toHaveTextContent(i18n.t("admin.support.platformPanel"))
+    expect(within(banner).queryByRole("button")).not.toBeInTheDocument()
   })
 })

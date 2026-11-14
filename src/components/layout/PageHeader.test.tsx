@@ -3,6 +3,7 @@ import { MemoryRouter } from "react-router-dom"
 import { describe, expect, it } from "vitest"
 
 import { PageHeader } from "@/components/layout/PageHeader"
+import { ShellContext } from "@/components/layout/ShellContext"
 
 describe("PageHeader", () => {
   it("renders the title as the page heading", () => {
@@ -48,5 +49,21 @@ describe("PageHeader", () => {
     expect(screen.getByRole("link", { name: "Voltar" })).toHaveAttribute("href", "/agendas")
     expect(screen.getByText("Operação")).toBeInTheDocument()
     expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1)
+  })
+})
+
+describe("PageHeader under the staff shell", () => {
+  it("hides the eyebrow when the breadcrumb lives in the header", () => {
+    render(
+      <ShellContext.Provider value={{ breadcrumbInHeader: true }}>
+        <PageHeader title="Reservas" eyebrow="Operacao" />
+      </ShellContext.Provider>,
+    )
+    expect(screen.queryByText("Operacao")).not.toBeInTheDocument()
+  })
+
+  it("shows the eyebrow without the context", () => {
+    render(<PageHeader title="Reservas" eyebrow="Operacao" />)
+    expect(screen.getByText("Operacao")).toBeInTheDocument()
   })
 })

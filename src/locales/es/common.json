@@ -2205,6 +2205,8 @@
     "openMenu": "Abrir menú de navegación",
     "loading": "Cargando menú de navegación",
     "collapseMenu": "Contraer menú",
+    "workspaceCaption": "Tu espacio de trabajo",
+    "platformWorkspace": "Plataforma Rolvix",
     "expandMenu": "Expandir menú",
     "sections": {
       "settings": "Configuración",
@@ -2913,7 +2915,8 @@
   "theme": {
     "toggle": "Cambiar tema",
     "light": "Claro",
-    "dark": "Oscuro"
+    "dark": "Oscuro",
+    "system": "Sistema"
   },
   "language": {
     "label": "Idioma",
@@ -4892,6 +4895,8 @@
     "support": {
       "banner": "Está en el tenant {{tenant}} como super-admin",
       "platformPanel": "Panel de la plataforma",
+      "bannerSlim": "Estás viendo este espacio como super-admin",
+      "exitShort": "Salir del tenant",
       "tenantFallback": "cliente",
       "exit": "Salir del tenant",
       "exiting": "Saliendo...",

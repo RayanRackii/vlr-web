@@ -1,4 +1,4 @@
-import { useContext, useSyncExternalStore } from "react"
+import { useContext, useSyncExternalStore, type ReactNode } from "react"
 import { Link, useLocation } from "react-router-dom"
 import { useTranslation } from "react-i18next"
 import { ArrowLeft, ChevronRight } from "lucide-react"
@@ -30,7 +30,15 @@ function isNarrowViewport() {
   return window.matchMedia?.(narrowQuery).matches ?? false
 }
 
-export function Breadcrumb() {
+type BreadcrumbProps = {
+  /** Top-bar styling: no bottom margin, "/" separators. */
+  variant?: "page" | "header"
+  /** Rendered when there is no breadcrumb to show (fewer than two crumbs). */
+  fallback?: ReactNode
+}
+
+export function Breadcrumb({ variant = "page", fallback = null }: BreadcrumbProps = {}) {
+  const inHeader = variant === "header"
   const { t } = useTranslation()
   const { pathname } = useLocation()
   const { sections } = useAppNavigationSections("module-intros")
@@ -41,8 +49,8 @@ export function Breadcrumb() {
   const intro = matchModuleIntro(sections, pathname)
 
   const normalized = pathname.replace(/\/+$/, "") || "/"
-  if (/^\/(?:catalogo\/produtos|configuracoes\/recursos)\/(?:[^/]+\/)?cadastro$/.test(normalized)) return null
-  if (/^\/grupos\/[^/]+$/.test(normalized)) return null
+  if (/^\/(?:catalogo\/produtos|configuracoes\/recursos)\/(?:[^/]+\/)?cadastro$/.test(normalized)) return <>{fallback}</>
+  if (/^\/grupos\/[^/]+$/.test(normalized)) return <>{fallback}</>
 
   const maintenanceChild = pathname.startsWith("/manutencao/")
   const pedidosChild = pathname.startsWith("/pedidos/")
@@ -79,15 +87,15 @@ export function Breadcrumb() {
   }
 
   const visibleCrumbs = narrow ? crumbs.slice(-2) : crumbs
-  if (visibleCrumbs.length < 2) return null
+  if (visibleCrumbs.length < 2) return <>{fallback}</>
   return (
-    <nav aria-label={t("nav.breadcrumbLabel")} className={pedidosChild || maintenanceChild ? "mx-auto mb-4 max-w-[1240px] text-sm text-muted-foreground" : "mb-4 text-sm text-muted-foreground"}>
+    <nav aria-label={t("nav.breadcrumbLabel")} className={inHeader ? "min-w-0 text-sm text-muted-foreground" : pedidosChild || maintenanceChild ? "mx-auto mb-4 max-w-[1240px] text-sm text-muted-foreground" : "mb-4 text-sm text-muted-foreground"}>
       <ol className="flex min-w-0 items-center gap-2">
         {visibleCrumbs.map((crumb, index) => {
           const current = index === visibleCrumbs.length - 1
           return (
             <li key={`${index}-${crumb.label}`} className="flex min-w-0 items-center gap-2">
-              {index > 0 && (pedidosChild || maintenanceChild ? <span aria-hidden="true">/</span> : <ChevronRight className="size-4 shrink-0" strokeWidth={ICON_STROKE_WIDTH} aria-hidden="true" />)}
+              {index > 0 && (inHeader || pedidosChild || maintenanceChild ? <span aria-hidden="true">/</span> : <ChevronRight className="size-4 shrink-0" strokeWidth={ICON_STROKE_WIDTH} aria-hidden="true" />)}
               {current ? (
                 <span aria-current="page" className="truncate font-medium text-foreground">{crumb.label}</span>
               ) : crumb.to ? (
