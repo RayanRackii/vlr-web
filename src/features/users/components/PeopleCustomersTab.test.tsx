@@ -163,7 +163,7 @@ describe("PeopleCustomersTab", () => {
       expect(calls).toHaveLength(1)
     })
     await resolveCall(calls[0], customerPage([CUSTOMER]))
-    expect(await screen.findByText(CUSTOMER.name)).toBeInTheDocument()
+    expect(within(await screen.findByRole("table")).getByText(CUSTOMER.name)).toBeInTheDocument()
 
     const search = screen.getByLabelText(
       i18n.t("peopleAccess.customers.searchLabel"),
@@ -199,12 +199,12 @@ describe("PeopleCustomersTab", () => {
     expect(calls[2]?.signal?.aborted).toBe(false)
 
     await resolveCall(calls[2], customerPage([CUSTOMER, OTHER_CUSTOMER]))
-    expect(await screen.findByText(OTHER_CUSTOMER.name)).toBeInTheDocument()
+    expect(within(await screen.findByRole("table")).getByText(OTHER_CUSTOMER.name)).toBeInTheDocument()
 
     await resolveCall(calls[1], customerPage([]))
 
-    expect(screen.getByText(CUSTOMER.name)).toBeInTheDocument()
-    expect(screen.getByText(OTHER_CUSTOMER.name)).toBeInTheDocument()
+    expect(within(screen.getByRole("table")).getByText(CUSTOMER.name)).toBeInTheDocument()
+    expect(within(screen.getByRole("table")).getByText(OTHER_CUSTOMER.name)).toBeInTheDocument()
     expect(screen.queryByText(searchEmpty)).not.toBeInTheDocument()
     expect(screen.queryByText(environmentEmpty)).not.toBeInTheDocument()
   })
@@ -218,7 +218,7 @@ describe("PeopleCustomersTab", () => {
       expect(calls).toHaveLength(1)
     })
     await resolveCall(calls[0], customerPage([CUSTOMER]))
-    expect(await screen.findByText(CUSTOMER.name)).toBeInTheDocument()
+    expect(within(await screen.findByRole("table")).getByText(CUSTOMER.name)).toBeInTheDocument()
 
     await user.type(
       screen.getByLabelText(i18n.t("peopleAccess.customers.searchLabel")),
@@ -246,7 +246,7 @@ describe("PeopleCustomersTab", () => {
     })
 
     await resolveCall(calls[2], customerPage([CUSTOMER]))
-    expect(await screen.findByText(CUSTOMER.name)).toBeInTheDocument()
+    expect(within(await screen.findByRole("table")).getByText(CUSTOMER.name)).toBeInTheDocument()
 
     const canceled = Object.assign(new Error("canceled"), {
       name: "CanceledError",
@@ -256,11 +256,43 @@ describe("PeopleCustomersTab", () => {
       calls[1]?.reject(canceled)
     })
 
-    expect(screen.getByText(CUSTOMER.name)).toBeInTheDocument()
+    expect(within(screen.getByRole("table")).getByText(CUSTOMER.name)).toBeInTheDocument()
     expect(screen.queryByRole("alert")).not.toBeInTheDocument()
     expect(screen.queryByText(searchEmpty)).not.toBeInTheDocument()
     expect(
       screen.queryByText(i18n.t("peopleAccess.errors.loadCustomers")),
     ).not.toBeInTheDocument()
+  })
+
+  it("shows a loading status while the list loads and no table until it resolves", async () => {
+    const calls = installPendingCalls()
+    render(<PeopleCustomersTab />)
+
+    expect(screen.getByRole("status", { name: i18n.t("peopleAccess.tabs.customers") })).toBeInTheDocument()
+    expect(screen.queryByRole("table")).not.toBeInTheDocument()
+    await waitFor(() => {
+      expect(calls).toHaveLength(1)
+    })
+    await resolveCall(calls[0], customerPage([CUSTOMER]))
+
+    expect(await screen.findByRole("table")).toBeInTheDocument()
+    expect(screen.queryByRole("status", { name: i18n.t("peopleAccess.tabs.customers") })).not.toBeInTheDocument()
+  })
+
+  it("shows the load error without rows and reloads on Retry", async () => {
+    const user = userEvent.setup()
+    listTenantCustomersMock.mockRejectedValueOnce(new Error("boom"))
+    listTenantCustomersMock.mockResolvedValueOnce(customerPage([CUSTOMER]))
+    render(<PeopleCustomersTab />)
+
+    const alert = await screen.findByRole("alert")
+    expect(within(alert).getByText("boom")).toBeInTheDocument()
+    expect(screen.queryByRole("table")).not.toBeInTheDocument()
+
+    await user.click(within(alert).getByRole("button", { name: i18n.t("common.retry") }))
+
+    expect(within(await screen.findByRole("table")).getByText(CUSTOMER.name)).toBeInTheDocument()
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument()
+    expect(listTenantCustomersMock).toHaveBeenCalledTimes(2)
   })
 })

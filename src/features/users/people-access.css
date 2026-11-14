@@ -13,7 +13,7 @@
 .people-tab:focus-visible { outline: 2px solid var(--ring); outline-offset: -3px; border-radius: 6px; }
 .people-tab:hover { color: var(--primary); }
 .people-content { min-width: 0; }
-.people-search-card, .people-directory, .people-role-list, .people-field-section, .people-role-summary {
+.people-search-card, .people-role-list, .people-field-section, .people-role-summary {
   border: 1px solid var(--border); border-radius: 16px; background: var(--card); color: var(--card-foreground); box-shadow: var(--people-shadow);
 }
 .people-search-card { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 10px; padding: 12px 14px; }
@@ -23,30 +23,7 @@
 .people-search-input [role="alert"] { margin-top: 6px; }
 .people-search-card .people-search-submit { min-height: 44px; border-radius: 10px; }
 .people-search-card .people-invite { margin-left: auto; min-height: 44px; border-radius: 10px; }
-.people-list-heading { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px 20px; padding: 14px 18px; font-size: .8125rem; }
-.people-list-heading h2 { font-weight: 650; }
-.people-list-heading p { color: var(--muted-foreground); }
-.people-table { width: 100%; border-collapse: collapse; table-layout: auto; text-align: left; }
-.people-table th { padding: 11px 18px; background: color-mix(in oklch, var(--muted) 55%, var(--card)); border-block: 1px solid var(--border); font-size: .6875rem; font-weight: 650; letter-spacing: .055em; text-transform: uppercase; color: var(--muted-foreground); }
-.people-table td { padding: 14px 18px; border-top: 1px solid var(--border); vertical-align: middle; }
-.people-table th:first-child { width: 34%; }
-.people-table th:nth-child(2) { width: 28%; }
-.people-table th:nth-child(3) { width: 15%; }
-.people-table .people-actions-heading { width: 23%; text-align: right; }
-.people-person { display: flex; align-items: center; gap: 12px; min-width: 0; }
-.people-avatar { display: grid; place-items: center; flex-shrink: 0; width: 38px; height: 38px; border-radius: 50%; background: color-mix(in oklch, var(--primary) 10%, var(--card)); color: var(--primary); font-size: .75rem; font-weight: 700; text-transform: uppercase; }
-.people-person-name { font-size: .875rem; font-weight: 600; overflow-wrap: anywhere; }
-.people-person-email { margin-top: 2px; color: var(--muted-foreground); font-size: .8125rem; overflow-wrap: anywhere; }
-.people-role-chips { display: flex; flex-wrap: wrap; gap: 6px; }
-.people-role-chip { padding: 3px 9px; border-radius: 8px; color: var(--primary); background: color-mix(in oklch, var(--primary) 10%, var(--card)); font-size: .75rem; font-weight: 600; overflow-wrap: anywhere; }
-.people-no-roles { color: var(--muted-foreground); font-size: .8125rem; font-style: italic; }
-.people-status-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
-.people-table .people-status { height: auto; min-height: 22px; }
-.people-actions-cell { text-align: right; }
-.people-table .people-card-action { min-height: 36px; font-size: .75rem; }
-.people-date-cell { font-variant-numeric: tabular-nums; color: var(--muted-foreground); font-size: .8125rem; }
-.people-mobile-date-label { display: none; }
-.people-pager { display: flex; flex-wrap: wrap; justify-content: flex-end; align-items: center; gap: 12px; border-top: 1px solid var(--border); padding: 10px 16px; }
+.people-pager { display: flex; flex-wrap: wrap; justify-content: flex-end; align-items: center; gap: 12px; padding: 0; }
 .people-pager button { min-width: 40px; min-height: 40px; padding: 0; }
 .people-empty-icon, .people-empty [data-slot="empty-state-icon"] { display: grid; place-items: center; width: 84px; height: 70px; border-radius: 18px; background: color-mix(in oklch, var(--primary) 10%, var(--card)); color: var(--primary); }
 .people-role-summary { display: none; align-self: start; padding: 20px; }
@@ -84,22 +61,11 @@
   .people-access { padding-bottom: calc(90px + env(safe-area-inset-bottom)); }
   .people-tab { padding-inline: 10px; }
   .people-tab svg { display: none; }
-  .people-table, .people-table tbody { display: block; }
-  .people-table thead { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
-  .people-table tbody { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .people-table tr { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) auto; align-content: center; align-items: start; gap: 6px 10px; border-top: 1px solid var(--border); padding: 18px 16px; }
-  .people-table tr:nth-child(odd) { border-right: 1px solid var(--border); }
-  .people-table td { display: block; border: 0; padding: 0; min-width: 0; }
-  .people-identity-cell { grid-column: 1; grid-row: 1; }
-  .people-status-cell { grid-column: 2; grid-row: 1; }
-  .people-roles-cell, .people-date-cell { grid-column: 1 / -1; grid-row: 2; padding-left: 50px !important; }
-  .people-mobile-date-label { display: inline; }
-  .people-actions-cell { display: contents !important; }
-  .people-table .people-card-action, .people-role-row .people-card-action, .people-field-row .people-card-action {
+  .people-role-row .people-card-action, .people-field-row .people-card-action {
     position: absolute; inset: 0; z-index: 1; width: 100%; height: 100%; min-height: 44px; margin: 0; border: 0; border-radius: 0; background: transparent; color: transparent; transform: none;
   }
   .people-card-action > span, .people-card-action > svg { opacity: 0; }
-  .people-table .people-card-action:focus-visible, .people-role-row .people-card-action:focus-visible, .people-field-row .people-card-action:focus-visible { outline: 2px solid var(--ring); outline-offset: -3px; box-shadow: none; }
+  .people-role-row .people-card-action:focus-visible, .people-field-row .people-card-action:focus-visible { outline: 2px solid var(--ring); outline-offset: -3px; box-shadow: none; }
   /* The full-row button opens the action sheet at these widths. */
   .people-role-row .people-delete-action, .people-field-row .people-delete-action { display: none; }
   .people-actions-hint { display: flex; align-items: center; gap: 8px; color: var(--muted-foreground); font-size: .8125rem; }
@@ -165,18 +131,17 @@
   .people-search-card .people-search-submit { position: absolute; width: 1px; height: 1px; min-height: 0; padding: 0; border: 0; overflow: hidden; clip-path: inset(50%); }
   .people-search-card .people-search-submit:focus-visible { position: static; width: auto; height: auto; min-height: 44px; padding: 0 14px; overflow: visible; clip-path: none; }
   .people-search-card .people-invite { position: fixed; right: 16px; bottom: calc(84px + env(safe-area-inset-bottom)); z-index: 31; min-height: 52px; padding-inline: 18px; border-radius: 16px; box-shadow: 0 10px 24px -8px color-mix(in oklch, var(--primary) 65%, transparent); }
-  .people-table tbody, .people-role-list { grid-template-columns: minmax(0, 1fr); }
-  .people-table tr:nth-child(odd), .people-role-row:nth-child(odd) { border-right: 0; }
+  .people-role-list { grid-template-columns: minmax(0, 1fr); }
+  .people-role-row:nth-child(odd) { border-right: 0; }
   .people-role-row:nth-child(2) { border-top: 1px solid var(--border); }
-  .people-list-heading p { display: none; }
   .people-field-section { padding: 16px; }
 }
 @media (prefers-reduced-motion: no-preference) {
   .people-tab, .people-search-card button, .people-bottom-nav a { transition: transform .25s var(--people-spring), background-color .2s, color .2s; }
   .people-tab:active, .people-search-card button:active, .people-bottom-nav a:active { transform: scale(.97); }
-  .people-directory, .people-field-section, .people-role-list { animation: people-enter .35s var(--people-spring) both; }
-  .people-table tr:has(button), .people-role-row, .people-field-row:has(button) { transition: background-color .2s; }
-  .people-table tr:has(button):hover, .people-role-row:hover, .people-field-row:has(button):hover { background: color-mix(in oklch, var(--primary) 3%, var(--card)); }
+  .people-field-section, .people-role-list { animation: people-enter .35s var(--people-spring) both; }
+  .people-role-row, .people-field-row:has(button) { transition: background-color .2s; }
+  .people-role-row:hover, .people-field-row:has(button):hover { background: color-mix(in oklch, var(--primary) 3%, var(--card)); }
   @keyframes people-enter { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
 }
 @media (prefers-reduced-motion: reduce) {
@@ -189,6 +154,4 @@
 
 /* Staff tabs wrap rather than moving the page sideways. Registration keeps its batch-2 layout. */
 .people-access:not(.people-access-registration) .people-tabs { flex-wrap: wrap; overflow-x: visible; }
-.people-access:not(.people-access-registration) .people-directory { min-width: 0; }
-.people-access:not(.people-access-registration) .people-list-heading { font-variant-numeric: tabular-nums; }
 .people-access:not(.people-access-registration) .people-bottom-nav a:focus-visible { outline: 2px solid var(--ring); outline-offset: -3px; border-radius: 8px; }
