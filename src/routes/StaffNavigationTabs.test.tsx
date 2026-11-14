@@ -135,10 +135,10 @@ describe("legacy sidebar URLs rendered inside their new screens", () => {
   it.each(["catalog", "rentals"])("keeps registration-only access through People and access with %s", async (module) => {
     renderRoute("/configuracoes/cadastro", ["core.registration_fields.read"], [module])
     expect(await screen.findByText("registration content")).toBeInTheDocument()
-    expect(await screen.findByRole("link", { name: i18n.t("nav.registrationFields") })).toBeInTheDocument()
+    expect(await screen.findByRole("tab", { name: i18n.t("nav.registrationFields") })).toHaveAttribute("aria-selected", "true")
     expect(screen.queryByText("team content")).not.toBeInTheDocument()
-    expect(screen.queryByRole("button", { name: i18n.t("peopleAccess.tabs.users") })).not.toBeInTheDocument()
-    expect(screen.queryByRole("button", { name: i18n.t("peopleAccess.tabs.roles") })).not.toBeInTheDocument()
+    expect(screen.queryByRole("tab", { name: i18n.t("peopleAccess.tabs.users") })).not.toBeInTheDocument()
+    expect(screen.queryByRole("tab", { name: i18n.t("peopleAccess.tabs.roles") })).not.toBeInTheDocument()
   })
 
   it("denies the registration content when neither supported module is enabled", async () => {
@@ -158,7 +158,7 @@ describe("legacy sidebar URLs rendered inside their new screens", () => {
     const user = userEvent.setup()
     renderRoute("/configuracoes/cadastro", ["core.registration_fields.read", "core.users.read", "core.roles.read"])
     expect(listRoles).not.toHaveBeenCalled()
-    await user.click(await screen.findByRole("button", { name: i18n.t("peopleAccess.tabs.roles") }))
+    await user.click(await screen.findByRole("tab", { name: i18n.t("peopleAccess.tabs.roles") }))
     await waitFor(() => expect(screen.getByText("roles content")).toBeInTheDocument())
     expect(await screen.findByTestId("location")).toHaveTextContent("/pessoas-e-acesso?tab=roles")
     expect(screen.queryByText("registration content")).not.toBeInTheDocument()
