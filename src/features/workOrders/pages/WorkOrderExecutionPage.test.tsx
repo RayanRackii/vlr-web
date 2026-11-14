@@ -1170,3 +1170,115 @@ describe("WorkOrderExecutionPage assignee", () => {
     ).not.toBeInTheDocument()
   })
 })
+
+describe("WorkOrderExecutionPage mobile-first layout", () => {
+  beforeEach(() => {
+    getWorkOrderByIdMock.mockReset()
+    getTechniciansMock.mockResolvedValue([sampleTechnician])
+  })
+
+  function baseTask() {
+    return makeWorkOrder().tasks[0] as NonNullable<
+      ReturnType<typeof makeWorkOrder>["tasks"][number]
+    >
+  }
+
+  it("shows the checklist before the collapsed details and never the full UUID or the input type", async () => {
+    getWorkOrderByIdMock.mockResolvedValue(makeWorkOrder({ notes: "Levar peça" }))
+    renderExecution(["os.work_orders.read"], ["os"])
+
+    const checklist = await screen.findByRole("heading", {
+      name: i18n.t("workOrders.execution.tasksTitle"),
+    })
+    const details = document.querySelector("[data-work-order-details]")
+    expect(details).not.toBeNull()
+    expect(details).not.toHaveAttribute("open")
+    expect(
+      checklist.compareDocumentPosition(details as Element) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy()
+    expect(
+      screen.getByRole("heading", { level: 1, name: /Split sala 1/ }),
+    ).toBeInTheDocument()
+    expect(document.body.textContent).not.toContain(WORK_ORDER_ID)
+    expect(screen.queryByText(i18n.t("workOrders.columns.id"))).not.toBeInTheDocument()
+    expect(
+      screen.queryByText(i18n.t("pmoc.inputType.Checkbox")),
+    ).not.toBeInTheDocument()
+    expect(screen.getByText(/99999999/)).toBeInTheDocument()
+  })
+
+  it("keeps the primary action in a sticky bottom bar on mobile", async () => {
+    getWorkOrderByIdMock.mockResolvedValue(makeWorkOrder())
+    renderExecution(["os.work_orders.read"], ["os"])
+    const bar = await waitFor(() => {
+      const found = document.querySelector("[data-work-order-action-bar]")
+      expect(found).not.toBeNull()
+      return found as HTMLElement
+    })
+    expect(
+      within(bar).getByRole("button", { name: i18n.t("workOrders.execution.complete") }),
+    ).toBeInTheDocument()
+  })
+
+  it("moves the primary action into the header on desktop", async () => {
+    const original = window.matchMedia
+    window.matchMedia = ((query: string) => ({
+      matches: true,
+      media: query,
+      onchange: null,
+      addEventListener: () => undefined,
+      removeEventListener: () => undefined,
+      addListener: () => undefined,
+      removeListener: () => undefined,
+      dispatchEvent: () => false,
+    })) as typeof window.matchMedia
+    try {
+      getWorkOrderByIdMock.mockResolvedValue(makeWorkOrder())
+      renderExecution(["os.work_orders.read"], ["os"])
+      expect(
+        await screen.findByRole("button", { name: i18n.t("workOrders.execution.complete") }),
+      ).toBeInTheDocument()
+      expect(document.querySelector("[data-work-order-action-bar]")).toBeNull()
+    } finally {
+      window.matchMedia = original
+    }
+  })
+
+  it.each(["Completed", "Canceled"] as const)(
+    "makes every task control read-only when the OS is %s",
+    async (status) => {
+      const base = baseTask()
+      getWorkOrderByIdMock.mockResolvedValue(
+        makeWorkOrder({
+          status,
+          tasks: [
+            { ...base, id: "20000000-0000-4000-8000-000000000001", title: "Chk", inputType: "Checkbox", order: 1 },
+            { ...base, id: "20000000-0000-4000-8000-000000000002", title: "Txt", inputType: "Text", order: 2 },
+            { ...base, id: "20000000-0000-4000-8000-000000000003", title: "Num", inputType: "Number", order: 3 },
+            {
+              ...base,
+              id: "20000000-0000-4000-8000-000000000004",
+              title: "Cho",
+              inputType: "SingleChoice",
+              configuration: JSON.stringify({ options: ["A", "B"] }),
+              order: 4,
+            },
+          ],
+        }),
+      )
+      renderExecution(["os.work_orders.read"], ["os"])
+
+      await screen.findByRole("heading", { name: i18n.t("workOrders.execution.tasksTitle") })
+      const toggle = screen.getByRole("switch")
+      expect(toggle).toHaveAttribute("aria-disabled", "true")
+      expect(toggle).toHaveAttribute("tabindex", "-1")
+      expect(screen.getByRole("textbox")).toBeDisabled()
+      expect(screen.getByRole("spinbutton")).toBeDisabled()
+      expect(screen.getByRole("combobox", { name: "Cho" })).toBeDisabled()
+      expect(
+        document.querySelector("[data-work-order-action-bar]"),
+      ).toBeNull()
+    },
+  )
+})

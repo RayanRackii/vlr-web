@@ -4067,10 +4067,35 @@
         "notes": "Observaciones",
         "notesPlaceholder": "Contexto adicional para la ejecución"
       },
+      "sections": {
+        "details": "Datos de la OT"
+      },
+      "mode": {
+        "label": "Checklist de la OT",
+        "plan": "Usar checklist de un plan",
+        "adhoc": "Suelta"
+      },
+      "plan": {
+        "label": "Plan de mantenimiento",
+        "placeholder": "Seleccione un plan",
+        "hint": "Las tareas del plan se convierten en el checklist de la OT.",
+        "noTasks": "Este plan no tiene tareas."
+      },
+      "checklist": {
+        "title": "Tareas",
+        "taskN": "Tarea {{n}}",
+        "taskPlaceholder": "Ej.: Inspeccionar el equipo",
+        "mandatory": "Obligatoria",
+        "add": "Añadir tarea",
+        "remove": "Quitar tarea {{n}}",
+        "moveUp": "Subir tarea {{n}}",
+        "moveDown": "Bajar tarea {{n}}"
+      },
       "validation": {
         "assetRequired": "Seleccione un activo.",
         "dateRequired": "Informe la fecha programada.",
-        "taskRequired": "Informe al menos una tarea."
+        "taskRequired": "Informe al menos una tarea.",
+        "planRequired": "Seleccione un plan."
       },
       "errors": {
         "loadLookupsFailed": "No se pudieron cargar los activos y técnicos.",
@@ -4085,7 +4110,8 @@
     "execution": {
       "breadcrumb": "OT {{id}} · {{asset}}",
       "title": "Ejecución de OT",
-      "subtitle": "Activo {{tag}} — {{name}}",
+      "subtitle": "{{tag}} · OT {{code}}",
+      "details": "Detalles de la OT",
       "loading": "Cargando OT...",
       "back": "Volver a la lista",
       "tasksTitle": "Checklist",

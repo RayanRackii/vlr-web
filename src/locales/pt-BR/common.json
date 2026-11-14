@@ -4067,10 +4067,35 @@
         "notes": "Observações",
         "notesPlaceholder": "Contexto adicional para a execução"
       },
+      "sections": {
+        "details": "Dados da OS"
+      },
+      "mode": {
+        "label": "Checklist da OS",
+        "plan": "Usar checklist de um plano",
+        "adhoc": "Avulsa"
+      },
+      "plan": {
+        "label": "Plano de manutenção",
+        "placeholder": "Selecione um plano",
+        "hint": "As tarefas do plano viram o checklist da OS.",
+        "noTasks": "Este plano não tem tarefas."
+      },
+      "checklist": {
+        "title": "Tarefas",
+        "taskN": "Tarefa {{n}}",
+        "taskPlaceholder": "Ex: Inspecionar equipamento",
+        "mandatory": "Obrigatória",
+        "add": "Adicionar tarefa",
+        "remove": "Remover tarefa {{n}}",
+        "moveUp": "Mover tarefa {{n}} para cima",
+        "moveDown": "Mover tarefa {{n}} para baixo"
+      },
       "validation": {
         "assetRequired": "Selecione um ativo.",
         "dateRequired": "Informe a data agendada.",
-        "taskRequired": "Informe ao menos uma tarefa."
+        "taskRequired": "Informe ao menos uma tarefa.",
+        "planRequired": "Selecione um plano."
       },
       "errors": {
         "loadLookupsFailed": "Não foi possível carregar ativos e técnicos.",
@@ -4085,7 +4110,8 @@
     "execution": {
       "breadcrumb": "OS {{id}} · {{asset}}",
       "title": "Execução da OS",
-      "subtitle": "Ativo {{tag}} — {{name}}",
+      "subtitle": "{{tag}} · OS {{code}}",
+      "details": "Detalhes da OS",
       "loading": "Carregando OS...",
       "back": "Voltar para lista",
       "tasksTitle": "Checklist",
@@ -4118,7 +4144,7 @@
       "completedDate": "Concluída em",
       "notCompleted": "Ainda não concluída",
       "start": "Iniciar OS",
-      "complete": "Finalizar OS",
+      "complete": "Concluir OS",
       "startedSuccess": "OS iniciada com sucesso.",
       "completedSuccess": "OS finalizada com sucesso.",
       "mandatoryIncomplete": "Preencha as tarefas obrigatórias: {{tasks}}",

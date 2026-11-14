@@ -4067,10 +4067,35 @@
         "notes": "Notes",
         "notesPlaceholder": "Additional context for execution"
       },
+      "sections": {
+        "details": "Work order details"
+      },
+      "mode": {
+        "label": "Work order checklist",
+        "plan": "Use a plan checklist",
+        "adhoc": "Ad hoc"
+      },
+      "plan": {
+        "label": "Maintenance plan",
+        "placeholder": "Select a plan",
+        "hint": "The plan tasks become the work order checklist.",
+        "noTasks": "This plan has no tasks."
+      },
+      "checklist": {
+        "title": "Tasks",
+        "taskN": "Task {{n}}",
+        "taskPlaceholder": "E.g. Inspect equipment",
+        "mandatory": "Mandatory",
+        "add": "Add task",
+        "remove": "Remove task {{n}}",
+        "moveUp": "Move task {{n}} up",
+        "moveDown": "Move task {{n}} down"
+      },
       "validation": {
         "assetRequired": "Select an asset.",
         "dateRequired": "Enter the scheduled date.",
-        "taskRequired": "Enter at least one task."
+        "taskRequired": "Enter at least one task.",
+        "planRequired": "Select a plan."
       },
       "errors": {
         "loadLookupsFailed": "Could not load assets and technicians.",
@@ -4085,7 +4110,8 @@
     "execution": {
       "breadcrumb": "WO {{id}} · {{asset}}",
       "title": "Work Order Execution",
-      "subtitle": "Asset {{tag}} — {{name}}",
+      "subtitle": "{{tag}} · WO {{code}}",
+      "details": "Work order details",
       "loading": "Loading work order...",
       "back": "Back to list",
       "tasksTitle": "Checklist",

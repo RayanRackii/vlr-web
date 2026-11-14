@@ -169,7 +169,8 @@ type CreateWorkOrderFormMessages = {
   assetRequired: string
   dateRequired: string
   dateInvalid: string
-  taskRequired: string
+  /** Kept for callers; tasks are validated by the page (plan checklist or ad hoc rows). */
+  taskRequired?: string
 }
 
 export function createWorkOrderFormSchema(
@@ -180,7 +181,6 @@ export function createWorkOrderFormSchema(
     assignedUserId: z.string().uuid().optional(),
     scheduledDate: civilDateFormSchema(messages.dateRequired, messages.dateInvalid),
     notes: z.string(),
-    taskTitle: z.string().trim().min(1, messages.taskRequired),
   })
 }
 

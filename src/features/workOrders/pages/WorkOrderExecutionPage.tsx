@@ -2,12 +2,11 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { formatWorkOrderShortId } from "@/features/workOrders/lib/workOrderLabel"
 import { useBreadcrumbTitle } from "@/components/layout/useBreadcrumbTitle"
 import { useParams } from "react-router-dom"
-import { CircleCheck, Play } from "lucide-react"
+import { ChevronDown, CircleCheck, Play } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 
 import { PageHeader } from "@/components/layout/PageHeader"
-import { Card, CardContent } from "@/components/ui/card"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -58,6 +57,25 @@ import {
   type OsSyncConflict,
   type ProcessSyncQueueResult,
 } from "@/lib/offlineSync"
+
+/** True from the Tailwind `sm` breakpoint up. Mobile-first: false when matchMedia is unavailable. */
+function useIsDesktop(): boolean {
+  const query = "(min-width: 640px)"
+  const [matches, setMatches] = useState(() =>
+    typeof window !== "undefined" && typeof window.matchMedia === "function"
+      ? window.matchMedia(query).matches
+      : false,
+  )
+  useEffect(() => {
+    if (typeof window.matchMedia !== "function") return
+    const media = window.matchMedia(query)
+    const onChange = () => setMatches(media.matches)
+    onChange()
+    media.addEventListener("change", onChange)
+    return () => media.removeEventListener("change", onChange)
+  }, [])
+  return matches
+}
 
 function formatScheduledDate(value: string, locale: string): string {
   const date = new Date(`${value}T00:00:00`)
@@ -552,6 +570,7 @@ export function WorkOrderExecutionPage() {
     [],
   )
   const online = useOnlineStatus()
+  const isDesktop = useIsDesktop()
   const actionBar = useObservedHeight<HTMLDivElement>()
   const hasWorkOrderRef = useRef(false)
   const flushersRef = useRef(new Map<string, () => unknown>())
@@ -997,16 +1016,78 @@ export function WorkOrderExecutionPage() {
   const showActionBar =
     workOrder.status === "Pending" || workOrder.status === "InProgress"
 
+  const actionButtons = showActionBar ? (
+    <div className="flex shrink-0 flex-col gap-3 sm:flex-row sm:justify-end">
+      {workOrder.status === "Pending" ? (
+        <LoadingButton
+          type="button"
+          variant="outline"
+          className="min-h-11"
+          loading={isUpdatingStatus}
+          onClick={() => {
+            void handleStart()
+          }}
+        >
+          <Play data-icon="inline-start" />
+          {t("workOrders.execution.start")}
+        </LoadingButton>
+      ) : null}
+
+      <LoadingButton
+        type="button"
+        variant="default"
+        className="min-h-11"
+        loading={isUpdatingStatus}
+        disabled={clientMissingTitles.length > 0 || hasValueBelowMinimum}
+        aria-describedby={
+          missingTitles.length > 0 ? "work-order-missing-tasks" : undefined
+        }
+        onClick={() => {
+          void handleComplete()
+        }}
+      >
+        <CircleCheck data-icon="inline-start" />
+        {t("workOrders.execution.complete")}
+      </LoadingButton>
+    </div>
+  ) : null
+
+  const missingList =
+    showActionBar && missingTitles.length > 0 ? (
+      <div
+        id="work-order-missing-tasks"
+        role="status"
+        aria-live="polite"
+        aria-atomic="true"
+        className="flex min-h-0 min-w-0 flex-col"
+      >
+        <p id="work-order-missing-tasks-title" className="shrink-0 text-sm font-medium">
+          {t("workOrders.execution.mandatoryIncompleteTitle")}
+        </p>
+        <ul
+          aria-labelledby="work-order-missing-tasks-title"
+          tabIndex={0}
+          className="mt-2 min-h-0 list-disc space-y-1 overflow-y-auto overscroll-contain break-words rounded-md pl-5 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        >
+          {missingTitles.map((title) => (
+            <li key={title}>{title}</li>
+          ))}
+        </ul>
+      </div>
+    ) : null
+
+  const stickyBar = showActionBar && !isDesktop
+
   return (
     <div
       data-work-order-execution
       className={
-        showActionBar && actionBar.height === 0
+        stickyBar && actionBar.height === 0
           ? "min-w-0 space-y-6 break-words pb-28"
           : "min-w-0 space-y-6 break-words"
       }
       style={
-        showActionBar && actionBar.height > 0
+        stickyBar && actionBar.height > 0
           ? { paddingBottom: actionBar.height }
           : undefined
       }
@@ -1028,7 +1109,7 @@ export function WorkOrderExecutionPage() {
       <PageHeader
         title={
           <span className="flex flex-wrap items-center gap-2">
-            <span>{t("workOrders.execution.title")}</span>
+            <span className="min-w-0 break-words">{workOrder.asset.name}</span>
             <Badge
               variant={
                 workOrder.status === "Completed"
@@ -1044,25 +1125,13 @@ export function WorkOrderExecutionPage() {
         }
         description={t("workOrders.execution.subtitle", {
           tag: workOrder.asset.tag,
-          name: workOrder.asset.name,
+          code: formatWorkOrderShortId(workOrder.id),
         })}
+        actions={isDesktop ? actionButtons : undefined}
+        className="mb-0 sm:mb-0"
       />
 
-      <Card className="min-w-0 motion-reduce:transition-none">
-        <CardContent className="grid min-w-0 gap-4 sm:grid-cols-2 [&>*]:min-w-0">
-        <div>
-          <p className="text-xs text-muted-foreground">
-            {t("workOrders.columns.asset")}
-          </p>
-          <p className="min-w-0 break-words font-medium tabular-nums">
-            {workOrder.asset.tag} — {workOrder.asset.name}
-          </p>
-          {workOrder.asset.location ? (
-            <p className="text-sm text-muted-foreground">
-              {workOrder.asset.location}
-            </p>
-          ) : null}
-        </div>
+      <div className="grid min-w-0 gap-4 rounded-xl border border-border bg-card p-4 text-card-foreground sm:grid-cols-2 [&>*]:min-w-0">
         <div>
           <p className="text-xs text-muted-foreground">
             {t("workOrders.columns.scheduledDate")}
@@ -1084,45 +1153,12 @@ export function WorkOrderExecutionPage() {
             )
           }}
         />
-        <div>
-          <p className="text-xs text-muted-foreground">
-            {t("workOrders.columns.origin")}
+        {workOrder.asset.location ? (
+          <p className="text-sm text-muted-foreground sm:col-span-2">
+            {workOrder.asset.location}
           </p>
-          <p className="min-w-0 break-words font-medium tabular-nums">
-            <WorkOrderOrigin
-              maintenancePlanId={workOrder.maintenancePlanId}
-              sourcePlanName={workOrder.sourcePlanName}
-            />
-          </p>
-        </div>
-        <div>
-          <p className="text-xs text-muted-foreground">
-            {t("workOrders.columns.id")}
-          </p>
-          <p className="break-all font-mono text-sm tabular-nums">{workOrder.id}</p>
-        </div>
-        <div className="sm:col-span-2">
-          <p className="text-xs text-muted-foreground">
-            {t("workOrders.execution.notes")}
-          </p>
-          <p className="whitespace-pre-wrap font-medium">
-            {workOrder.notes?.trim()
-              ? workOrder.notes
-              : t("workOrders.execution.noNotes")}
-          </p>
-        </div>
-        <div>
-          <p className="text-xs text-muted-foreground">
-            {t("workOrders.execution.completedDate")}
-          </p>
-          <p className="min-w-0 break-words font-medium tabular-nums">
-            {workOrder.completedDate
-              ? formatCompletedDate(workOrder.completedDate, i18n.language)
-              : t("workOrders.execution.notCompleted")}
-          </p>
-        </div>
-        </CardContent>
-      </Card>
+        ) : null}
+      </div>
 
       <div
         role="status"
@@ -1152,15 +1188,12 @@ export function WorkOrderExecutionPage() {
         </div>
       ) : null}
 
+      {isDesktop ? missingList : null}
+
       <section className="min-w-0 space-y-4">
-        <div className="space-y-1">
-          <h2 className="text-lg font-medium">
-            {t("workOrders.execution.tasksTitle")}
-          </h2>
-          <p className="text-sm text-muted-foreground">
-            {t("workOrders.execution.tasksDescription")}
-          </p>
-        </div>
+        <h2 className="text-lg font-medium">
+          {t("workOrders.execution.tasksTitle")}
+        </h2>
 
         <div className="min-w-0 space-y-4">
           {orderedTasks.map((task, index) => (
@@ -1177,9 +1210,6 @@ export function WorkOrderExecutionPage() {
                     {t("workOrders.execution.mandatory")}
                   </Badge>
                 ) : null}
-                <Badge variant="secondary">
-                  {t(`pmoc.inputType.${task.inputType}`)}
-                </Badge>
               </div>
 
               <TaskField
@@ -1204,68 +1234,61 @@ export function WorkOrderExecutionPage() {
         </div>
       </section>
 
-      {showActionBar ? (
+      <details
+        data-work-order-details
+        className="group min-w-0 rounded-xl border border-border bg-card text-card-foreground"
+      >
+        <summary className="touch-target flex min-h-11 cursor-pointer list-none items-center justify-between gap-2 rounded-xl px-4 py-2 font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring [&::-webkit-details-marker]:hidden">
+          {t("workOrders.execution.details")}
+          <ChevronDown
+            className="size-4 shrink-0 text-muted-foreground transition-transform group-open:rotate-180"
+            aria-hidden="true"
+          />
+        </summary>
+        <div className="grid min-w-0 gap-4 border-t border-border p-4 sm:grid-cols-2 [&>*]:min-w-0">
+          <div>
+            <p className="text-xs text-muted-foreground">
+              {t("workOrders.columns.origin")}
+            </p>
+            <p className="min-w-0 break-words font-medium tabular-nums">
+              <WorkOrderOrigin
+                maintenancePlanId={workOrder.maintenancePlanId}
+                sourcePlanName={workOrder.sourcePlanName}
+              />
+            </p>
+          </div>
+          <div>
+            <p className="text-xs text-muted-foreground">
+              {t("workOrders.execution.completedDate")}
+            </p>
+            <p className="min-w-0 break-words font-medium tabular-nums">
+              {workOrder.completedDate
+                ? formatCompletedDate(workOrder.completedDate, i18n.language)
+                : t("workOrders.execution.notCompleted")}
+            </p>
+          </div>
+          <div className="sm:col-span-2">
+            <p className="text-xs text-muted-foreground">
+              {t("workOrders.execution.notes")}
+            </p>
+            <p className="whitespace-pre-wrap font-medium">
+              {workOrder.notes?.trim()
+                ? workOrder.notes
+                : t("workOrders.execution.noNotes")}
+            </p>
+          </div>
+        </div>
+      </details>
+
+      {stickyBar ? (
         <div
           ref={actionBar.ref}
           data-work-order-action-bar
           className="fixed inset-x-0 bottom-0 z-20 flex max-h-[50dvh] flex-col border-t border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80"
         >
           <div className="mx-auto flex min-h-0 min-w-0 w-full max-w-5xl flex-col gap-3 p-4">
-            {missingTitles.length > 0 ? (
-              <div
-                id="work-order-missing-tasks"
-                role="status"
-                aria-live="polite"
-                aria-atomic="true"
-                className="flex min-h-0 min-w-0 flex-col"
-              >
-                <p id="work-order-missing-tasks-title" className="shrink-0 text-sm font-medium">
-                  {t("workOrders.execution.mandatoryIncompleteTitle")}
-                </p>
-                <ul
-                  aria-labelledby="work-order-missing-tasks-title"
-                  tabIndex={0}
-                  className="mt-2 min-h-0 list-disc space-y-1 overflow-y-auto overscroll-contain break-words rounded-md pl-5 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                >
-                  {missingTitles.map((title) => (
-                    <li key={title}>{title}</li>
-                  ))}
-                </ul>
-              </div>
-            ) : null}
-            <div className="flex shrink-0 flex-col gap-3 sm:flex-row sm:justify-end">
-              {workOrder.status === "Pending" ? (
-                <LoadingButton
-                  type="button"
-                  variant="outline"
-                  loading={isUpdatingStatus}
-                  onClick={() => {
-                    void handleStart()
-                  }}
-                >
-                  <Play data-icon="inline-start" />
-                  {t("workOrders.execution.start")}
-                </LoadingButton>
-              ) : null}
-
-              <LoadingButton
-                type="button"
-                variant="default"
-                loading={isUpdatingStatus}
-                disabled={clientMissingTitles.length > 0 || hasValueBelowMinimum}
-                aria-describedby={
-                  missingTitles.length > 0
-                    ? "work-order-missing-tasks"
-                    : undefined
-                }
-                onClick={() => {
-                  void handleComplete()
-                }}
-              >
-                <CircleCheck data-icon="inline-start" />
-                {t("workOrders.execution.complete")}
-              </LoadingButton>
-            </div>
+            {missingList}
+            {actionButtons}
           </div>
         </div>
       ) : null}

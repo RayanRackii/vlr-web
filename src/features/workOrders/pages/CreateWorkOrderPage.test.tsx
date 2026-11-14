@@ -27,14 +27,23 @@ vi.mock("@/features/users/services/usersService", () => ({
 vi.mock("@/features/workOrders/services/workOrdersService", () => ({
   listWorkOrderAssets: vi.fn(),
   createWorkOrder: vi.fn(),
+  generateWorkOrderFromPlan: vi.fn(),
+}))
+
+vi.mock("@/features/pmoc/services/pmocService", () => ({
+  getPlans: vi.fn(async () => []),
 }))
 
 import { toast } from "sonner"
 import { getTechnicians } from "@/features/users/services/usersService"
 import {
   createWorkOrder,
+  generateWorkOrderFromPlan,
   listWorkOrderAssets,
 } from "@/features/workOrders/services/workOrdersService"
+import { getPlans } from "@/features/pmoc/services/pmocService"
+import { basePlanJson } from "@/features/pmoc/test/pmocFixtures"
+import { matchingRegistryAsset } from "@/features/workOrders/test/workOrderFixtures"
 
 const listAssetsMock = vi.mocked(listWorkOrderAssets)
 const createWorkOrderMock = vi.mocked(createWorkOrder)
@@ -152,7 +161,7 @@ describe("CreateWorkOrderPage validity gate", () => {
     )
     expect(createWorkOrderMock).not.toHaveBeenCalled()
 
-    const task = screen.getByLabelText(i18n.t("workOrders.create.form.task"))
+    const task = screen.getByLabelText(i18n.t("workOrders.create.checklist.taskN", { n: 1 }))
     await user.type(task, "Inspecionar equipamento")
     await selectAsset(user)
     expect(submit).toBeEnabled()
@@ -173,7 +182,7 @@ describe("CreateWorkOrderPage validity gate", () => {
     renderPage()
 
     const task = await screen.findByLabelText(
-      i18n.t("workOrders.create.form.task"),
+      i18n.t("workOrders.create.checklist.taskN", { n: 1 }),
     )
     await user.type(task, "Inspecionar equipamento")
     await selectAsset(user)
@@ -241,7 +250,7 @@ describe("CreateWorkOrderPage validity gate", () => {
     )
 
     const task = await screen.findByLabelText(
-      i18n.t("workOrders.create.form.task"),
+      i18n.t("workOrders.create.checklist.taskN", { n: 1 }),
     )
     await user.type(task, "Inspecionar equipamento")
     await selectAsset(user)
@@ -256,4 +265,117 @@ describe("CreateWorkOrderPage validity gate", () => {
     )
     expect(await screen.findByText("os-detail", {}, { timeout: 6000 })).toBeInTheDocument()
   }, 10000)
+})
+
+describe("CreateWorkOrderPage checklist modes", () => {
+  const user = userEvent.setup()
+  const otherCategoryAsset = {
+    ...matchingRegistryAsset,
+    id: "cdcdcdcd-cdcd-4cdc-8cdc-cdcdcdcdcdcd",
+    name: "Bomba",
+    tag: "PU-01",
+    categoryId: "eeeeeeee-0000-4eee-8eee-eeeeeeeeeeee",
+  }
+
+  beforeEach(() => {
+    listAssetsMock.mockReset()
+    createWorkOrderMock.mockReset()
+    vi.mocked(generateWorkOrderFromPlan).mockReset()
+    vi.mocked(getPlans).mockReset()
+    getTechniciansMock.mockReset()
+    getTechniciansMock.mockResolvedValue([])
+    listAssetsMock.mockResolvedValue([matchingRegistryAsset, otherCategoryAsset])
+    vi.mocked(getPlans).mockResolvedValue([basePlanJson])
+    createWorkOrderMock.mockResolvedValue(makeWorkOrder())
+  })
+
+  function renderPage(props: Parameters<typeof CreateWorkOrderPage>[0] = {}) {
+    return render(
+      <MemoryRouter>
+        <CreateWorkOrderPage {...props} />
+      </MemoryRouter>,
+    )
+  }
+
+  it("hides the plan option when there are no plans and starts in ad hoc mode", async () => {
+    vi.mocked(getPlans).mockResolvedValue([])
+    renderPage()
+    await screen.findByRole("combobox", { name: i18n.t("workOrders.create.form.asset") })
+    expect(screen.queryByRole("radio", { name: i18n.t("workOrders.create.mode.plan") })).not.toBeInTheDocument()
+    expect(screen.getByLabelText(i18n.t("workOrders.create.checklist.taskN", { n: 1 }))).toBeInTheDocument()
+  })
+
+  it("adds, reorders and removes ad hoc tasks and sends them in order", async () => {
+    renderPage()
+    await user.type(await screen.findByLabelText(i18n.t("workOrders.create.checklist.taskN", { n: 1 })), "Primeira")
+    await user.click(screen.getByRole("button", { name: i18n.t("workOrders.create.checklist.add") }))
+    await user.type(screen.getByLabelText(i18n.t("workOrders.create.checklist.taskN", { n: 2 })), "Segunda")
+    await user.click(screen.getByRole("button", { name: i18n.t("workOrders.create.checklist.add") }))
+    await user.type(screen.getByLabelText(i18n.t("workOrders.create.checklist.taskN", { n: 3 })), "Terceira")
+    await user.click(screen.getByRole("button", { name: i18n.t("workOrders.create.checklist.moveUp", { n: 3 }) }))
+    await user.click(screen.getByRole("button", { name: i18n.t("workOrders.create.checklist.remove", { n: 1 }) }))
+
+    await user.click(await screen.findByRole("combobox", { name: i18n.t("workOrders.create.form.asset") }))
+    await user.click(await screen.findByRole("option", { name: "AC-01 — Split sala 1" }))
+    await user.click(screen.getByRole("button", { name: i18n.t("workOrders.create.submit") }))
+
+    await waitFor(() => expect(createWorkOrderMock).toHaveBeenCalledTimes(1))
+    expect(createWorkOrderMock.mock.calls[0]?.[0]).toMatchObject({
+      maintenancePlanId: null,
+      tasks: [
+        expect.objectContaining({ title: "Terceira", order: 1, planTaskId: null, isMandatory: true }),
+        expect.objectContaining({ title: "Segunda", order: 2, planTaskId: null }),
+      ],
+    })
+  })
+
+  it("keeps at least one ad hoc row and blocks a blank checklist", async () => {
+    renderPage()
+    expect(
+      await screen.findByRole("button", { name: i18n.t("workOrders.create.checklist.remove", { n: 1 }) }),
+    ).toBeDisabled()
+    await user.click(await screen.findByRole("combobox", { name: i18n.t("workOrders.create.form.asset") }))
+    await user.click(await screen.findByRole("option", { name: "AC-01 — Split sala 1" }))
+    await user.click(screen.getByRole("button", { name: i18n.t("workOrders.create.submit") }))
+    expect(await screen.findByRole("alert")).toHaveTextContent(i18n.t("workOrders.create.validation.taskRequired"))
+    expect(createWorkOrderMock).not.toHaveBeenCalled()
+  })
+
+  it("uses a plan checklist: filters assets by the plan and generates from the plan", async () => {
+    vi.mocked(generateWorkOrderFromPlan).mockResolvedValue(makeWorkOrder())
+    renderPage()
+    await user.click(await screen.findByRole("radio", { name: i18n.t("workOrders.create.mode.plan") }))
+    await user.click(screen.getByRole("combobox", { name: i18n.t("workOrders.create.plan.label") }))
+    await user.click(await screen.findByRole("option", { name: basePlanJson.name }))
+    expect(screen.getByText(basePlanJson.tasks[0]?.title ?? "")).toBeInTheDocument()
+
+    await user.click(screen.getByRole("combobox", { name: i18n.t("workOrders.create.form.asset") }))
+    expect(await screen.findAllByRole("option")).toHaveLength(1)
+    await user.click(screen.getByRole("option", { name: "AC-01 — Split sala 1" }))
+    await user.click(screen.getByRole("button", { name: i18n.t("workOrders.create.submit") }))
+
+    await waitFor(() =>
+      expect(generateWorkOrderFromPlan).toHaveBeenCalledWith(
+        expect.objectContaining({ planId: basePlanJson.id, assetId: matchingRegistryAsset.id }),
+      ),
+    )
+    expect(createWorkOrderMock).not.toHaveBeenCalled()
+  })
+
+  it("requires a plan when the plan checklist is chosen", async () => {
+    renderPage()
+    await user.click(await screen.findByRole("radio", { name: i18n.t("workOrders.create.mode.plan") }))
+    await user.click(await screen.findByRole("combobox", { name: i18n.t("workOrders.create.form.asset") }))
+    await user.click(await screen.findByRole("option", { name: "AC-01 — Split sala 1" }))
+    await user.click(screen.getByRole("button", { name: i18n.t("workOrders.create.submit") }))
+    expect(await screen.findByRole("alert")).toHaveTextContent(i18n.t("workOrders.create.validation.planRequired"))
+    expect(generateWorkOrderFromPlan).not.toHaveBeenCalled()
+  })
+
+  it("opens in plan mode with a prefilled plan", async () => {
+    renderPage({ maintenance: true, sourcePlan: basePlanJson })
+    expect(await screen.findByRole("radio", { name: i18n.t("workOrders.create.mode.plan") })).toBeChecked()
+    expect(screen.getByRole("combobox", { name: i18n.t("workOrders.create.plan.label") })).toHaveTextContent(basePlanJson.name)
+    expect(screen.queryByLabelText(i18n.t("workOrders.create.checklist.taskN", { n: 1 }))).not.toBeInTheDocument()
+  })
 })
