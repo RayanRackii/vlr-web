@@ -125,7 +125,7 @@ export function ReservationsPage({ showHeader = true, onDateChange }: Reservatio
 
   const requestSeq = useRef(0)
   const [loadError, setLoadError] = useState(false)
-  const sortedRows = useMemo(() => [...rows].sort((a, b) => Date.parse(a.startDateTime) - Date.parse(b.startDateTime)), [rows])
+  const sortedRows = useMemo(() => [...rows].filter((row) => !status || row.status === status).sort((a, b) => Date.parse(a.startDateTime) - Date.parse(b.startDateTime)), [rows, status])
 
   useEffect(() => { onDateChange?.(date) }, [date, onDateChange])
 
@@ -153,7 +153,6 @@ export function ReservationsPage({ showHeader = true, onDateChange }: Reservatio
       const items = await listAdminReservations({
         from: range.from,
         to: range.to,
-        status,
       })
       if (seq !== requestSeq.current) return
       setRows(items)
@@ -168,7 +167,7 @@ export function ReservationsPage({ showHeader = true, onDateChange }: Reservatio
     } finally {
       if (seq === requestSeq.current) setLoading(false)
     }
-  }, [range.from, range.to, status, t])
+  }, [range.from, range.to, t])
 
   useEffect(() => {
     void load()
@@ -269,8 +268,8 @@ export function ReservationsPage({ showHeader = true, onDateChange }: Reservatio
       : view === "month"
         ? new Intl.DateTimeFormat(i18n.language, { month: "long", year: "numeric" }).format(new Date(`${date}T12:00:00`))
         : listDateLabel
-  // Rows are filtered server-side, so per-status counts are only meaningful while no status is selected.
-  const statusCounts = status === "" ? countByStatus(rows) : null
+  // The range is loaded unfiltered and the status filter applies client-side, so counts are always complete.
+  const statusCounts = countByStatus(rows)
 
   const filterBar = (
     <FilterBar
@@ -291,10 +290,19 @@ export function ReservationsPage({ showHeader = true, onDateChange }: Reservatio
             today={today}
             label={navigatorLabel}
             labels={{
-              previous: t("rentals.reservations.previousDay"),
-              next: t("rentals.reservations.nextDay"),
+              previous: {
+                day: t("rentals.reservations.previousDay"),
+                week: t("rentals.reservations.previousWeek"),
+                month: t("rentals.reservations.previousMonth"),
+              },
+              next: {
+                day: t("rentals.reservations.nextDay"),
+                week: t("rentals.reservations.nextWeek"),
+                month: t("rentals.reservations.nextMonth"),
+              },
               today: t("rentals.reservations.today"),
               view: t("rentals.reservations.period"),
+              pickDate: t("rentals.reservations.pickDate"),
             }}
           />
           <StatusChips
@@ -302,12 +310,12 @@ export function ReservationsPage({ showHeader = true, onDateChange }: Reservatio
             allLabel={t("rentals.reservations.statusAll")}
             value={status === "" ? null : status}
             onChange={(value) => setStatus(value ?? "")}
-            allCount={statusCounts ? rows.length : undefined}
+            allCount={rows.length}
             options={reservationStatuses.map((value) => ({
               value,
               label: t(`rentals.reservations.statuses.${value}`),
               tone: reservationStatusTone[value],
-              count: statusCounts?.[value],
+              count: statusCounts[value],
             }))}
           />
         </>

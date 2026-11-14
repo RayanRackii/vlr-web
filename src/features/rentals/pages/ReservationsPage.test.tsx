@@ -1,7 +1,7 @@
 import type { ReactNode } from "react"
 import { ModuleIntroLinksProvider } from "@/components/layout/ModuleIntroLinksContext"
 import { AuthProvider } from "@/contexts/AuthContext"
-import { render as testingRender, screen, waitFor, within } from "@testing-library/react"
+import { fireEvent, render as testingRender, screen, waitFor, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { MemoryRouter } from "react-router-dom"
@@ -378,24 +378,30 @@ describe("ReservationsPage filters and states", () => {
     const user = userEvent.setup()
     renderPage()
     await screen.findByText("Nenhuma reserva neste filtro.")
-    const q = (from: string, to: string, status = "") => ({ from, to, status })
+    const q = (from: string, to: string) => ({ from, to })
+    fireEvent.change(document.querySelector("input[type='date']") as HTMLInputElement, { target: { value: "2026-10-30" } })
+    await waitFor(() => expect(listMock).toHaveBeenLastCalledWith(q("2026-10-30", "2026-10-30")))
+    await user.click(screen.getByRole("button", { name: "Próximo dia" }))
+    await waitFor(() => expect(listMock).toHaveBeenLastCalledWith(q("2026-10-31", "2026-10-31")))
     await user.click(screen.getByRole("button", { name: "Próximo dia" }))
     await waitFor(() => expect(listMock).toHaveBeenLastCalledWith(q("2026-11-01", "2026-11-01")))
     await user.click(screen.getByRole("button", { name: "Dia anterior" }))
     await waitFor(() => expect(listMock).toHaveBeenLastCalledWith(q("2026-10-31", "2026-10-31")))
     await user.click(screen.getByRole("radio", { name: "Semana" }))
     await waitFor(() => expect(listMock).toHaveBeenLastCalledWith(q("2026-10-26", "2026-11-01")))
-    await user.click(screen.getByRole("button", { name: "Próximo dia" }))
+    await user.click(screen.getByRole("button", { name: "Próxima semana" }))
     await waitFor(() => expect(listMock).toHaveBeenLastCalledWith(q("2026-11-02", "2026-11-08")))
     await user.click(screen.getByRole("radio", { name: "Mês" }))
     await waitFor(() => expect(listMock).toHaveBeenLastCalledWith(q("2026-11-01", "2026-11-30")))
-    await user.click(screen.getByRole("button", { name: "Dia anterior" }))
+    await user.click(screen.getByRole("button", { name: "Mês anterior" }))
     await waitFor(() => expect(listMock).toHaveBeenLastCalledWith(q("2026-10-01", "2026-10-31")))
     await user.click(within(screen.getByRole("group", { name: "Status" })).getByRole("button", { name: /Confirmada/ }))
-    await waitFor(() => expect(listMock).toHaveBeenLastCalledWith(q("2026-10-01", "2026-10-31", "Confirmed")))
-    expect(screen.getByRole("button", { name: /Confirmada/ })).toHaveAttribute("aria-pressed", "true")
+    await waitFor(() => expect(screen.getByRole("button", { name: /Confirmada/ })).toHaveAttribute("aria-pressed", "true"))
+    expect(listMock).toHaveBeenLastCalledWith(q("2026-10-01", "2026-10-31"))
+    await user.click(screen.getByRole("button", { name: "Próximo mês" }))
+    await waitFor(() => expect(listMock).toHaveBeenLastCalledWith(q("2026-11-01", "2026-11-30")))
     await user.click(screen.getByRole("button", { name: "Hoje" }))
-    await waitFor(() => expect(listMock).toHaveBeenLastCalledWith(q("2026-10-01", "2026-10-31", "Confirmed")))
+    await waitFor(() => expect(listMock).toHaveBeenLastCalledWith(q("2026-10-01", "2026-10-31")))
     expect(screen.getByRole("radio", { name: "Mês" })).toBeChecked()
   })
 
@@ -406,6 +412,10 @@ describe("ReservationsPage filters and states", () => {
     await waitFor(() => expect(within(group).getByRole("button", { name: /^Todos/ })).toHaveTextContent("3"))
     expect(within(group).getByRole("button", { name: /Confirmada/ })).toHaveTextContent("2")
     expect(within(group).getAllByRole("button")[0]).toHaveTextContent("Todos")
+    await userEvent.click(within(group).getByRole("button", { name: /Confirmada/ }))
+    expect(within(group).getByRole("button", { name: /^Todos/ })).toHaveTextContent("3")
+    expect(within(group).getByRole("button", { name: /Confirmada/ })).toHaveTextContent("2")
+    expect(listMock).toHaveBeenCalledTimes(1)
   })
 
   it("clears an empty filtered view and restores the example", async () => {
