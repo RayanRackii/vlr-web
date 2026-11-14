@@ -42,6 +42,8 @@ export type AgendaRow = {
   name: string
   categoryId?: string | null
   categoryName?: string | null
+  /** Resource kind: a place (Location) or an item (Good). */
+  resourceType?: "Location" | "Good" | null
   /** Opening hours in minutes, when the resource declares them. */
   open?: number | null
   close?: number | null
@@ -52,6 +54,14 @@ export function clockMinutes(clock?: string | null): number | null {
   if (!clock || !/^\d{2}:\d{2}(:\d{2}(\.\d+)?)?$/.test(clock)) return null
   const [h, m] = clock.split(":").map(Number)
   return h <= 24 && m < 60 && (h < 24 || m === 0) ? h * 60 + m : null
+}
+
+export function formatClock(minutes: number): string {
+  const bounded = Math.min(Math.max(minutes, 0), 24 * 60)
+  if (bounded === 24 * 60) return "00:00"
+  const hour = Math.floor(bounded / 60)
+  const minute = bounded % 60
+  return `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`
 }
 
 /** Intersect instants with the tenant's civil day, keeping overnight occupancy. */
@@ -87,16 +97,18 @@ export function buildAgendaDay(
     if (!rows.has(id)) rows.set(id, { id, name, blocks: [] })
     return rows.get(id)!
   }
-  const hours: number[] = []
-  const addHours = (start: number | null, end: number | null) => {
+  // Availability windows of resources that declare no opening hours of their own.
+  const slotHours = new Map<string, { open: number; close: number }>()
+  const addHours = (resourceId: string, start: number | null, end: number | null) => {
     if (start === null || end === null) return
-    hours.push(start, end <= start ? 1440 : end)
+    const close = end <= start ? 1440 : end
+    const known = slotHours.get(resourceId)
+    slotHours.set(resourceId, { open: Math.min(known?.open ?? start, start), close: Math.max(known?.close ?? close, close) })
   }
   for (const asset of data.assets) {
     const open = clockMinutes(asset.openTime)
     const close = clockMinutes(asset.closeTime)
-    Object.assign(ensure(asset.id, asset.name), { categoryId: asset.categoryId, categoryName: asset.categoryName, open, close: close !== null && open !== null && close <= open ? 1440 : close })
-    addHours(open, close)
+    Object.assign(ensure(asset.id, asset.name), { resourceType: asset.type, categoryId: asset.categoryId, categoryName: asset.categoryName, open, close: close !== null && open !== null && close <= open ? 1440 : close })
   }
   for (const resource of data.catalog.resources) {
     const row = ensure(resource.id, resource.name)
@@ -129,7 +141,7 @@ export function buildAgendaDay(
     ensure(slot.rentalAssetId, slot.assetName)
     const start = clockMinutes(slot.startTime)
     const end = clockMinutes(slot.endTime)
-    addHours(start, end)
+    if (["open", "lesson"].includes(slot.occupancyKindKey.toLowerCase())) addHours(slot.rentalAssetId, start, end)
     if (start === null || end === null || start === end) continue
     const window = { start, end: end < start ? 1440 : end }
     let kind: AgendaBlock["kind"]
@@ -165,33 +177,85 @@ export function buildAgendaDay(
   }
   const allBlocks = new Map<string, AgendaBlock[]>()
   for (const block of blocks) {
-    hours.push(block.start, block.end)
     allBlocks.set(block.resourceId, [...(allBlocks.get(block.resourceId) ?? []), block])
     if (state.tipo && state.tipo !== block.kind) continue
     if (block.kind === "pedido" && ((state.produto && state.produto !== block.productId) || (state.pedido && state.pedido !== block.orderId))) continue
     rows.get(block.resourceId)?.blocks.push(withOrderLabel(block, labels))
   }
-  const start = hours.length ? Math.floor(Math.min(...hours) / 60) * 60 : null
-  const end = hours.length ? Math.ceil(Math.max(...hours) / 60) * 60 : null
+  for (const [id, hours] of slotHours) {
+    const row = rows.get(id)
+    if (row && (row.open == null || row.close == null)) Object.assign(row, { open: hours.open, close: hours.close })
+  }
   // A selected id may also be a category id (legacy `recurso` links carried one).
   const picked = (row: AgendaRow) => state.recursos.includes(row.id) || (!!row.categoryId && state.recursos.includes(row.categoryId))
   // Ids that match nothing (stale links) are ignored instead of hiding every row.
   const selecting = [...rows.values()].some(picked)
-  return {
-    rows: [...rows.values()].filter((row) => {
-      if (selecting && !picked(row)) return false
-      return !state.livres || hasFreeTime(row, allBlocks.get(row.id) ?? [], start, end)
-    }),
-    start,
-    end,
+  // "Free time" is judged against the opening hours, even when the grid shows 24 hours.
+  const open = agendaAxis([...rows.values()], blocks, false)
+  const visible = [...rows.values()].filter((row) => {
+    if (selecting && !picked(row)) return false
+    return !state.livres || hasFreeTime(row, allBlocks.get(row.id) ?? [], open.start, open.end)
+  })
+  const axis = state.fechadas ? { ...agendaAxis(visible, blocks, true), businessHours: agendaAxis(visible, blocks, false).businessHours } : agendaAxis(visible, blocks, false)
+  return { rows: visible, start: axis.start, end: axis.end, businessHours: axis.businessHours }
+}
+
+export const DEFAULT_AXIS_START = 8 * 60
+export const DEFAULT_AXIS_END = 20 * 60
+
+/**
+ * Hour axis of the day grid. It follows the business hours of the given resources
+ * (earliest open to latest close, rounded to the hour) and is never widened by a block:
+ * long blocks are clipped to it. Only when no resource declares hours does it fall back
+ * to the span of the blocks, then to a default working day. `full` shows 00:00 to 24:00.
+ */
+export function agendaAxis(rows: AgendaRow[], blocks: AgendaBlock[], full: boolean) {
+  const opens = rows.flatMap((row) => (row.open != null && row.close != null ? [row.open] : []))
+  const closes = rows.flatMap((row) => (row.open != null && row.close != null ? [row.close] : []))
+  const businessHours = opens.length ? { open: Math.min(...opens), close: Math.max(...closes) } : null
+  if (full) return { start: 0, end: 1440, businessHours }
+  let from: number
+  let to: number
+  if (businessHours) {
+    from = businessHours.open
+    to = businessHours.close
+  } else {
+    const own = blocks.filter((block) => rows.some((row) => row.id === block.resourceId))
+    from = own.length ? Math.min(...own.map((block) => block.start)) : DEFAULT_AXIS_START
+    to = own.length ? Math.max(...own.map((block) => block.end)) : DEFAULT_AXIS_END
   }
+  const start = Math.floor(from / 60) * 60
+  return { start, end: Math.max(start + 60, Math.ceil(to / 60) * 60), businessHours }
+}
+
+/** A block cut to the axis: where it sits and whether the edges were clipped. */
+export type ClippedBlock = { start: number; end: number; clippedStart: boolean; clippedEnd: boolean; allDay: boolean }
+
+/** Packs overlapping blocks of one row into lanes (0-based), earliest first. */
+export function layoutLanes(blocks: AgendaBlock[]): { block: AgendaBlock; lane: number }[] {
+  const sorted = [...blocks].sort((a, b) => a.start - b.start || a.end - b.end)
+  const ends: number[] = []
+  return sorted.map((block) => {
+    const open = ends.findIndex((end) => end <= block.start)
+    const lane = open === -1 ? ends.length : open
+    ends[lane] = block.end
+    return { block, lane }
+  })
+}
+
+/** Null when the block lies entirely outside the axis. */
+export function clipBlock(block: Pick<AgendaBlock, "start" | "end">, axisStart: number, axisEnd: number): ClippedBlock | null {
+  if (block.end <= axisStart || block.start >= axisEnd) return null
+  const start = Math.max(block.start, axisStart)
+  const end = Math.min(block.end, axisEnd)
+  return { start, end, clippedStart: block.start < axisStart, clippedEnd: block.end > axisEnd, allDay: block.start <= axisStart && block.end >= axisEnd }
 }
 
 /** True when the blocks (of every kind) leave part of the open window uncovered. */
-function hasFreeTime(row: AgendaRow, blocks: AgendaBlock[], axisStart: number | null, axisEnd: number | null) {
+function hasFreeTime(row: AgendaRow, blocks: AgendaBlock[], axisStart: number, axisEnd: number) {
   const open = row.open ?? axisStart
   const close = row.close ?? axisEnd
-  if (open === null || close === null || close <= open) return false
+  if (open == null || close == null || close <= open) return false
   let cursor = open
   for (const block of [...blocks].sort((a, b) => a.start - b.start)) {
     if (block.start > cursor) return true
@@ -210,6 +274,7 @@ export type AgendaWeekRow = {
   id: string
   name: string
   categoryName?: string | null
+  resourceType?: AgendaRow["resourceType"]
   cells: AgendaWeekCell[]
 }
 
@@ -233,6 +298,7 @@ export function buildAgendaWeek(
           id: row.id,
           name: row.name,
           categoryName: row.categoryName,
+          resourceType: row.resourceType,
           cells: days.map((date) => ({
             date,
             counts: { reserva: 0, pedido: 0, manutencao: 0, bloqueio: 0 },

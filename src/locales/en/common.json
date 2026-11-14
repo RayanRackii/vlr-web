@@ -5766,7 +5766,8 @@
     "eyebrow": "Operations · Agendas",
     "overview": {
       "title": "Agenda overview",
-      "subtitle": "Resource occupancy in this period: reservations, orders, maintenance and blocks."
+      "subtitle": "All your resources. One day at a glance.",
+      "subtitleWeek": "All your resources. One week at a glance."
     },
     "resources": {
       "title": "Resource agenda",
@@ -5793,8 +5794,6 @@
     },
     "filters": {
       "title": "Filters",
-      "open": "Show filters",
-      "collapse": "Collapse filters",
       "resources": "Resources · {{selected}} of {{total}}",
       "resourcesList": "Resources",
       "noCategory": "No category",
@@ -5805,14 +5804,45 @@
       "pickProduct": "Choose a product",
       "options": "Options",
       "onlyFree": "Only resources with free time",
-      "showClosed": "Show closed hours",
+      "showClosed": "Show 24 hours",
       "clear": "Clear filters",
-      "sheetDescription": "Filter the resources and product shown on the agenda."
+      "sheetDescription": "Filter the resources and product shown on the agenda.",
+      "selected_one": "{{count}} resource selected",
+      "selected_other": "{{count}} resources selected"
     },
     "prep": "Preparation",
     "cleanup": "Cleanup",
     "selectedProductOrders": "Product orders: {{count}}",
-    "otherUses": "Other uses · {{kind}}: {{count}}"
+    "otherUses": "Other uses · {{kind}}: {{count}}",
+    "dateLong": "{{month}} {{day}}, {{year}}",
+    "searchPlaceholder": "Search order or customer",
+    "openSearch": "Open order search",
+    "grid": {
+      "available": "Available to book",
+      "reserveOn": "Book {{name}}",
+      "reserveHere": "New reservation on this resource",
+      "rowActions": "Actions for {{name}}",
+      "allDay": "All day",
+      "continues": "continues",
+      "outside_one": "{{count}} outside hours",
+      "outside_other": "{{count}} outside hours",
+      "resourceType": {
+        "Location": "Space",
+        "Good": "Equipment"
+      },
+      "businessHours": "Business hours · {{start}} – {{end}}",
+      "variableHours": "Variable hours"
+    },
+    "footer": {
+      "resources_one": "{{count}} resource",
+      "resources_other": "{{count}} resources",
+      "activitiesDay_one": "{{count}} activity this day",
+      "activitiesDay_other": "{{count}} activities this day",
+      "activitiesWeek_one": "{{count}} activity this week",
+      "activitiesWeek_other": "{{count}} activities this week",
+      "updatedNow": "Updated just now",
+      "updatedAgo": "Updated {{minutes}} min ago"
+    }
   },
   "pedidos": {
     "eyebrow": "Operations · Orders",

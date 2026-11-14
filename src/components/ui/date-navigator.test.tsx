@@ -96,4 +96,34 @@ describe("DateNavigator", () => {
     expect(onViewChange).toHaveBeenCalledWith("week")
     expect(document.querySelector("[aria-live='polite']")).toHaveTextContent("sábado, 14 de novembro")
   })
+
+  it("toolbar layout puts Hoje and the chevrons before the date, the view switch last, and keeps the behaviour", async () => {
+    const user = userEvent.setup()
+    const onDateChange = vi.fn()
+    const onViewChange = vi.fn()
+    render(
+      <DateNavigator
+        layout="toolbar"
+        secondaryLabel="sábado"
+        date="2026-11-14"
+        onDateChange={onDateChange}
+        view="day"
+        views={views}
+        onViewChange={onViewChange}
+        step={(date, _view, direction) => `${date}|${direction}`}
+        today="2026-11-10"
+        label="14 de novembro, 2026"
+        labels={{ previous: "Anterior", next: "Próximo", today: "Hoje", view: "Período", pickDate: "Escolher data" }}
+      />,
+    )
+    const order = screen.getAllByRole("button").map((button) => button.getAttribute("aria-label") ?? button.textContent)
+    expect(order).toEqual(["Hoje", "Anterior", "Próximo", "Escolher data: 14 de novembro, 2026"])
+    expect(screen.getByText("sábado")).toBeInTheDocument()
+    await user.click(screen.getByRole("button", { name: "Hoje" }))
+    expect(onDateChange).toHaveBeenLastCalledWith("2026-11-10")
+    await user.click(screen.getByRole("button", { name: "Próximo" }))
+    expect(onDateChange).toHaveBeenLastCalledWith("2026-11-14|1")
+    await user.click(screen.getByRole("radio", { name: "Semana" }))
+    expect(onViewChange).toHaveBeenCalledWith("week")
+  })
 })

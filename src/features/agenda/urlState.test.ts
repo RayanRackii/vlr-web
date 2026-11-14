@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest"
 import { parseAgendaState, serializeAgendaState } from "./urlState"
 
-const base = { visao: "dia", date: "2026-11-10", recursos: [], produto: null, pedido: null, tipo: null, livres: false, fechadas: true }
+const base = { visao: "dia", date: "2026-11-10", recursos: [], produto: null, pedido: null, tipo: null, livres: false, fechadas: false }
 
 describe("staff agenda URL", () => {
   it("defaults to the tenant civil date and validates view, date and type", () => {
@@ -14,13 +14,16 @@ describe("staff agenda URL", () => {
     expect(result.toString()).toBe("visao=semana&other=keep&date=2026-11-10&recursos=a%2Cb&tipo=reserva")
   })
   it("round-trips recursos and the option flags", () => {
-    const state = parseAgendaState(new URLSearchParams("recursos=a,b,a&livres=1&fechadas=0"), "2026-11-10")
-    expect(state).toMatchObject({ recursos: ["a", "b"], livres: true, fechadas: false })
+    const state = parseAgendaState(new URLSearchParams("recursos=a,b,a&livres=1&fechadas=1"), "2026-11-10")
+    expect(state).toMatchObject({ recursos: ["a", "b"], livres: true, fechadas: true })
     const params = serializeAgendaState(state)
     expect(params.get("recursos")).toBe("a,b")
     expect(params.get("livres")).toBe("1")
-    expect(params.get("fechadas")).toBe("0")
-    expect(serializeAgendaState({ ...state, livres: false, fechadas: true }).has("fechadas")).toBe(false)
+    expect(params.get("fechadas")).toBe("1")
+    expect(serializeAgendaState({ ...state, livres: false, fechadas: false }).has("fechadas")).toBe(false)
+  })
+  it("ignores the old fechadas=0 value (business hours is the default)", () => {
+    expect(parseAgendaState(new URLSearchParams("fechadas=0"), "2026-11-10").fechadas).toBe(false)
   })
   it("maps the legacy recurso param to recursos and drops it on write", () => {
     const params = new URLSearchParams("recurso=old-id&other=keep")

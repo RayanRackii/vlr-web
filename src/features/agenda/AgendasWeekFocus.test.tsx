@@ -11,3 +11,11 @@ it("separates selected-product orders from dimmed other orders in the same weekl
   expect(screen.getByLabelText("Outros usos · Pedido: 1")).toHaveClass("opacity-40")
   expect(screen.getByLabelText("Outros usos · Pedido: 1")).toHaveTextContent("1")
 })
+
+it("tints only the column of today", () => {
+  const cell = (date: string) => ({ date, counts: { pedido: 0, reserva: 0, manutencao: 0, bloqueio: 0 } })
+  render(<AgendaWeek loading={false} failedSources={[]} days={["2026-11-09", "2026-11-10"]} rows={[{ id: "r1", name: "Estúdio", cells: [cell("2026-11-09"), cell("2026-11-10")] }]}
+    today="2026-11-10" onOpenDay={() => {}} />)
+  expect(screen.getByRole("button", { name: /2026-11-10/ })).toHaveClass("bg-muted/60")
+  expect(screen.getByRole("button", { name: /2026-11-09/ })).not.toHaveClass("bg-muted/60")
+})

@@ -3,7 +3,8 @@ import { Search, X } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { Skeleton } from "@/components/ui/skeleton"
 import { ICON_SIZE, ICON_STROKE_WIDTH } from "@/lib/icon"
-import { fold } from "./agendaFilterModel"
+import { Button } from "@/components/ui/button"
+import { fold, useIsMedium } from "./agendaFilterModel"
 import { agendaOptionLoaders, useAgendaOptions, type AgendaOption } from "./useAgendaOptions"
 
 const emptyOptions = async (): Promise<AgendaOption[]> => []
@@ -32,6 +33,8 @@ export function AgendaFilters({ order, value, onChange }: AgendaFiltersProps) {
   const pedido = useAgendaOptions(order ? agendaOptionLoaders.pedido : emptyOptions)
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState("")
+  const medium = useIsMedium()
+  const [expanded, setExpanded] = useState(false)
   const rootRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -51,9 +54,17 @@ export function AgendaFilters({ order, value, onChange }: AgendaFiltersProps) {
   const selected = optionLabel(pedido.options, value)
   const shown = matching(pedido.options, query).slice(0, query.trim() ? 6 : 8)
   const listId = "agenda-order-results"
+  // Below `md` the search is an icon until it is opened (or an order is already chosen).
+  if (!medium && !expanded && !selected) {
+    return (
+      <Button type="button" variant="ghost" size="icon" className="touch-target size-11 shrink-0" aria-label={t("agendas.openSearch")} onClick={() => setExpanded(true)}>
+        <Search className={ICON_SIZE.md} strokeWidth={ICON_STROKE_WIDTH} aria-hidden />
+      </Button>
+    )
+  }
   return (
     <div ref={rootRef} className="relative w-full min-w-0 md:w-80">
-      <div className="flex min-h-11 items-center gap-2 rounded-lg border border-border bg-background px-3">
+      <div className="flex min-h-11 items-center gap-2 px-1">
         <Search className={ICON_SIZE.sm} strokeWidth={ICON_STROKE_WIDTH} aria-hidden />
         {selected && (
           <span className="inline-flex max-w-[12rem] items-center gap-1 truncate rounded-full bg-primary/15 px-2 py-0.5 text-sm">
@@ -69,8 +80,9 @@ export function AgendaFilters({ order, value, onChange }: AgendaFiltersProps) {
           aria-controls={listId}
           aria-autocomplete="list"
           aria-label={t("staffAgenda.searchOrder")}
-          placeholder={selected ? t("staffAgenda.replaceOrder") : t("staffAgenda.orderPlaceholder")}
+          placeholder={selected ? t("staffAgenda.replaceOrder") : t("agendas.searchPlaceholder")}
           value={query}
+          autoFocus={!medium && expanded}
           onFocus={() => { setOpen(true); setQuery("") }}
           onChange={(event) => { setOpen(true); setQuery(event.target.value) }}
           className="h-11 min-w-0 flex-1 bg-transparent text-sm outline-none"
@@ -79,7 +91,7 @@ export function AgendaFilters({ order, value, onChange }: AgendaFiltersProps) {
       {pedido.loading && <div role="status" aria-label={t("staffAgenda.loading", { label })} className="mt-2"><Skeleton variant="shimmer" className="h-11 w-40 rounded-full" /></div>}
       {pedido.error && <p role="alert" className="mt-2 text-sm text-destructive">{t("staffAgenda.loadError", { label })}</p>}
       {open && (
-        <div id={listId} role="listbox" aria-label={label} className="absolute left-0 top-full z-20 mt-1 w-full min-w-72 rounded-lg border border-border bg-popover p-2 text-popover-foreground shadow-md">
+        <div id={listId} role="listbox" aria-label={label} className="absolute right-0 top-full z-20 mt-1 w-full min-w-72 rounded-lg border border-border bg-popover p-2 text-popover-foreground shadow-md">
           {shown.map((option) => (
             <button key={option.id} type="button" role="option" aria-selected={option.id === value} className="flex min-h-11 w-full items-center rounded-md px-2 text-left text-sm hover:bg-muted" onClick={() => { onChange(option.id); setOpen(false); setQuery("") }}>
               {option.label}

@@ -1,18 +1,22 @@
-import { Link, useSearchParams } from "react-router-dom"
+import { Ban, Plus } from "lucide-react"
+import { Link, useNavigate, useSearchParams } from "react-router-dom"
 import { useTranslation } from "react-i18next"
-import { StatusChips } from "@/components/data-table/StatusChips"
+import { FilterTabs } from "@/components/data-table/FilterTabs"
 import { Page } from "@/components/layout/Page"
 import { Button } from "@/components/ui/button"
 import { DateNavigator } from "@/components/ui/date-navigator"
 import { useTenantTimeZone } from "@/contexts/TenantTimeZoneContext"
-import { addCivilDays, civilToday, formatDayLabel, startOfCivilWeek } from "@/features/catalog/components/agenda/agendaLayout"
+import { addCivilDays, civilToday, formatDayLabel, startOfCivilWeek, zonedDayAndMinutes } from "@/features/catalog/components/agenda/agendaLayout"
 import { usePermissions } from "@/features/users/permissions/PermissionContext"
+import { ICON_SIZE, ICON_STROKE_WIDTH } from "@/lib/icon"
+import { AgendaFooter, BusinessHoursLabel } from "./AgendaCardParts"
 import { AgendaDayGrid } from "./AgendaDayGrid"
-import { AgendaFilterPanel, AgendaFilterSheet, type AgendaFilterFieldsProps } from "./AgendaFilterPanel"
-import { useIsDesktop } from "./agendaFilterModel"
+import { AgendaFilterMenu, type AgendaFilterFieldsProps } from "./AgendaFilterPanel"
 import { AgendaFilters } from "./AgendaFilters"
 import { AgendaWeek } from "./AgendaWeek"
+import { formatClock } from "./dayGridModel"
 import { useAgendaDay } from "./useAgendaDay"
+import { useFreshness } from "./useFreshness"
 import { agendaOptionLoaders, useAgendaOptions, type AgendaOption } from "./useAgendaOptions"
 import { agendaTypes, parseAgendaState, serializeAgendaState, type AgendaState } from "./urlState"
 import "./agendas.css"
@@ -21,14 +25,23 @@ export type AgendasView = "overview" | "resources" | "product"
 
 const emptyOptions = async (): Promise<AgendaOption[]> => []
 const dayViews = ["dia", "semana"] as const
-// Chip order after "Todos".
+// Tab order after "Todos" (also the legend order).
 const chipKinds = ["pedido", "reserva", "manutencao", "bloqueio"] as const
+
+/** "14 de novembro, 2026" and the weekday ("sábado") of a civil date. */
+function longDate(civil: string, locale: string, format: (key: string, options: Record<string, string | number>) => string) {
+  const [year, month, day] = civil.split("-").map(Number)
+  const date = new Date(Date.UTC(year, month - 1, day))
+  const part = (options: Intl.DateTimeFormatOptions) => new Intl.DateTimeFormat(locale, { ...options, timeZone: "UTC" }).format(date)
+  return { label: format("agendas.dateLong", { day, month: part({ month: "long" }), year }), weekday: part({ weekday: "long" }) }
+}
 
 export function AgendasPage({ view }: { view: AgendasView }) {
   const { t, i18n } = useTranslation()
   const timeZone = useTenantTimeZone()
   const { can, activeModules, isLoading, currentUser } = usePermissions()
   const [params, setParams] = useSearchParams()
+  const navigate = useNavigate()
   const today = civilToday(timeZone)
   const state = parseAgendaState(params, today)
   const update = (patch: Partial<AgendaState>) => setParams(serializeAgendaState({ ...state, ...patch }, params))
@@ -42,15 +55,25 @@ export function AgendasPage({ view }: { view: AgendasView }) {
     reservations: rentals && can("rentals.reservations.read"),
     orders: catalog && can("catalog.orders.read"),
   }, currentUser?.tenantId ?? null, !isLoading, productView ? state.produto : null)
-  const desktop = useIsDesktop()
   const canReserve = rentals && can("rentals.reservations.read")
   const canBlock = rentals && can("rentals.schedule.read") && can("rentals.assets.read")
   const canReadProducts = catalog && can("catalog.products.read")
   const products = useAgendaOptions(canReadProducts ? agendaOptionLoaders.produto : emptyOptions)
   const locale = i18n.resolvedLanguage ?? i18n.language
   const weekStart = startOfCivilWeek(state.date)
-  const dateLabel = state.visao === "dia" ? formatDayLabel(state.date, locale)
-    : `${formatDayLabel(weekStart, locale)} – ${formatDayLabel(addCivilDays(weekStart, 6), locale)}`
+  const week = state.visao === "semana"
+  const long = longDate(state.date, locale, t)
+  const dateLabel = week ? `${formatDayLabel(weekStart, locale)} – ${formatDayLabel(addCivilDays(weekStart, 6), locale)}` : long.label
+  const loading = isLoading || day.loading
+  const { now, updatedAt } = useFreshness(loading)
+  const nowMinutes = now !== null && state.date === today ? zonedDayAndMinutes(new Date(now).toISOString(), timeZone)?.minutes ?? null : null
+  const resourceCount = week ? day.week.rows.length : day.day.rows.length
+  const activities = week
+    ? day.week.rows.reduce((sum, row) => sum + row.cells.reduce((cellSum, cell) => cellSum + agendaTypes.reduce((kindSum, kind) => kindSum + cell.counts[kind], 0), 0), 0)
+    : day.day.rows.reduce((sum, row) => sum + row.blocks.length, 0)
+  // The reservations screen opens as before; the resource and slot travel as query params for it to pick up.
+  const createReservation = (rentalAssetId: string, minutes: number) =>
+    navigate(`/configuracoes/reservas?${new URLSearchParams({ rentalAssetId, date: state.date, startTime: formatClock(minutes) })}`)
 
   const filterProps: AgendaFilterFieldsProps = {
     state,
@@ -73,17 +96,28 @@ export function AgendasPage({ view }: { view: AgendasView }) {
       header={{
         eyebrow: t("agendas.eyebrow"),
         title: t(`agendas.${view}.title`),
-        description: t(`agendas.${view}.subtitle`),
+        description: t(view === "overview" && week ? "agendas.overview.subtitleWeek" : `agendas.${view}.subtitle`),
         actions: canReserve || canBlock ? (
           <>
-            {canBlock && <Button variant="outline" className="touch-target min-h-11" render={<Link to="/configuracoes/agenda" />}>{t("staffAgenda.blockPeriod")}</Button>}
-            {canReserve && <Button className="touch-target min-h-11" render={<Link to="/configuracoes/reservas" />}>{t("agendas.newReservation")}</Button>}
+            {canBlock && (
+              <Button variant="outline" className="touch-target min-h-11" render={<Link to="/configuracoes/agenda" />}>
+                <Ban className={ICON_SIZE.sm} strokeWidth={ICON_STROKE_WIDTH} aria-hidden />
+                {t("staffAgenda.blockPeriod")}
+              </Button>
+            )}
+            {canReserve && (
+              <Button className="touch-target min-h-11" render={<Link to="/configuracoes/reservas" />}>
+                <Plus className={ICON_SIZE.sm} strokeWidth={ICON_STROKE_WIDTH} aria-hidden />
+                {t("agendas.newReservation")}
+              </Button>
+            )}
           </>
         ) : undefined,
       }}
     >
       <div role="group" aria-label={t("staffAgenda.dateNavigation")}>
         <DateNavigator
+          layout="toolbar"
           date={state.date}
           onDateChange={(date) => update({ date })}
           view={state.visao}
@@ -92,6 +126,7 @@ export function AgendasPage({ view }: { view: AgendasView }) {
           step={(date, visao, direction) => addCivilDays(date, visao === "dia" ? direction : direction * 7)}
           today={today}
           label={dateLabel}
+          secondaryLabel={week ? undefined : long.weekday}
           labels={{
             previous: { dia: t("agendas.nav.previousDay"), semana: t("agendas.nav.previousWeek") },
             next: { dia: t("agendas.nav.nextDay"), semana: t("agendas.nav.nextWeek") },
@@ -101,9 +136,10 @@ export function AgendasPage({ view }: { view: AgendasView }) {
           }}
         />
       </div>
-      <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
-        <div className="min-w-0 flex-1">
-          <StatusChips
+      <section className="min-w-0 rounded-xl border border-border bg-card text-card-foreground">
+        <div className="flex min-w-0 items-center justify-between gap-3 px-5">
+          <FilterTabs
+            className="flex-1"
             label={t("staffAgenda.tipo")}
             allLabel={t("staffAgenda.all")}
             value={state.tipo}
@@ -111,22 +147,25 @@ export function AgendasPage({ view }: { view: AgendasView }) {
             allCount={total}
             options={typeOptions}
           />
-        </div>
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
           <AgendaFilters key={currentUser?.tenantId ?? "current"} order={catalog && can("catalog.orders.read")} value={state.pedido} onChange={(pedido) => update({ pedido })} />
-          {!desktop && <AgendaFilterSheet {...filterProps} />}
         </div>
-      </div>
-      <div className="flex min-w-0 items-start gap-4">
-        {desktop && <AgendaFilterPanel {...filterProps} />}
-        <section className="min-w-0 flex-1 overflow-visible rounded-xl border border-border bg-card p-3 text-card-foreground">
-          {productView && !state.produto ? <p className="py-8 text-center text-sm text-muted-foreground">{t("agendas.chooseProduct")}</p>
-            : state.visao === "dia" ? <AgendaDayGrid loading={isLoading || day.loading} failedSources={day.failedSources} rows={day.day.rows} start={day.day.start} end={day.day.end}
-              canReserve={canReserve} canBlock={canBlock}
-              focusedProductId={productView ? state.produto : null} focusDate={state.date} />
-            : <AgendaWeek loading={isLoading || day.loading} failedSources={day.failedSources} days={day.week.days} rows={day.week.rows} focusedRows={day.focusedWeek} today={today} onOpenDay={(date) => update({ visao: "dia", date })} />}
-        </section>
-      </div>
+        <div className="flex items-center justify-between gap-3 border-t px-5">
+          <AgendaFilterMenu {...filterProps} />
+          <BusinessHoursLabel hours={day.day.businessHours} />
+        </div>
+        {productView && !state.produto ? <p className="border-t py-8 text-center text-sm text-muted-foreground">{t("agendas.chooseProduct")}</p>
+          : week ? <AgendaWeek loading={loading} failedSources={day.failedSources} days={day.week.days} rows={day.week.rows} focusedRows={day.focusedWeek} today={today} onOpenDay={(date) => update({ visao: "dia", date })} />
+          : <AgendaDayGrid loading={loading} failedSources={day.failedSources} rows={day.day.rows} start={day.day.start} end={day.day.end}
+              canReserve={canReserve} canBlock={canBlock} nowMinutes={nowMinutes} onCreateReservation={createReservation}
+              focusedProductId={productView ? state.produto : null} focusDate={state.date} />}
+        <AgendaFooter
+          resources={resourceCount}
+          activities={activities}
+          week={week}
+          kinds={chipKinds.filter((kind) => day.typeCounts[kind] > 0)}
+          updatedMinutes={updatedAt !== null && now !== null ? Math.max(0, Math.floor((now - updatedAt) / 60_000)) : null}
+        />
+      </section>
     </Page>
   )
 }
