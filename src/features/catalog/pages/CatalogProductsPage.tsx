@@ -638,7 +638,7 @@ function TaxonomyFilterHeader({ kind, title, options, filter, onChange }: {
   const categories = [...options.categories].sort((left, right) => left.sortOrder - right.sortOrder || left.name.localeCompare(right.name))
   return (
     <Popover>
-      <PopoverTrigger render={<Button type="button" variant="outline" className="staff-catalog-filter" data-active={active} />}>
+      <PopoverTrigger render={<Button type="button" variant="outline" className="min-h-11 min-w-11 rounded-lg px-3 text-sm data-[active=true]:border-primary data-[active=true]:bg-primary/10 data-[active=true]:text-primary" data-active={active} />}>
         {title}
       </PopoverTrigger>
       <PopoverContent className="w-72 space-y-3" align="start">

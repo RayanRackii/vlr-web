@@ -270,6 +270,46 @@ describe("CatalogProductsPage validity gate", () => {
     })
   })
 
+  it("shows a chip for the category in the URL and clears it on remove", async () => {
+    const category = "11111111-1111-4111-8111-111111111111"
+    getTaxonomyOptionsMock.mockResolvedValue({
+      categories: [{ id: category, name: "Quadras", slug: "quadras", parentId: null, icon: null, sortOrder: 0 }],
+      tags: [],
+    })
+    listProductsMock.mockResolvedValue([PRODUCT])
+    const user = userEvent.setup()
+    renderPage(`/?category=${category}`)
+    const chip = await screen.findByRole("button", { name: new RegExp(`${i18n.t("taxonomy.categories")}: Quadras`) })
+    expect(screen.getByRole("button", { name: i18n.t("taxonomy.categories") })).toHaveAttribute("data-active", "true")
+    await user.click(chip)
+    await waitFor(() => expect(screen.getByTestId("search")).toHaveTextContent(/^$/))
+    expect(screen.queryByRole("button", { name: /Quadras/ })).not.toBeInTheDocument()
+    await waitFor(() => expect(listProductsMock).toHaveBeenLastCalledWith(
+      { category: null, tags: [] },
+      expect.objectContaining({ signal: expect.any(AbortSignal) }),
+    ))
+  })
+
+  it("shows a chip for the tag in the URL and clears it on remove", async () => {
+    const tag = "22222222-2222-4222-8222-222222222222"
+    getTaxonomyOptionsMock.mockResolvedValue({
+      categories: [],
+      tags: [{ id: tag, name: "Premium", slug: "premium" }],
+    })
+    listProductsMock.mockResolvedValue([PRODUCT])
+    const user = userEvent.setup()
+    renderPage(`/?tags=${tag}`)
+    const chip = await screen.findByRole("button", { name: new RegExp(`${i18n.t("taxonomy.tags")}: Premium`) })
+    expect(screen.getByRole("button", { name: i18n.t("taxonomy.tags") })).toHaveAttribute("data-active", "true")
+    await user.click(chip)
+    await waitFor(() => expect(screen.getByTestId("search")).toHaveTextContent(/^$/))
+    expect(screen.queryByRole("button", { name: /Premium/ })).not.toBeInTheDocument()
+    await waitFor(() => expect(listProductsMock).toHaveBeenLastCalledWith(
+      { category: null, tags: [] },
+      expect.objectContaining({ signal: expect.any(AbortSignal) }),
+    ))
+  })
+
   it("does not let an older taxonomy request overwrite the current products", async () => {
     const category = "11111111-1111-4111-8111-111111111111"
     const oldProduct = { ...PRODUCT, name: "Old result" }
@@ -299,7 +339,7 @@ describe("CatalogProductsPage validity gate", () => {
 
 function LocationProbe() {
   const location = useLocation()
-  return <span data-testid="location">{location.pathname}</span>
+  return <><span data-testid="location">{location.pathname}</span><span data-testid="search">{location.search}</span></>
 }
 
 function TaxonomyNavigation({ category }: { category: string }) {

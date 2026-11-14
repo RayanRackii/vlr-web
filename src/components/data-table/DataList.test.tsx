@@ -158,5 +158,49 @@ describe("DataList", () => {
       expect(header.indeterminate).toBe(true)
       expect(header.checked).toBe(false)
     })
+
+    it("select-all keeps selected ids that are not in the visible rows", () => {
+      const onChange = vi.fn()
+      renderList({
+        selection: {
+          selectedIds: new Set(["hidden"]),
+          onChange,
+          rowLabel: (row) => `Selecionar ${row.name}`,
+          selectAllLabel: "Selecionar todos",
+        },
+      })
+      const table = screen.getByRole("table", { name: "Pessoas" })
+      fireEvent.click(within(table).getByRole("checkbox", { name: "Selecionar todos" }))
+      expect(onChange).toHaveBeenCalledWith(new Set(["hidden", "a", "b"]))
+    })
+
+    it("clearing all keeps selected ids that are not in the visible rows", () => {
+      const onChange = vi.fn()
+      renderList({
+        selection: {
+          selectedIds: new Set(["hidden", "a", "b"]),
+          onChange,
+          rowLabel: (row) => `Selecionar ${row.name}`,
+          selectAllLabel: "Selecionar todos",
+        },
+      })
+      const table = screen.getByRole("table", { name: "Pessoas" })
+      fireEvent.click(within(table).getByRole("checkbox", { name: "Selecionar todos" }))
+      expect(onChange).toHaveBeenCalledWith(new Set(["hidden"]))
+    })
+
+    it("renders no select-all with zero rows (empty state)", () => {
+      renderList({
+        rows: [],
+        selection: {
+          selectedIds: new Set(),
+          onChange: vi.fn(),
+          rowLabel: (row) => row.name,
+          selectAllLabel: "Selecionar todos",
+        },
+      })
+      expect(screen.queryByRole("checkbox")).not.toBeInTheDocument()
+      expect(screen.getByText("Nada aqui")).toBeInTheDocument()
+    })
   })
 })
