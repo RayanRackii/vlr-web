@@ -27,17 +27,17 @@ describe("Pedidos staff route selection and access", () => {
     ["/catalogo/pedidos", "catalog.orders.read", "Unified orders"],
     ["/catalogo/pedidos/order-1", "catalog.orders.read", "Unified detail"],
     ["/catalogo/solicitacoes", "catalog.products.read", "Unified orders"],
-  ])("keeps %s routable with %s", (path, permission, title) => {
+  ])("keeps %s routable with %s", async (path, permission, title) => {
     mount(path, ["catalog"], [permission])
-    expect(screen.getByRole("heading", { name: title })).toBeInTheDocument()
+    expect(await screen.findByRole("heading", { name: title })).toBeInTheDocument()
   })
   it.each([
     ["/pedidos", [], ["catalog.orders.read"]],
     ["/pedidos", ["catalog"], []],
     ["/pedidos/order-1", ["catalog"], ["catalog.products.read"]],
     ["/pedidos/solicitacoes/request-1", ["catalog"], ["catalog.orders.read"]],
-  ])("blocks %s without its module/permission", (path, modules, permissions) => {
+  ])("blocks %s without its module/permission", async (path, modules, permissions) => {
     mount(path as string, modules as string[], permissions as string[])
-    expect(screen.getByRole("heading", { name: i18n.t("accessDenied.title") })).toBeInTheDocument()
+    expect(await screen.findByRole("heading", { name: i18n.t("accessDenied.title") })).toBeInTheDocument()
   })
 })
