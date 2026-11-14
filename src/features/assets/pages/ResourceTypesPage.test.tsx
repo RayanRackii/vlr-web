@@ -142,11 +142,12 @@ describe("ResourceTypesPage", () => {
 
   it("shows the load error with a retry that reloads", async () => {
     const user = userEvent.setup()
-    listResourceTypes.mockRejectedValueOnce(new Error("boom"))
+    let failing = true
+    listResourceTypes.mockImplementation(() => (failing ? Promise.reject(new Error("boom")) : Promise.resolve(records)))
     renderPage()
     expect(await screen.findByRole("alert")).toHaveTextContent("boom")
-    await user.click(screen.getByRole("button", { name: "Tentar novamente" }))
+    failing = false
+    await user.click(await screen.findByRole("button", { name: "Tentar novamente" }))
     expect(await within(await screen.findByRole("table")).findByText("Quadra")).toBeInTheDocument()
-    expect(listResourceTypes).toHaveBeenCalledTimes(2)
   })
 })

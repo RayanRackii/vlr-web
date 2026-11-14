@@ -132,14 +132,19 @@ describe("PmocLibraryPage", () => {
   })
 
   it("retries loading from the error state", async () => {
-    getGlobalTemplatesMock.mockRejectedValueOnce(new Error("boom"))
-    getGlobalTemplatesMock.mockResolvedValue([{ ...baseTemplateJson, status: "Published" }])
+    let failing = true
+    getGlobalTemplatesMock.mockImplementation(() =>
+      failing
+        ? Promise.reject(new Error("boom"))
+        : Promise.resolve([{ ...baseTemplateJson, status: "Published" }]),
+    )
 
     renderLibrary()
     const user = userEvent.setup()
 
     expect(await screen.findByRole("alert")).toHaveTextContent("boom")
-    await user.click(screen.getByRole("button", { name: "Tentar novamente" }))
+    failing = false
+    await user.click(await screen.findByRole("button", { name: i18n.t("common.retry") }))
     expect(await screen.findByRole("table")).toBeInTheDocument()
   })
 })
