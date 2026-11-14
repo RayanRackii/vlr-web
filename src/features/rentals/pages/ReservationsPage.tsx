@@ -16,10 +16,9 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { Button } from "@/components/ui/button"
-import { EmptyState } from "@/components/ui/empty-state"
+import { FilterBar } from "@/components/data-table/FilterBar"
 import { useModuleIntroLink } from "@/hooks/useModuleIntroLink"
 import { LoadingButton } from "@/components/ui/loading-button"
-import { Skeleton } from "@/components/ui/skeleton"
 import { ReservationsHeader } from "@/features/rentals/components/ReservationsHeader"
 import { ReservationsList } from "@/features/rentals/components/ReservationsList"
 import "./reservations.css"
@@ -240,18 +239,16 @@ export function ReservationsPage({ showHeader = true, onDateChange }: Reservatio
     ? `${new Intl.DateTimeFormat(i18n.language).format(new Date(`${range.from}T12:00:00`))} – ${new Intl.DateTimeFormat(i18n.language).format(new Date(`${range.to}T12:00:00`))}`
     : ""
 
-  return (
-    <div className={cn("reservations-page", showHeader && "reservations-layout")}>
-      {showHeader && <ReservationsHeader date={date || undefined} />}
-      {isTrialReadOnly && (
-        <Alert variant="warning" role="status" className="reservations-trial">
-          <AlertTriangle size={20} aria-hidden="true" />
-          <AlertDescription>{t("trial.readOnlyHint")}</AlertDescription>
-        </Alert>
-      )}
-
-      <section className="reservations-surface reservations-filters" aria-label={t("rentals.reservations.filters")}>
-        <div className="reservations-filter-bar">
+  const filterBar = (
+    <FilterBar
+      label={t("rentals.reservations.filters")}
+      actions={
+        <Button variant="outline" className="reservations-today" onClick={() => setDate(tenantTodayIsoDate(timeZoneId))}>
+          {t("rentals.reservations.today")}
+        </Button>
+      }
+      filters={
+        <>
           <div role="group" aria-label={t("rentals.reservations.period")} className="reservations-segment">
             {(["day", "week", "month"] as const).map((value) => (
               <button className="touch-target" key={value} type="button" aria-pressed={view === value} onClick={() => setView(value)}>
@@ -270,57 +267,66 @@ export function ReservationsPage({ showHeader = true, onDateChange }: Reservatio
               <ChevronRight aria-hidden="true" />
             </Button>
           </div>
-          <Button variant="outline" className="reservations-today" onClick={() => setDate(tenantTodayIsoDate(timeZoneId))}>
-            {t("rentals.reservations.today")}
-          </Button>
-        </div>
-        <fieldset className="reservations-chips">
-          <legend className="sr-only">{t("rentals.reservations.status")}</legend>
-          {[
-            { value: "" as const, label: t("rentals.reservations.statusAll") },
-            ...reservationStatuses.map((value) => ({ value, label: t(`rentals.reservations.statuses.${value}`) })),
-          ].map((option) => (
-            <button className="touch-target" key={option.value || "all"} type="button" aria-pressed={status === option.value} onClick={() => setStatus(option.value)}>
-              {option.value && <span className="reservation-filter-dot" data-status={option.value} aria-hidden="true" />}
-              {option.label}
-            </button>
-          ))}
-        </fieldset>
-      </section>
+          <fieldset className="reservations-chips">
+            <legend className="sr-only">{t("rentals.reservations.status")}</legend>
+            {[
+              { value: "" as const, label: t("rentals.reservations.statusAll") },
+              ...reservationStatuses.map((value) => ({ value, label: t(`rentals.reservations.statuses.${value}`) })),
+            ].map((option) => (
+              <button className="touch-target" key={option.value || "all"} type="button" aria-pressed={status === option.value} onClick={() => setStatus(option.value)}>
+                {option.value && <span className="reservation-filter-dot" data-status={option.value} aria-hidden="true" />}
+                {option.label}
+              </button>
+            ))}
+          </fieldset>
+        </>
+      }
+    />
+  )
+
+  return (
+    <div className={cn("reservations-page", showHeader && "reservations-layout")}>
+      {showHeader && <ReservationsHeader date={date || undefined} />}
+      {isTrialReadOnly && (
+        <Alert variant="warning" role="status" className="reservations-trial">
+          <AlertTriangle size={20} aria-hidden="true" />
+          <AlertDescription>{t("trial.readOnlyHint")}</AlertDescription>
+        </Alert>
+      )}
+
+      {filterBar}
 
       <div aria-busy={loading} className="reservations-results">
-        {loadError && !loading && (
+        {loadError && !loading && sortedRows.length > 0 && (
           <Alert variant="destructive" role="alert" className="reservations-error">
             <AlertTriangle size={20} aria-hidden="true" />
             <AlertDescription>{t("rentals.reservations.loadError")}</AlertDescription>
           </Alert>
         )}
-        {loading ? (
-          <section className="reservations-surface reservations-loading" role="status" aria-label={t("rentals.reservations.loading")}>
-            <div className="reservations-list-heading">{t("rentals.reservations.loading")}</div>
-            {[0, 1, 2].map((row) => (
-              <div key={row} className="reservations-skeleton-row" aria-hidden="true">
-                <Skeleton /><Skeleton /><Skeleton /><Skeleton />
-              </div>
-            ))}
-          </section>
-        ) : loadError && sortedRows.length === 0 ? null : sortedRows.length === 0 ? (
-          <EmptyState
-            icon={CalendarRange}
-            className="reservations-surface reservations-empty"
-            title={t("rentals.reservations.empty")}
-            description={t(hasActiveFilters ? "emptyStates.filterDescription" : "rentals.reservations.emptyDescription")}
-            example={hasActiveFilters ? undefined : t("emptyStates.examples.bookings")}
-            learnMore={hasActiveFilters ? undefined : learnMore}
-            action={hasActiveFilters ? (
+        <ReservationsList
+          rows={sortedRows}
+          dateLabel={listDateLabel}
+          showDates={view !== "day" || !date}
+          actions={rowActions}
+          loadingLabel={t("rentals.reservations.loading")}
+          {...(loading
+            ? { state: "loading" as const }
+            : loadError && sortedRows.length === 0
+              ? { state: "error" as const, error: t("rentals.reservations.loadError"), onRetry: () => { void load() } }
+              : {})}
+          empty={{
+            icon: CalendarRange,
+            title: t("rentals.reservations.empty"),
+            description: t(hasActiveFilters ? "emptyStates.filterDescription" : "rentals.reservations.emptyDescription"),
+            example: hasActiveFilters ? undefined : t("emptyStates.examples.bookings"),
+            learnMore: hasActiveFilters ? undefined : learnMore,
+            action: hasActiveFilters ? (
               <Button onClick={() => { setDate(tenantTodayIsoDate(timeZoneId)); setStatus(""); setView("day") }}>{t("emptyStates.clearFilters")}</Button>
             ) : (
               <Button className="reservations-today" onClick={() => setView("week")}>{t("rentals.reservations.showWeek")}</Button>
-            )}
-          />
-        ) : (
-          <ReservationsList rows={sortedRows} dateLabel={listDateLabel} showDates={view !== "day" || !date} actions={rowActions} />
-        )}
+            ),
+          }}
+        />
       </div>
 
       <AlertDialog

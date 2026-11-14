@@ -1,7 +1,9 @@
 import type { ReactNode } from "react"
 import { useTranslation } from "react-i18next"
 
+import { DataList, type DataListColumn } from "@/components/data-table/DataList"
 import { Badge } from "@/components/ui/badge"
+import type { EmptyStateProps } from "@/components/ui/empty-state"
 import { useTenantTimeZone } from "@/contexts/TenantTimeZoneContext"
 import {
   formatMoney,
@@ -24,78 +26,152 @@ type ReservationsListProps = {
   dateLabel: string
   showDates: boolean
   actions: (row: AdminReservation) => ReactNode
-}
+  toolbar?: ReactNode
+  empty: EmptyStateProps
+  loadingLabel?: string
+} & (
+  | { state?: "ready" | "loading"; error?: undefined; onRetry?: undefined }
+  | { state: "error"; error: string; onRetry: () => void }
+)
 
-/** One set of rows and actions: the table becomes a card grid on smaller screens. */
-export function ReservationsList({ rows, dateLabel, showDates, actions }: ReservationsListProps) {
+/** One set of rows and actions through DataList: a table from md, cards below. */
+export function ReservationsList({ rows, dateLabel, showDates, actions, toolbar, empty, loadingLabel, ...stateProps }: ReservationsListProps) {
   const { t, i18n } = useTranslation()
   const timeZoneId = useTenantTimeZone()
 
-  return (
-    <section className="reservations-surface reservations-list" aria-label={t("rentals.reservations.title")}>
-      <div className="reservations-list-heading">
-        <p><strong>{t("rentals.reservations.count", { count: rows.length })}</strong>{dateLabel && <> · {dateLabel}</>}</p>
-        <span>{t("rentals.reservations.orderedByTime")}</span>
-      </div>
-      <table className="reservations-table" role="table" aria-label={t("rentals.reservations.title")}>
-        <thead role="rowgroup">
-          <tr role="row">
-            <th scope="col" role="columnheader">{t("rentals.reservations.time")}</th>
-            <th scope="col" role="columnheader">{t("rentals.reservations.customer")}</th>
-            <th scope="col" role="columnheader" className="reservations-resource-column">{t("rentals.reservations.resources")}</th>
-            <th scope="col" role="columnheader">{t("rentals.reservations.status")}</th>
-            <th scope="col" role="columnheader" className="reservations-number">{t("rentals.reservations.total")}</th>
-            <th scope="col" role="columnheader" className="reservations-number">{t("rentals.reservations.actions")}</th>
-          </tr>
-        </thead>
-        <tbody role="rowgroup">
-          {rows.map((row) => {
-            const start = new Date(row.startDateTime)
-            const end = new Date(row.endDateTime)
-            const minutes = Math.max(0, Math.round((end.getTime() - start.getTime()) / 60_000))
-            const duration = minutes % 60 === 0
-              ? t("rentals.reservations.durationHours", { hours: minutes / 60 })
-              : minutes < 60
-                ? t("rentals.reservations.durationMinutes", { minutes })
-                : t("rentals.reservations.durationHoursMinutes", { hours: Math.floor(minutes / 60), minutes: minutes % 60 })
-            const multiDay = tenantCivilDaySpan(row.startDateTime, row.endDateTime, timeZoneId) > 1
-            const initials = row.customerName.trim().split(/\s+/).filter(Boolean).slice(0, 2).map((part) => Array.from(part)[0]).join("")
-            const rowActions = actions(row)
+  function describe(row: AdminReservation) {
+    const start = new Date(row.startDateTime)
+    const end = new Date(row.endDateTime)
+    const minutes = Math.max(0, Math.round((end.getTime() - start.getTime()) / 60_000))
+    const duration = minutes % 60 === 0
+      ? t("rentals.reservations.durationHours", { hours: minutes / 60 })
+      : minutes < 60
+        ? t("rentals.reservations.durationMinutes", { minutes })
+        : t("rentals.reservations.durationHoursMinutes", { hours: Math.floor(minutes / 60), minutes: minutes % 60 })
+    const multiDay = tenantCivilDaySpan(row.startDateTime, row.endDateTime, timeZoneId) > 1
+    const initials = row.customerName.trim().split(/\s+/).filter(Boolean).slice(0, 2).map((part) => Array.from(part)[0]).join("")
+    const range = multiDay
+      ? formatReservationRange(row.startDateTime, row.endDateTime, timeZoneId)
+      : `${formatTenantTime(start, timeZoneId, i18n.language)} – ${formatTenantTime(end, timeZoneId, i18n.language)}`
+    const day = showDates && !multiDay ? formatTenantDate(start, timeZoneId, i18n.language) : null
+    return { duration, initials, range, day }
+  }
 
-            return (
-              <tr key={row.id} role="row" className="reservation-row" data-status={row.status}>
-                <td role="cell" className="reservation-time">
-                  <span className="reservation-time-range">
-                    {showDates && !multiDay && <small>{formatTenantDate(start, timeZoneId, i18n.language)}</small>}
-                    {multiDay ? formatReservationRange(row.startDateTime, row.endDateTime, timeZoneId) : <>{formatTenantTime(start, timeZoneId, i18n.language)} – {formatTenantTime(end, timeZoneId, i18n.language)}</>}
-                  </span>
-                  <small className="reservation-duration">{duration}</small>
-                </td>
-                <td role="cell" className="reservation-customer">
-                  <div className="reservation-customer-details">
-                    <span className="reservation-avatar" aria-hidden="true">{initials}</span>
-                    <div className="min-w-0">
-                      <strong>{row.customerName}</strong>
-                      <p className="reservation-compact-resources">{formatReservationAssets(row)}</p>
-                    </div>
-                  </div>
-                </td>
-                <td role="cell" className="reservations-resource-column reservation-resources">{formatReservationAssets(row)}</td>
-                <td role="cell" className="reservation-status">
-                  <Badge variant={statusVariant[row.status]} className="reservation-status-badge">
-                    <span className="reservation-status-dot" aria-hidden="true" />
-                    {t(`rentals.reservations.statuses.${row.status}`)}
-                  </Badge>
-                </td>
-                <td role="cell" className="reservation-total">{formatMoney(row.totalAmount)}</td>
-                <td role="cell" className="reservation-actions-cell">
-                  {rowActions ? <div className="reservation-actions">{rowActions}</div> : <span className="reservation-no-actions" aria-label={t("rentals.reservations.noActions")}>—</span>}
-                </td>
-              </tr>
-            )
-          })}
-        </tbody>
-      </table>
-    </section>
+  function statusBadge(row: AdminReservation) {
+    return (
+      <Badge variant={statusVariant[row.status]} className="h-auto min-h-6 gap-1.5 px-2.5 py-0.5 text-xs font-semibold">
+        <span className="inline-block size-1.5 shrink-0 rounded-full bg-current" aria-hidden="true" />
+        {t(`rentals.reservations.statuses.${row.status}`)}
+      </Badge>
+    )
+  }
+
+  function actionsNode(row: AdminReservation, labelled: boolean) {
+    const node = actions(row)
+    return node
+      ? <div className="reservation-actions flex flex-wrap justify-end gap-2">{node}</div>
+      : labelled
+        ? <span className="text-muted-foreground" aria-label={t("rentals.reservations.noActions")}>—</span>
+        : null
+  }
+
+  const columns: DataListColumn<AdminReservation>[] = [
+    {
+      id: "time",
+      header: t("rentals.reservations.time"),
+      className: "tabular-nums",
+      cell: (row) => {
+        const { range, day, duration } = describe(row)
+        return (
+          <>
+            <span className="block font-semibold">
+              {day && <small className="block text-xs font-normal text-muted-foreground">{day}</small>}
+              {range}
+            </span>
+            <small className="block text-xs text-muted-foreground">{duration}</small>
+          </>
+        )
+      },
+    },
+    {
+      id: "customer",
+      header: t("rentals.reservations.customer"),
+      cell: (row) => (
+        <div className="flex min-w-0 items-center gap-2.5">
+          <span className="grid size-8 shrink-0 place-items-center rounded-full bg-accent text-xs font-semibold text-accent-foreground" aria-hidden="true">{describe(row).initials}</span>
+          <div className="min-w-0">
+            <strong className="break-words font-semibold">{row.customerName}</strong>
+            <p className="text-sm text-muted-foreground break-words lg:hidden">{formatReservationAssets(row)}</p>
+          </div>
+        </div>
+      ),
+    },
+    {
+      id: "resources",
+      header: t("rentals.reservations.resources"),
+      hideBelow: "lg",
+      className: "text-muted-foreground break-words",
+      cell: (row) => formatReservationAssets(row),
+    },
+    { id: "status", header: t("rentals.reservations.status"), cell: statusBadge },
+    {
+      id: "total",
+      header: t("rentals.reservations.total"),
+      align: "end",
+      className: "whitespace-nowrap font-bold tabular-nums",
+      cell: (row) => formatMoney(row.totalAmount),
+    },
+    {
+      id: "actions",
+      header: t("rentals.reservations.actions"),
+      align: "end",
+      cell: (row) => actionsNode(row, true),
+    },
+  ]
+
+  return (
+    <DataList<AdminReservation>
+      {...stateProps}
+      label={t("rentals.reservations.title")}
+      columns={columns}
+      rows={rows}
+      getRowId={(row) => row.id}
+      rowAttributes={(row) => ({ "data-status": row.status })}
+      toolbar={toolbar}
+      empty={empty}
+      loadingLabel={loadingLabel}
+      heading={
+        <>
+          <p><strong className="font-semibold text-foreground">{t("rentals.reservations.count", { count: rows.length })}</strong>{dateLabel && <> · {dateLabel}</>}</p>
+          <span className="hidden shrink-0 sm:inline">{t("rentals.reservations.orderedByTime")}</span>
+        </>
+      }
+      renderCard={(row) => {
+        const { range, day, duration, initials } = describe(row)
+        return (
+          <>
+            <div className="flex items-start justify-between gap-3">
+              <span className="min-w-0 font-semibold tabular-nums">
+                {day && <small className="block text-xs font-normal text-muted-foreground">{day}</small>}
+                {range}
+              </span>
+              {statusBadge(row)}
+            </div>
+            <div className="flex min-w-0 items-center gap-2.5">
+              <span className="grid size-8 shrink-0 place-items-center rounded-full bg-accent text-xs font-semibold text-accent-foreground" aria-hidden="true">{initials}</span>
+              <div className="min-w-0">
+                <strong className="break-words font-semibold">{row.customerName}</strong>
+                <p className="text-sm text-muted-foreground break-words">{formatReservationAssets(row)}</p>
+              </div>
+            </div>
+            <div className="flex items-center justify-between gap-3 text-sm">
+              <small className="text-muted-foreground">{duration}</small>
+              <span className="font-bold tabular-nums">{formatMoney(row.totalAmount)}</span>
+            </div>
+            {actionsNode(row, false)}
+          </>
+        )
+      }}
+    />
   )
 }

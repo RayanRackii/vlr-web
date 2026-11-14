@@ -110,8 +110,20 @@ function renderPage(permissions: readonly string[] = [COMPLETE_PERM]) {
   )
 }
 
+/** The table and the mobile cards both render (CSS picks one), so scope queries to the table. */
+const tableQuery = () => screen.getByRole("table", { name: "Reservas" })
+const findTable = () => screen.findByRole("table", { name: "Reservas" })
+function inTable() {
+  return {
+    findByText: async (text: string) => within(await findTable()).findByText(text),
+    findByRole: async (role: string, options?: object) => within(await findTable()).findByRole(role, options),
+    getByRole: (role: string, options?: object) => within(tableQuery()).getByRole(role, options),
+    queryByRole: (role: string, options?: object) => within(tableQuery()).queryByRole(role, options),
+  }
+}
+
 function completeButton() {
-  return screen.queryByRole("button", {
+  return inTable().queryByRole("button", {
     name: i18n.t("rentals.reservations.complete"),
   })
 }
@@ -148,17 +160,17 @@ describe("ReservationsPage", () => {
     listMock.mockResolvedValue([makeReservation("Confirmed")])
     renderPage([COMPLETE_PERM])
 
-    expect(await screen.findByText("Ana Souza")).toBeInTheDocument()
+    expect(await inTable().findByText("Ana Souza")).toBeInTheDocument()
     expect(completeButton()).toBeInTheDocument()
-    expect(screen.getByText(/10:00/)).toBeInTheDocument()
-    expect(screen.getByText(/11:00/)).toBeInTheDocument()
+    expect(within(tableQuery()).getByText(/10:00/)).toBeInTheDocument()
+    expect(within(tableQuery()).getByText(/11:00/)).toBeInTheDocument()
   })
 
   it("hides Concluir when the reservation is Confirmed but the permission is missing", async () => {
     listMock.mockResolvedValue([makeReservation("Confirmed")])
     renderPage(["rentals.reservations.read", "rentals.reservations.confirm"])
 
-    expect(await screen.findByText("Ana Souza")).toBeInTheDocument()
+    expect(await inTable().findByText("Ana Souza")).toBeInTheDocument()
     expect(completeButton()).not.toBeInTheDocument()
   })
 
@@ -168,7 +180,7 @@ describe("ReservationsPage", () => {
       listMock.mockResolvedValue([makeReservation(status)])
       renderPage([COMPLETE_PERM])
 
-      expect(await screen.findByText("Ana Souza")).toBeInTheDocument()
+      expect(await inTable().findByText("Ana Souza")).toBeInTheDocument()
       expect(completeButton()).not.toBeInTheDocument()
     },
   )
@@ -186,11 +198,11 @@ describe("ReservationsPage", () => {
     })
 
     renderPage([COMPLETE_PERM])
-    expect(await screen.findByText("Ana Souza")).toBeInTheDocument()
+    expect(await inTable().findByText("Ana Souza")).toBeInTheDocument()
     expect(completeButton()).toBeInTheDocument()
 
     await user.click(
-      screen.getByRole("button", {
+      inTable().getByRole("button", {
         name: i18n.t("rentals.reservations.complete"),
       }),
     )
@@ -205,7 +217,7 @@ describe("ReservationsPage", () => {
     await waitFor(() => {
       expect(listMock.mock.calls.length).toBeGreaterThanOrEqual(2)
     })
-    expect(await screen.findByText("Ana Souza")).toBeInTheDocument()
+    expect(await inTable().findByText("Ana Souza")).toBeInTheDocument()
     expect(completeButton()).not.toBeInTheDocument()
   })
 })
@@ -225,9 +237,9 @@ describe("ReservationsPage Cancel confirmation", () => {
     listMock.mockResolvedValue([makeReservation("Confirmed")])
     renderPage([COMPLETE_PERM])
 
-    expect(await screen.findByText("Ana Souza")).toBeInTheDocument()
+    expect(await inTable().findByText("Ana Souza")).toBeInTheDocument()
     await user.click(
-      screen.getByRole("button", { name: i18n.t("rentals.reservations.cancel") }),
+      inTable().getByRole("button", { name: i18n.t("rentals.reservations.cancel") }),
     )
 
     expect(cancelMock).not.toHaveBeenCalled()
@@ -255,10 +267,10 @@ describe("ReservationsPage Cancel confirmation", () => {
     })
 
     renderPage([COMPLETE_PERM])
-    expect(await screen.findByText("Ana Souza")).toBeInTheDocument()
+    expect(await inTable().findByText("Ana Souza")).toBeInTheDocument()
 
     await user.click(
-      screen.getByRole("button", { name: i18n.t("rentals.reservations.cancel") }),
+      inTable().getByRole("button", { name: i18n.t("rentals.reservations.cancel") }),
     )
     await screen.findByRole("alertdialog")
 
@@ -284,9 +296,9 @@ describe("ReservationsPage Cancel confirmation", () => {
     listMock.mockResolvedValue([makeReservation("Confirmed")])
     renderPage([COMPLETE_PERM])
 
-    expect(await screen.findByText("Ana Souza")).toBeInTheDocument()
+    expect(await inTable().findByText("Ana Souza")).toBeInTheDocument()
     await user.click(
-      screen.getByRole("button", { name: i18n.t("rentals.reservations.cancel") }),
+      inTable().getByRole("button", { name: i18n.t("rentals.reservations.cancel") }),
     )
     await screen.findByRole("alertdialog")
 
@@ -322,9 +334,9 @@ describe("ReservationsPage Cancel confirmation", () => {
     ])
     renderPage([COMPLETE_PERM])
 
-    expect(await screen.findByText("Ana Souza")).toBeInTheDocument()
+    expect(await inTable().findByText("Ana Souza")).toBeInTheDocument()
     await user.click(
-      screen.getByRole("button", { name: i18n.t("rentals.reservations.cancel") }),
+      inTable().getByRole("button", { name: i18n.t("rentals.reservations.cancel") }),
     )
 
     const dialog = await screen.findByRole("alertdialog")
@@ -402,9 +414,9 @@ describe("ReservationsPage filters and states", () => {
     listMock.mockResolvedValueOnce([makeReservation("PendingDeposit")]).mockResolvedValue([makeReservation("Confirmed")])
     confirmMock.mockResolvedValue(makeReservation("Confirmed"))
     renderPage()
-    await user.click(await screen.findByRole("button", { name: "Confirmar" }))
+    await user.click(await inTable().findByRole("button", { name: "Confirmar" }))
     expect(confirmMock).toHaveBeenCalledWith(RESERVATION_ID)
-    await waitFor(() => expect(screen.queryByRole("button", { name: "Confirmar" })).not.toBeInTheDocument())
+    await waitFor(() => expect(inTable().queryByRole("button", { name: "Confirmar" })).not.toBeInTheDocument())
     expect(completeButton()).toBeInTheDocument()
   })
 
@@ -450,11 +462,25 @@ describe("ReservationsPage filters and states", () => {
     expect(within(table).queryByRole("button")).not.toBeInTheDocument()
   })
 
+  it("shows one error state with Retry when the load fails with no rows, then recovers", async () => {
+    listMock.mockRejectedValueOnce(new Error("Network unavailable")).mockResolvedValue([makeReservation("Confirmed")])
+    renderPage()
+    const alerts = await screen.findAllByRole("alert")
+    expect(alerts).toHaveLength(1)
+    expect(alerts[0]).toHaveTextContent("Não foi possível carregar as reservas.")
+    expect(screen.queryByRole("table")).not.toBeInTheDocument()
+    const calls = listMock.mock.calls.length
+    await userEvent.click(within(alerts[0]).getByRole("button", { name: i18n.t("common.retry") }))
+    expect(await inTable().findByText("Ana Souza")).toBeInTheDocument()
+    expect(listMock.mock.calls.length).toBeGreaterThan(calls)
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument()
+  })
+
   it("keeps the visible reservation after an action succeeds but reloading fails", async () => {
     listMock.mockResolvedValueOnce([makeReservation("PendingDeposit")]).mockRejectedValue(new Error("Offline"))
     confirmMock.mockResolvedValue(makeReservation("Confirmed"))
     renderPage()
-    await userEvent.click(await screen.findByRole("button", { name: "Confirmar" }))
+    await userEvent.click(await inTable().findByRole("button", { name: "Confirmar" }))
     expect(await screen.findByRole("alert")).toBeInTheDocument()
     expect(screen.getByRole("table")).toHaveTextContent("Ana Souza")
     expect(screen.queryByText("Nenhuma reserva neste filtro.")).not.toBeInTheDocument()
