@@ -63,7 +63,22 @@ type AssetTableRow = Asset & {
 
 type WizardMode = "create" | "bulk" | "edit"
 
+type RowFilters = { search: string; category: string; location: string }
+
 const ALL = "__all__"
+
+function applyRowFilters(rows: AssetTableRow[], filters: RowFilters) {
+  const needle = filters.search.trim().toLowerCase()
+
+  return rows.filter(
+    (row) =>
+      (filters.category === ALL || row.categoryName === filters.category) &&
+      (filters.location === ALL || row.location === filters.location) &&
+      (needle === "" ||
+        row.name.toLowerCase().includes(needle) ||
+        row.tag.toLowerCase().includes(needle)),
+  )
+}
 
 function getStatusBadgeVariant(
   status: AssetStatus,
@@ -110,6 +125,7 @@ export function AssetsPage() {
   const [categoriesDenied, setCategoriesDenied] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const [loadError, setLoadError] = useState<string | null>(null)
+  const [assetsFailed, setAssetsFailed] = useState(false)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
   const [search, setSearch] = useState("")
   const [categoryFilter, setCategoryFilter] = useState(ALL)
@@ -131,6 +147,7 @@ export function AssetsPage() {
 
   const loadPageData = useCallback(async () => {
     if (!session) {
+      setAssetsFailed(true)
       setLoadError(t("assets.inventory.errors.unauthorized"))
       setIsLoading(false)
       return
@@ -154,9 +171,11 @@ export function AssetsPage() {
 
       if (assetsResult.status === "fulfilled") {
         setAssets(assetsResult.value)
+        setAssetsFailed(false)
       } else {
         console.error("AssetsPage getAssets failed", assetsResult.reason)
         setAssets([])
+        setAssetsFailed(true)
         nextError = describeApiError(
           assetsResult.reason,
           t("assets.inventory.errors.loadFailed"),
@@ -215,6 +234,7 @@ export function AssetsPage() {
         console.error("AssetsPage loadPageData response", error.response?.data)
       }
 
+      setAssetsFailed(true)
       setLoadError(
         describeApiError(error, t("assets.inventory.errors.loadFailed")),
       )
@@ -370,26 +390,42 @@ export function AssetsPage() {
     [tableRows],
   )
 
-  const filteredRows = useMemo(() => {
-    const needle = search.trim().toLowerCase()
-
-    return tableRows.filter(
-      (row) =>
-        (categoryFilter === ALL || row.categoryName === categoryFilter) &&
-        (locationFilter === ALL || row.location === locationFilter) &&
-        (needle === "" ||
-          row.name.toLowerCase().includes(needle) ||
-          row.tag.toLowerCase().includes(needle)),
-    )
-  }, [tableRows, search, categoryFilter, locationFilter])
+  const filteredRows = useMemo(
+    () =>
+      applyRowFilters(tableRows, {
+        search,
+        category: categoryFilter,
+        location: locationFilter,
+      }),
+    [tableRows, search, categoryFilter, locationFilter],
+  )
 
   const hasActiveFilters =
     search.trim() !== "" || categoryFilter !== ALL || locationFilter !== ALL
 
+  // Every filter change goes through here so the selection never keeps rows the user can no longer see.
+  function applyFilters(change: Partial<RowFilters>) {
+    const next: RowFilters = {
+      search,
+      category: categoryFilter,
+      location: locationFilter,
+      ...change,
+    }
+    const visibleIds = new Set(
+      applyRowFilters(tableRows, next).map((row) => row.id),
+    )
+
+    setSearch(next.search)
+    setCategoryFilter(next.category)
+    setLocationFilter(next.location)
+    setSelectedIds((current) => {
+      const kept = [...current].filter((id) => visibleIds.has(id))
+      return kept.length === current.size ? current : new Set(kept)
+    })
+  }
+
   function clearFilters() {
-    setSearch("")
-    setCategoryFilter(ALL)
-    setLocationFilter(ALL)
+    applyFilters({ search: "", category: ALL, location: ALL })
   }
 
   const columns: DataListColumn<AssetTableRow>[] = [
@@ -443,10 +479,10 @@ export function AssetsPage() {
       : []),
   ]
 
-  // Selected ids intersected with the loaded rows (also those a filter hides).
+  // Selected ids intersected with the visible rows: count and delete targets match what is on screen.
   const selectedRows = useMemo(
-    () => tableRows.filter((row) => selectedIds.has(row.id)),
-    [tableRows, selectedIds],
+    () => filteredRows.filter((row) => selectedIds.has(row.id)),
+    [filteredRows, selectedIds],
   )
   const selectedCount = selectedRows.length
   const scheduleCount = selectedRows.filter(
@@ -682,7 +718,7 @@ export function AssetsPage() {
           {
             label: `${t("assets.inventory.filters.searchLabel")}: ${search.trim()}`,
             onRemove: () => {
-              setSearch("")
+              applyFilters({ search: "" })
             },
           },
         ]
@@ -692,7 +728,7 @@ export function AssetsPage() {
           {
             label: `${t("assets.inventory.filters.category")}: ${categoryFilter}`,
             onRemove: () => {
-              setCategoryFilter(ALL)
+              applyFilters({ category: ALL })
             },
           },
         ]
@@ -702,7 +738,7 @@ export function AssetsPage() {
           {
             label: `${t("assets.inventory.filters.location")}: ${locationFilter}`,
             onRemove: () => {
-              setLocationFilter(ALL)
+              applyFilters({ location: ALL })
             },
           },
         ]
@@ -731,7 +767,7 @@ export function AssetsPage() {
       }
 
   // A failed asset list becomes an error with retry; a failed lookup keeps the rows and shows the alert.
-  const listFailed = loadError !== null && assets.length === 0
+  const listFailed = loadError !== null && assetsFailed
 
   const headerActions = canWriteAssets ? (
     <div className="flex flex-wrap gap-2">
@@ -837,7 +873,9 @@ export function AssetsPage() {
             label={t("assets.inventory.filters.label")}
             search={{
               value: search,
-              onChange: setSearch,
+              onChange: (value) => {
+                applyFilters({ search: value })
+              },
               placeholder: t("assets.inventory.filters.searchPlaceholder"),
               label: t("assets.inventory.filters.searchLabel"),
             }}
@@ -848,14 +886,18 @@ export function AssetsPage() {
                   t("assets.inventory.filters.category"),
                   categoryFilter,
                   categoryOptions,
-                  setCategoryFilter,
+                  (value) => {
+                    applyFilters({ category: value })
+                  },
                 )}
                 {filterSelect(
                   "assets-filter-location",
                   t("assets.inventory.filters.location"),
                   locationFilter,
                   locationOptions,
-                  setLocationFilter,
+                  (value) => {
+                    applyFilters({ location: value })
+                  },
                 )}
               </>
             }

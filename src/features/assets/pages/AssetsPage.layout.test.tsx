@@ -287,4 +287,47 @@ describe("AssetsPage list, filters and bulk selection", () => {
       }),
     ).toBeEnabled()
   })
+
+  it("prunes hidden rows from the selection so bulk delete only targets what is visible", async () => {
+    const user = userEvent.setup()
+    renderList()
+    const table = await rowsInTable()
+    const bulkButton = (count: number) =>
+      screen.getByRole("button", {
+        name: i18n.t("assets.inventory.actions.bulkDeleteCount", { count }),
+      })
+
+    for (const tag of ["Q-01", "Q-02", "B-01"]) {
+      await user.click(within(table).getByRole("checkbox", { name: selectRowLabel(tag) }))
+    }
+    expect(bulkButton(3)).toBeEnabled()
+
+    await user.type(
+      screen.getByRole("searchbox", { name: i18n.t("assets.inventory.filters.searchLabel") }),
+      "bomba",
+    )
+    expect(bulkButton(1)).toBeEnabled()
+
+    await user.click(
+      within(screen.getByRole("region", { name: i18n.t("assets.inventory.filters.label") })).getByRole("button", { name: /bomba/i }),
+    )
+    expect(within(table).getByText("Q-01")).toBeInTheDocument()
+    expect(bulkButton(1)).toBeEnabled()
+    expect(within(table).getByRole("checkbox", { name: selectRowLabel("Q-01") })).not.toBeChecked()
+
+    await user.click(bulkButton(1))
+    const dialog = await screen.findByRole("dialog")
+    await user.type(
+      within(dialog).getByRole("textbox"),
+      i18n.t("assets.deletion.bulkConfirmPhrase"),
+    )
+    await user.click(
+      within(dialog).getByRole("button", { name: i18n.t("assets.deletion.confirm") }),
+    )
+
+    await vi.waitFor(() => {
+      expect(api.delete).toHaveBeenCalledTimes(1)
+    })
+    expect(api.delete).toHaveBeenCalledWith(`/api/assets/${LIST_ASSETS[2].id}`)
+  })
 })
