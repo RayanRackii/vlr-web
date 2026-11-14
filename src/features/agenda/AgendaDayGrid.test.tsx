@@ -46,6 +46,8 @@ describe("agenda day grid (timeline)", () => {
     const item = within(section("Cortadora")).getByRole("button", { name: /Pedido/ })
     expect(item).toHaveTextContent("Dia inteiro · Corte a laser")
     expect(item).toHaveAttribute("data-clipped", "true")
+    // Text clears both edge chevrons.
+    expect(item).toHaveClass("pl-6", "pr-6")
     expect(item.style.left).toBe("0%")
     expect(item.style.width).toBe("100%")
     // The axis was not widened to fit the block.

@@ -245,6 +245,7 @@ export function AgendaDayGrid({ loading, failedSources, rows, start: axisStart, 
                           className={cn(
                             "absolute flex flex-col justify-center overflow-hidden rounded-md border-l-[3px] px-2.5 py-1.5 text-left outline-none focus-visible:ring-2 focus-visible:ring-ring",
                             tone.block,
+                            clip.clippedStart && "pl-6",
                             clip.clippedEnd && "pr-6",
                             focusedProductId && block.productId !== focusedProductId && "opacity-40",
                           )}
