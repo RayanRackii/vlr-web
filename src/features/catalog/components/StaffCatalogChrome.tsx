@@ -2,13 +2,10 @@ import type { ReactNode } from "react"
 import { FileText, Package, Search, ShoppingBag, Tag } from "lucide-react"
 import { Link } from "react-router-dom"
 import { useTranslation } from "react-i18next"
-import type { Column } from "@tanstack/react-table"
 
 import { PageHeader } from "@/components/layout/PageHeader"
 import { EmptyState } from "@/components/ui/empty-state"
-import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { usePermissions } from "@/features/users/permissions/PermissionContext"
 import "./staffCatalog.css"
 
@@ -65,34 +62,6 @@ export function CatalogSearch({ value, onChange, label, placeholder }: {
       <Input type="search" aria-label={label} title={label} placeholder={placeholder} className="min-w-0 placeholder:text-ellipsis" value={value}
         onChange={(event) => onChange(event.target.value)} />
     </label>
-  )
-}
-
-export function CatalogColumnFilter<T>({ column, title, options }: {
-  column: Column<T>
-  title: string
-  options?: readonly { value: string; label: string }[]
-}) {
-  const { t } = useTranslation()
-  const value = column.getFilterValue()
-  return (
-    <Popover>
-      <PopoverTrigger render={<Button variant="outline" className="staff-catalog-filter touch-target" data-active={column.getIsFiltered()} />}>
-        {title}
-      </PopoverTrigger>
-      <PopoverContent className="w-64" align="start">
-        <label className="grid gap-2 text-sm font-medium">
-          {title}
-          {options ? <select className="touch-target min-h-11 w-full rounded-lg border border-input bg-background px-3 focus-visible:outline-none"
-            value={typeof value === "string" ? value : ""} onChange={(event) => column.setFilterValue(event.target.value)}>
-            <option value="">{t("catalog.staff.allStatuses")}</option>
-            {options.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
-          </select> : <Input className="min-h-11" autoComplete="off" placeholder={t("common.searchPlaceholder")}
-            value={typeof value === "string" ? value : ""}
-            onChange={(event) => column.setFilterValue(event.target.value)} />}
-        </label>
-      </PopoverContent>
-    </Popover>
   )
 }
 

@@ -99,4 +99,108 @@ describe("DataList", () => {
     fireEvent.click(screen.getByRole("button"))
     expect(onRetry).toHaveBeenCalledTimes(1)
   })
+
+  describe("selection", () => {
+    it("renders no checkboxes without selection props", () => {
+      renderList()
+      expect(screen.queryAllByRole("checkbox")).toHaveLength(0)
+    })
+
+    function withSelection(selected: string[] = []) {
+      const onChange = vi.fn()
+      renderList({
+        selection: {
+          selectedIds: new Set(selected),
+          onChange,
+          rowLabel: (row) => `Selecionar ${row.name}`,
+          selectAllLabel: "Selecionar todos",
+        },
+      })
+      return onChange
+    }
+
+    it("toggles a row from the table", () => {
+      const onChange = withSelection()
+      const table = screen.getByRole("table", { name: "Pessoas" })
+      fireEvent.click(within(table).getByRole("checkbox", { name: "Selecionar Ana" }))
+      expect(onChange).toHaveBeenCalledWith(new Set(["a"]))
+    })
+
+    it("toggles a row from the card", () => {
+      const onChange = withSelection(["a"])
+      const list = screen.getByRole("list", { name: "Pessoas" })
+      fireEvent.click(within(list).getByRole("checkbox", { name: "Selecionar Ana" }))
+      expect(onChange).toHaveBeenCalledWith(new Set())
+      fireEvent.click(within(list).getByRole("checkbox", { name: "Selecionar Bruno" }))
+      expect(onChange).toHaveBeenLastCalledWith(new Set(["a", "b"]))
+    })
+
+    it("header checkbox selects all, then clears all", () => {
+      const onChange = withSelection()
+      const table = screen.getByRole("table", { name: "Pessoas" })
+      fireEvent.click(within(table).getByRole("checkbox", { name: "Selecionar todos" }))
+      expect(onChange).toHaveBeenCalledWith(new Set(["a", "b"]))
+    })
+
+    it("header checkbox clears when everything is selected", () => {
+      const onChange = withSelection(["a", "b"])
+      const table = screen.getByRole("table", { name: "Pessoas" })
+      const header = within(table).getByRole("checkbox", { name: "Selecionar todos" }) as HTMLInputElement
+      expect(header.checked).toBe(true)
+      fireEvent.click(header)
+      expect(onChange).toHaveBeenCalledWith(new Set())
+    })
+
+    it("header checkbox is indeterminate when only some rows are selected", () => {
+      withSelection(["a"])
+      const table = screen.getByRole("table", { name: "Pessoas" })
+      const header = within(table).getByRole("checkbox", { name: "Selecionar todos" }) as HTMLInputElement
+      expect(header.indeterminate).toBe(true)
+      expect(header.checked).toBe(false)
+    })
+
+    it("select-all keeps selected ids that are not in the visible rows", () => {
+      const onChange = vi.fn()
+      renderList({
+        selection: {
+          selectedIds: new Set(["hidden"]),
+          onChange,
+          rowLabel: (row) => `Selecionar ${row.name}`,
+          selectAllLabel: "Selecionar todos",
+        },
+      })
+      const table = screen.getByRole("table", { name: "Pessoas" })
+      fireEvent.click(within(table).getByRole("checkbox", { name: "Selecionar todos" }))
+      expect(onChange).toHaveBeenCalledWith(new Set(["hidden", "a", "b"]))
+    })
+
+    it("clearing all keeps selected ids that are not in the visible rows", () => {
+      const onChange = vi.fn()
+      renderList({
+        selection: {
+          selectedIds: new Set(["hidden", "a", "b"]),
+          onChange,
+          rowLabel: (row) => `Selecionar ${row.name}`,
+          selectAllLabel: "Selecionar todos",
+        },
+      })
+      const table = screen.getByRole("table", { name: "Pessoas" })
+      fireEvent.click(within(table).getByRole("checkbox", { name: "Selecionar todos" }))
+      expect(onChange).toHaveBeenCalledWith(new Set(["hidden"]))
+    })
+
+    it("renders no select-all with zero rows (empty state)", () => {
+      renderList({
+        rows: [],
+        selection: {
+          selectedIds: new Set(),
+          onChange: vi.fn(),
+          rowLabel: (row) => row.name,
+          selectAllLabel: "Selecionar todos",
+        },
+      })
+      expect(screen.queryByRole("checkbox")).not.toBeInTheDocument()
+      expect(screen.getByText("Nada aqui")).toBeInTheDocument()
+    })
+  })
 })

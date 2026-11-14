@@ -1,6 +1,7 @@
-import type { ReactNode } from "react"
+import { useEffect, useRef, type ReactNode } from "react"
 
 import { ErrorState } from "@/components/ErrorState"
+import { Checkbox } from "@/components/ui/checkbox"
 import { EmptyState, type EmptyStateProps } from "@/components/ui/empty-state"
 import { Skeleton } from "@/components/ui/skeleton"
 import {
@@ -23,6 +24,16 @@ export type DataListColumn<T> = {
   hideBelow?: "lg"
 }
 
+/** Optional row selection. Omit it and no checkbox is rendered. */
+export type DataListSelection<T> = {
+  selectedIds: ReadonlySet<string>
+  onChange: (next: Set<string>) => void
+  /** Accessible name of a row checkbox, e.g. the row title. */
+  rowLabel: (row: T) => string
+  /** Accessible name of the header checkbox that selects every visible row. */
+  selectAllLabel: string
+}
+
 type DataListBaseProps<T> = {
   /** Accessible name for the table, the card list and the frame. */
   label: string
@@ -42,6 +53,7 @@ type DataListBaseProps<T> = {
   /** Accessible name of the loading status (defaults to `label`). */
   loadingLabel?: string
   className?: string
+  selection?: DataListSelection<T>
 }
 
 export type DataListProps<T> = DataListBaseProps<T> &
@@ -60,6 +72,50 @@ function cellClass<T>(column: DataListColumn<T>) {
   )
 }
 
+function SelectAllCheckbox<T>({ selection, rows, getRowId }: {
+  selection: DataListSelection<T>
+  rows: readonly T[]
+  getRowId: (row: T) => string
+}) {
+  const ref = useRef<HTMLInputElement>(null)
+  const selectedCount = rows.filter((row) => selection.selectedIds.has(getRowId(row))).length
+  const all = rows.length > 0 && selectedCount === rows.length
+  const partial = selectedCount > 0 && !all
+  useEffect(() => {
+    if (ref.current) ref.current.indeterminate = partial
+  }, [partial])
+  return (
+    <Checkbox
+      ref={ref}
+      aria-label={selection.selectAllLabel}
+      checked={all}
+      onChange={() => {
+        const next = new Set(selection.selectedIds)
+        for (const row of rows) {
+          if (all) next.delete(getRowId(row))
+          else next.add(getRowId(row))
+        }
+        selection.onChange(next)
+      }}
+    />
+  )
+}
+
+function RowCheckbox<T>({ selection, row, id }: { selection: DataListSelection<T>; row: T; id: string }) {
+  return (
+    <Checkbox
+      aria-label={selection.rowLabel(row)}
+      checked={selection.selectedIds.has(id)}
+      onChange={() => {
+        const next = new Set(selection.selectedIds)
+        if (next.has(id)) next.delete(id)
+        else next.add(id)
+        selection.onChange(next)
+      }}
+    />
+  )
+}
+
 /** Shared list: a real table from `md`, cards below, with loading/empty/error in the same frame. */
 export function DataList<T>(props: DataListProps<T>) {
   const {
@@ -75,6 +131,7 @@ export function DataList<T>(props: DataListProps<T>) {
     loadingRows = 3,
     loadingLabel,
     className,
+    selection,
   } = props
 
   const ready = props.state !== "loading" && props.state !== "error"
@@ -109,6 +166,11 @@ export function DataList<T>(props: DataListProps<T>) {
           <Table aria-label={label}>
             <TableHeader>
               <TableRow>
+                {selection ? (
+                  <TableHead scope="col" className="w-11">
+                    <SelectAllCheckbox selection={selection} rows={rows} getRowId={getRowId} />
+                  </TableHead>
+                ) : null}
                 {columns.map((column) => (
                   <TableHead key={column.id} scope="col" className={cellClass(column)}>
                     {column.header}
@@ -119,6 +181,11 @@ export function DataList<T>(props: DataListProps<T>) {
             <TableBody>
               {rows.map((row) => (
                 <TableRow key={getRowId(row)} {...rowAttributes?.(row)}>
+                  {selection ? (
+                    <TableCell className="w-11">
+                      <RowCheckbox selection={selection} row={row} id={getRowId(row)} />
+                    </TableCell>
+                  ) : null}
                   {columns.map((column) => (
                     <TableCell key={column.id} className={cn("whitespace-normal", cellClass(column))}>
                       {column.cell(row)}
@@ -136,6 +203,11 @@ export function DataList<T>(props: DataListProps<T>) {
               className="flex min-w-0 flex-col gap-3 rounded-lg border border-border p-4"
               {...rowAttributes?.(row)}
             >
+              {selection ? (
+                <div className="flex min-h-11 min-w-11 items-center">
+                  <RowCheckbox selection={selection} row={row} id={getRowId(row)} />
+                </div>
+              ) : null}
               {renderCard(row)}
             </li>
           ))}
