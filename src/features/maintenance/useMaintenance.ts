@@ -1,20 +1,21 @@
-import { useTenantTimeZone } from "@/contexts/TenantTimeZoneContext"
-import { tenantTodayIsoDate } from "@/lib/tenantTimeZone"
-import { formatWorkOrderShortId } from "@/features/workOrders/lib/workOrderLabel"
 import { useEffect, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { usePermissions } from "@/features/users/permissions/PermissionContext"
 import type { MaintenancePlan } from "@/features/pmoc/schemas/maintenancePlanSchemas"
 import type { WorkOrder } from "@/features/workOrders/schemas/workOrderSchemas"
-import { getPlans } from "@/features/pmoc/services/pmocService"
+import type { MaintenancePlanCoverage } from "@/features/pmoc/schemas/coverageSchemas"
+import { getPlanCoverage, getPlans } from "@/features/pmoc/services/pmocService"
 import { getWorkOrders } from "@/features/workOrders/services/workOrdersService"
+
+const MAX_COVERAGE_PLANS = 50
+const COVERAGE_BATCH = 6
 
 export function useMaintenanceAccess() {
   const { can, activeModules, isLoading, currentUser } = usePermissions()
   const pmoc = !isLoading && activeModules.includes("pmoc")
   const os = !isLoading && activeModules.includes("os")
   return {
-    isLoading, scope: currentUser?.tenantId ?? "",
+    isLoading, scope: currentUser?.tenantId ?? "", userId: currentUser?.id ?? null,
     plans: pmoc && can("pmoc.plans.read"), library: pmoc && can("pmoc.templates.read"),
     orders: os && can("os.work_orders.read"),
     createPlan: pmoc && can("pmoc.plans.write"), createOrder: os && can("os.work_orders.create"),
@@ -40,36 +41,34 @@ export function useMaintenance() {
     return () => { cancelled = true }
   }, [requestKey, access.plans, access.orders, t])
   const ready = state.key === requestKey
+  const [coverageState, setCoverageState] = useState<{ key: string; data: Record<string, MaintenancePlanCoverage>; failed: number }>({ key: "", data: {}, failed: 0 })
+  useEffect(() => {
+    if (state.key !== requestKey || !access.plans) return
+    let cancelled = false
+    const targets = state.plans.filter(plan => plan.isActive).slice(0, MAX_COVERAGE_PLANS)
+    void (async () => {
+      const data: Record<string, MaintenancePlanCoverage> = {}
+      let failed = 0
+      for (let index = 0; index < targets.length; index += COVERAGE_BATCH) {
+        const batch = targets.slice(index, index + COVERAGE_BATCH)
+        const results = await Promise.allSettled(batch.map(plan => getPlanCoverage(plan.id)))
+        results.forEach((result, position) => {
+          if (result.status === "fulfilled") data[batch[position].id] = result.value
+          else failed += 1
+        })
+        if (cancelled) return
+      }
+      if (!cancelled) setCoverageState({ key: requestKey, data, failed })
+    })()
+    return () => { cancelled = true }
+  }, [state, requestKey, access.plans])
+  const coverageReady = !access.plans || (ready && coverageState.key === requestKey)
   return {
-    access, plans: ready && access.plans ? state.plans : [], orders: ready && access.orders ? state.orders : [],
+    coverage: coverageReady && access.plans ? coverageState.data : {}, coverageFailed: coverageReady ? coverageState.failed : 0,
+    coverageLoading: !coverageReady, access, plans: ready && access.plans ? state.plans : [], orders: ready && access.orders ? state.orders : [],
     errors: ready ? state.errors : [], loading: access.isLoading || !ready,
     retry: () => setRevision(value => value + 1),
   }
 }
 
-export type MaintenanceTab = "hoje" | "ordens" | "planos"
-type Row = { id: string; kind: "planos" | "ordens"; title: string; status: string; statusLabel: string; date: string; description: string; to: string; generate?: string }
-
-export function useMaintenanceList(data: ReturnType<typeof useMaintenance>, { tab, search, status, kind }: { tab: MaintenanceTab; search: string; status: string; kind: string }) {
-  const { t, i18n } = useTranslation()
-  const timeZone = useTenantTimeZone()
-  const today = tenantTodayIsoDate(timeZone)
-  const rows: Row[] = [
-    ...(tab !== "ordens" ? data.plans.filter(plan => tab !== "hoje" || (plan.isActive && plan.firstDueDate <= today)).map(plan => ({
-      id: `plan-${plan.id}`, kind: "planos" as const, title: plan.name,
-      status: tab === "hoje" ? "due" : plan.isActive ? "active" : "inactive",
-      statusLabel: tab === "hoje" ? t("maintenance.due") : t(`pmoc.plans.status.${plan.isActive ? "active" : "inactive"}`),
-      date: plan.firstDueDate, description: [t("maintenance.firstDue", { date: plan.firstDueDate }), plan.description].filter(Boolean).join(" · "),
-      to: `/pmoc/${plan.id}`, generate: plan.isActive && data.access.createOrder ? `/manutencao/ordens/nova?plano=${plan.id}` : undefined,
-    })) : []),
-    ...(tab !== "planos" ? data.orders.filter(order => tab !== "hoje" || !["Completed", "Canceled"].includes(order.status)).map(order => ({
-      id: `order-${order.id}`, kind: "ordens" as const, title: `${formatWorkOrderShortId(order.id)} · ${order.asset.tag} — ${order.asset.name}`,
-      status: order.status, statusLabel: t(`workOrders.status.${order.status}`), date: order.scheduledDate,
-      description: [order.scheduledDate, order.sourcePlanName, order.assignedUser?.fullName].filter(Boolean).join(" · "), to: `/os/${order.id}`,
-    })) : []),
-  ].sort((a, b) => a.date.localeCompare(b.date))
-  const statusOptions = [...new Map(rows.map(row => [row.status, row.statusLabel])).entries()]
-  const query = search.trim().toLocaleLowerCase(i18n.language)
-  const filtered = rows.filter(row => (!status || row.status === status) && (!kind || row.kind === kind) && `${row.title} ${row.description} ${row.statusLabel}`.toLocaleLowerCase(i18n.language).includes(query))
-  return { filtered, statusOptions }
-}
+export type MaintenanceTab = "agenda" | "ordens" | "planos"
