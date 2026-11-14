@@ -51,18 +51,18 @@ describe("tenantPortalManifest public routes", () => {
     ).toBeInTheDocument()
   })
 
-  it("shows an invalid-link message with a forgot-password link for /t/:subdomain/reset-password", () => {
+  it("shows an invalid-link message with a forgot-password link for /t/:subdomain/reset-password", async () => {
     renderPublicRoutes("/t/ficc/reset-password")
 
-    expect(screen.getByRole("heading", {
+    expect(await screen.findByRole("heading", {
       level: 1,
       name: i18n.t("tenantPortal.passwordReset.invalidLinkTitle"),
     })).toBeVisible()
-    expect(screen.getByRole("alert")).toHaveTextContent(
+    expect(await screen.findByRole("alert")).toHaveTextContent(
       i18n.t("tenantPortal.passwordReset.invalidLink"),
     )
     expect(
-      screen.getByRole("link", {
+      await screen.findByRole("link", {
         name: i18n.t("tenantPortal.passwordReset.requestNewLink"),
       }),
     ).toHaveAttribute("href", "/t/ficc/forgot-password")

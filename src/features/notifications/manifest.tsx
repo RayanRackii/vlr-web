@@ -1,9 +1,11 @@
 import type { ReactElement } from "react"
+import { lazyPage } from "@/routes/lazyPage"
 import { Bell } from "lucide-react"
 
 import type { AppNavigationItem } from "@/components/layout/navigation"
-import { NotificationsPage } from "@/features/notifications/pages/NotificationsPage"
 import { NotificationsLegacyRedirect } from "@/routes/legacyScreenRedirect"
+
+const NotificationsPage = lazyPage(() => import("@/features/notifications/pages/NotificationsPage"), "NotificationsPage")
 
 type FeatureRoute = {
   path: string

@@ -27,7 +27,7 @@ it.each([
   ["/configuracoes/recursos/r1/assistente", "Resource cadastro"],
   ["/configuracoes/recursos/r1/passos", "Resource cadastro"],
   ["/configuracoes/categorias-tags", "Legacy taxonomy"],
-])("keeps the intended staff page reachable at %s", (path, title) => {
+])("keeps the intended staff page reachable at %s", async (path, title) => {
   render(<MemoryRouter initialEntries={[path]}>
     <TestPermissionProvider permissions={["rentals.assets.write", "core.units.read", "catalog.products.read", "catalog.products.manage"]} activeModules={["rentals", "catalog"]}>
       <Routes>
@@ -35,12 +35,12 @@ it.each([
       </Routes>
     </TestPermissionProvider>
   </MemoryRouter>)
-  expect(screen.getByRole("heading", { name: title, level: 1 })).toBeInTheDocument()
-  expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1)
+  expect(await screen.findByRole("heading", { name: title, level: 1 })).toBeInTheDocument()
+  expect(await screen.findAllByRole("heading", { level: 1 })).toHaveLength(1)
   expect(screen.queryByRole("dialog")).not.toBeInTheDocument()
 })
 
-it("sends a resource reader from the old wizard to the read-only editor", () => {
+it("sends a resource reader from the old wizard to the read-only editor", async () => {
   render(<MemoryRouter initialEntries={["/configuracoes/recursos/r1/assistente?passo=rules"]}>
     <TestPermissionProvider permissions={["rentals.assets.read", "core.units.read"]} activeModules={["rentals"]}>
       <Routes>
@@ -48,6 +48,6 @@ it("sends a resource reader from the old wizard to the read-only editor", () => 
       </Routes>
     </TestPermissionProvider>
   </MemoryRouter>)
-  expect(screen.getByRole("heading", { name: "Legacy resource editor", level: 1 })).toBeInTheDocument()
+  expect(await screen.findByRole("heading", { name: "Legacy resource editor", level: 1 })).toBeInTheDocument()
   expect(screen.queryByRole("heading", { name: "Resource cadastro" })).not.toBeInTheDocument()
 })

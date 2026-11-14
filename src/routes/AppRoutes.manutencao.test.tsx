@@ -24,10 +24,10 @@ it.each([
   ["/manutencao/ordens/nova", "os", "os.work_orders.create", "New order page"],
   ["/pmoc/novo", "pmoc", "pmoc.plans.write", "New plan page"],
   ["/os/nova", "os", "os.work_orders.create", "New order page"],
-])("renders %s as a full page with %s / %s", (path, module, permission, title) => {
+])("renders %s as a full page with %s / %s", async (path, module, permission, title) => {
   mount(path, [module], [permission])
-  expect(screen.getByRole("heading", { level: 1, name: title })).toBeInTheDocument()
-  expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1)
+  expect(await screen.findByRole("heading", { level: 1, name: title })).toBeInTheDocument()
+  expect(await screen.findAllByRole("heading", { level: 1 })).toHaveLength(1)
   expect(screen.queryByRole("dialog")).not.toBeInTheDocument()
 })
 it.each([
@@ -38,9 +38,9 @@ it.each([
   ["/manutencao/planos/novo", ["pmoc"], ["pmoc.templates.read"]],
   ["/manutencao/ordens/nova", ["os"], ["os.work_orders.read"]],
   ["/manutencao/ordens/nova?plano=plan-1", ["os"], ["os.work_orders.create"]],
-])("blocks %s without paired access", (path, modules, permissions) => {
+])("blocks %s without paired access", async (path, modules, permissions) => {
   mount(path as string, modules as string[], permissions as string[])
-  expect(screen.getByRole("heading", { name: i18n.t("accessDenied.title") })).toBeInTheDocument()
+  expect(await screen.findByRole("heading", { name: i18n.t("accessDenied.title") })).toBeInTheDocument()
 })
 it("retains every legacy maintenance destination", () => {
   expect([...pmocManifest.routes.staff, ...workOrdersManifest.routes.staff].map(route => route.path)).toEqual([

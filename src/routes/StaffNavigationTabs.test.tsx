@@ -75,81 +75,81 @@ describe("legacy sidebar URLs rendered inside their new screens", () => {
     ["/pmoc/novo/", "pmoc.plans.write", "custom plan content"],
     ["/pmoc/biblioteca/", "pmoc.templates.read", "library content"],
     ["/configuracoes/cadastro/", "core.registration_fields.read", "registration content"],
-  ])("keeps the existing trailing-slash URL %s usable", (path, permission, content) => {
+  ])("keeps the existing trailing-slash URL %s usable", async (path, permission, content) => {
     renderRoute(path, [permission])
-    expect(screen.getByText(content)).toBeInTheDocument()
+    expect(await screen.findByText(content)).toBeInTheDocument()
     expect(screen.queryByRole("heading", { name: i18n.t("accessDenied.title") })).not.toBeInTheDocument()
   })
 
-  it.each(legacyTabs)("opens $path as a gated tab with only its original permission", ({ path, permission, content, tab, hidden }) => {
+  it.each(legacyTabs)("opens $path as a gated tab with only its original permission", async ({ path, permission, content, tab, hidden }) => {
     renderRoute(path, [permission])
-    expect(screen.getByText(content)).toBeInTheDocument()
-    expect(screen.getByRole("tab", { name: i18n.t(tab) })).toHaveAttribute("aria-selected", "true")
-    expect(screen.getByRole("tablist")).toHaveClass("overflow-x-auto", "overflow-y-hidden", "px-0", "justify-start")
-    expect(screen.getAllByRole("tab")[0]).toHaveClass("first:pl-0")
+    expect(await screen.findByText(content)).toBeInTheDocument()
+    expect(await screen.findByRole("tab", { name: i18n.t(tab) })).toHaveAttribute("aria-selected", "true")
+    expect(await screen.findByRole("tablist")).toHaveClass("overflow-x-auto", "overflow-y-hidden", "px-0", "justify-start")
+    expect((await screen.findAllByRole("tab"))[0]).toHaveClass("first:pl-0")
     expect(screen.queryByRole("tab", { name: i18n.t(hidden) })).not.toBeInTheDocument()
     expect(screen.queryByText("route not found")).not.toBeInTheDocument()
   })
 
-  it.each(legacyTabs)("denies $path without its original permission", ({ path, content }) => {
+  it.each(legacyTabs)("denies $path without its original permission", async ({ path, content }) => {
     renderRoute(path, [])
-    expect(screen.getByRole("heading", { name: i18n.t("accessDenied.title") })).toBeInTheDocument()
+    expect(await screen.findByRole("heading", { name: i18n.t("accessDenied.title") })).toBeInTheDocument()
     expect(screen.queryByText(content)).not.toBeInTheDocument()
   })
 
-  it.each(legacyTabs)("does not mount $path content while its module is off", ({ path, permission, content, module }) => {
+  it.each(legacyTabs)("does not mount $path content while its module is off", async ({ path, permission, content, module }) => {
     renderRoute(path, [permission], ["catalog", "rentals", "pmoc", "inventory"].filter((entry) => entry !== module))
-    expect(screen.getByRole("heading", { name: i18n.t("accessDenied.title") })).toBeInTheDocument()
+    expect(await screen.findByRole("heading", { name: i18n.t("accessDenied.title") })).toBeInTheDocument()
     expect(screen.queryByText(content)).not.toBeInTheDocument()
   })
 
   it.each([
     ["/ativos", "inventory.assets.read", "equipment content", "nav.assetsInventory", "nav.assetsCategories"],
     ["/configuracoes/reservas", "rentals.reservations.read", "reservations content", "nav.reservations", "nav.bookingPolicy"],
-  ])("keeps the main page %s usable without the absorbed tab's permission", (path, permission, content, tab, hidden) => {
+  ])("keeps the main page %s usable without the absorbed tab's permission", async (path, permission, content, tab, hidden) => {
     renderRoute(path, [permission])
-    expect(screen.getByText(content)).toBeInTheDocument()
-    expect(screen.getByRole("tab", { name: i18n.t(tab) })).toHaveAttribute("aria-selected", "true")
+    expect(await screen.findByText(content)).toBeInTheDocument()
+    expect(await screen.findByRole("tab", { name: i18n.t(tab) })).toHaveAttribute("aria-selected", "true")
     expect(screen.queryByRole("tab", { name: i18n.t(hidden) })).not.toBeInTheDocument()
   })
 
-  it("sends /pmoc/novo to the maintenance plan form", () => {
+  it("sends /pmoc/novo to the maintenance plan form", async () => {
     renderRoute("/pmoc/novo", ["pmoc.plans.write"])
-    expect(screen.getByTestId("location")).toHaveTextContent("/manutencao/planos/novo")
-    expect(screen.getByText("custom plan content")).toBeInTheDocument()
+    expect(await screen.findByTestId("location")).toHaveTextContent("/manutencao/planos/novo")
+    expect(await screen.findByText("custom plan content")).toBeInTheDocument()
     expect(screen.queryByRole("tab", { name: i18n.t("nav.pmocLibrary") })).not.toBeInTheDocument()
   })
 
   it("navigates between reservations and booking rules and restores the selected tab on Back", async () => {
     const user = userEvent.setup()
     renderRoute("/configuracoes/reservas", ["rentals.reservations.read", "rentals.booking_policy.read"])
-    await user.click(screen.getByRole("tab", { name: i18n.t("nav.bookingPolicy") }))
-    expect(screen.getByTestId("location")).toHaveTextContent("/configuracoes/politica-reservas")
-    expect(screen.getByText("booking rules content")).toBeInTheDocument()
+    await user.click(await screen.findByRole("tab", { name: i18n.t("nav.bookingPolicy") }))
+    expect(await screen.findByTestId("location")).toHaveTextContent("/configuracoes/politica-reservas")
+    expect(await screen.findByText("booking rules content")).toBeInTheDocument()
     expect(screen.queryByText("reservations content")).not.toBeInTheDocument()
-    await user.click(screen.getByRole("button", { name: "history back" }))
-    expect(screen.getByRole("tab", { name: i18n.t("nav.reservations") })).toHaveAttribute("aria-selected", "true")
-    expect(screen.getByText("reservations content")).toBeInTheDocument()
+    await user.click(await screen.findByRole("button", { name: "history back" }))
+    expect(await screen.findByRole("tab", { name: i18n.t("nav.reservations") })).toHaveAttribute("aria-selected", "true")
+    expect(await screen.findByText("reservations content")).toBeInTheDocument()
   })
 
-  it.each(["catalog", "rentals"])("keeps registration-only access through People and access with %s", (module) => {
+  it.each(["catalog", "rentals"])("keeps registration-only access through People and access with %s", async (module) => {
     renderRoute("/configuracoes/cadastro", ["core.registration_fields.read"], [module])
-    expect(screen.getByText("registration content")).toBeInTheDocument()
-    expect(screen.getByRole("link", { name: i18n.t("nav.registrationFields") })).toBeInTheDocument()
+    expect(await screen.findByText("registration content")).toBeInTheDocument()
+    expect(await screen.findByRole("link", { name: i18n.t("nav.registrationFields") })).toBeInTheDocument()
     expect(screen.queryByText("team content")).not.toBeInTheDocument()
     expect(screen.queryByRole("button", { name: i18n.t("peopleAccess.tabs.users") })).not.toBeInTheDocument()
     expect(screen.queryByRole("button", { name: i18n.t("peopleAccess.tabs.roles") })).not.toBeInTheDocument()
   })
 
-  it("denies the registration content when neither supported module is enabled", () => {
+  it("denies the registration content when neither supported module is enabled", async () => {
     renderRoute("/configuracoes/cadastro", ["core.registration_fields.read"], ["inventory"])
-    expect(screen.getByRole("heading", { name: i18n.t("accessDenied.title") })).toBeInTheDocument()
+    expect(await screen.findByRole("heading", { name: i18n.t("accessDenied.title") })).toBeInTheDocument()
     expect(screen.queryByText("registration content")).not.toBeInTheDocument()
   })
 
-  it("denies the old registration URL when only people access is granted", () => {
+  it("denies the old registration URL when only people access is granted", async () => {
     renderRoute("/configuracoes/cadastro", ["core.users.read"])
-    expect(screen.getByRole("heading", { name: i18n.t("accessDenied.title") })).toBeInTheDocument()
+    expect(await screen.findByRole("heading", { name: i18n.t("accessDenied.title") })).toBeInTheDocument()
     expect(screen.queryByText("registration content")).not.toBeInTheDocument()
   })
 
@@ -158,11 +158,11 @@ describe("legacy sidebar URLs rendered inside their new screens", () => {
     const user = userEvent.setup()
     renderRoute("/configuracoes/cadastro", ["core.registration_fields.read", "core.users.read", "core.roles.read"])
     expect(listRoles).not.toHaveBeenCalled()
-    await user.click(screen.getByRole("button", { name: i18n.t("peopleAccess.tabs.roles") }))
+    await user.click(await screen.findByRole("button", { name: i18n.t("peopleAccess.tabs.roles") }))
     await waitFor(() => expect(screen.getByText("roles content")).toBeInTheDocument())
-    expect(screen.getByTestId("location")).toHaveTextContent("/pessoas-e-acesso?tab=roles")
+    expect(await screen.findByTestId("location")).toHaveTextContent("/pessoas-e-acesso?tab=roles")
     expect(screen.queryByText("registration content")).not.toBeInTheDocument()
-    await user.click(screen.getByRole("button", { name: "history back" }))
-    expect(screen.getByText("registration content")).toBeInTheDocument()
+    await user.click(await screen.findByRole("button", { name: "history back" }))
+    expect(await screen.findByText("registration content")).toBeInTheDocument()
   })
 })

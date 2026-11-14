@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react"
+import { Suspense, useEffect, useMemo, useState } from "react"
 import { Navigate, Outlet, useLocation, useParams } from "react-router-dom"
 import { useTranslation } from "react-i18next"
 
@@ -280,7 +280,9 @@ export function TenantPortalLayout() {
           }
         >
           <TenantTimeZoneProvider timeZoneId={branding.timeZoneId}>
-            <Outlet context={{ subdomain, branding, primary: tokens.primary }} />
+            <Suspense fallback={<PageContentSkeleton rows={3} />}>
+              <Outlet context={{ subdomain, branding, primary: tokens.primary }} />
+            </Suspense>
           </TenantTimeZoneProvider>
         </AuthSplitShell>
       </div>
@@ -313,7 +315,9 @@ export function TenantPortalLayout() {
           </div>
 
           <TenantTimeZoneProvider timeZoneId={branding.timeZoneId}>
-            <Outlet context={{ subdomain, branding, primary: tokens.primary }} />
+            <Suspense fallback={<PageContentSkeleton rows={3} />}>
+              <Outlet context={{ subdomain, branding, primary: tokens.primary }} />
+            </Suspense>
           </TenantTimeZoneProvider>
         </div>
       </main>

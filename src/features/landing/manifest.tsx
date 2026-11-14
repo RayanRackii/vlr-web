@@ -1,7 +1,9 @@
 import type { ReactElement } from "react"
+import { lazyPage } from "@/routes/lazyPage"
 import { Navigate } from "react-router-dom"
 
-import { LandingPage } from "@/features/landing/pages/LandingPage"
+const LandingPage = lazyPage(() => import("@/features/landing/pages/LandingPage"), "LandingPage")
+
 
 type FeatureRoute = { path: string; element: ReactElement }
 
