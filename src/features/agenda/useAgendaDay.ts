@@ -10,7 +10,7 @@ import {
 } from "@/features/rentals/services/scheduleService"
 import { tenantCivilInstant } from "@/lib/tenantTimeZone"
 import { buildAgendaDay, buildAgendaWeek, type AgendaDaySources, type AgendaOrderLabel } from "./dayGridModel"
-import type { AgendaState } from "./urlState"
+import { agendaTypes, type AgendaState } from "./urlState"
 
 const emptySources = (): AgendaDaySources => ({
   assets: [],
@@ -112,7 +112,19 @@ export function useAgendaDay(state: AgendaState, zone: string, access: AgendaAcc
 
   const ready = canLoad && loadedKey === requestKey ? sources : emptySources()
   const labels = new Map((canLoad && loadedKey === requestKey ? orderLabels : []).map((order) => [order.id, order]))
+  // Chip counts ignore the type filter itself; resources ignore every filter so the tree stays complete.
+  const countState = { ...state, tipo: null }
+  const typeCounts: Record<(typeof agendaTypes)[number], number> = { reserva: 0, pedido: 0, manutencao: 0, bloqueio: 0 }
+  if (state.visao === "semana") {
+    for (const row of buildAgendaWeek(ready, countState, zone, labels).rows) for (const cell of row.cells) for (const kind of agendaTypes) typeCounts[kind] += cell.counts[kind]
+  } else {
+    for (const row of buildAgendaDay(ready, countState, zone, labels).rows) for (const block of row.blocks) typeCounts[block.kind] += 1
+  }
+  const resources = buildAgendaDay(ready, { ...state, recursos: [], livres: false, tipo: null, produto: null, pedido: null }, zone, labels).rows
+    .map(({ id, name, categoryId, categoryName }) => ({ id, name, categoryId, categoryName }))
   return {
+    typeCounts,
+    resources,
     loading: canLoad && loadedKey !== requestKey,
     failedSources: canLoad && loadedKey === requestKey ? failedSources : [],
     availableProducts: [...new Map(ready.catalog.items.map((item) => [item.productId, { id: item.productId, label: item.productName }])).values()],

@@ -5772,6 +5772,38 @@
       "subtitle": "Ocupación de los recursos utilizados por el producto en el período."
     },
     "chooseProduct": "Elige un producto para consultar su agenda.",
+    "newReservation": "Nueva reserva",
+    "nav": {
+      "previousDay": "Día anterior",
+      "nextDay": "Día siguiente",
+      "previousWeek": "Semana anterior",
+      "nextWeek": "Semana siguiente",
+      "pickDate": "Elegir fecha"
+    },
+    "chips": {
+      "pedido": "Pedidos",
+      "reserva": "Reservas",
+      "manutencao": "Mantenimiento",
+      "bloqueio": "Bloqueos"
+    },
+    "filters": {
+      "title": "Filtros",
+      "open": "Mostrar filtros",
+      "collapse": "Contraer filtros",
+      "resources": "Recursos · {{selected}} de {{total}}",
+      "resourcesList": "Recursos",
+      "noCategory": "Sin categoría",
+      "group": "Todos los recursos de {{name}}",
+      "noResources": "No se encontraron recursos.",
+      "product": "Producto",
+      "allProducts": "Todos los productos",
+      "pickProduct": "Elige un producto",
+      "options": "Opciones",
+      "onlyFree": "Solo recursos con horario libre",
+      "showClosed": "Mostrar horas cerradas",
+      "clear": "Limpiar filtros",
+      "sheetDescription": "Filtra los recursos y el producto que se muestran en la agenda."
+    },
     "prep": "Preparación",
     "cleanup": "Limpieza",
     "selectedProductOrders": "Pedidos del producto: {{count}}",

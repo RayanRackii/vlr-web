@@ -1,7 +1,6 @@
 /* Only the new staff pages opt out of the shell width, like Pessoas e acesso. */
 [data-shell-part="main"]:has(.agendas-page) > div { max-width: none; }
-.agendas-page { width: 100%; max-width: min(1240px, 100%); min-width: 0; overflow-wrap: anywhere; }
+.agendas-page { min-width: 0; overflow-wrap: anywhere; }
 .agendas-page :is(button, input):focus-visible { outline: none; box-shadow: 0 0 0 1px var(--ring); }
 
 .agenda-product-pad { pointer-events: none; background: repeating-linear-gradient(135deg, transparent 0 4px, color-mix(in oklch, var(--primary) 25%, transparent) 4px 6px); }
-.agendas-resources [data-agenda-filter="recurso"] > span { border-color: var(--primary); }
