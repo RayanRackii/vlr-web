@@ -65,6 +65,7 @@ export function civilReservationDay(value: string | undefined): string | undefin
 
 export async function listAdminReservations(
   query: ListAdminReservationsQuery = {},
+  { signal }: { signal?: AbortSignal } = {},
 ): Promise<AdminReservation[]> {
   try {
     const response = await api.get("/api/reservations", {
@@ -74,6 +75,7 @@ export async function listAdminReservations(
         status: query.status || undefined,
         assetId: query.assetId || undefined,
       },
+      ...(signal ? { signal } : {}),
     })
     const parsed = z.array(reservationSchema).safeParse(response.data)
     if (!parsed.success) {
@@ -83,6 +85,7 @@ export async function listAdminReservations(
   } catch (error) {
     throw new Error(
       parseApiError(getAxiosErrorPayload(error), i18n.t("apiErrors.loadReservations")),
+      { cause: error },
     )
   }
 }

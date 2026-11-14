@@ -1,15 +1,8 @@
-import { useEffect, useMemo, useState } from "react"
-import { addCivilDays, startOfCivilWeek } from "@/features/catalog/components/agenda/agendaLayout"
-import { listCatalogOrders, listCatalogResourceAgenda } from "@/features/catalog/services/catalogService"
-import { listAdminReservations } from "@/features/rentals/services/reservationsService"
-import {
-  fetchAdminScheduleDay,
-  listAdminRentalAssets,
-  listOccupancyKinds,
-  type AdminDaySlot,
-} from "@/features/rentals/services/scheduleService"
-import { tenantCivilInstant } from "@/lib/tenantTimeZone"
-import { buildAgendaDay, buildAgendaWeek, type AgendaDaySources, type AgendaOrderLabel } from "./dayGridModel"
+import { useMemo } from "react"
+import { useQueries, useQuery } from "@tanstack/react-query"
+import type { AdminDaySlot } from "@/features/rentals/services/scheduleService"
+import { agendaOrderSelect, agendaQueries, agendaRange } from "./agendaQueries"
+import { buildAgendaDay, buildAgendaWeek, type AgendaDaySources } from "./dayGridModel"
 import { agendaTypes, type AgendaState } from "./urlState"
 
 const emptySources = (): AgendaDaySources => ({
@@ -19,6 +12,8 @@ const emptySources = (): AgendaDaySources => ({
   slots: [],
   kinds: [],
 })
+const emptyCatalog = { resources: [], items: [] } as AgendaDaySources["catalog"]
+const noLabels: ReturnType<typeof agendaOrderSelect.labels> = []
 
 type AgendaAccess = {
   assets: boolean
@@ -30,90 +25,67 @@ type AgendaAccess = {
 export const agendaSourceIds = ["assets", "orders", "reservations", "schedule", "kinds"] as const
 export type AgendaSourceId = (typeof agendaSourceIds)[number]
 
+type ScheduleDays = { slots: AdminDaySlot[]; failed: boolean; pending: boolean }
+// Module level so `useQueries` can memoize the combined result.
+const combineScheduleDays = (results: { data?: { slots: AdminDaySlot[] }; isError: boolean; isPending: boolean }[]): ScheduleDays => ({
+  slots: results.flatMap((result) => result.data?.slots ?? []),
+  failed: results.some((result) => result.isError),
+  pending: results.some((result) => result.isPending),
+})
+
 /**
  * Staff day occupancy for `/agenda`. Work orders are not loaded: the list API
  * has an asset and a date, not a rental asset or a start and end.
+ * Each source is its own query (tenant-scoped key), so a failed source only
+ * lands in `failedSources` while the others still render.
  */
 export function useAgendaDay(state: AgendaState, zone: string, access: AgendaAccess, tenantId: string | null, enabled: boolean, focusedProductId?: string | null) {
-  const [sources, setSources] = useState<AgendaDaySources>(emptySources)
-  const [orderLabels, setOrderLabels] = useState<AgendaOrderLabel[]>([])
-  const [failedSources, setFailedSources] = useState<AgendaSourceId[]>([])
-  const [loadedKey, setLoadedKey] = useState<string | null>(null)
   const canLoad = enabled && (access.assets || access.schedule || access.reservations || access.orders)
-  const rangeStart = state.visao === "semana" ? startOfCivilWeek(state.date) : state.date
-  const rangeDays = state.visao === "semana" ? 7 : 1
-  const requestKey = [
-    state.visao,
-    rangeStart,
-    rangeDays,
-    zone,
-    tenantId ?? "",
-    access.assets,
-    access.schedule,
-    access.reservations,
-    access.orders,
-  ].join("|")
+  const range = agendaRange(state, zone)
+  const rangeKey = [range.from, range.to, range.reservationTo].join("|")
+  // `range` is rebuilt every render; its key is what identifies it.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const stableRange = useMemo(() => range, [rangeKey])
+  const on = (flag: boolean) => canLoad && flag
+  const assets = useQuery({ ...agendaQueries.assets(tenantId), enabled: on(access.assets) })
+  const kinds = useQuery({ ...agendaQueries.kinds(tenantId), enabled: on(access.schedule) })
+  const catalog = useQuery({ ...agendaQueries.resourceAgenda(tenantId, stableRange), enabled: on(access.orders) })
+  const reservations = useQuery({ ...agendaQueries.reservations(tenantId, stableRange), enabled: on(access.reservations) })
+  const orders = useQuery({ ...agendaQueries.orders(tenantId), select: agendaOrderSelect.labels, enabled: on(access.orders) })
+  const schedule = useQueries({
+    queries: stableRange.dates.map((date) => ({ ...agendaQueries.scheduleDay(tenantId, date), enabled: on(access.schedule) })),
+    combine: combineScheduleDays,
+  })
 
-  useEffect(() => {
-    if (!canLoad) return
-    let active = true
-    const dates = Array.from({ length: rangeDays }, (_, index) => addCivilDays(rangeStart, index))
-    const from = tenantCivilInstant(rangeStart, "00:00:00", zone).toISOString()
-    const to = tenantCivilInstant(addCivilDays(rangeStart, rangeDays), "00:00:00", zone).toISOString()
-    // Reservations bind DateOnly (yyyy-MM-dd). `to` is the last civil day, inclusive of that day.
-    const reservationTo = dates[dates.length - 1] ?? rangeStart
-    const schedulePromise: Promise<{ slots: AdminDaySlot[]; failed: boolean }> = access.schedule
-      ? Promise.allSettled(dates.map((date) => fetchAdminScheduleDay(date))).then((results) => ({
-          failed: results.some((result) => result.status === "rejected"),
-          slots: results.flatMap((result) => result.status === "fulfilled" ? result.value.slots : []),
-        }))
-      : Promise.resolve({ slots: [], failed: false })
-    const pending = [
-      access.assets ? listAdminRentalAssets() : Promise.resolve([]),
-      access.orders ? listCatalogResourceAgenda({ from, to }) : Promise.resolve({ resources: [], items: [] }),
-      access.reservations ? listAdminReservations({ from: rangeStart, to: reservationTo }) : Promise.resolve([]),
-      schedulePromise,
-      access.schedule ? listOccupancyKinds() : Promise.resolve([]),
-      access.orders
-        ? listCatalogOrders().then((orders) => orders.map((order) => ({
-            id: order.id,
-            displayNumber: order.displayNumber,
-            customerName: order.customerName,
-          })))
-        : Promise.resolve([]),
-    ] as const
+  const pending = (on(access.assets) && assets.isPending) || (on(access.schedule) && (kinds.isPending || schedule.pending))
+    || (on(access.orders) && (catalog.isPending || orders.isPending)) || (on(access.reservations) && reservations.isPending)
+  const loaded = canLoad && !pending
+  const failed: AgendaSourceId[] = []
+  if (on(access.assets) && assets.isError) failed.push("assets")
+  if (on(access.orders) && catalog.isError) failed.push("orders")
+  if (on(access.reservations) && reservations.isError) failed.push("reservations")
+  if (on(access.schedule) && schedule.failed) failed.push("schedule")
+  if (on(access.schedule) && kinds.isError) failed.push("kinds")
+  const failedKey = failed.join("|")
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const failedSources = useMemo(() => failed, [failedKey])
 
-    void Promise.allSettled(pending).then((results) => {
-      if (!active) return
-      const [assets, catalog, reservations, schedule, kinds, labels] = results
-      const scheduleValue = schedule.status === "fulfilled" ? schedule.value : { slots: [], failed: true }
-      const failed: AgendaSourceId[] = []
-      if (assets.status === "rejected") failed.push("assets")
-      if (catalog.status === "rejected") failed.push("orders")
-      if (reservations.status === "rejected") failed.push("reservations")
-      if (schedule.status === "rejected" || scheduleValue.failed) failed.push("schedule")
-      if (kinds.status === "rejected") failed.push("kinds")
-      setOrderLabels(labels.status === "fulfilled" ? labels.value : [])
-      setFailedSources(failed)
-      setSources({
-        assets: assets.status === "fulfilled" ? assets.value : [],
-        catalog: catalog.status === "fulfilled" ? catalog.value : { resources: [], items: [] },
-        reservations: reservations.status === "fulfilled" ? reservations.value : [],
-        slots: scheduleValue.slots,
-        kinds: kinds.status === "fulfilled" ? kinds.value : [],
-      })
-      setLoadedKey(requestKey)
-    })
-
-    return () => {
-      active = false
-    }
-  }, [access.assets, access.orders, access.reservations, access.schedule, canLoad, rangeDays, rangeStart, requestKey, zone])
-
-  const loaded = canLoad && loadedKey === requestKey
+  const assetsData = on(access.assets) ? assets.data : undefined
+  const catalogData = on(access.orders) ? catalog.data : undefined
+  const reservationsData = on(access.reservations) ? reservations.data : undefined
+  const kindsData = on(access.schedule) ? kinds.data : undefined
+  const slots = on(access.schedule) ? schedule.slots : undefined
   const none = useMemo(() => emptySources(), [])
+  const sources = useMemo<AgendaDaySources>(() => ({
+    assets: assetsData ?? none.assets,
+    catalog: catalogData ?? emptyCatalog,
+    reservations: reservationsData ?? none.reservations,
+    slots: slots ?? none.slots,
+    kinds: kindsData ?? none.kinds,
+  }), [assetsData, catalogData, reservationsData, slots, kindsData, none])
   const ready = loaded ? sources : none
-  const labels = useMemo(() => new Map((loaded ? orderLabels : []).map((order) => [order.id, order])), [loaded, orderLabels])
+  const orderLabels = on(access.orders) ? orders.data : undefined
+  const labels = useMemo(() => new Map((loaded ? (orderLabels ?? noLabels) : noLabels).map((order) => [order.id, order])), [loaded, orderLabels])
   const stateKey = JSON.stringify([state.visao, state.date, state.recursos, state.produto, state.pedido, state.tipo, state.livres, state.fechadas])
   const derived = useMemo(() => {
     const current = JSON.parse(stateKey) as [AgendaState["visao"], string, string[], string | null, string | null, AgendaState["tipo"], boolean, boolean]
@@ -138,7 +110,7 @@ export function useAgendaDay(state: AgendaState, zone: string, access: AgendaAcc
   }, [ready, labels, stateKey, zone, focusedProductId])
   return {
     ...derived,
-    loading: canLoad && loadedKey !== requestKey,
+    loading: canLoad && !loaded,
     failedSources: loaded ? failedSources : [],
     availableProducts: [...new Map(ready.catalog.items.map((item) => [item.productId, { id: item.productId, label: item.productName }])).values()],
   }

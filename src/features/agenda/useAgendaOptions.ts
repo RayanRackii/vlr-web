@@ -1,22 +1,23 @@
-import { useEffect, useState } from "react"
-import { listCatalogOrders, listCatalogProducts } from "@/features/catalog/services/catalogService"
+import { useQuery } from "@tanstack/react-query"
+import { agendaOrderSelect, agendaQueries } from "./agendaQueries"
 
 export type AgendaOption = { id: string; label: string }
-export const agendaOptionLoaders = {
-  produto: async () => (await listCatalogProducts()).map(({ id, name }) => ({ id, label: name })),
-  // No date range: GET /api/catalog/orders treats from/to as optional instants, not civil dates.
-  pedido: async () => (await listCatalogOrders()).map(({ id, displayNumber, customerName }) => ({ id, label: `${displayNumber} · ${customerName}` })),
+
+const noOptions: AgendaOption[] = []
+
+function toResult(query: { data: AgendaOption[] | undefined; isPending: boolean; isError: boolean }, enabled: boolean) {
+  return {
+    options: enabled ? (query.data ?? noOptions) : noOptions,
+    loading: enabled && query.isPending,
+    error: enabled && query.isError,
+  }
 }
 
-export function useAgendaOptions(load: () => Promise<AgendaOption[]>) {
-  const [result, setResult] = useState<{ options: AgendaOption[]; loading: boolean; error: boolean }>({ options: [], loading: true, error: false })
-  useEffect(() => {
-    let active = true
-    void load().then(
-      (options) => { if (active) setResult({ options, loading: false, error: false }) },
-      () => { if (active) setResult({ options: [], loading: false, error: true }) },
-    )
-    return () => { active = false }
-  }, [load])
-  return result
+export function useAgendaProductOptions(tenantId: string | null, enabled: boolean) {
+  return toResult(useQuery({ ...agendaQueries.products(tenantId), enabled }), enabled)
+}
+
+/** Same request as the day/week labels (one shared `listCatalogOrders()`). */
+export function useAgendaOrderOptions(tenantId: string | null, enabled: boolean) {
+  return toResult(useQuery({ ...agendaQueries.orders(tenantId), select: agendaOrderSelect.options, enabled }), enabled)
 }
