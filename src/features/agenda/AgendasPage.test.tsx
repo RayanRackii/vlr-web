@@ -257,11 +257,11 @@ describe("agenda requests", () => {
   const total = () => [listAdminRentalAssets, listCatalogResourceAgenda, listCatalogOrders, listCatalogProducts, fetchAdminScheduleDay, listAdminReservations, listOccupancyKinds]
     .reduce((sum, fn) => sum + vi.mocked(fn).mock.calls.length, 0)
 
-  it("loads orders once for the labels and the order search, a day view in 6 requests", async () => {
+  it("loads orders once, without a range, for the labels and the order search; a day view in 6 requests", async () => {
     setup()
     await screen.findByRole("button", { name: /Pedidos\s*1/ })
     expect(listCatalogOrders).toHaveBeenCalledTimes(1)
-    expect(vi.mocked(listCatalogOrders).mock.calls[0]![0]).toEqual({ from: "2026-11-10T03:00:00.000Z", to: "2026-11-11T03:00:00.000Z" })
+    expect(vi.mocked(listCatalogOrders).mock.calls[0]![0]).toBeUndefined() // the API filters from/to by creation date
     expect(total()).toBe(6)
   })
 
@@ -270,5 +270,12 @@ describe("agenda requests", () => {
     await screen.findByRole("button", { name: /Pedidos\s*1/ })
     expect(listCatalogOrders).toHaveBeenCalledTimes(1)
     expect(total()).toBe(12)
+  })
+
+  it("finds an order created outside the visible range through the search", async () => {
+    vi.mocked(listCatalogOrders).mockResolvedValue([catalogOrderSchema.parse({ id: orderId, displayNumber: "#7", orderNumber: 7, status: "Requested", customerId: productId, customerName: "Beatriz Antiga", customerEmail: null, customerPhone: null, customerNote: null, totalAmount: null, currency: "BRL", rejectedReason: null, cancelledReason: null, createdAt: "2025-01-02T12:00:00Z", items: [], history: [] })])
+    setup()
+    await userEvent.type(await screen.findByRole("combobox", { name: "Buscar pedido por número ou cliente" }), "Beatriz")
+    expect(await screen.findByText(/#7 · Beatriz Antiga/)).toBeInTheDocument()
   })
 })

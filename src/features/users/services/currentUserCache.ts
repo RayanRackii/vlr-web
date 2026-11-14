@@ -39,9 +39,6 @@ export function staffSessionFingerprint(
 }
 
 export function invalidateCurrentUserCache(): void {
-  // Single choke point for tenant enter/exit/switch (refreshAuthSession), login and logout
-  // (syncCurrentUserCacheToAuthUser) and session restore: the data cache goes with the profile.
-  clearQueryCache()
   generation += 1
   cached = null
   inflight = null
@@ -59,6 +56,9 @@ export function syncCurrentUserCacheToAuthUser(user: AuthUserLike): void {
   }
 
   lastFingerprint = next
+  // Identity or tenant changed (login, logout, tenant enter/exit/switch): drop cached tenant data.
+  // A forced profile refresh (invalidateCurrentUserCache alone) keeps it.
+  clearQueryCache()
   invalidateCurrentUserCache()
 }
 

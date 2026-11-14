@@ -45,38 +45,40 @@ const productOption = (products: Awaited<ReturnType<typeof listCatalogProducts>>
 /** Static-ish lists, shared by every agenda hook through the same key. */
 export const agendaQueries = {
   assets: (tenantId: string | null) => queryOptions({
-    queryKey: tenantKey(tenantId, "rental-assets"),
+    queryKey: tenantKey("staff", tenantId, "rental-assets"),
     queryFn: ({ signal }) => listAdminRentalAssets({ signal }),
   }),
   kinds: (tenantId: string | null) => queryOptions({
-    queryKey: tenantKey(tenantId, "occupancy-kinds"),
+    queryKey: tenantKey("staff", tenantId, "occupancy-kinds"),
     queryFn: ({ signal }) => listOccupancyKinds({ signal }),
   }),
   products: (tenantId: string | null) => queryOptions({
-    queryKey: tenantKey(tenantId, "catalog-products"),
+    queryKey: tenantKey("staff", tenantId, "catalog-products"),
     queryFn: ({ signal }) => listCatalogProducts(undefined, { signal }),
     select: productOption,
   }),
   resourceAgenda: (tenantId: string | null, { from, to }: AgendaRange) => queryOptions({
-    queryKey: tenantKey(tenantId, "catalog-resource-agenda", from, to),
+    queryKey: tenantKey("staff", tenantId, "catalog-resource-agenda", from, to),
     queryFn: ({ signal }) => listCatalogResourceAgenda({ from, to }, { signal }),
     ...rangeData,
   }),
   reservations: (tenantId: string | null, { rangeStart, reservationTo }: AgendaRange) => queryOptions({
-    queryKey: tenantKey(tenantId, "reservations", rangeStart, reservationTo),
+    queryKey: tenantKey("staff", tenantId, "reservations", rangeStart, reservationTo),
     queryFn: ({ signal }) => listAdminReservations({ from: rangeStart, to: reservationTo }, { signal }),
     ...rangeData,
   }),
   scheduleDay: (tenantId: string | null, date: string) => queryOptions({
-    queryKey: tenantKey(tenantId, "schedule-day", date),
+    queryKey: tenantKey("staff", tenantId, "schedule-day", date),
     queryFn: ({ signal }) => fetchAdminScheduleDay(date, undefined, { signal }),
     ...rangeData,
   }),
-  /** One request per visible range; labels and the order search read it through `select`. */
-  orders: (tenantId: string | null, { from, to }: AgendaRange) => queryOptions({
-    queryKey: tenantKey(tenantId, "catalog-orders", from, to),
-    queryFn: ({ signal }) => listCatalogOrders({ from, to }, { signal }),
-    ...rangeData,
+  /**
+   * No date range: GET /api/catalog/orders filters `from`/`to` by order creation instant, not by the
+   * service date shown on the agenda. One request; labels and the order search read it through `select`.
+   */
+  orders: (tenantId: string | null) => queryOptions({
+    queryKey: tenantKey("staff", tenantId, "catalog-orders"),
+    queryFn: ({ signal }) => listCatalogOrders(undefined, { signal }),
   }),
 }
 export const agendaOrderSelect = { labels: orderLabel, options: orderOption }

@@ -13,7 +13,6 @@ import { useIsDesktop } from "./agendaFilterModel"
 import { AgendaFilters } from "./AgendaFilters"
 import { AgendaWeek } from "./AgendaWeek"
 import { useAgendaDay } from "./useAgendaDay"
-import { agendaRange } from "./agendaQueries"
 import { useAgendaProductOptions } from "./useAgendaOptions"
 import { agendaTypes, parseAgendaState, serializeAgendaState, type AgendaState } from "./urlState"
 import "./agendas.css"
@@ -114,7 +113,7 @@ export function AgendasPage({ view }: { view: AgendasView }) {
           />
         </div>
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-          <AgendaFilters key={currentUser?.tenantId ?? "current"} order={catalog && can("catalog.orders.read")} tenantId={tenantId} range={agendaRange(state, timeZone)} value={state.pedido} onChange={(pedido) => update({ pedido })} />
+          <AgendaFilters key={currentUser?.tenantId ?? "current"} order={catalog && can("catalog.orders.read")} tenantId={tenantId} value={state.pedido} onChange={(pedido) => update({ pedido })} />
           {!desktop && <AgendaFilterSheet {...filterProps} />}
         </div>
       </div>

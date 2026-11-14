@@ -48,13 +48,23 @@ beforeEach(() => {
 })
 
 describe("useAgendaDay queries", () => {
-  it("requests orders once per range, with the range and an abort signal", async () => {
+  it("requests orders once, without a date range (the API filters by creation date), with an abort signal", async () => {
     const { result } = setup()
     await waitFor(() => expect(result.current.loading).toBe(false))
     expect(listCatalogOrders).toHaveBeenCalledTimes(1)
     const [query, options] = vi.mocked(listCatalogOrders).mock.calls[0]!
-    expect(query).toEqual({ from: "2026-11-10T03:00:00.000Z", to: "2026-11-11T03:00:00.000Z" })
+    expect(query).toBeUndefined()
     expect(options?.signal).toBeInstanceOf(AbortSignal)
+  })
+
+  it("labels a block with an order created outside the visible range", async () => {
+    // Created long before the service date; the label still resolves because orders are not range-filtered.
+    vi.mocked(listCatalogResourceAgenda).mockResolvedValue({ resources: [], items: [{ ...order, customerName: "", displayNumber: "" }] })
+    vi.mocked(listCatalogOrders).mockResolvedValue([{ id: order.orderId, displayNumber: "#42", customerName: "Ana Antiga", createdAt: "2026-01-02T12:00:00Z" } as never])
+    const { result } = setup()
+    await waitFor(() => expect(result.current.loading).toBe(false))
+    const blocks = result.current.day.rows.flatMap((row) => row.blocks)
+    expect(JSON.stringify(blocks)).toContain("Ana Antiga")
   })
 
   it("counts the requests of a day view and then a week view", async () => {
@@ -63,9 +73,9 @@ describe("useAgendaDay queries", () => {
     expect(requestCount()).toBe(6) // assets, kinds, resource agenda, reservations, orders (once), 1 schedule day
     rerender({ state: week, tenantId: "t1" })
     await waitFor(() => expect(result.current.loading).toBe(false))
-    // assets and kinds reused; resource agenda, reservations, orders for the week; 7 schedule days (the day of the first view is cached)
-    expect(requestCount()).toBe(6 + 3 + 6)
-    expect(listCatalogOrders).toHaveBeenCalledTimes(2)
+    // assets, kinds and orders (no range) reused; resource agenda, reservations and the 6 schedule days not yet cached
+    expect(requestCount()).toBe(6 + 2 + 6)
+    expect(listCatalogOrders).toHaveBeenCalledTimes(1)
   })
 
   it("reuses the cache going day, week and back to day", async () => {
@@ -98,6 +108,16 @@ describe("useAgendaDay queries", () => {
     await waitFor(() => expect(signal.aborted).toBe(true))
   })
 
+  it("keeps agenda data on a forced profile refresh with the same tenant", async () => {
+    const { result } = setup(day, "t1")
+    await waitFor(() => expect(result.current.loading).toBe(false))
+    const before = requestCount()
+    invalidateCurrentUserCache() // getCurrentUser({ force: true })
+    expect(result.current.loading).toBe(false)
+    expect(result.current.day.rows.length).toBeGreaterThan(0)
+    expect(requestCount()).toBe(before)
+  })
+
   it("never serves cached data of the previous tenant after a tenant switch", async () => {
     vi.mocked(listAdminRentalAssets).mockResolvedValueOnce([{ ...asset, name: "Recurso do tenant A" }])
     const { result, rerender, client } = setup(day, "tenantA")
@@ -108,6 +128,6 @@ describe("useAgendaDay queries", () => {
     rerender({ state: day, tenantId: "tenantB" })
     await waitFor(() => expect(result.current.day.rows.map((row) => row.name)).toContain("Recurso do tenant B"))
     expect(result.current.day.rows.map((row) => row.name)).not.toContain("Recurso do tenant A")
-    expect(client.getQueryCache().getAll().every((query) => query.queryKey[1] === "tenantB")).toBe(true)
+    expect(client.getQueryCache().getAll().every((query) => query.queryKey[2] === "tenantB")).toBe(true)
   })
 })

@@ -19,6 +19,8 @@ export function shouldRetryQuery(failureCount: number, error: unknown): boolean 
   if (!axiosError) return false
   if (axiosError.code === "ERR_CANCELED") return false
   const status = axiosError.response?.status
+  // A timeout would just make the user wait twice as long.
+  if (status === undefined && (axiosError.code === "ECONNABORTED" || axiosError.code === "ETIMEDOUT")) return false
   return status === undefined || status >= 500
 }
 
@@ -44,4 +46,10 @@ export function clearQueryCache(): void {
 }
 
 // Customer portal login/logout (same tab or another tab) also starts a new tenant session.
-if (typeof window !== "undefined") subscribeCustomerSession(clearQueryCache)
+// Only customer session keys count: the staff Supabase client rewrites its own storage on every token refresh.
+if (typeof window !== "undefined") {
+  subscribeCustomerSession((event) => {
+    if (event instanceof StorageEvent && event.key !== null && !event.key.startsWith("rolvix.customer.")) return
+    clearQueryCache()
+  })
+}

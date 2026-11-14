@@ -58,6 +58,7 @@ export function clearPlatformTenantExited() {
 }
 
 export async function refreshAuthSession() {
+  clearQueryCache()
   invalidateCurrentUserCache()
   const { error } = await supabase.auth.refreshSession()
   if (error) {

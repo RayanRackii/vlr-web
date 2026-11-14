@@ -51,7 +51,7 @@ export function useAgendaDay(state: AgendaState, zone: string, access: AgendaAcc
   const kinds = useQuery({ ...agendaQueries.kinds(tenantId), enabled: on(access.schedule) })
   const catalog = useQuery({ ...agendaQueries.resourceAgenda(tenantId, stableRange), enabled: on(access.orders) })
   const reservations = useQuery({ ...agendaQueries.reservations(tenantId, stableRange), enabled: on(access.reservations) })
-  const orders = useQuery({ ...agendaQueries.orders(tenantId, stableRange), select: agendaOrderSelect.labels, enabled: on(access.orders) })
+  const orders = useQuery({ ...agendaQueries.orders(tenantId), select: agendaOrderSelect.labels, enabled: on(access.orders) })
   const schedule = useQueries({
     queries: stableRange.dates.map((date) => ({ ...agendaQueries.scheduleDay(tenantId, date), enabled: on(access.schedule) })),
     combine: combineScheduleDays,
