@@ -2,6 +2,7 @@ import { ChevronLeft, type LucideIcon } from "lucide-react"
 import type { ReactNode } from "react"
 import { Link } from "react-router-dom"
 
+import { useShellContext } from "@/components/layout/ShellContext"
 import { ICON_SIZE, ICON_STROKE_WIDTH } from "@/lib/icon"
 import { cn } from "@/lib/utils"
 
@@ -35,6 +36,7 @@ export function PageHeader({
   actions,
   className,
 }: PageHeaderProps) {
+  const { breadcrumbInHeader } = useShellContext()
   return (
     <div
       className={cn(
@@ -58,7 +60,7 @@ export function PageHeader({
               {back.label}
             </Link>
           ) : null}
-          {eyebrow ? (
+          {eyebrow && !breadcrumbInHeader ? (
             <p className="text-sm font-semibold tracking-wide text-primary">{eyebrow}</p>
           ) : null}
           <h1 className="text-xl font-semibold tracking-tight text-foreground sm:text-2xl">

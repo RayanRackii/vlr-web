@@ -2205,6 +2205,8 @@
     "openMenu": "Open navigation menu",
     "loading": "Loading navigation menu",
     "collapseMenu": "Collapse menu",
+    "workspaceCaption": "Your workspace",
+    "platformWorkspace": "Rolvix platform",
     "expandMenu": "Expand menu",
     "sections": {
       "settings": "Settings",
@@ -2913,7 +2915,8 @@
   "theme": {
     "toggle": "Toggle theme",
     "light": "Light",
-    "dark": "Dark"
+    "dark": "Dark",
+    "system": "System"
   },
   "language": {
     "label": "Language",
@@ -4892,6 +4895,8 @@
     "support": {
       "banner": "You are in tenant {{tenant}} as a super-admin",
       "platformPanel": "Platform panel",
+      "bannerSlim": "You are viewing this workspace as super-admin",
+      "exitShort": "Leave tenant",
       "tenantFallback": "client",
       "exit": "Leave tenant",
       "exiting": "Leaving...",

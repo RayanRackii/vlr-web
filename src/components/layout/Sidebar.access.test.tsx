@@ -40,15 +40,11 @@ describe("Sidebar access by role permissions", () => {
     { collapsed: false },
     { collapsed: true },
     { touchTargets: true },
-  ])("separates consecutive navigation groups in mode %j", (props) => {
+  ])("renders no separators between navigation groups in mode %j", (props) => {
     renderSidebar(["core.dashboard.read", "rentals.reservations.read", "core.users.read"], ["rentals"], "/", props)
-    const nav = screen.getByRole("navigation")
-    const groups = Array.from(nav.children).filter((child) => !child.matches('[data-slot="separator"]'))
-    const separators = nav.querySelectorAll('[data-slot="separator"]')
-    expect(groups.length).toBeGreaterThan(1)
-    expect(separators).toHaveLength(groups.length - 1)
-    expect(nav.firstElementChild).toBe(groups[0])
-    separators.forEach((separator) => expect(separator).toHaveClass("bg-[var(--sidebar-border)]"))
+    const nav = screen.getByRole("navigation", { name: i18n.t("nav.menu") })
+    expect(Array.from(nav.children).length).toBeGreaterThan(1)
+    expect(nav.querySelectorAll('[data-slot="separator"]')).toHaveLength(0)
   })
 
   it("does not show Recursos to a professor", async () => {
@@ -140,16 +136,16 @@ it.each([
   } finally { await i18n.changeLanguage("pt-BR") }
 })
 
-it("starts settings collapsed and toggles groups only through dedicated plus/minus controls", async () => {
+it("starts settings collapsed and toggles groups only through dedicated chevron controls", async () => {
   renderSidebar(["rentals.schedule.read", "rentals.assets.read", "rentals.reservations.read"])
   const user = userEvent.setup()
   const settings = screen.getByRole("button", { name: "Expandir Configurações" })
   expect(settings).toHaveAttribute("aria-expanded", "false")
-  expect(settings.querySelector(".lucide-plus")).toBeInTheDocument()
+  expect(settings.querySelector(".lucide-chevron-down")).toBeInTheDocument()
   expect(screen.queryByRole("link", { name: "Horários" })).not.toBeInTheDocument()
   await user.click(settings)
   expect(settings).toHaveAttribute("aria-expanded", "true")
-  expect(settings.querySelector(".lucide-minus")).toBeInTheDocument()
+  expect(settings.querySelector(".lucide-chevron-down")).toHaveClass("rotate-180")
   expect(screen.getByRole("link", { name: "Horários" })).toBeVisible()
   const operations = screen.getByRole("button", { name: "Recolher Operação" })
   await user.click(operations)
@@ -166,7 +162,7 @@ it.each([
   expect(screen.getAllByRole("link", { current: "page" })).toHaveLength(1)
   expect(screen.getByRole("link", { name: label })).toHaveAttribute("aria-current", "page")
   const toggle = screen.getByRole("button", { name: "Recolher Agendas" })
-  expect(toggle.querySelector(".lucide-minus")).toBeInTheDocument()
+  expect(toggle.querySelector(".lucide-chevron-down")).not.toHaveClass("-rotate-90")
   const links = screen.getAllByRole("link").map((link) => link.getAttribute("href"))
   for (const legacy of ["/agenda", "/catalogo/agenda-recursos", "/catalogo/agenda-produto"]) expect(links).not.toContain(legacy)
 })

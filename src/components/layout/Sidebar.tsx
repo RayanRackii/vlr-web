@@ -1,7 +1,7 @@
-import { Fragment, useId, useState } from "react"
+import { type ReactNode, useId, useState } from "react"
 import { Link, useLocation } from "react-router-dom"
 import { useTranslation } from "react-i18next"
-import { Info, Minus, PanelLeftClose, PanelLeftOpen, Plus } from "lucide-react"
+import { ChevronDown, Info, PanelLeftClose, PanelLeftOpen, Settings } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -9,7 +9,6 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover"
-import { Separator } from "@/components/ui/separator"
 import {
   useAppNavigationSections,
   type AppNavigationItem,
@@ -27,6 +26,12 @@ type SidebarProps = {
   onToggleCollapsed?: () => void
   touchTargets?: boolean
   className?: string
+  /** Tenant name shown in the workspace card (display only). */
+  workspaceName?: string
+  /** Platform admin on the platform panel: the card shows the platform label instead. */
+  platformWorkspace?: boolean
+  /** User card pinned at the bottom (rendered by the shell). */
+  account?: ReactNode
 }
 
 const SIDEBAR_LABEL_KEYS: Partial<Record<AppNavigationItem["labelKey"], string>> = {
@@ -37,29 +42,51 @@ const SIDEBAR_LABEL_KEYS: Partial<Record<AppNavigationItem["labelKey"], string>>
   "nav.notifications": "nav.sidebar.notifications",
 }
 
-const NAV_ICON_CLASS = "size-5 shrink-0"
+const NAV_ICON_CLASS = "size-4.5 shrink-0"
+const SETTINGS_SECTION_KEY: AppNavigationSection["titleKey"] = "nav.sections.settings"
 
 /** Soft-tinted active fill + rested/hover treatment, shared by leaf and child rows. */
 function rowClassName(isActive: boolean, touchTargets: boolean | undefined) {
   return cn(
-    "group/nav relative flex items-center gap-2.5 rounded-lg px-3 text-sm font-medium outline-none transition-colors duration-150 ease-out motion-reduce:transition-none focus-visible:ring-2 focus-visible:ring-sidebar-ring",
+    "group/nav relative flex items-center gap-3 rounded-lg px-3 text-sm outline-none transition-colors duration-150 ease-out motion-reduce:transition-none focus-visible:ring-2 focus-visible:ring-sidebar-ring",
     touchTargets ? "min-h-11 py-2" : "min-h-9 py-1.5",
     isActive
-      ? "bg-primary/10 text-primary dark:bg-primary/15"
+      ? "bg-primary/10 font-medium text-primary dark:bg-primary/15"
       : "text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
   )
 }
 
-/** The left edge pill that marks the active row. */
-function ActiveIndicator({ show }: { show: boolean }) {
-  if (!show) {
-    return null
-  }
+/** Quiet chevron toggle used after section labels and group rows. */
+function ChevronToggle({
+  expanded,
+  label,
+  controls,
+  touchTargets,
+  onClick,
+}: {
+  expanded: boolean
+  label: string
+  controls: string
+  touchTargets?: boolean
+  onClick: () => void
+}) {
   return (
-    <span
-      aria-hidden="true"
-      className="absolute inset-y-1.5 left-0 w-1 rounded-r-full bg-primary"
-    />
+    <button
+      type="button"
+      aria-label={label}
+      aria-expanded={expanded}
+      aria-controls={controls}
+      onClick={onClick}
+      className={cn(
+        "flex shrink-0 items-center justify-center rounded-md text-muted-foreground outline-none hover:bg-sidebar-accent focus-visible:ring-2 focus-visible:ring-sidebar-ring",
+        touchTargets ? "size-11" : "size-7",
+      )}
+    >
+      <ChevronDown
+        className={cn("size-4 transition-transform duration-150 motion-reduce:transition-none", !expanded && "-rotate-90")}
+        aria-hidden="true"
+      />
+    </button>
   )
 }
 
@@ -105,7 +132,7 @@ function NavigationLink({
                 className={cn(
                   "flex size-10 items-center justify-center rounded-lg outline-none transition-colors duration-150 ease-out motion-reduce:transition-none focus-visible:ring-2 focus-visible:ring-sidebar-ring",
                   isSectionActive
-                    ? "bg-primary/10 text-primary dark:bg-primary/15"
+                    ? "bg-primary/10 font-medium text-primary dark:bg-primary/15"
                     : "text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
                 )}
               />
@@ -177,12 +204,12 @@ function NavigationLink({
     )
   }
 
-  // Expanded group: muted header + indented, left-bordered child list.
+  // Expanded group: icon row with a quiet chevron + children indented to the parent's text start.
   if (hasChildren && children !== undefined) {
     return (
       <div className="space-y-0.5">
         <div
-          className={cn("flex items-center rounded-lg text-sm font-medium", isIntroActive ? "bg-primary/10 text-primary" : isSectionActive ? "text-foreground" : "text-muted-foreground")}
+          className={cn("flex items-center rounded-lg text-sm", isIntroActive ? "bg-primary/10 font-medium text-primary" : isSectionActive ? "font-medium text-foreground" : "text-muted-foreground")}
         >
           {item.introKey ? (
             <Link
@@ -191,30 +218,27 @@ function NavigationLink({
               aria-label={t("moduleIntro.open", { module: label })}
               aria-current={isIntroActive ? "page" : undefined}
               onClick={onNavigate}
-              className={cn("flex min-w-0 flex-1 items-center gap-2.5 rounded-lg px-3 py-1.5 outline-none hover:text-sidebar-accent-foreground focus-visible:ring-2 focus-visible:ring-sidebar-ring", touchTargets ? "min-h-11" : "min-h-9", isSectionActive && !isIntroActive && "text-foreground")}
+              className={cn("flex min-w-0 flex-1 items-center gap-3 rounded-lg px-3 py-1.5 outline-none hover:text-sidebar-accent-foreground focus-visible:ring-2 focus-visible:ring-sidebar-ring", touchTargets ? "min-h-11" : "min-h-9")}
             >
               <Icon className={NAV_ICON_CLASS} strokeWidth={ICON_STROKE_WIDTH} aria-hidden="true" />
               <span className="min-w-0 whitespace-normal break-words">{label}</span>
             </Link>
           ) : (
-            <span title={tooltip} className="flex min-h-9 min-w-0 flex-1 items-center gap-2.5 px-3 py-1.5">
+            <span title={tooltip} className="flex min-h-9 min-w-0 flex-1 items-center gap-3 px-3 py-1.5">
               <Icon className={NAV_ICON_CLASS} strokeWidth={ICON_STROKE_WIDTH} aria-hidden="true" />
               <span className="min-w-0 whitespace-normal break-words">{label}</span>
             </span>
           )}
-          <button
-            type="button"
-            aria-label={t(expanded ? "moduleIntro.collapse" : "moduleIntro.expand", { module: label })}
-            aria-expanded={expanded}
-            aria-controls={childrenId}
+          <ChevronToggle
+            expanded={expanded}
+            label={t(expanded ? "moduleIntro.collapse" : "moduleIntro.expand", { module: label })}
+            controls={childrenId}
+            touchTargets={touchTargets}
             onClick={() => setExpanded((value) => !value)}
-            className={cn("flex shrink-0 items-center justify-center rounded-full border border-sidebar-border outline-none hover:bg-sidebar-accent focus-visible:ring-2 focus-visible:ring-sidebar-ring", touchTargets ? "size-11" : "size-8")}
-          >
-            {expanded ? <Minus className="size-3.5" aria-hidden="true" /> : <Plus className="size-3.5" aria-hidden="true" />}
-          </button>
+          />
         </div>
 
-        <div id={childrenId} hidden={!expanded} className="ml-[1.3125rem] space-y-0.5 border-l border-sidebar-border pl-3">
+        <div id={childrenId} hidden={!expanded} className="space-y-0.5">
           {children.map((child) => (
             <Link
               key={child.to}
@@ -223,15 +247,14 @@ function NavigationLink({
               onClick={onNavigate}
               className={
                 cn(
-                  "relative flex items-center rounded-lg px-3 text-sm font-medium outline-none transition-colors duration-150 ease-out motion-reduce:transition-none focus-visible:ring-2 focus-visible:ring-sidebar-ring",
-                  touchTargets ? "min-h-11 py-2" : "min-h-8 py-1.5",
+                  "relative flex items-center rounded-lg pl-[2.625rem] pr-3 text-sm outline-none transition-colors duration-150 ease-out motion-reduce:transition-none focus-visible:ring-2 focus-visible:ring-sidebar-ring",
+                  touchTargets ? "min-h-11 py-2" : "min-h-9 py-1.5",
                   match?.child === child
-                    ? "bg-primary/10 text-primary dark:bg-primary/15"
+                    ? "bg-primary/10 font-medium text-primary dark:bg-primary/15"
                     : "text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
                 )
               }
             >
-              <ActiveIndicator show={match?.child === child} />
               <span className="min-w-0 whitespace-normal break-words">{t(child.labelKey)}</span>
             </Link>
           ))}
@@ -248,7 +271,6 @@ function NavigationLink({
       onClick={onNavigate}
       className={rowClassName(isActive, touchTargets)}
     >
-      <ActiveIndicator show={isActive} />
       <Icon className={NAV_ICON_CLASS} strokeWidth={ICON_STROKE_WIDTH} aria-hidden="true" />
       <span className="min-w-0 whitespace-normal break-words">{label}</span>
     </Link>
@@ -270,33 +292,29 @@ function NavigationSection({
   const itemsId = useId()
   const label = t(section.titleKey)
   const isIntroActive = section.introKey !== undefined && section.introKey === activeIntroKey
-  const isGroupActive = isIntroActive || section.items.some((item) => item.introKey !== undefined && item.introKey === activeIntroKey)
 
   return (
     <div className={cn("flex w-full flex-col gap-0.5", collapsed && "items-center gap-1")}>
-      {!section.standalone && <div className={cn("flex items-center", collapsed && "justify-center", isGroupActive ? "text-primary" : "text-muted-foreground/80")}>
+      {!section.standalone && <div className={cn("flex items-center text-muted-foreground", collapsed && "justify-center")}>
         {section.introKey ? (
           <Link
             to={moduleIntroPath(section.introKey)}
             aria-label={t("moduleIntro.open", { module: label })}
             aria-current={isIntroActive ? "page" : undefined}
             onClick={onNavigate}
-            className={cn("flex min-w-0 items-center rounded-lg outline-none hover:text-sidebar-accent-foreground focus-visible:ring-2 focus-visible:ring-sidebar-ring", collapsed ? "size-10 justify-center" : "flex-1 px-3 text-[0.6875rem] font-semibold uppercase tracking-wider", !collapsed && (touchTargets ? "min-h-11" : "min-h-9"), isIntroActive && "bg-primary/10")}
+            className={cn("flex min-w-0 items-center rounded-lg outline-none hover:text-sidebar-accent-foreground focus-visible:ring-2 focus-visible:ring-sidebar-ring", collapsed ? "size-10 justify-center" : "flex-1 px-3 text-xs font-medium uppercase tracking-wide", !collapsed && (touchTargets ? "min-h-11" : "min-h-8"), isIntroActive && "bg-primary/10 text-primary")}
           >
             {collapsed ? <Info className="size-4" strokeWidth={ICON_STROKE_WIDTH} aria-hidden="true" /> : <span className="min-w-0 whitespace-normal break-words">{label}</span>}
           </Link>
-        ) : !collapsed && <p className="flex-1 px-3 text-[0.6875rem] font-semibold uppercase tracking-wider">{label}</p>}
+        ) : !collapsed && <p className="flex-1 px-3 text-xs font-medium uppercase tracking-wide">{label}</p>}
         {!collapsed && (
-          <button
-            type="button"
-            aria-label={t(expanded ? "moduleIntro.collapse" : "moduleIntro.expand", { module: label })}
-            aria-expanded={expanded}
-            aria-controls={itemsId}
+          <ChevronToggle
+            expanded={expanded}
+            label={t(expanded ? "moduleIntro.collapse" : "moduleIntro.expand", { module: label })}
+            controls={itemsId}
+            touchTargets={touchTargets}
             onClick={() => setExpanded((value) => !value)}
-            className={cn("flex shrink-0 items-center justify-center rounded-full border border-sidebar-border outline-none hover:bg-sidebar-accent focus-visible:ring-2 focus-visible:ring-sidebar-ring", touchTargets ? "size-11" : "size-8")}
-          >
-            {expanded ? <Minus className="size-3.5" aria-hidden="true" /> : <Plus className="size-3.5" aria-hidden="true" />}
-          </button>
+          />
         )}
       </div>}
       <div id={itemsId} hidden={!collapsed && !expanded} className={cn("space-y-0.5", collapsed && "flex flex-col items-center gap-1")}>
@@ -305,6 +323,102 @@ function NavigationSection({
         ))}
       </div>
     </div>
+  )
+}
+
+/** The settings section as one pinned row: expands its items inline above it; the collapsed rail opens a flyout. */
+function SettingsGroup({
+  section, collapsed, touchTargets, onNavigate, match, activeIntroKey,
+}: {
+  section: AppNavigationSection
+  collapsed?: boolean
+  touchTargets?: boolean
+  onNavigate?: () => void
+  match?: NavigationMatch
+  activeIntroKey?: ModuleIntroKey
+}) {
+  const { t } = useTranslation()
+  const [expanded, setExpanded] = useState(!section.defaultCollapsed)
+  const [flyoutOpen, setFlyoutOpen] = useState(false)
+  const itemsId = useId()
+  const label = t(section.titleKey)
+  const hasActiveItem = section.items.some(
+    (item) => match?.item === item || (item.introKey !== undefined && item.introKey === activeIntroKey),
+  )
+  const toggleLabel = t(
+    (collapsed ? flyoutOpen : expanded) ? "moduleIntro.collapse" : "moduleIntro.expand",
+    { module: label },
+  )
+
+  if (collapsed) {
+    return (
+      <Popover open={flyoutOpen} onOpenChange={setFlyoutOpen}>
+        <PopoverTrigger
+          render={
+            <button
+              type="button"
+              aria-label={toggleLabel}
+              title={label}
+              className={cn(
+                "flex size-10 items-center justify-center rounded-lg outline-none transition-colors duration-150 ease-out motion-reduce:transition-none focus-visible:ring-2 focus-visible:ring-sidebar-ring",
+                hasActiveItem
+                  ? "bg-primary/10 font-medium text-primary dark:bg-primary/15"
+                  : "text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+              )}
+            />
+          }
+        >
+          <Settings className={NAV_ICON_CLASS} strokeWidth={ICON_STROKE_WIDTH} aria-hidden="true" />
+        </PopoverTrigger>
+        <PopoverContent side="right" align="end" sideOffset={8} className="w-56 gap-0.5 p-1.5">
+          <p className="px-2 pb-1 pt-1 text-xs font-medium text-muted-foreground">{label}</p>
+          {section.items.map((item) => (
+            <Link
+              key={item.to}
+              to={item.to}
+              aria-current={match?.item === item ? "page" : undefined}
+              onClick={() => {
+                setFlyoutOpen(false)
+                onNavigate?.()
+              }}
+              className={cn(
+                "flex min-h-9 items-center rounded-md px-2 py-1.5 text-sm transition-colors duration-150 ease-out motion-reduce:transition-none",
+                match?.item === item
+                  ? "bg-primary/10 font-medium text-primary dark:bg-primary/15"
+                  : "text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+              )}
+            >
+              {t(SIDEBAR_LABEL_KEYS[item.labelKey] ?? item.labelKey)}
+            </Link>
+          ))}
+        </PopoverContent>
+      </Popover>
+    )
+  }
+
+  return (
+    <nav aria-label={label} className="flex w-full flex-col gap-0.5">
+      <div id={itemsId} hidden={!expanded} className="space-y-0.5 pb-1">
+        {section.items.map((item) => (
+          <NavigationLink key={item.to} item={item} match={match} activeIntroKey={activeIntroKey} onNavigate={onNavigate} touchTargets={touchTargets} />
+        ))}
+      </div>
+      <button
+        type="button"
+        aria-label={toggleLabel}
+        aria-expanded={expanded}
+        aria-controls={itemsId}
+        onClick={() => setExpanded((value) => !value)}
+        className={cn(rowClassName(false, touchTargets), "w-full", hasActiveItem && "text-foreground")}
+      >
+        <Settings className={NAV_ICON_CLASS} strokeWidth={ICON_STROKE_WIDTH} aria-hidden="true" />
+        <span className="min-w-0 flex-1 truncate text-left">{label}</span>
+        <ChevronDown
+          className={cn("size-4 transition-transform duration-150 motion-reduce:transition-none", expanded && "rotate-180")}
+          aria-hidden="true"
+        />
+      </button>
+    </nav>
   )
 }
 
@@ -357,68 +471,101 @@ export function Sidebar({
   onToggleCollapsed,
   touchTargets,
   className,
+  workspaceName,
+  platformWorkspace,
+  account,
 }: SidebarProps) {
   const { t } = useTranslation()
   const { sections: navigationSections, isLoading } = useAppNavigationSections()
   const { pathname } = useLocation()
   const match = matchNavigationPath(navigationSections.flatMap((section) => section.items), pathname)
   const activeIntro = matchModuleIntro(navigationSections, pathname)
+  const mainSections = navigationSections.filter((section) => section.titleKey !== SETTINGS_SECTION_KEY)
+  const settingsSection = navigationSections.find((section) => section.titleKey === SETTINGS_SECTION_KEY)
+  const brandName = t("app.name")
+  const workspaceLabel = platformWorkspace ? t("nav.platformWorkspace") : workspaceName
+  const workspaceInitial = workspaceLabel?.trim().charAt(0).toUpperCase() ?? ""
+
+  const toggleButton = onToggleCollapsed ? (
+    <Button
+      type="button"
+      variant="ghost"
+      size="icon-sm"
+      onClick={onToggleCollapsed}
+      aria-label={collapsed ? t("nav.expandMenu") : t("nav.collapseMenu")}
+      title={collapsed ? t("nav.expandMenu") : t("nav.collapseMenu")}
+      className="text-muted-foreground"
+    >
+      {collapsed ? (
+        <PanelLeftOpen strokeWidth={ICON_STROKE_WIDTH} />
+      ) : (
+        <PanelLeftClose strokeWidth={ICON_STROKE_WIDTH} />
+      )}
+    </Button>
+  ) : null
+
+  const brandMark = (
+    <span
+      data-sidebar-mark
+      aria-hidden="true"
+      className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary text-sm font-semibold text-primary-foreground"
+    >
+      {brandName.charAt(0).toUpperCase()}
+    </span>
+  )
 
   return (
     <div className={cn("flex h-full flex-col", className)}>
-      <div
-        className={cn(
-          "flex h-14 items-center",
-          collapsed ? "justify-center px-2" : "justify-between px-4",
-        )}
-      >
-        {!collapsed ? (
-          <span className="truncate text-sm font-semibold tracking-tight">
-            {t("app.name")}
+      {collapsed ? (
+        <div className="flex flex-col items-center gap-1 px-2 pb-1 pt-4">
+          {brandMark}
+          {toggleButton}
+        </div>
+      ) : (
+        <div className="flex h-16 shrink-0 items-center justify-between gap-2 px-4">
+          <span className="flex min-w-0 items-center gap-2.5">
+            {brandMark}
+            <span className="truncate text-base font-semibold tracking-tight">{brandName}</span>
           </span>
-        ) : null}
+          {toggleButton}
+        </div>
+      )}
 
-        {onToggleCollapsed ? (
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon-sm"
-            onClick={onToggleCollapsed}
-            aria-label={collapsed ? t("nav.expandMenu") : t("nav.collapseMenu")}
-            title={collapsed ? t("nav.expandMenu") : t("nav.collapseMenu")}
-            className="text-muted-foreground"
+      {workspaceLabel ? (
+        collapsed ? (
+          <div
+            data-testid="sidebar-workspace"
+            title={workspaceLabel}
+            className="mx-auto mt-2 flex size-9 shrink-0 items-center justify-center rounded-lg bg-sidebar-accent text-sm font-medium"
           >
-            {collapsed ? (
-              <PanelLeftOpen strokeWidth={ICON_STROKE_WIDTH} />
-            ) : (
-              <PanelLeftClose strokeWidth={ICON_STROKE_WIDTH} />
-            )}
-          </Button>
-        ) : null}
-      </div>
-
-      <Separator />
+            {workspaceInitial}
+          </div>
+        ) : (
+          <div data-testid="sidebar-workspace" className="mx-3 shrink-0 rounded-lg bg-sidebar-accent px-3 py-2.5">
+            <p className="truncate text-sm font-medium">{workspaceLabel}</p>
+            <p className="truncate text-xs text-muted-foreground">{t("nav.workspaceCaption")}</p>
+          </div>
+        )
+      ) : null}
 
       <nav
         aria-label={t("nav.menu")}
         className={cn(
-          "flex flex-1 flex-col gap-5 overflow-y-auto overflow-x-hidden py-3",
+          "flex flex-1 flex-col gap-4 overflow-y-auto overflow-x-hidden py-3",
           collapsed ? "items-center px-2" : "px-3",
         )}
         aria-busy={isLoading}
       >
-        {navigationSections.map((section, index) => (
-          <Fragment key={section.titleKey}>
-            {index > 0 && <Separator className="-my-2.5 bg-[var(--sidebar-border)]" />}
-            <NavigationSection
-              section={section}
-              match={match}
-              activeIntroKey={activeIntro?.key}
-              onNavigate={onNavigate}
-              collapsed={collapsed}
-              touchTargets={touchTargets}
-            />
-          </Fragment>
+        {mainSections.map((section) => (
+          <NavigationSection
+            key={section.titleKey}
+            section={section}
+            match={match}
+            activeIntroKey={activeIntro?.key}
+            onNavigate={onNavigate}
+            collapsed={collapsed}
+            touchTargets={touchTargets}
+          />
         ))}
         {isLoading ? (
           <SidebarNavigationSkeleton
@@ -427,6 +574,28 @@ export function Sidebar({
           />
         ) : null}
       </nav>
+
+      {settingsSection || account ? (
+        <div
+          data-testid="sidebar-bottom"
+          className={cn(
+            "mt-auto flex shrink-0 flex-col gap-1 border-t border-sidebar-border py-2",
+            collapsed ? "items-center px-2" : "px-3",
+          )}
+        >
+          {settingsSection ? (
+            <SettingsGroup
+              section={settingsSection}
+              match={match}
+              activeIntroKey={activeIntro?.key}
+              onNavigate={onNavigate}
+              collapsed={collapsed}
+              touchTargets={touchTargets}
+            />
+          ) : null}
+          {account}
+        </div>
+      ) : null}
     </div>
   )
 }
