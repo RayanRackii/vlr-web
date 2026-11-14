@@ -82,6 +82,15 @@ describe("PeopleCustomersTab", () => {
     listTenantCustomersMock.mockReset()
   })
 
+  it("keeps the customer email on one truncated line with a tooltip", async () => {
+    listTenantCustomersMock.mockResolvedValue(customerPage([CUSTOMER]))
+    render(<PeopleCustomersTab />)
+    await screen.findByRole("table", { name: i18n.t("peopleAccess.tabs.customers") })
+    const emails = screen.getAllByText(CUSTOMER.email!)
+    expect(emails.length).toBeGreaterThan(0)
+    for (const email of emails) { expect(email).toHaveClass("truncate"); expect(email).toHaveAttribute("title", CUSTOMER.email!) }
+  })
+
   it("presents real customer data in the responsive directory without adding actions or filters", async () => {
     listTenantCustomersMock.mockResolvedValue(customerPage([CUSTOMER]))
     render(<PeopleCustomersTab />)

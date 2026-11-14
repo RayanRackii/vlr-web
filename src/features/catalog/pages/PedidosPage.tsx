@@ -32,6 +32,7 @@ type Row = {
 }
 
 const DASH = "—"
+const PAGE_SIZE = 25
 
 function toStatusTone(tone: string): StatusTone {
   return tone === "muted" ? "neutral" : (tone as StatusTone)
@@ -44,12 +45,14 @@ export function PedidosPage() {
   const [params, setParams] = useSearchParams()
   const [search, setSearch] = useState("")
   const [status, setStatus] = useState<string | null>(null)
+  const [visible, setVisible] = useState(PAGE_SIZE)
   const tabs: Tab[] = ["todos", ...(data.ordersAllowed ? ["pedidos" as const] : []), ...(data.requestsAllowed ? ["solicitacoes" as const] : [])]
   const requestedTab = params.get("aba")
   const tab = tabs.find(value => value === requestedTab) ?? "todos"
   function selectTab(value: Tab) {
     setParams(previous => { previous.set("aba", value); return previous })
     setStatus(null)
+    setVisible(PAGE_SIZE)
   }
   const rows: Row[] = [
     ...(tab !== "solicitacoes" ? data.orders.map((order): Row => ({
@@ -73,7 +76,8 @@ export function PedidosPage() {
   }))
   const query = search.trim().toLocaleLowerCase(i18n.language)
   const filtered = rows.filter(row => (!status || row.status === status) && [row.title, row.statusLabel, row.customer, row.total, row.dateLabel, row.note].filter(Boolean).join(" ").toLocaleLowerCase(i18n.language).includes(query))
-  const clear = () => { setSearch(""); setStatus(null) }
+  const clear = () => { setSearch(""); setStatus(null); setVisible(PAGE_SIZE) }
+  const shown = filtered.slice(0, visible)
   const sourceCount = data.orders.length + data.requests.length
   const failedWithoutData = !data.loading && data.errors.length > 0 && sourceCount === 0
 
@@ -87,8 +91,8 @@ export function PedidosPage() {
 
   const toolbar = <FilterBar
     label={t("pedidos.filters")}
-    search={{ value: search, onChange: setSearch, placeholder: t("pedidos.search"), label: t("pedidos.search") }}
-    filters={statusOptions.length > 0 ? <StatusChips label={t("pedidos.status")} allLabel={t("pedidos.allStatuses")} value={status} onChange={setStatus} options={statusOptions} allCount={rows.length} /> : undefined}
+    search={{ value: search, onChange: value => { setSearch(value); setVisible(PAGE_SIZE) }, placeholder: t("pedidos.search"), label: t("pedidos.search") }}
+    filters={statusOptions.length > 0 ? <StatusChips label={t("pedidos.status")} allLabel={t("pedidos.allStatuses")} value={status} onChange={value => { setStatus(value); setVisible(PAGE_SIZE) }} options={statusOptions} allCount={rows.length} /> : undefined}
   />
 
   const header = { title: t("nav.pedidos"), description: t("pedidos.subtitle") }
@@ -117,7 +121,7 @@ export function PedidosPage() {
         loadingLabel={t("pedidos.loading")}
         toolbar={toolbar}
         columns={columns}
-        rows={filtered}
+        rows={shown}
         getRowId={row => row.id}
         empty={{
           title: t("pedidos.emptyTitle"),
@@ -133,6 +137,10 @@ export function PedidosPage() {
           {row.note ? <p className="text-xs text-muted-foreground">{row.note}</p> : null}
         </>}
       />
+      {!data.loading && filtered.length > 0 ? <div className="flex flex-col items-center gap-2">
+        <p className="text-sm text-muted-foreground">{t("pedidos.showing", { shown: shown.length, total: filtered.length })}</p>
+        {filtered.length > shown.length ? <Button variant="outline" className="w-full sm:w-auto" onClick={() => setVisible(count => count + PAGE_SIZE)}>{t("pedidos.loadMore")}</Button> : null}
+      </div> : null}
     </div>
   </Page>
 }

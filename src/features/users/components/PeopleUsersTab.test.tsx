@@ -67,6 +67,15 @@ describe("PeopleUsersTab", () => {
     expect(within(table).queryByRole("button", { name: i18n.t("peopleAccess.users.assign") })).not.toBeInTheDocument()
   })
 
+  it("keeps the email on one truncated line with the full address in a tooltip", async () => {
+    listTenantMembersMock.mockResolvedValue(memberPage([MEMBER]))
+    render(<PeopleUsersTab roles={[]} inviteOpen={false} onInviteOpenChange={() => undefined} />)
+    await screen.findByRole("table", { name: usersLabel })
+    const emails = screen.getAllByText(MEMBER.email)
+    expect(emails.length).toBeGreaterThan(0)
+    for (const email of emails) { expect(email).toHaveClass("truncate"); expect(email).toHaveAttribute("title", MEMBER.email) }
+  })
+
   it("opens the assign dialog from the row menu", async () => {
     const user = userEvent.setup()
     listTenantMembersMock.mockResolvedValue(memberPage([MEMBER]))

@@ -251,7 +251,7 @@ export function PeopleUsersTab({ roles, inviteOpen, onInviteOpenChange }: People
         <span className="grid size-9 shrink-0 place-items-center rounded-full bg-accent text-xs font-semibold uppercase text-accent-foreground" aria-hidden="true">{member.fullName.trim().split(/\s+/).slice(0, 2).map((part) => part[0]).join("")}</span>
         <div className="min-w-0">
           <p className="font-semibold [overflow-wrap:anywhere]">{member.fullName}</p>
-          <p className="text-sm text-muted-foreground [overflow-wrap:anywhere]">{member.email}</p>
+          <p className="truncate text-sm text-muted-foreground" title={member.email}>{member.email}</p>
         </div>
       </div>
     )
@@ -340,14 +340,14 @@ export function PeopleUsersTab({ roles, inviteOpen, onInviteOpenChange }: People
         empty={empty}
         renderCard={(member) => (
           <>
-            <div className="flex items-start justify-between gap-3">
-              {identity(member)}
-              <div className="flex shrink-0 items-center gap-1">
-                {statusBadge(member)}
-                {rowMenu(member)}
-              </div>
+            <div className="flex items-start justify-between gap-2">
+              <div className="min-w-0 flex-1">{identity(member)}</div>
+              <div className="shrink-0">{rowMenu(member)}</div>
             </div>
-            {roleChips(member)}
+            <div className="flex flex-wrap items-center gap-2">
+              {statusBadge(member)}
+              {roleChips(member)}
+            </div>
           </>
         )}
       />

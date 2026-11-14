@@ -5888,6 +5888,8 @@
     "emptyTitle": "Sin resultados",
     "emptyDescription": "Ningún pedido o solicitud coincide con la búsqueda y los filtros.",
     "clear": "Limpiar búsqueda/filtros",
+    "loadMore": "Cargar más",
+    "showing": "Mostrando {{shown}} de {{total}}",
     "loading": "Cargando pedidos…",
     "quantity": "Cantidad: {{count}}",
     "detailTitle": "Detalles del pedido",
