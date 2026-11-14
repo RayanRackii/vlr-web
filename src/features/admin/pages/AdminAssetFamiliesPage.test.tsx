@@ -67,9 +67,14 @@ function table() {
   return screen.getByRole("table")
 }
 
+/** The table only exists once loading finishes, so wait for it before scoping. */
+async function findInTable(text: string) {
+  return within(await screen.findByRole("table")).findByText(text)
+}
+
 async function renderLoaded() {
   render(<AdminAssetFamiliesPage />)
-  await within(table()).findByText("Quadras")
+  await findInTable("Quadras")
 }
 
 describe("AdminAssetFamiliesPage", () => {
@@ -115,7 +120,7 @@ describe("AdminAssetFamiliesPage", () => {
       }),
     )
 
-    await within(table()).findByText("Arquivo")
+    await findInTable("Arquivo")
     expect(listMock).toHaveBeenCalledWith({ includeInactive: true })
   })
 
@@ -298,7 +303,32 @@ describe("AdminAssetFamiliesPage", () => {
     expect(screen.getByRole("alertdialog")).toBeInTheDocument()
   })
 
-  it("filters the order column by the digits typed, not a numeric range", async () => {
+  it("renders the title as the single h1", async () => {
+    await renderLoaded()
+
+    expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1)
+    expect(
+      screen.getByRole("heading", {
+        level: 1,
+        name: i18n.t("admin.assetFamilies.title"),
+      }),
+    ).toBeInTheDocument()
+  })
+
+  async function filterBy(
+    user: ReturnType<typeof userEvent.setup>,
+    column: string,
+    value: string,
+  ) {
+    await user.type(
+      screen.getByRole("textbox", {
+        name: i18n.t(`admin.assetFamilies.columns.${column}`),
+      }),
+      value,
+    )
+  }
+
+  it("narrows rows with each filter bar control and clears it with its chip", async () => {
     const user = userEvent.setup()
     const dozen: AdminAssetFamily = {
       ...courts,
@@ -306,24 +336,65 @@ describe("AdminAssetFamiliesPage", () => {
       key: "doze",
       label: "Doze",
       sortOrder: 12,
+      isActive: false,
     }
-    listMock.mockResolvedValue([courts, dozen])
+    listMock.mockResolvedValue([spaces, courts, dozen])
 
     render(<AdminAssetFamiliesPage />)
-    await within(table()).findByText("Doze")
+    await findInTable("Doze")
 
-    const orderHeader = screen.getByRole("columnheader", { name: /Ordem/ })
-    await user.click(
-      within(orderHeader).getByRole("button", {
-        name: i18n.t("common.filter"),
-      }),
-    )
-    await user.type(
-      screen.getByPlaceholderText(i18n.t("common.searchPlaceholder")),
-      "12",
-    )
+    const cases: { column: string; value: string; kept: string[]; dropped: string[] }[] = [
+      { column: "key", value: "quad", kept: ["Quadras"], dropped: ["Espaços", "Doze"] },
+      { column: "label", value: "doz", kept: ["Doze"], dropped: ["Espaços", "Quadras"] },
+      { column: "sortOrder", value: "12", kept: ["Doze"], dropped: ["Espaços", "Quadras"] },
+      { column: "fields", value: "1", kept: ["Quadras", "Doze"], dropped: ["Espaços"] },
+      {
+        column: "status",
+        value: i18n.t("admin.assetFamilies.statusInactive"),
+        kept: ["Doze"],
+        dropped: ["Espaços", "Quadras"],
+      },
+    ]
 
-    expect(within(table()).getByText("Doze")).toBeInTheDocument()
-    expect(within(table()).queryByText("Quadras")).not.toBeInTheDocument()
+    for (const { column, value, kept, dropped } of cases) {
+      await filterBy(user, column, value)
+      for (const name of kept) {
+        expect(within(table()).getByText(name)).toBeInTheDocument()
+      }
+      for (const name of dropped) {
+        expect(within(table()).queryByText(name)).not.toBeInTheDocument()
+      }
+
+      await user.click(screen.getByRole("button", { name: new RegExp(`: ${value}$`) }))
+      expect(within(table()).getByText("Espaços")).toBeInTheDocument()
+      expect(within(table()).getByText("Quadras")).toBeInTheDocument()
+      expect(within(table()).getByText("Doze")).toBeInTheDocument()
+    }
+  })
+
+  it("shows the empty state when no family matches", async () => {
+    const user = userEvent.setup()
+    await renderLoaded()
+
+    await filterBy(user, "key", "zzz")
+
+    expect(
+      await screen.findByText(i18n.t("admin.assetFamilies.emptyTitle")),
+    ).toBeInTheDocument()
+    expect(screen.queryByRole("table")).not.toBeInTheDocument()
+  })
+
+  it("shows the load error and retries", async () => {
+    const user = userEvent.setup()
+    listMock.mockRejectedValueOnce(new Error("boom"))
+    render(<AdminAssetFamiliesPage />)
+
+    const retry = await screen.findByRole("button", {
+      name: i18n.t("admin.assetFamilies.actions.retry"),
+    })
+    await user.click(retry)
+
+    await findInTable("Quadras")
+    expect(listMock).toHaveBeenCalledTimes(2)
   })
 })
