@@ -66,6 +66,19 @@ describe("PeopleUsersTab", () => {
     expect(within(table).getByRole("button", { name: i18n.t("peopleAccess.users.assign") })).toBeInTheDocument()
   })
 
+  it("opens the assign dialog from the card list used below md", async () => {
+    const user = userEvent.setup()
+    listTenantMembersMock.mockResolvedValue(memberPage([MEMBER]))
+    render(<PeopleUsersTab roles={[]} />)
+
+    const list = await screen.findByRole("list", { name: usersLabel })
+    expect(within(list).getByText(MEMBER.fullName)).toBeInTheDocument()
+    await user.click(within(list).getByRole("button", { name: i18n.t("peopleAccess.users.assign") }))
+
+    const dialog = await screen.findByRole("dialog")
+    expect(within(dialog).getByText(i18n.t("peopleAccess.users.assignDescription", { name: MEMBER.fullName }))).toBeInTheDocument()
+  })
+
   it("shows a loading status while the list loads", async () => {
     listTenantMembersMock.mockReturnValue(new Promise(() => undefined))
     render(<PeopleUsersTab roles={[]} />)

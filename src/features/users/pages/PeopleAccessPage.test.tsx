@@ -843,7 +843,7 @@ describe("People users and roles validity gate", () => {
       within(dialog).getByRole("button", { name: i18n.t("common.close") }),
     ).toBeEnabled()
     expect(toastSuccess).not.toHaveBeenCalled()
-    expect(screen.getAllByText(MEMBER.fullName).length).toBeGreaterThan(0)
+    expect(within(screen.getByRole("table", { name: i18n.t("peopleAccess.tabs.users"), hidden: true })).getByText(MEMBER.fullName)).toBeInTheDocument()
     expect(assignUserRolesMock).toHaveBeenCalledTimes(1)
 
     assignUserRolesMock.mockResolvedValueOnce(undefined)
