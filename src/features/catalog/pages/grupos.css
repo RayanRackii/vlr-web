@@ -21,16 +21,12 @@
   color: var(--muted-foreground); background: color-mix(in oklch, var(--foreground) 4%, transparent);
 }
 .grupos-empty { padding: 56px 24px; text-align: center; }
-.grupos-form { display: flex; flex-direction: column; gap: 18px; padding: 20px 18px; }
-.grupos-field { max-width: 640px; min-width: 0; }
 .grupos-expander { max-width: 640px; border: 1px solid var(--border); border-radius: 12px; }
 .grupos-expander > button { display: flex; width: 100%; align-items: center; justify-content: space-between; gap: 12px; min-height: 48px; padding: 0 14px; text-align: left; font-weight: 500; }
-.grupos-form-actions { display: flex; gap: 8px; padding: 16px 18px; border-top: 1px solid var(--border); }
 .grupos-page :is(button, a, input, textarea):focus-visible { outline: 1px solid var(--ring); outline-offset: 1px; box-shadow: 0 0 0 3px color-mix(in oklch, var(--ring) 28%, transparent); }
 @media (max-width: 760px) {
   .grupos-header { align-items: stretch; }
   .grupos-primary { width: 100%; }
   .grupos-row { flex-direction: column; align-items: stretch; gap: 12px; padding: 16px; }
   .grupos-actions > * { flex: 1; min-height: 44px; }
-  .grupos-form-actions { flex-direction: column; }
 }

@@ -1,13 +1,9 @@
-import { useContext, useEffect, type ReactNode } from "react"
-import {
-  UNSAFE_DataRouterContext as DataRouterContext,
-  useBlocker,
-} from "react-router-dom"
+import type { ReactNode } from "react"
 import { useTranslation } from "react-i18next"
 
-import { LeaveConfirmDialog } from "@/components/LeaveConfirmDialog"
+import { SaveBar } from "@/components/layout/SaveBar"
+import { UnsavedChangesGuard } from "@/components/layout/UnsavedChangesGuard"
 import { cn } from "@/lib/utils"
-import { Button } from "@/components/ui/button"
 import { LoadingButton } from "@/components/ui/loading-button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
@@ -47,27 +43,6 @@ type EntityPageProps = {
 }
 
 /**
- * In-app leave guard. Only mounted when a data router is present (useBlocker
- * throws otherwise); the app-level beforeunload guard covers tab/window close.
- */
-function RouterLeaveGuard({ when, message }: { when: boolean; message: string }) {
-  const blocker = useBlocker(when)
-  const open = blocker.state === "blocked"
-  return (
-    <LeaveConfirmDialog
-      open={open}
-      title={message}
-      onStay={() => {
-        if (blocker.state === "blocked") blocker.reset()
-      }}
-      onLeave={() => {
-        if (blocker.state === "blocked") blocker.proceed()
-      }}
-    />
-  )
-}
-
-/**
  * Shared full-page editor layout: breadcrumb, header (title + badges + Salvar),
  * subject tabs (horizontal scroll on mobile), a sticky bottom save bar when
  * dirty, and an unsaved-changes guard. Props-driven, no data fetching.
@@ -94,20 +69,6 @@ export function EntityPage({
 }: EntityPageProps) {
   const { t } = useTranslation()
   const guard = guardUnsaved && dirty
-  const leaveMessage = t("fullPage.leaveConfirm")
-  const hasDataRouter = useContext(DataRouterContext) != null
-
-  // beforeunload covers tab/window close regardless of router type.
-  useEffect(() => {
-    if (!guard) return
-    const handler = (event: BeforeUnloadEvent) => {
-      event.preventDefault()
-      event.returnValue = ""
-    }
-    window.addEventListener("beforeunload", handler)
-    return () => window.removeEventListener("beforeunload", handler)
-  }, [guard])
-
   const saveButton = onSave ? (
     <LoadingButton type="button" loading={saving} disabled={!dirty || saveDisabled} onClick={onSave}>
       {saveLabel ?? t("fullPage.save")}
@@ -116,7 +77,7 @@ export function EntityPage({
 
   return (
     <div className={cn("flex flex-col gap-4 pb-24", className)}>
-      {hasDataRouter ? <RouterLeaveGuard when={guard} message={leaveMessage} /> : null}
+      <UnsavedChangesGuard when={guard} />
       {breadcrumb}
       <header className="flex flex-wrap items-center gap-x-3 gap-y-2">
         <h1 className="font-heading text-xl font-semibold text-foreground">{title}</h1>
@@ -149,21 +110,15 @@ export function EntityPage({
       )}
 
       {dirty ? (
-        <div className="sticky bottom-0 z-40 mt-4 border-t border-border bg-background/95 p-3 shadow-lg backdrop-blur supports-backdrop-filter:bg-background/80">
-          <div className="mx-auto flex max-w-5xl flex-wrap items-center gap-3 px-2">
-            <span className="text-sm text-muted-foreground">
-              {t("fullPage.unsavedChanges", { count: unsavedCount })}
-            </span>
-            <div className="ml-auto flex items-center gap-2">
-              {onDiscard ? (
-                <Button type="button" variant="ghost" onClick={onDiscard}>
-                  {t("fullPage.discard")}
-                </Button>
-              ) : null}
-              {saveButton}
-            </div>
-          </div>
-        </div>
+        <SaveBar
+          dirty={dirty}
+          unsavedCount={unsavedCount}
+          saving={saving}
+          saveDisabled={saveDisabled}
+          saveLabel={saveLabel}
+          onDiscard={onDiscard}
+          onSave={onSave}
+        />
       ) : null}
     </div>
   )

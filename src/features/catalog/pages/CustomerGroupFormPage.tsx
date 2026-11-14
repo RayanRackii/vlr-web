@@ -5,8 +5,11 @@ import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
-import { FormPrimaryButton } from "@/components/ui/form-primary-button"
+import { FormPage } from "@/components/layout/FormPage"
+import { Page } from "@/components/layout/Page"
+import { FormGrid, FormRow, FormSection } from "@/components/ui/form-layout"
 import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import {
   addCustomerGroupMembers,
@@ -147,15 +150,10 @@ export function CustomerGroupFormPage() {
   }
 
   const dirty = !saved && (name !== baseline.name || description !== baseline.description || selected.length > 0)
+  // Leave from an effect so the unsaved-changes guard is already released.
   useEffect(() => {
-    if (!dirty) return
-    const preventUnload = (event: BeforeUnloadEvent) => {
-      event.preventDefault()
-      event.returnValue = ""
-    }
-    window.addEventListener("beforeunload", preventUnload)
-    return () => window.removeEventListener("beforeunload", preventUnload)
-  }, [dirty])
+    if (saved) void navigate("/grupos")
+  }, [navigate, saved])
 
   const nameTrim = name.trim()
   const descriptionTrim = description.trim()
@@ -191,7 +189,6 @@ export function CustomerGroupFormPage() {
         toast.success(t("catalog.customerGroups.toastCreated"))
       }
       setSaved(true)
-      void navigate("/grupos")
     } catch (error: unknown) {
       if (error instanceof CatalogDuplicateGroupNameError) setNameError(error.message)
       else toast.error(error instanceof Error ? error.message : t("catalog.customerGroups.errors.save"))
@@ -200,50 +197,67 @@ export function CustomerGroupFormPage() {
     }
   }
 
+  const header = {
+    eyebrow: t("grupos.eyebrow"),
+    title,
+    description: t(editing ? "grupos.editSubtitle" : "grupos.createSubtitle"),
+    actions: <StaffReturnLink />,
+  }
+
+  if (loading || missing) {
+    return (
+      <Page width="form" header={header}>
+        {loading ? <p role="status" className="text-sm text-muted-foreground">{t("common.loading")}</p> : null}
+        {!loading && missing ? <p role="alert" className="text-sm text-destructive">{nameError ?? t("catalog.customerGroups.page.notFound")}</p> : null}
+      </Page>
+    )
+  }
+
   return (
-    <div className="grupos-page mx-auto min-w-0 space-y-5">
-      <header>
-        <p className="grupos-eyebrow">{t("grupos.eyebrow")}</p>
-        <h1 className="text-xl font-semibold tracking-tight sm:text-2xl">{title}</h1>
-        <p className="max-w-2xl text-sm text-muted-foreground">{t(editing ? "grupos.editSubtitle" : "grupos.createSubtitle")}</p>
-        <StaffReturnLink />
-      </header>
-      {loading ? <p role="status" className="text-sm text-muted-foreground">{t("common.loading")}</p> : null}
-      {!loading && missing ? <p role="alert" className="text-sm text-destructive">{nameError ?? t("catalog.customerGroups.page.notFound")}</p> : null}
-      {!loading && !missing ? (
-        <form className="grupos-card" onSubmit={(event) => { event.preventDefault(); void submit() }}>
-          {!canManage ? <p className="px-[18px] pt-5 text-sm text-muted-foreground">{t("catalog.customerGroups.readOnlyHint")}</p> : null}
-          <div className="grupos-form">
-            <div className="grupos-field">
-              <label htmlFor="group-name" className="mb-1.5 block text-sm font-medium">{t("grupos.name")}</label>
+    <FormPage
+      header={header}
+      submitFormId="customer-group-form"
+      dirty={dirty}
+      saving={saving}
+      saveDisabled={!valid}
+      saveLabel={t("grupos.save")}
+      discardLabel={t("common.cancel")}
+      guardUnsaved={!saved}
+      onDiscard={() => { void navigate("/grupos") }}
+    >
+      <form id="customer-group-form" className="space-y-5" onSubmit={(event) => { event.preventDefault(); void submit() }}>
+        <FormSection title={t("grupos.sectionDetails")}>
+          {!canManage ? <p className="text-sm text-muted-foreground">{t("catalog.customerGroups.readOnlyHint")}</p> : null}
+          <FormGrid>
+            <FormRow
+              label={t("grupos.name")}
+              htmlFor="group-name"
+              hint={t("grupos.nameHelp")}
+              required
+              error={nameFieldError}
+            >
               <Input
                 id="group-name"
                 value={name}
                 disabled={!canManage || saving}
                 placeholder={t("grupos.namePlaceholder")}
-                aria-invalid={nameFieldError ? true : undefined}
-                aria-describedby={nameFieldError ? "group-name-help group-name-error" : "group-name-help"}
                 onBlur={() => setTouchedName(true)}
                 onChange={(event) => { setName(event.target.value); setNameError(null) }}
               />
-              <p id="group-name-help" className="mt-1.5 text-xs text-muted-foreground">{t("grupos.nameHelp")}</p>
-              {nameFieldError ? <p id="group-name-error" className="mt-1 text-xs text-destructive" role="alert">{nameFieldError}</p> : null}
-            </div>
-            <div className="grupos-field">
-              <label htmlFor="group-description" className="mb-1.5 block text-sm font-medium">
-                {t("grupos.description")} <span className="font-normal text-muted-foreground">({t("common.optional")})</span>
-              </label>
+            </FormRow>
+            <FormRow
+              label={<>{t("grupos.description")} <span className="font-normal text-muted-foreground">({t("common.optional")})</span></>}
+              htmlFor="group-description"
+              error={descriptionError}
+            >
               <Textarea
                 id="group-description"
                 value={description}
                 disabled={!canManage || saving}
                 placeholder={t("grupos.descriptionPlaceholder")}
-                aria-invalid={descriptionError ? true : undefined}
-                aria-describedby={descriptionError ? "group-description-error" : undefined}
                 onChange={(event) => setDescription(event.target.value)}
               />
-              {descriptionError ? <p id="group-description-error" className="mt-1 text-xs text-destructive" role="alert">{descriptionError}</p> : null}
-            </div>
+            </FormRow>
             {!editing && canManage && canReadCustomers ? (
               <div className="grupos-expander">
                 <button type="button" aria-expanded={membersOpen} aria-controls="group-members" onClick={() => setMembersOpen((open) => !open)}>
@@ -256,7 +270,7 @@ export function CustomerGroupFormPage() {
                     {customers === null ? <p role="status" className="text-sm text-muted-foreground">{t("common.loading")}</p> : null}
                     {customers !== null && visibleCustomers.length === 0 ? <p className="text-sm text-muted-foreground">{t("grupos.membersEmpty")}</p> : null}
                     {visibleCustomers.map((customer) => (
-                      <label key={customer.id} className="flex min-h-11 items-center gap-2 text-sm">
+                      <Label key={customer.id} className="min-h-11 text-sm font-normal leading-normal">
                         <Checkbox
                           checked={selected.includes(customer.id)}
                           onChange={(event) => {
@@ -266,7 +280,7 @@ export function CustomerGroupFormPage() {
                         />
                         <span>{customer.name}</span>
                         {customer.email ? <small className="text-muted-foreground">{customer.email}</small> : null}
-                      </label>
+                      </Label>
                     ))}
                     <p className="text-xs text-muted-foreground">{t("grupos.membersHint")}</p>
                   </div>
@@ -326,13 +340,9 @@ export function CustomerGroupFormPage() {
                 ) : null}
               </div>
             ) : null}
-          </div>
-          <div className="grupos-form-actions">
-            <FormPrimaryButton type="submit" isValid={valid} loading={saving}>{t("grupos.save")}</FormPrimaryButton>
-            <Button type="button" variant="ghost" className="min-h-11" disabled={saving} onClick={() => { void navigate("/grupos") }}>{t("common.cancel")}</Button>
-          </div>
-        </form>
-      ) : null}
-    </div>
+          </FormGrid>
+        </FormSection>
+      </form>
+    </FormPage>
   )
 }

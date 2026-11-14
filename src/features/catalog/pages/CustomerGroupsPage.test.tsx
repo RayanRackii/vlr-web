@@ -1,7 +1,7 @@
 import { render, screen, waitFor } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { beforeEach, describe, expect, it, vi } from "vitest"
-import { MemoryRouter, Route, Routes } from "react-router-dom"
+import { createMemoryRouter, MemoryRouter, Route, RouterProvider, Routes } from "react-router-dom"
 
 import { CustomerGroupFormPage } from "@/features/catalog/pages/CustomerGroupFormPage"
 import { CustomerGroupsPage } from "@/features/catalog/pages/CustomerGroupsPage"
@@ -188,8 +188,10 @@ describe("CustomerGroupsPage", () => {
     renderAt(`/grupos/${GROUP.id}`, MANAGE)
     expect(await screen.findByDisplayValue(GROUP.name)).toBeInTheDocument()
     expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent(i18n.t("grupos.editTitle"))
+    expect(screen.getByRole("button", { name: i18n.t("grupos.save") })).toBeDisabled()
+    await user.type(screen.getByLabelText(i18n.t("grupos.name")), " 2")
     await user.click(screen.getByRole("button", { name: i18n.t("grupos.save") }))
-    await waitFor(() => expect(updateCustomerGroup).toHaveBeenCalledWith(GROUP.id, { name: GROUP.name, description: GROUP.description }))
+    await waitFor(() => expect(updateCustomerGroup).toHaveBeenCalledWith(GROUP.id, { name: `${GROUP.name} 2`, description: GROUP.description }))
   })
 
   it("adds and removes members on the edit page through the customers query", async () => {
@@ -210,5 +212,26 @@ describe("CustomerGroupsPage", () => {
     await waitFor(() => expect(listTenantCustomers).toHaveBeenCalledWith({ q: "Bruno", pageSize: 20 }))
     await user.click(await screen.findByRole("button", { name: i18n.t("grupos.addMember") }))
     await waitFor(() => expect(addCustomerGroupMembers).toHaveBeenCalledWith(GROUP.id, ["cccccccc-cccc-4ccc-8ccc-cccccccccccc"]))
+  })
+
+  it("asks before leaving the form with unsaved changes", async () => {
+    const user = userEvent.setup()
+    const router = createMemoryRouter(
+      [
+        { path: "/grupos/novo", element: <CustomerGroupFormPage /> },
+        { path: "/grupos", element: <p>groups list</p> },
+      ],
+      { initialEntries: ["/grupos/novo"] },
+    )
+    render(
+      <TestPermissionProvider permissions={MANAGE}>
+        <RouterProvider router={router} />
+      </TestPermissionProvider>,
+    )
+    expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1)
+    await user.type(screen.getByLabelText(i18n.t("grupos.name")), "Clientes")
+    await user.click(screen.getByRole("button", { name: i18n.t("common.cancel") }))
+    expect(await screen.findByRole("alertdialog")).toBeInTheDocument()
+    expect(screen.queryByText("groups list")).not.toBeInTheDocument()
   })
 })

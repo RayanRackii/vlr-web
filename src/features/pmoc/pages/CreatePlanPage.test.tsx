@@ -1,7 +1,7 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import type { ReactNode } from "react"
-import { MemoryRouter, Route, Routes } from "react-router-dom"
+import { createMemoryRouter, MemoryRouter, Route, RouterProvider, Routes } from "react-router-dom"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 
 import { CreatePlanPage } from "@/features/pmoc/pages/CreatePlanPage"
@@ -472,5 +472,32 @@ describe("CreatePlanPage validity gate", () => {
       assetId: assetId,
       assetCategoryId: null,
     })))
+  })
+
+  it("renders a single h1 and saves through the sticky bar, then opens the new plan", async () => {
+    createPlanMock.mockResolvedValue({ id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa" } as Awaited<ReturnType<typeof createPlan>>)
+    const user = userEvent.setup()
+    renderPage()
+    await fillValidPlan(user)
+    expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1)
+    await user.click(screen.getByRole("button", { name: i18n.t("pmoc.create.actions.save") }))
+    await waitFor(() => expect(createPlanMock).toHaveBeenCalledTimes(1))
+    expect(await screen.findByText("plan-detail")).toBeInTheDocument()
+  })
+
+  it("asks before leaving with unsaved changes", async () => {
+    const user = userEvent.setup()
+    const router = createMemoryRouter(
+      [
+        { path: "/pmoc/novo", element: <CreatePlanPage /> },
+        { path: "/pmoc", element: <div>plan-list</div> },
+      ],
+      { initialEntries: ["/pmoc/novo"] },
+    )
+    render(<RouterProvider router={router} />)
+    await user.type(await screen.findByLabelText(i18n.t("pmoc.create.form.name")), "PMOC Split")
+    await user.click(screen.getByRole("button", { name: i18n.t("common.cancel") }))
+    expect(await screen.findByRole("alertdialog")).toBeInTheDocument()
+    expect(screen.queryByText("plan-list")).not.toBeInTheDocument()
   })
 })

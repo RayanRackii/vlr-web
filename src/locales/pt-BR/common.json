@@ -2136,6 +2136,7 @@
     "name": "Nome",
     "namePlaceholder": "Ex.: Clientes frequentes",
     "nameHelp": "Aparece para a equipe ao liberar produtos.",
+    "sectionDetails": "Dados do grupo",
     "nameRequired": "Informe o nome do grupo.",
     "description": "Descrição",
     "descriptionPlaceholder": "Para que serve este grupo",
