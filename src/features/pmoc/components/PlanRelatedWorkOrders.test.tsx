@@ -68,7 +68,7 @@ describe("PlanRelatedWorkOrders", () => {
     ).toBeInTheDocument()
     expect(screen.getByText("AC-01 — Split sala 1")).toBeInTheDocument()
     expect(screen.getByText("Ana Souza")).toBeInTheDocument()
-    expect(screen.getByText("18/09/2026")).toBeInTheDocument()
+    expect(screen.getByText("18 set 2026")).toBeInTheDocument()
 
     const openLink = screen.getByRole("link", {
       name: i18n.t("workOrders.actions.open"),
@@ -141,9 +141,9 @@ describe("PlanRelatedWorkOrders", () => {
     renderRelated(["os.work_orders.read"])
 
     const items = await screen.findAllByRole("listitem")
-    expect(items[0]).toHaveTextContent("02/10/2026")
+    expect(items[0]).toHaveTextContent("2 out 2026")
     expect(items[0]).toHaveTextContent("AC-03 — Newer asset")
-    expect(items[1]).toHaveTextContent("01/09/2026")
+    expect(items[1]).toHaveTextContent("1 set 2026")
     expect(items[1]).toHaveTextContent("AC-02 — Older asset")
   })
 })

@@ -3758,6 +3758,87 @@
       "intervalInvalid": "Indique un intervalo entero entre 1 y 3650 días.",
       "firstDueRequired": "Indique el primer vencimiento."
     },
+    "taskInputTypes": {
+      "Checkbox": "Sí/No",
+      "Text": "Texto",
+      "Number": "Número",
+      "Image": "Foto",
+      "SingleChoice": "Elección única"
+    },
+    "newPlan": {
+      "choose": {
+        "title": "¿Cómo quiere empezar?",
+        "library": {
+          "title": "Usar un modelo de la Biblioteca (recomendado)",
+          "description": "Modelos PMOC listos, con checklist y frecuencia ya definidos."
+        },
+        "blank": {
+          "title": "Empezar en blanco",
+          "description": "Arme el plan y el checklist desde cero."
+        }
+      },
+      "form": {
+        "addDescription": "Añadir descripción",
+        "frequency": "Frecuencia",
+        "presets": {
+          "monthly": "Mensual",
+          "quarterly": "Trimestral",
+          "semiannual": "Semestral",
+          "annual": "Anual",
+          "custom": "Personalizado"
+        },
+        "customDays": "Intervalo en días",
+        "appliesTo": "Aplicar a",
+        "categorySearch": "Buscar categoría",
+        "categoryNone": "No se encontró ninguna categoría",
+        "specificAsset": "O elegir un equipo específico",
+        "backToCategory": "Aplicar a una categoría",
+        "assetPlaceholder": "Seleccione el equipo",
+        "assetSearch": "Buscar equipo",
+        "assetNone": "No se encontró ningún equipo",
+        "appliesHelp": "El plan vale para todos los equipos de la categoría en la unidad.",
+        "assetHelp": "El plan vale solo para este equipo."
+      },
+      "scheduleHelper": "Tras cada OT completada, el próximo vencimiento cuenta desde la finalización real."
+    },
+    "planDetail": {
+      "badges": {
+        "automatic": "Automático",
+        "origin": {
+          "Custom": "Personalizado",
+          "RolvixTemplate": "Biblioteca"
+        }
+      },
+      "actions": {
+        "activate": "Activar plan",
+        "enableAuto": "Activar generación automática",
+        "disableAuto": "Desactivar generación automática",
+        "more": "Más acciones",
+        "save": "Guardar cambios"
+      },
+      "toast": {
+        "saved": "Plan guardado."
+      },
+      "errors": {
+        "partialSave": "Los datos del plan se guardaron, pero el checklist no. Intente guardar de nuevo."
+      },
+      "coverage": {
+        "overdue_zero": "Ningún equipo atrasado",
+        "overdue_one": "{{count}} equipo atrasado",
+        "overdue_other": "{{count}} equipos atrasados",
+        "dueToday_zero": "0 vencen hoy",
+        "dueToday_one": "{{count}} vence hoy",
+        "dueToday_other": "{{count}} vencen hoy",
+        "inactive": "Plan inactivo: no genera OT automáticamente.",
+        "columns": {
+          "asset": "Equipo",
+          "last": "Último mantenimiento",
+          "nextDue": "Próximo vencimiento",
+          "status": "Situación",
+          "openOrder": "OT abierta"
+        }
+      }
+    },
     "inputType": {
       "Checkbox": "Checkbox",
       "Text": "Texto",

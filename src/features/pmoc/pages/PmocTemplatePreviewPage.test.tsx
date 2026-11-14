@@ -138,12 +138,10 @@ describe("PmocTemplatePreviewPage", () => {
     await user.click(await screen.findByRole("option", { name: "Split" }))
 
     expect(confirm).toBeDisabled()
-    expect(screen.queryByText(/Frequência|Frequency|Frecuencia/)).not.toBeInTheDocument()
+    // Frequency is only a preset over intervalDays: nothing is preselected on a template clone.
+    expect(screen.getByRole("button", { name: i18n.t("pmoc.newPlan.form.presets.monthly") })).toHaveAttribute("aria-pressed", "false")
 
-    await user.type(
-      screen.getByRole("spinbutton", { name: i18n.t("pmoc.scheduling.interval") }),
-      "30",
-    )
+    await user.click(screen.getByRole("button", { name: i18n.t("pmoc.newPlan.form.presets.monthly") }))
     await user.type(
       screen.getByLabelText(i18n.t("pmoc.scheduling.firstDue")),
       "15/01/2026",

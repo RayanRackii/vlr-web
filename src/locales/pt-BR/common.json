@@ -3758,6 +3758,87 @@
       "intervalInvalid": "Informe um intervalo inteiro entre 1 e 3650 dias.",
       "firstDueRequired": "Informe o primeiro vencimento."
     },
+    "taskInputTypes": {
+      "Checkbox": "Sim/Não",
+      "Text": "Texto",
+      "Number": "Número",
+      "Image": "Foto",
+      "SingleChoice": "Escolha única"
+    },
+    "newPlan": {
+      "choose": {
+        "title": "Como você quer começar?",
+        "library": {
+          "title": "Usar um modelo da Biblioteca (recomendado)",
+          "description": "Modelos PMOC prontos, com checklist e frequência já definidos."
+        },
+        "blank": {
+          "title": "Começar em branco",
+          "description": "Monte o plano e o checklist do zero."
+        }
+      },
+      "form": {
+        "addDescription": "Adicionar descrição",
+        "frequency": "Frequência",
+        "presets": {
+          "monthly": "Mensal",
+          "quarterly": "Trimestral",
+          "semiannual": "Semestral",
+          "annual": "Anual",
+          "custom": "Personalizado"
+        },
+        "customDays": "Intervalo em dias",
+        "appliesTo": "Aplicar a",
+        "categorySearch": "Buscar categoria",
+        "categoryNone": "Nenhuma categoria encontrada",
+        "specificAsset": "Ou escolher um equipamento específico",
+        "backToCategory": "Aplicar a uma categoria",
+        "assetPlaceholder": "Selecione o equipamento",
+        "assetSearch": "Buscar equipamento",
+        "assetNone": "Nenhum equipamento encontrado",
+        "appliesHelp": "O plano vale para todos os equipamentos da categoria na unidade.",
+        "assetHelp": "O plano vale só para este equipamento."
+      },
+      "scheduleHelper": "Depois de cada OS concluída, o próximo vencimento conta a partir da conclusão real."
+    },
+    "planDetail": {
+      "badges": {
+        "automatic": "Automático",
+        "origin": {
+          "Custom": "Personalizado",
+          "RolvixTemplate": "Biblioteca"
+        }
+      },
+      "actions": {
+        "activate": "Ativar plano",
+        "enableAuto": "Ligar geração automática",
+        "disableAuto": "Desligar geração automática",
+        "more": "Mais ações",
+        "save": "Salvar alterações"
+      },
+      "toast": {
+        "saved": "Plano salvo."
+      },
+      "errors": {
+        "partialSave": "Os dados do plano foram salvos, mas o checklist não. Tente salvar novamente."
+      },
+      "coverage": {
+        "overdue_zero": "Nenhum equipamento atrasado",
+        "overdue_one": "{{count}} equipamento atrasado",
+        "overdue_other": "{{count}} equipamentos atrasados",
+        "dueToday_zero": "0 vencem hoje",
+        "dueToday_one": "{{count}} vence hoje",
+        "dueToday_other": "{{count}} vencem hoje",
+        "inactive": "Plano inativo: não gera OS automaticamente.",
+        "columns": {
+          "asset": "Equipamento",
+          "last": "Última manutenção",
+          "nextDue": "Próximo vencimento",
+          "status": "Situação",
+          "openOrder": "OS aberta"
+        }
+      }
+    },
     "inputType": {
       "Checkbox": "Checkbox",
       "Text": "Texto",

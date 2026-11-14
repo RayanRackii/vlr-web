@@ -3758,6 +3758,87 @@
       "intervalInvalid": "Enter a whole number of days from 1 to 3650.",
       "firstDueRequired": "Enter the first due date."
     },
+    "taskInputTypes": {
+      "Checkbox": "Yes/No",
+      "Text": "Text",
+      "Number": "Number",
+      "Image": "Photo",
+      "SingleChoice": "Single choice"
+    },
+    "newPlan": {
+      "choose": {
+        "title": "How do you want to start?",
+        "library": {
+          "title": "Use a Library template (recommended)",
+          "description": "Ready-made PMOC templates with the checklist and frequency already set."
+        },
+        "blank": {
+          "title": "Start blank",
+          "description": "Build the plan and checklist from scratch."
+        }
+      },
+      "form": {
+        "addDescription": "Add description",
+        "frequency": "Frequency",
+        "presets": {
+          "monthly": "Monthly",
+          "quarterly": "Quarterly",
+          "semiannual": "Semiannual",
+          "annual": "Annual",
+          "custom": "Custom"
+        },
+        "customDays": "Interval in days",
+        "appliesTo": "Apply to",
+        "categorySearch": "Search category",
+        "categoryNone": "No category found",
+        "specificAsset": "Or pick a specific piece of equipment",
+        "backToCategory": "Apply to a category",
+        "assetPlaceholder": "Select the equipment",
+        "assetSearch": "Search equipment",
+        "assetNone": "No equipment found",
+        "appliesHelp": "The plan covers every piece of equipment of the category in the unit.",
+        "assetHelp": "The plan covers only this equipment."
+      },
+      "scheduleHelper": "After each completed work order, the next due date counts from the actual completion."
+    },
+    "planDetail": {
+      "badges": {
+        "automatic": "Automatic",
+        "origin": {
+          "Custom": "Custom",
+          "RolvixTemplate": "Library"
+        }
+      },
+      "actions": {
+        "activate": "Activate plan",
+        "enableAuto": "Turn on automatic generation",
+        "disableAuto": "Turn off automatic generation",
+        "more": "More actions",
+        "save": "Save changes"
+      },
+      "toast": {
+        "saved": "Plan saved."
+      },
+      "errors": {
+        "partialSave": "The plan details were saved, but the checklist was not. Try saving again."
+      },
+      "coverage": {
+        "overdue_zero": "No equipment overdue",
+        "overdue_one": "{{count}} equipment overdue",
+        "overdue_other": "{{count}} equipment overdue",
+        "dueToday_zero": "0 due today",
+        "dueToday_one": "{{count}} due today",
+        "dueToday_other": "{{count}} due today",
+        "inactive": "Inactive plan: it does not generate work orders automatically.",
+        "columns": {
+          "asset": "Equipment",
+          "last": "Last maintenance",
+          "nextDue": "Next due",
+          "status": "Status",
+          "openOrder": "Open work order"
+        }
+      }
+    },
     "inputType": {
       "Checkbox": "Checkbox",
       "Text": "Text",

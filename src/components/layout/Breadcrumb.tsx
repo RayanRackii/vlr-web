@@ -56,7 +56,16 @@ export function Breadcrumb({ variant = "page", fallback = null }: BreadcrumbProp
 
   const maintenanceChild = pathname.startsWith("/manutencao/")
   const pedidosChild = pathname.startsWith("/pedidos/")
-  if (maintenanceChild) {
+  // PMOC plan pages live under the Manutenção nav: "Manutenção / Planos / <nome>" and "Manutenção / Novo plano".
+  const pmocPlanDetail = /^\/pmoc\/(?!biblioteca$|novo$)[^/]+$/.test(normalized)
+  if (normalized === "/pmoc/novo") {
+    crumbs.push({ label: t("nav.manutencao"), to: "/manutencao" })
+    crumbs.push({ label: t("maintenance.newPlan") })
+  } else if (pmocPlanDetail) {
+    crumbs.push({ label: t("nav.manutencao"), to: "/manutencao" })
+    crumbs.push({ label: t("maintenance.tabs.planos"), to: "/manutencao?aba=planos" })
+    crumbs.push({ label: title?.pathname === pathname ? title.value : t("nav.details") })
+  } else if (maintenanceChild) {
     crumbs.push({ label: t("nav.manutencao"), to: "/manutencao" })
     crumbs.push({ label: t(pathname === "/manutencao/planos/novo" ? "maintenance.newPlan" : "maintenance.newOrder") })
   } else if (pedidosChild) {

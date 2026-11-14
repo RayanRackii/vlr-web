@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react"
-import { useNavigate } from "react-router-dom"
+import { Link, useNavigate, useSearchParams } from "react-router-dom"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { ClipboardList, LoaderCircle, Plus } from "lucide-react"
+import { ClipboardList, LibraryBig, LoaderCircle, PencilLine } from "lucide-react"
 import { useFieldArray, useForm, useWatch } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
@@ -21,12 +21,19 @@ import {
   FormField,
   FormItem,
   FormLabel,
-  FormMessage,
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
-import { SegmentedControl } from "@/components/ui/segmented-control"
-import { Textarea } from "@/components/ui/textarea"
+import { PlanCombobox } from "@/features/pmoc/components/PlanCombobox"
+import { PlanDescriptionField } from "@/features/pmoc/components/PlanDescriptionField"
 import { PlanSchedulingFields } from "@/features/pmoc/components/PlanSchedulingFields"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import { useOptionalPermissions } from "@/features/users/permissions/PermissionContext"
 import { useAuth } from "@/contexts/AuthContext"
 import type { Unit } from "@/features/assets/schemas/unitSchemas"
 import { getUnits } from "@/features/assets/services/unitsService"
@@ -43,11 +50,16 @@ import { listWorkOrderAssets } from "@/features/workOrders/services/workOrdersSe
 import type { WorkOrderRegistryAsset } from "@/features/workOrders/schemas/workOrderSchemas"
 import { isAxiosError } from "@/lib/api"
 import { useVisibleFormIssues } from "@/lib/useVisibleFormIssues"
+import { cn } from "@/lib/utils"
 
 export function CreatePlanPage({ maintenance = false }: { maintenance?: boolean }) {
   const { t } = useTranslation()
   const { session } = useAuth()
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  const canUseLibrary = useOptionalPermissions()?.can("pmoc.templates.read") ?? false
+  const [startedBlank, setStartedBlank] = useState(false)
+  const showStartChoice = canUseLibrary && !startedBlank && searchParams.get("modo") !== "branco"
 
   const [units, setUnits] = useState<Unit[]>([])
   const [categories, setCategories] = useState<RegistryCategoryListItem[]>([])
@@ -84,7 +96,7 @@ export function CreatePlanPage({ maintenance = false }: { maintenance?: boolean 
       unitId: "",
       name: "",
       description: "",
-      intervalDays: Number.NaN,
+      intervalDays: 30,
       firstDueDate: "",
       target: "type",
       assetCategoryId: "",
@@ -134,6 +146,9 @@ export function CreatePlanPage({ maintenance = false }: { maintenance?: boolean 
         listWorkOrderAssets(),
       ])
       setUnits(unitsData)
+      if (unitsData.length === 1 && unitsData[0]) {
+        form.setValue("unitId", unitsData[0].id)
+      }
       setCategories(categoriesData)
       setAssets(assetsData)
     } catch (error: unknown) {
@@ -150,7 +165,7 @@ export function CreatePlanPage({ maintenance = false }: { maintenance?: boolean 
     } finally {
       setIsLoadingLookups(false)
     }
-  }, [session, t])
+  }, [session, t, form])
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- initial and session-driven fetch; loadLookups owns the loading state
@@ -212,57 +227,83 @@ export function CreatePlanPage({ maintenance = false }: { maintenance?: boolean 
     [assets, watchedValues.unitId],
   )
 
-  const statusItems = useMemo(
-    () => [
-      { value: "true", label: t("pmoc.plans.status.active") },
-      { value: "false", label: t("pmoc.plans.status.inactive") },
-    ],
-    [t],
-  )
-
   const header = {
     eyebrow: maintenance ? t("maintenance.eyebrow") : undefined,
     title: t(maintenance ? "maintenance.newPlan" : "pmoc.create.title"),
-    description: t("pmoc.create.description"),
   }
   const formReady = !isLoadingLookups && loadError === null && categories.length > 0
   const formId = "create-plan-form"
+  const target = watchedValues.target === "asset" ? "asset" : "type"
+
+  if (showStartChoice) {
+    const choiceClass =
+      "flex min-h-11 w-full flex-col items-start gap-2 rounded-xl border border-border bg-card p-4 text-left transition-colors hover:border-primary hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+    return (
+      <Page width="form" header={header}>
+        <section className={cn("space-y-4", maintenance && "maintenance-card p-[18px]")}>
+          <h2 className="text-base font-semibold">{t("pmoc.newPlan.choose.title")}</h2>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <Link to="/pmoc/biblioteca" className={cn(choiceClass, "border-primary/60")}>
+              <LibraryBig className="size-5 text-primary" aria-hidden="true" />
+              <span className="font-medium">{t("pmoc.newPlan.choose.library.title")}</span>
+              <span className="text-sm text-muted-foreground">
+                {t("pmoc.newPlan.choose.library.description")}
+              </span>
+            </Link>
+            <button
+              type="button"
+              className={choiceClass}
+              onClick={() => {
+                setStartedBlank(true)
+              }}
+            >
+              <PencilLine className="size-5 text-muted-foreground" aria-hidden="true" />
+              <span className="font-medium">{t("pmoc.newPlan.choose.blank.title")}</span>
+              <span className="text-sm text-muted-foreground">
+                {t("pmoc.newPlan.choose.blank.description")}
+              </span>
+            </button>
+          </div>
+        </section>
+      </Page>
+    )
+  }
 
   if (!formReady) {
     return (
       <Page width="form" header={header}>
-      {loadError !== null ? (
-        <div
-          role="alert"
-          className="rounded-lg border border-destructive/30 bg-destructive/10 p-4 text-sm text-destructive"
-        >
-          {loadError}
-        </div>
-      ) : null}
+        {loadError !== null ? (
+          <div
+            role="alert"
+            className="rounded-lg border border-destructive/30 bg-destructive/10 p-4 text-sm text-destructive"
+          >
+            {loadError}
+          </div>
+        ) : null}
 
-      {isLoadingLookups ? (
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <LoaderCircle className="size-4 animate-spin" />
-          {t("pmoc.create.loading")}
-        </div>
-      ) : loadError !== null ? null : categories.length === 0 ? (
-        <div
-          role="status"
-          className="flex flex-col items-center justify-center gap-3 rounded-lg border border-dashed border-border px-6 py-14 text-center"
-        >
-          <div className="flex size-12 items-center justify-center rounded-full bg-muted text-muted-foreground">
-            <ClipboardList className="size-6" aria-hidden />
+        {isLoadingLookups ? (
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <LoaderCircle className="size-4 animate-spin" />
+            {t("pmoc.create.loading")}
           </div>
-          <div className="max-w-sm space-y-1">
-            <p className="text-sm font-medium text-foreground">
-              {t("pmoc.create.emptyCategoriesTitle")}
-            </p>
-            <p className="text-sm text-muted-foreground">
-              {t("pmoc.create.emptyCategoriesDescription")}
-            </p>
+        ) : loadError !== null ? null : categories.length === 0 ? (
+          <div
+            role="status"
+            className="flex flex-col items-center justify-center gap-3 rounded-lg border border-dashed border-border px-6 py-14 text-center"
+          >
+            <div className="flex size-12 items-center justify-center rounded-full bg-muted text-muted-foreground">
+              <ClipboardList className="size-6" aria-hidden />
+            </div>
+            <div className="max-w-sm space-y-1">
+              <p className="text-sm font-medium text-foreground">
+                {t("pmoc.create.emptyCategoriesTitle")}
+              </p>
+              <p className="text-sm text-muted-foreground">
+                {t("pmoc.create.emptyCategoriesDescription")}
+              </p>
+            </div>
           </div>
-        </div>
-      ) : null}
+        ) : null}
       </Page>
     )
   }
@@ -283,145 +324,85 @@ export function CreatePlanPage({ maintenance = false }: { maintenance?: boolean 
         void navigate(maintenance ? "/manutencao?aba=planos" : "/pmoc")
       }}
     >
-        <Form {...form}>
-          <form
-            id={formId}
-            className={maintenance ? "maintenance-card space-y-8 p-[18px]" : "space-y-8"}
-            noValidate
-            onKeyDown={(event) => {
-              if (event.key === "Enter" && !event.nativeEvent.isComposing &&
-                event.target instanceof HTMLInputElement &&
-                !["button", "submit", "checkbox", "radio", "file"].includes(event.target.type)) {
-                event.preventDefault()
-                if (!form.formState.isSubmitting) event.currentTarget.requestSubmit()
-              }
-            }}
-            onSubmit={(event) => {
-              void form.handleSubmit(onSubmit)(event)
-            }}
-          >
-            <FormSection
-              title={t("pmoc.create.sections.main")}
-              description={t("pmoc.create.sections.mainDescription")}
-            >
-              <FormGrid>
-                <FormField
-                  control={form.control}
-                  name="name"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>{t("pmoc.create.form.name")}</FormLabel>
-                      <FormControl>
-                        <Input
-                          autoComplete="off"
-                          placeholder={t("pmoc.create.form.namePlaceholder")}
-                          {...field}
-                        />
-                        </FormControl>
-                      <LiveFieldMessage message={issueMessageAt(planError, ["name"])} />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="description"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>{t("pmoc.create.form.description")}</FormLabel>
-                      <FormControl>
-                        <Textarea
-                          placeholder={t(
-                            "pmoc.create.form.descriptionPlaceholder",
-                          )}
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="unitId"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>{t("pmoc.create.form.unit")}</FormLabel>
-                      <FormControl>
-                        <div
-                          role="radiogroup"
-                          aria-label={t("pmoc.create.form.unit")}
-                          ref={field.ref}
-                          tabIndex={-1}
-                          onBlur={field.onBlur}
-                          className="flex flex-wrap gap-2 rounded-md aria-invalid:border-destructive"
-                        >
-                          {unitItems.map((unit) => (
-                            <Button
-                              key={unit.value}
-                              type="button"
-                              size="sm"
-                              variant={field.value === unit.value ? "default" : "outline"}
-                              aria-pressed={field.value === unit.value}
-                              onClick={() => {
-                                field.onChange(unit.value)
-                                form.setValue("assetId", "")
-                                field.onBlur()
-                              }}
-                            >
-                              {unit.label}
-                            </Button>
-                          ))}
-                        </div>
-                      </FormControl>
-                      <LiveFieldMessage
-                        message={issueMessageAt(planError, ["unitId"])}
+      <Form {...form}>
+        <form
+          id={formId}
+          className={maintenance ? "maintenance-card space-y-8 p-[18px]" : "space-y-8"}
+          noValidate
+          onKeyDown={(event) => {
+            if (event.key === "Enter" && !event.nativeEvent.isComposing &&
+              event.target instanceof HTMLInputElement &&
+              !["button", "submit", "checkbox", "radio", "file"].includes(event.target.type)) {
+              event.preventDefault()
+              if (!form.formState.isSubmitting) event.currentTarget.requestSubmit()
+            }
+          }}
+          onSubmit={(event) => {
+            void form.handleSubmit(onSubmit)(event)
+          }}
+        >
+          <FormSection title={t("pmoc.create.sections.main")}>
+            <FormGrid>
+              <FormField
+                control={form.control}
+                name="name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{t("pmoc.create.form.name")}</FormLabel>
+                    <FormControl>
+                      <Input
+                        autoComplete="off"
+                        placeholder={t("pmoc.create.form.namePlaceholder")}
+                        {...field}
                       />
-                    </FormItem>
-                  )}
-                />
+                    </FormControl>
+                    <LiveFieldMessage message={issueMessageAt(planError, ["name"])} />
+                  </FormItem>
+                )}
+              />
 
-                <FormField
-                  control={form.control}
-                  name="target"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>{t("pmoc.create.form.target")}</FormLabel>
+              <PlanDescriptionField
+                control={form.control}
+                hasValue={(watchedValues.description ?? "").length > 0}
+              />
+
+              <FormField
+                control={form.control}
+                name="unitId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{t("pmoc.create.form.unit")}</FormLabel>
+                    <Select
+                      modal={false}
+                      value={field.value}
+                      items={unitItems}
+                      onValueChange={(value) => {
+                        field.onChange(value)
+                        form.setValue("assetId", "")
+                        field.onBlur()
+                      }}
+                    >
                       <FormControl>
-                        <div role="radiogroup" aria-label={t("pmoc.create.form.target")} className="flex flex-wrap gap-2">
-                          <Button
-                            type="button"
-                            size="sm"
-                            variant={field.value !== "asset" ? "default" : "outline"}
-                            aria-pressed={field.value !== "asset"}
-                            onClick={() => {
-                              field.onChange("type")
-                              form.setValue("assetId", "")
-                            }}
-                          >
-                            {t("pmoc.create.form.targetType")}
-                          </Button>
-                          <Button
-                            type="button"
-                            size="sm"
-                            variant={field.value === "asset" ? "default" : "outline"}
-                            aria-pressed={field.value === "asset"}
-                            onClick={() => {
-                              field.onChange("asset")
-                              form.setValue("assetCategoryId", "")
-                            }}
-                          >
-                            {t("pmoc.create.form.targetAsset")}
-                          </Button>
-                        </div>
+                        <SelectTrigger ref={field.ref} className="min-h-11 w-full">
+                          <SelectValue placeholder={t("pmoc.create.form.unitPlaceholder")} />
+                        </SelectTrigger>
                       </FormControl>
-                      <p className="text-sm text-muted-foreground">{t("pmoc.create.form.targetHelp")}</p>
-                    </FormItem>
-                  )}
-                />
+                      <SelectContent>
+                        {unitItems.map((unit) => (
+                          <SelectItem key={unit.value} value={unit.value}>
+                            {unit.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <LiveFieldMessage
+                      message={issueMessageAt(planError, ["unitId"])}
+                    />
+                  </FormItem>
+                )}
+              />
 
-                {watchedValues.target === "asset" ? (
+              {target === "asset" ? (
                 <FormField
                   control={form.control}
                   name="assetId"
@@ -429,149 +410,114 @@ export function CreatePlanPage({ maintenance = false }: { maintenance?: boolean 
                     <FormItem>
                       <FormLabel>{t("pmoc.create.form.asset")}</FormLabel>
                       <FormControl>
-                        <div
-                          role="radiogroup"
-                          aria-label={t("pmoc.create.form.asset")}
-                          className="flex flex-wrap gap-2"
-                        >
-                          {assetItems.map((asset) => (
-                            <Button
-                              key={asset.value}
-                              type="button"
-                              size="sm"
-                              variant={field.value === asset.value ? "default" : "outline"}
-                              aria-pressed={field.value === asset.value}
-                              onClick={() => {
-                                field.onChange(asset.value)
-                                field.onBlur()
-                              }}
-                            >
-                              {asset.label}
-                            </Button>
-                          ))}
-                        </div>
+                        <PlanCombobox
+                          ref={field.ref}
+                          items={assetItems}
+                          value={field.value ?? ""}
+                          onChange={field.onChange}
+                          onBlur={field.onBlur}
+                          placeholder={t("pmoc.newPlan.form.assetPlaceholder")}
+                          searchLabel={t("pmoc.newPlan.form.assetSearch")}
+                          emptyLabel={t("pmoc.newPlan.form.assetNone")}
+                        />
                       </FormControl>
                       <LiveFieldMessage message={issueMessageAt(planError, ["assetId"])} />
+                      <p className="text-sm text-muted-foreground">{t("pmoc.newPlan.form.assetHelp")}</p>
+                      <Button
+                        type="button"
+                        variant="link"
+                        className="h-auto min-h-11 px-0"
+                        onClick={() => {
+                          form.setValue("target", "type")
+                          form.setValue("assetId", "")
+                        }}
+                      >
+                        {t("pmoc.newPlan.form.backToCategory")}
+                      </Button>
                     </FormItem>
                   )}
                 />
-                ) : (
+              ) : (
                 <FormField
                   control={form.control}
                   name="assetCategoryId"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>{t("pmoc.create.form.category")}</FormLabel>
+                      <FormLabel>{t("pmoc.newPlan.form.appliesTo")}</FormLabel>
                       <FormControl>
-                        <div
-                          role="radiogroup"
-                          aria-label={t("pmoc.create.form.category")}
+                        <PlanCombobox
                           ref={field.ref}
-                          tabIndex={-1}
+                          items={categoryItems}
+                          value={field.value ?? ""}
+                          onChange={field.onChange}
                           onBlur={field.onBlur}
-                          className="flex flex-wrap gap-2 rounded-md aria-invalid:border-destructive"
-                        >
-                          {categoryItems.map((category) => (
-                            <Button
-                              key={category.value}
-                              type="button"
-                              size="sm"
-                              variant={field.value === category.value ? "default" : "outline"}
-                              aria-pressed={field.value === category.value}
-                              onClick={() => {
-                                field.onChange(category.value)
-                                field.onBlur()
-                              }}
-                            >
-                              {category.label}
-                            </Button>
-                          ))}
-                        </div>
+                          placeholder={t("pmoc.create.form.categoryPlaceholder")}
+                          searchLabel={t("pmoc.newPlan.form.categorySearch")}
+                          emptyLabel={t("pmoc.newPlan.form.categoryNone")}
+                        />
                       </FormControl>
                       <LiveFieldMessage
                         message={issueMessageAt(planError, ["assetCategoryId"])}
                       />
-                    </FormItem>
-                  )}
-                />
-                )}
-
-                <PlanSchedulingFields
-                  control={form.control}
-                  intervalMessage={issueMessageAt(planError, ["intervalDays"])}
-                  firstDueMessage={issueMessageAt(planError, ["firstDueDate"])}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="isActive"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>{t("pmoc.create.form.status")}</FormLabel>
-                      <SegmentedControl
-                        label={t("pmoc.create.form.status")}
-                        value={field.value ? "true" : "false"}
-                        onChange={(value) => {
-                          field.onChange(value === "true")
-                          field.onBlur()
+                      <p className="text-sm text-muted-foreground">{t("pmoc.newPlan.form.appliesHelp")}</p>
+                      <Button
+                        type="button"
+                        variant="link"
+                        className="h-auto min-h-11 px-0"
+                        onClick={() => {
+                          form.setValue("target", "asset")
+                          form.setValue("assetCategoryId", "")
                         }}
-                        options={statusItems}
-                      />
-                      <FormMessage />
+                      >
+                        {t("pmoc.newPlan.form.specificAsset")}
+                      </Button>
                     </FormItem>
                   )}
                 />
-              </FormGrid>
-            </FormSection>
+              )}
 
-            <FormSection
-              title={t("pmoc.create.sections.tasks")}
-              description={t("pmoc.create.sections.tasksDescription")}
-              actions={
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => {
-                    append({
-                      title: "",
-                      inputType: "Checkbox",
-                      isMandatory: true,
-                      min: null,
-                      max: null,
-                      unit: null,
-                      options: undefined,
-                    })
-                  }}
-                >
-                  <Plus data-icon="inline-start" />
-                  {t("pmoc.create.actions.addTask")}
-                </Button>
-              }
-            >
-
-              <PlanTaskEditor
+              <PlanSchedulingFields
                 control={form.control}
-                fields={fields}
-                watchedTasks={watchedTasks}
-                setValue={form.setValue}
-                onRemove={remove}
-                issueMessage={(path) => issueMessageAt(planError, path)}
+                intervalMessage={issueMessageAt(planError, ["intervalDays"])}
+                firstDueMessage={issueMessageAt(planError, ["firstDueDate"])}
               />
-            </FormSection>
+            </FormGrid>
+          </FormSection>
 
-            <FormValidationSummary messages={planMessages} />
+          <FormSection title={t("pmoc.create.sections.tasks")}>
+            <PlanTaskEditor
+              control={form.control}
+              fields={fields}
+              watchedTasks={watchedTasks}
+              setValue={form.setValue}
+              onRemove={remove}
+              onAdd={() => {
+                append({
+                  title: "",
+                  inputType: "Checkbox",
+                  isMandatory: true,
+                  min: null,
+                  max: null,
+                  unit: null,
+                  options: undefined,
+                })
+              }}
+              issueMessage={(path) => issueMessageAt(planError, path)}
+            />
+          </FormSection>
 
-            {submitError !== null ? (
-              <div
-                role="alert"
-                className="rounded-lg border border-destructive/30 bg-destructive/10 p-4 text-sm text-destructive"
-              >
-                {submitError}
-              </div>
-            ) : null}
-          </form>
-        </Form>
+          <FormValidationSummary messages={planMessages} />
+
+          {submitError !== null ? (
+            <div
+              role="alert"
+              className="rounded-lg border border-destructive/30 bg-destructive/10 p-4 text-sm text-destructive"
+            >
+              {submitError}
+            </div>
+          ) : null}
+        </form>
+      </Form>
     </FormPage>
   )
 }
-
