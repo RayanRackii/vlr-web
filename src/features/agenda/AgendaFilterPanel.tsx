@@ -1,12 +1,13 @@
-import { useRef, useState } from "react"
-import { Filter, PanelLeftClose, Search } from "lucide-react"
+import { useState } from "react"
+import { ChevronDown, Search } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Label } from "@/components/ui/label"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
 import { ICON_SIZE, ICON_STROKE_WIDTH } from "@/lib/icon"
-import { activeFilterCount, fold, clearPatch, groupResources, readCollapsed, writeCollapsed, type AgendaFilterPatch, type AgendaResource } from "./agendaFilterModel"
+import { activeFilterCount, fold, clearPatch, groupResources, selectedResourceIds, useIsMedium, type AgendaFilterPatch, type AgendaResource } from "./agendaFilterModel"
 import type { AgendaOption } from "./useAgendaOptions"
 import type { AgendaState } from "./urlState"
 
@@ -28,9 +29,7 @@ function ResourceTree({ state, resources, onChange }: Pick<AgendaFilterFieldsPro
   const { t } = useTranslation()
   const [query, setQuery] = useState("")
   // `recursos` empty = every resource; a stored id may also be a legacy category id.
-  const byCategory = (id: string) => resources.filter((resource) => resource.categoryId === id).map((resource) => resource.id)
-  const stored = new Set(state.recursos.flatMap((id) => (resources.some((resource) => resource.id === id) ? [id] : byCategory(id))))
-  const checked = state.recursos.length === 0 || stored.size === 0 ? new Set(resources.map((resource) => resource.id)) : stored
+  const checked = selectedResourceIds(state.recursos, resources)
   const total = resources.length
   const needle = fold(query.trim())
   const visible = resources.filter((resource) => !needle || fold(resource.name).includes(needle))
@@ -90,7 +89,7 @@ function ResourceTree({ state, resources, onChange }: Pick<AgendaFilterFieldsPro
   )
 }
 
-/** Body shared by the desktop panel and the small-screen Sheet. */
+/** Body shared by the Popover and the small-screen Sheet. */
 export function AgendaFilterFields(props: AgendaFilterFieldsProps) {
   const { t } = useTranslation()
   const { state, showResources, showProducts, products, productsLoading, productsError, requiredProduct, onChange } = props
@@ -137,58 +136,38 @@ function CountBadge({ count }: { count: number }) {
   return count > 0 ? <span className="rounded-full bg-primary px-1.5 text-xs text-primary-foreground">{count}</span> : null
 }
 
-/** Left panel from `lg`: collapsible to an icon rail, the choice is remembered per viewer. */
-export function AgendaFilterPanel(props: AgendaFilterFieldsProps) {
+/**
+ * The "N recursos selecionados" button of the info row. From `md` it opens a Popover with the
+ * resource tree and filters; below `md` the same content opens in a bottom Sheet.
+ */
+export function AgendaFilterMenu(props: AgendaFilterFieldsProps) {
   const { t } = useTranslation()
-  const [collapsed, setCollapsed] = useState(readCollapsed)
+  const medium = useIsMedium()
   const count = activeFilterCount(props.state)
-  const refocus = useRef(false)
-  const set = (value: boolean) => { refocus.current = true; setCollapsed(value); writeCollapsed(value) }
-  // The toggle is a different button in each state; move focus to the new one after a user toggle.
-  const focusToggle = (element: HTMLButtonElement | null) => {
-    if (element && refocus.current) {
-      refocus.current = false
-      element.focus()
-    }
-  }
-
-  if (collapsed) {
+  const selected = selectedResourceIds(props.state.recursos, props.resources).size
+  const label = props.showResources ? t("agendas.filters.selected", { count: selected }) : t("agendas.filters.title")
+  const trigger = (
+    <>
+      <span className="truncate">{label}</span>
+      <CountBadge count={count} />
+      <ChevronDown className={ICON_SIZE.sm} strokeWidth={ICON_STROKE_WIDTH} aria-hidden />
+    </>
+  )
+  const triggerClass = "touch-target -ml-2 inline-flex min-h-11 max-w-full items-center gap-2 rounded-lg px-2 text-sm font-medium text-foreground outline-none transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring aria-expanded:bg-muted"
+  if (medium) {
     return (
-      <aside aria-label={t("agendas.filters.title")} className="shrink-0">
-        <Button type="button" variant="outline" size="icon" className="touch-target relative size-11" ref={focusToggle} aria-label={t("agendas.filters.open")} aria-expanded={false} onClick={() => set(false)}>
-          <Filter className={ICON_SIZE.md} strokeWidth={ICON_STROKE_WIDTH} aria-hidden />
-          {count > 0 && <span className="absolute -right-1 -top-1"><CountBadge count={count} /></span>}
-        </Button>
-      </aside>
+      <Popover>
+        <PopoverTrigger className={triggerClass}>{trigger}</PopoverTrigger>
+        <PopoverContent align="start" className="max-h-[min(40rem,var(--available-height,70vh))] w-96 gap-4 overflow-y-auto p-4" aria-label={t("agendas.filters.title")}>
+          <AgendaFilterFields {...props} />
+        </PopoverContent>
+      </Popover>
     )
   }
   return (
-    <aside aria-label={t("agendas.filters.title")} className="w-72 shrink-0 space-y-4 rounded-xl border border-border bg-card p-4 text-card-foreground">
-      <div className="flex items-center justify-between gap-2">
-        <h2 className="flex items-center gap-2 text-sm font-semibold">
-          {t("agendas.filters.title")}
-          <CountBadge count={count} />
-        </h2>
-        <Button type="button" variant="ghost" size="icon" className="touch-target size-11" aria-label={t("agendas.filters.collapse")} ref={focusToggle} aria-expanded onClick={() => set(true)}>
-          <PanelLeftClose className={ICON_SIZE.md} strokeWidth={ICON_STROKE_WIDTH} aria-hidden />
-        </Button>
-      </div>
-      <AgendaFilterFields {...props} />
-    </aside>
-  )
-}
-
-/** "Filtros" button + Sheet used below `lg`. */
-export function AgendaFilterSheet(props: AgendaFilterFieldsProps) {
-  const { t } = useTranslation()
-  return (
     <Sheet>
-      <SheetTrigger render={<Button type="button" variant="outline" className="touch-target min-h-11" />}>
-        <Filter className={ICON_SIZE.sm} strokeWidth={ICON_STROKE_WIDTH} aria-hidden />
-        {t("agendas.filters.title")}
-        <CountBadge count={activeFilterCount(props.state)} />
-      </SheetTrigger>
-      <SheetContent side="left" className="overflow-y-auto p-4">
+      <SheetTrigger className={triggerClass}>{trigger}</SheetTrigger>
+      <SheetContent side="bottom" className="max-h-[85vh] overflow-y-auto p-4">
         <SheetHeader className="p-0">
           <SheetTitle>{t("agendas.filters.title")}</SheetTitle>
           <SheetDescription>{t("agendas.filters.sheetDescription")}</SheetDescription>

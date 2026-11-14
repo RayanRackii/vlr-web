@@ -13,7 +13,7 @@ export type AgendaState = {
   tipo: (typeof agendaTypes)[number] | null
   /** Only resources with free time in the range. URL: `livres=1`. */
   livres: boolean
-  /** Show closed hours (default on). URL: `fechadas=0` when off. */
+  /** Show the full 24 hours instead of business hours (default off). URL: `fechadas=1`. */
   fechadas: boolean
 }
 
@@ -34,7 +34,7 @@ export function parseAgendaState(params: URLSearchParams, today: string): Agenda
     pedido: params.get("pedido")?.trim() || null,
     tipo: agendaTypes.find((value) => value === tipo) ?? null,
     livres: params.get("livres") === "1",
-    fechadas: params.get("fechadas") !== "0",
+    fechadas: params.get("fechadas") === "1",
   }
 }
 
@@ -52,7 +52,7 @@ export function serializeAgendaState(state: AgendaState, current = new URLSearch
   }
   if (state.livres) params.set("livres", "1")
   else params.delete("livres")
-  if (state.fechadas) params.delete("fechadas")
-  else params.set("fechadas", "0")
+  if (state.fechadas) params.set("fechadas", "1")
+  else params.delete("fechadas")
   return params
 }

@@ -5380,6 +5380,9 @@
       }
     },
     "reservations": {
+      "assetFilter": "Mostrando solo el recurso: {{name}}",
+      "assetFilterClear": "Mostrar todos los recursos",
+      "assetFilterUnknown": "Este recurso",
       "title": "Reservas",
       "description": "Confirma depósitos, completa y cancela reservas hechas a través del portal.",
       "date": "Fecha",
@@ -5766,7 +5769,8 @@
     "eyebrow": "Operación · Agendas",
     "overview": {
       "title": "Vista general de las agendas",
-      "subtitle": "Ocupación de los recursos en el período: reservas, pedidos, mantenimiento y bloqueos."
+      "subtitle": "Todos tus recursos. Una vista del día.",
+      "subtitleWeek": "Todos tus recursos. Una vista de la semana."
     },
     "resources": {
       "title": "Agenda de recursos",
@@ -5793,8 +5797,6 @@
     },
     "filters": {
       "title": "Filtros",
-      "open": "Mostrar filtros",
-      "collapse": "Contraer filtros",
       "resources": "Recursos · {{selected}} de {{total}}",
       "resourcesList": "Recursos",
       "noCategory": "Sin categoría",
@@ -5805,14 +5807,46 @@
       "pickProduct": "Elige un producto",
       "options": "Opciones",
       "onlyFree": "Solo recursos con horario libre",
-      "showClosed": "Mostrar horas cerradas",
+      "showClosed": "Mostrar 24 horas",
       "clear": "Limpiar filtros",
-      "sheetDescription": "Filtra los recursos y el producto que se muestran en la agenda."
+      "sheetDescription": "Filtra los recursos y el producto que se muestran en la agenda.",
+      "selected_one": "{{count}} recurso seleccionado",
+      "selected_other": "{{count}} recursos seleccionados"
     },
     "prep": "Preparación",
     "cleanup": "Limpieza",
     "selectedProductOrders": "Pedidos del producto: {{count}}",
-    "otherUses": "Otros usos · {{kind}}: {{count}}"
+    "otherUses": "Otros usos · {{kind}}: {{count}}",
+    "dateLong": "{{day}} de {{month}}, {{year}}",
+    "searchPlaceholder": "Buscar pedido o cliente",
+    "openSearch": "Abrir búsqueda de pedido",
+    "grid": {
+      "available": "Disponible para reservar",
+      "reserveOn": "Ver reservas de {{name}}",
+      "reserveHere": "Ver reservas de este recurso",
+      "rowActions": "Acciones de {{name}}",
+      "allDay": "Todo el día",
+      "scrollHint": "Desplázate para ver más horas",
+        "continues": "continúa",
+      "outside_one": "{{count}} fuera de horario",
+      "outside_other": "{{count}} fuera de horario",
+      "resourceType": {
+        "Location": "Espacio",
+        "Good": "Equipo"
+      },
+      "businessHours": "Horario comercial · {{start}} – {{end}}",
+      "variableHours": "Horario variable"
+    },
+    "footer": {
+      "resources_one": "{{count}} recurso",
+      "resources_other": "{{count}} recursos",
+      "activitiesDay_one": "{{count}} actividad este día",
+      "activitiesDay_other": "{{count}} actividades este día",
+      "activitiesWeek_one": "{{count}} actividad esta semana",
+      "activitiesWeek_other": "{{count}} actividades esta semana",
+      "updatedNow": "Actualizado ahora",
+      "updatedAgo": "Actualizado hace {{minutes}} min"
+    }
   },
   "pedidos": {
     "eyebrow": "Operación · Pedidos",

@@ -25,12 +25,13 @@ type AgendaAccess = {
 export const agendaSourceIds = ["assets", "orders", "reservations", "schedule", "kinds"] as const
 export type AgendaSourceId = (typeof agendaSourceIds)[number]
 
-type ScheduleDays = { slots: AdminDaySlot[]; failed: boolean; pending: boolean }
+type ScheduleDays = { slots: AdminDaySlot[]; failed: boolean; pending: boolean; updatedAt: number }
 // Module level so `useQueries` can memoize the combined result.
-const combineScheduleDays = (results: { data?: { slots: AdminDaySlot[] }; isError: boolean; isPending: boolean }[]): ScheduleDays => ({
+const combineScheduleDays = (results: { data?: { slots: AdminDaySlot[] }; isError: boolean; isPending: boolean; dataUpdatedAt: number }[]): ScheduleDays => ({
   slots: results.flatMap((result) => result.data?.slots ?? []),
   failed: results.some((result) => result.isError),
   pending: results.some((result) => result.isPending),
+  updatedAt: Math.max(0, ...results.map((result) => result.dataUpdatedAt)),
 })
 
 /**
@@ -108,8 +109,11 @@ export function useAgendaDay(state: AgendaState, zone: string, access: AgendaAcc
       week: buildAgendaWeek(ready, view, zone, labels),
     }
   }, [ready, labels, stateKey, zone, focusedProductId])
+  // When the newest data of any source arrived (react-query `dataUpdatedAt`); null until something loaded.
+  const updatedAt = Math.max(assets.dataUpdatedAt, kinds.dataUpdatedAt, catalog.dataUpdatedAt, reservations.dataUpdatedAt, orders.dataUpdatedAt, schedule.updatedAt) || null
   return {
     ...derived,
+    updatedAt,
     loading: canLoad && !loaded,
     failedSources: loaded ? failedSources : [],
     availableProducts: [...new Map(ready.catalog.items.map((item) => [item.productId, { id: item.productId, label: item.productName }])).values()],

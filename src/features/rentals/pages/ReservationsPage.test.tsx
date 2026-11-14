@@ -540,3 +540,44 @@ describe("ReservationsPage filters and states", () => {
     expect(screen.getAllByTestId("tenant-tz-label")).toHaveLength(1)
   })
 })
+
+describe("ReservationsPage opened from the agenda", () => {
+  const other = makeReservation("Confirmed", {
+    id: "99999999-9999-4999-8999-999999999999",
+    customerName: "Bruno Lima",
+    items: [{ ...makeReservation("Confirmed").items[0], id: "88888888-8888-4888-8888-888888888888", rentalAssetId: "22222222-2222-4222-8222-222222222222", assetName: "Quadra 2" }],
+  })
+  function renderFromAgenda(search: string) {
+    return render(
+      <MemoryRouter initialEntries={[`/configuracoes/reservas${search}`]}>
+        <TestPermissionProvider permissions={[COMPLETE_PERM]} activeModules={["rentals"]}>
+          <ModuleIntroLinksProvider keys={["bookings"]}><ReservationsPage /></ModuleIntroLinksProvider>
+        </TestPermissionProvider>
+      </MemoryRouter>,
+    )
+  }
+
+  beforeEach(() => {
+    listMock.mockReset()
+    listMock.mockResolvedValue([makeReservation("Confirmed"), other])
+  })
+
+  it("opens on the date of the link and keeps only the chosen resource, with a way to clear it", async () => {
+    renderFromAgenda("?date=2026-09-06&rentalAssetId=11111111-1111-4111-8111-111111111111&startTime=14:00")
+    expect(await screen.findByText("Mostrando só o recurso: Quadra 1")).toBeInTheDocument()
+    expect(listMock).toHaveBeenCalledWith({ from: "2026-09-06", to: "2026-09-06" })
+    const table = await findTable()
+    expect(within(table).getByText("Ana Souza")).toBeInTheDocument()
+    expect(within(table).queryByText("Bruno Lima")).not.toBeInTheDocument()
+    await userEvent.click(screen.getByRole("button", { name: "Mostrar todos os recursos" }))
+    expect(within(await findTable()).getByText("Bruno Lima")).toBeInTheDocument()
+    expect(screen.queryByText(/Mostrando só o recurso/)).not.toBeInTheDocument()
+  })
+
+  it("ignores an invalid date and shows no resource notice without the param", async () => {
+    renderFromAgenda("?date=nope")
+    await findTable()
+    expect(screen.queryByText(/Mostrando só o recurso/)).not.toBeInTheDocument()
+    expect(listMock).not.toHaveBeenCalledWith({ from: "nope", to: "nope" })
+  })
+})

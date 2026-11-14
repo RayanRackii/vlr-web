@@ -18,6 +18,10 @@ export type DateNavigatorProps<V extends string> = {
   today: string
   /** Formatted date or range, provided by the caller. */
   label: string
+  /** `toolbar`: Today, chevrons and the date on the left, the view switch on the right. Default keeps the compact bar. */
+  layout?: "default" | "toolbar"
+  /** Muted text after the label (toolbar layout), e.g. the weekday. */
+  secondaryLabel?: string
   labels: {
     /** Plain string, per-view record, or a function of the view. */
     previous: ViewLabel<V>
@@ -46,6 +50,8 @@ export function DateNavigator<V extends string>({
   step,
   today,
   label,
+  layout = "default",
+  secondaryLabel,
   labels,
 }: DateNavigatorProps<V>) {
   const pickerRef = useRef<HTMLInputElement>(null)
@@ -63,6 +69,56 @@ export function DateNavigator<V extends string>({
     }
     input.focus()
     input.click()
+  }
+
+  const picker = (
+    <input
+      ref={pickerRef}
+      type="date"
+      tabIndex={-1}
+      aria-hidden="true"
+      value={date}
+      onChange={(event) => {
+        if (event.target.value) onDateChange(event.target.value)
+      }}
+      className="pointer-events-none absolute inset-0 size-full opacity-0"
+    />
+  )
+
+  if (layout === "toolbar") {
+    return (
+      <div className="flex min-w-0 flex-wrap items-center justify-between gap-x-4 gap-y-3">
+        <div className="flex min-w-0 flex-wrap items-center gap-2">
+          <Button type="button" variant="outline" className="touch-target min-h-11" onClick={() => onDateChange(today)}>
+            {labels.today}
+          </Button>
+          <div className="flex items-center">
+            <Button type="button" variant="ghost" size="icon" className="touch-target size-11" aria-label={resolveLabel(labels.previous, view)} onClick={() => onDateChange(step(date, view, -1))}>
+              <ChevronLeft className={ICON_SIZE.md} strokeWidth={ICON_STROKE_WIDTH} aria-hidden="true" />
+            </Button>
+            <Button type="button" variant="ghost" size="icon" className="touch-target size-11" aria-label={resolveLabel(labels.next, view)} onClick={() => onDateChange(step(date, view, 1))}>
+              <ChevronRight className={ICON_SIZE.md} strokeWidth={ICON_STROKE_WIDTH} aria-hidden="true" />
+            </Button>
+          </div>
+          <div className="relative min-w-0">
+            <button
+              type="button"
+              aria-label={`${labels.pickDate}: ${label}`}
+              onClick={openPicker}
+              className="touch-target flex min-h-11 min-w-0 cursor-pointer items-baseline gap-2 rounded-lg px-2 text-left outline-none transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              <span aria-hidden="true" className="text-base font-medium tabular-nums text-foreground first-letter:uppercase">{label}</span>
+              {secondaryLabel ? <span aria-hidden="true" className="text-sm text-muted-foreground first-letter:uppercase">{secondaryLabel}</span> : null}
+            </button>
+            <span aria-live="polite" className="sr-only">
+              {secondaryLabel ? `${label}, ${secondaryLabel}` : label}
+            </span>
+            {picker}
+          </div>
+        </div>
+        <SegmentedControl label={labels.view} value={view} options={views} onChange={onViewChange} className="max-md:w-full" />
+      </div>
+    )
   }
 
   return (
@@ -93,17 +149,7 @@ export function DateNavigator<V extends string>({
           <span aria-live="polite" className="sr-only">
             {label}
           </span>
-          <input
-            ref={pickerRef}
-            type="date"
-            tabIndex={-1}
-            aria-hidden="true"
-            value={date}
-            onChange={(event) => {
-              if (event.target.value) onDateChange(event.target.value)
-            }}
-            className="pointer-events-none absolute inset-0 size-full opacity-0"
-          />
+          {picker}
         </div>
         <Button
           type="button"

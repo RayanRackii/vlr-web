@@ -5380,6 +5380,9 @@
       }
     },
     "reservations": {
+      "assetFilter": "Mostrando só o recurso: {{name}}",
+      "assetFilterClear": "Mostrar todos os recursos",
+      "assetFilterUnknown": "Esse recurso",
       "title": "Reservas",
       "description": "Confirme depósitos, conclua e cancele reservas feitas pelo portal.",
       "date": "Data",
@@ -5766,7 +5769,8 @@
     "eyebrow": "Operação · Agendas",
     "overview": {
       "title": "Visão geral das agendas",
-      "subtitle": "Tudo o que ocupa os recursos no período: reservas, pedidos, manutenções e bloqueios."
+      "subtitle": "Todos os seus recursos. Uma visão do dia.",
+      "subtitleWeek": "Todos os seus recursos. Uma visão da semana."
     },
     "resources": {
       "title": "Agenda de recursos",
@@ -5793,8 +5797,6 @@
     },
     "filters": {
       "title": "Filtros",
-      "open": "Mostrar filtros",
-      "collapse": "Recolher filtros",
       "resources": "Recursos · {{selected}} de {{total}}",
       "resourcesList": "Recursos",
       "noCategory": "Sem categoria",
@@ -5805,14 +5807,46 @@
       "pickProduct": "Escolha um produto",
       "options": "Opções",
       "onlyFree": "Só recursos com horário livre",
-      "showClosed": "Mostrar horas fechadas",
+      "showClosed": "Mostrar 24 horas",
       "clear": "Limpar filtros",
-      "sheetDescription": "Filtre os recursos e o produto exibidos na agenda."
+      "sheetDescription": "Filtre os recursos e o produto exibidos na agenda.",
+      "selected_one": "{{count}} recurso selecionado",
+      "selected_other": "{{count}} recursos selecionados"
     },
     "prep": "Preparo",
     "cleanup": "Limpeza",
     "selectedProductOrders": "Pedidos do produto: {{count}}",
-    "otherUses": "Outros usos · {{kind}}: {{count}}"
+    "otherUses": "Outros usos · {{kind}}: {{count}}",
+    "dateLong": "{{day}} de {{month}}, {{year}}",
+    "searchPlaceholder": "Buscar pedido ou cliente",
+    "openSearch": "Abrir busca de pedido",
+    "grid": {
+      "available": "Disponível para reserva",
+      "reserveOn": "Ver reservas de {{name}}",
+      "reserveHere": "Ver reservas neste recurso",
+      "rowActions": "Ações de {{name}}",
+      "allDay": "Dia inteiro",
+      "scrollHint": "Role para ver mais horas",
+        "continues": "continua",
+      "outside_one": "{{count}} fora do horário",
+      "outside_other": "{{count}} fora do horário",
+      "resourceType": {
+        "Location": "Espaço",
+        "Good": "Equipamento"
+      },
+      "businessHours": "Horário comercial · {{start}} – {{end}}",
+      "variableHours": "Horário variável"
+    },
+    "footer": {
+      "resources_one": "{{count}} recurso",
+      "resources_other": "{{count}} recursos",
+      "activitiesDay_one": "{{count}} atividade neste dia",
+      "activitiesDay_other": "{{count}} atividades neste dia",
+      "activitiesWeek_one": "{{count}} atividade nesta semana",
+      "activitiesWeek_other": "{{count}} atividades nesta semana",
+      "updatedNow": "Atualizado agora",
+      "updatedAgo": "Atualizado há {{minutes}} min"
+    }
   },
   "pedidos": {
     "eyebrow": "Operação · Pedidos",

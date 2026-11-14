@@ -46,6 +46,7 @@ function chips() { return within(screen.getByRole("group", { name: "Tipo" })).ge
 function smallScreen() {
   vi.stubGlobal("matchMedia", vi.fn(() => ({ matches: false, addEventListener: vi.fn(), removeEventListener: vi.fn() })))
 }
+async function openFilters() { await userEvent.click(await screen.findByRole("button", { name: /recursos? selecionados?|^Filtros/ })) }
 function tree() { return screen.getByRole("region", { name: "Recursos" }) }
 
 beforeEach(() => {
@@ -121,9 +122,10 @@ describe("agenda overview toolbar", () => {
   })
 })
 
-describe("agenda filter panel", () => {
+describe("agenda filters popover", () => {
   it("groups resources by category with a Sem categoria fallback and counts the selection", async () => {
     setup()
+    await openFilters()
     expect(await within(tree()).findByText("Estúdio B")).toBeInTheDocument()
     expect(screen.getByRole("heading", { name: "Recursos · 3 de 3" })).toBeInTheDocument()
     expect(within(within(tree()).getByRole("group", { name: "Estúdios" })).getAllByRole("checkbox")).toHaveLength(3)
@@ -132,6 +134,7 @@ describe("agenda filter panel", () => {
 
   it("toggles a whole group and shows the group as indeterminate when partial", async () => {
     setup()
+    await openFilters()
     const group = await within(tree()).findByRole("checkbox", { name: "Todos os recursos de Estúdios" })
     await userEvent.click(group)
     expect(params().get("recursos")).toBe(loose.id)
@@ -147,11 +150,13 @@ describe("agenda filter panel", () => {
 
   it("reads recursos from the URL and the legacy recurso param", async () => {
     const { unmount } = setup(`?visao=dia&date=2026-11-10&recursos=${studioB.id}`)
+    await openFilters()
     expect(await screen.findByRole("heading", { name: "Recursos · 1 de 3" })).toBeInTheDocument()
     expect(within(tree()).getByRole("checkbox", { name: "Estúdio B" })).toBeChecked()
     expect(within(tree()).getByRole("checkbox", { name: "Câmera" })).not.toBeChecked()
     unmount()
     setup(`?visao=dia&date=2026-11-10&recurso=${studioB.id}`)
+    await openFilters()
     expect(await screen.findByRole("heading", { name: "Recursos · 1 de 3" })).toBeInTheDocument()
     await userEvent.click(within(tree()).getByRole("checkbox", { name: "Câmera" }))
     expect(params().has("recurso")).toBe(false)
@@ -160,6 +165,7 @@ describe("agenda filter panel", () => {
 
   it("searches the tree", async () => {
     setup()
+    await openFilters()
     await within(tree()).findByText("Estúdio B")
     await userEvent.type(within(tree()).getByRole("textbox", { name: "Buscar recurso" }), "camera")
     expect(within(tree()).queryByText("Estúdio B")).not.toBeInTheDocument()
@@ -168,6 +174,7 @@ describe("agenda filter panel", () => {
 
   it("selects a product, offers Todos os produtos and keeps the param name", async () => {
     setup()
+    await openFilters()
     const select = await screen.findByRole("combobox", { name: "Produto" })
     expect(await within(select).findByRole("option", { name: "Podcast" })).toBeInTheDocument()
     expect(within(select).getByRole("option", { name: "Todos os produtos" })).toBeInTheDocument()
@@ -179,6 +186,7 @@ describe("agenda filter panel", () => {
 
   it("requires a product in the product view and never offers all products", async () => {
     setup(undefined, "product")
+    await openFilters()
     expect(screen.getByText("Escolha um produto para consultar sua agenda.")).toBeInTheDocument()
     const select = await screen.findByRole("combobox", { name: "Produto" })
     expect(within(select).queryByRole("option", { name: "Todos os produtos" })).not.toBeInTheDocument()
@@ -188,16 +196,18 @@ describe("agenda filter panel", () => {
     expect(screen.queryByText("Escolha um produto para consultar sua agenda.")).not.toBeInTheDocument()
   })
 
-  it("stores the option flags in the URL", async () => {
+  it("stores the option flags in the URL (fechadas=1 shows all 24 hours)", async () => {
     setup()
+    await openFilters()
     await userEvent.click(await screen.findByRole("checkbox", { name: "Só recursos com horário livre" }))
     expect(params().get("livres")).toBe("1")
-    await userEvent.click(screen.getByRole("checkbox", { name: "Mostrar horas fechadas" }))
-    expect(params().get("fechadas")).toBe("0")
+    await userEvent.click(screen.getByRole("checkbox", { name: "Mostrar 24 horas" }))
+    expect(params().get("fechadas")).toBe("1")
   })
 
   it("clears recursos, produto, tipo, search and options but keeps the period", async () => {
-    setup(`?visao=semana&date=2026-11-10&recursos=${studioB.id}&produto=${productId}&tipo=pedido&pedido=${orderId}&livres=1&fechadas=0`)
+    setup(`?visao=semana&date=2026-11-10&recursos=${studioB.id}&produto=${productId}&tipo=pedido&pedido=${orderId}&livres=1&fechadas=1`)
+    await openFilters()
     await userEvent.click(await screen.findByRole("button", { name: "Limpar filtros" }))
     expect(params().get("visao")).toBe("semana")
     expect(params().get("date")).toBe("2026-11-10")
@@ -205,51 +215,106 @@ describe("agenda filter panel", () => {
     expect(screen.queryByRole("button", { name: "Limpar filtros" })).not.toBeInTheDocument()
   })
 
-  it("remembers the collapsed state per viewer", async () => {
-    const { unmount } = setup()
-    await userEvent.click(await screen.findByRole("button", { name: "Recolher filtros" }))
-    expect(screen.queryByRole("region", { name: "Recursos" })).not.toBeInTheDocument()
-    expect(localStorage.getItem("rolvix.agenda.filters.collapsed")).toBe("1")
-    unmount()
-    setup()
-    expect(await screen.findByRole("button", { name: "Mostrar filtros" })).toBeInTheDocument()
-    await userEvent.click(screen.getByRole("button", { name: "Mostrar filtros" }))
-    expect(screen.getByRole("region", { name: "Recursos" })).toBeInTheDocument()
-    expect(localStorage.getItem("rolvix.agenda.filters.collapsed")).toBe("0")
-  })
-
-  it("keeps keyboard focus on the toggle when collapsing and expanding", async () => {
-    setup()
-    await userEvent.click(await screen.findByRole("button", { name: "Recolher filtros" }))
-    expect(screen.getByRole("button", { name: "Mostrar filtros" })).toHaveFocus()
-    await userEvent.click(screen.getByRole("button", { name: "Mostrar filtros" }))
-    expect(screen.getByRole("button", { name: "Recolher filtros" })).toHaveFocus()
-  })
-
   it("treats an unknown legacy recurso as all resources", async () => {
     setup("?visao=dia&date=2026-11-10&recurso=nope")
+    await openFilters()
     expect(await screen.findByRole("heading", { name: "Recursos · 3 de 3" })).toBeInTheDocument()
   })
 
-  it("still works when localStorage throws", async () => {
-    vi.spyOn(Storage.prototype, "getItem").mockImplementation(() => { throw new Error("blocked") })
-    vi.spyOn(Storage.prototype, "setItem").mockImplementation(() => { throw new Error("blocked") })
-    try {
-      setup()
-      await userEvent.click(await screen.findByRole("button", { name: "Recolher filtros" }))
-      expect(screen.getByRole("button", { name: "Mostrar filtros" })).toBeInTheDocument()
-    } finally { vi.restoreAllMocks() }
-  })
-
-  it("opens the filters in a Sheet below lg from the Filtros button", async () => {
+  it("opens the filters in a bottom Sheet below md from the same button", async () => {
     smallScreen()
     setup()
     expect(screen.queryByRole("region", { name: "Recursos" })).not.toBeInTheDocument()
-    await userEvent.click(screen.getByRole("button", { name: /^Filtros/ }))
+    await userEvent.click(await screen.findByRole("button", { name: /recursos? selecionados?/ }))
     const dialog = await screen.findByRole("dialog")
     expect(within(dialog).getByRole("heading", { name: /Recursos · / })).toBeInTheDocument()
     await userEvent.click(await within(dialog).findByRole("checkbox", { name: "Estúdio B" }))
     expect(params().get("recursos")).toBeTruthy()
+  })
+
+  it("shows the selection count on the button and keeps the tree closed until it is opened", async () => {
+    setup(`?visao=dia&date=2026-11-10&recursos=${studioB.id}`)
+    expect(await screen.findByRole("button", { name: /^1 recurso selecionado/ })).toBeInTheDocument()
+    expect(screen.queryByRole("region", { name: "Recursos" })).not.toBeInTheDocument()
+    await openFilters()
+    expect(await screen.findByRole("heading", { name: "Recursos · 1 de 3" })).toBeInTheDocument()
+  })
+
+  it("no longer keeps a collapsible left panel or its storage key", async () => {
+    setup()
+    await screen.findByRole("button", { name: /^3 recursos selecionados/ })
+    expect(screen.queryByRole("button", { name: "Recolher filtros" })).not.toBeInTheDocument()
+    expect(localStorage.getItem("rolvix.agenda.filters.collapsed")).toBeNull()
+  })
+})
+
+describe("agenda card", () => {
+  it("shows the date as a long label with the weekday, and the subtitle of the day view", async () => {
+    setup("?visao=dia&date=2026-11-14")
+    expect(screen.getByRole("button", { name: /Escolher data: 14 de novembro, 2026/ })).toBeInTheDocument()
+    expect(screen.getByText("sábado")).toBeInTheDocument()
+    expect(screen.getByText("Todos os seus recursos. Uma visão do dia.")).toBeInTheDocument()
+  })
+
+  it("shows the business hours of the visible resources on the info row", async () => {
+    setup()
+    expect(await screen.findByText("Horário comercial · 06:00 – 23:00")).toBeInTheDocument()
+    // The axis follows them: first and last hour label.
+    expect(await screen.findByText("06:00")).toBeInTheDocument()
+    expect(screen.queryByText("00:00")).not.toBeInTheDocument()
+  })
+
+  it("says Horário variável when no resource declares hours", async () => {
+    vi.mocked(listAdminRentalAssets).mockResolvedValue([{ ...studioA, openTime: null, closeTime: null }])
+    setup()
+    expect(await screen.findByText("Horário variável")).toBeInTheDocument()
+  })
+
+  it("shows 24 hours with fechadas=1 while keeping the business hours text", async () => {
+    setup("?visao=dia&date=2026-11-10&fechadas=1")
+    expect(await screen.findByText("Horário comercial · 06:00 – 23:00")).toBeInTheDocument()
+    expect(screen.getByText("00:00")).toBeInTheDocument()
+    expect(screen.getByText("23:00")).toBeInTheDocument()
+  })
+
+  it("counts resources and activities in the footer and lists the kinds present", async () => {
+    setup()
+    const footer = await screen.findByRole("contentinfo")
+    expect(await within(footer).findByText("3 recursos")).toBeInTheDocument()
+    expect(within(footer).getByText("2 atividades neste dia")).toBeInTheDocument()
+    expect(within(footer).getByText("Pedidos")).toBeInTheDocument()
+    expect(within(footer).getByText("Manutenção")).toBeInTheDocument()
+    expect(within(footer).queryByText("Reservas")).not.toBeInTheDocument()
+    expect(await within(footer).findByText("Atualizado agora")).toBeInTheDocument()
+  })
+
+  it("opens the create-reservation flow from an empty slot with the resource and slot time", async () => {
+    access(["rentals", "catalog"], [...grants, "rentals.reservations.read"])
+    setup()
+    await userEvent.click(await screen.findByRole("button", { name: "Ver reservas de Câmera" }))
+    const query = params()
+    expect(query.get("rentalAssetId")).toBe(loose.id)
+    expect(query.get("date")).toBe("2026-11-10")
+    expect(query.get("startTime")).toMatch(/^\d{2}:00$/)
+  })
+
+  it("offers no empty-slot action without reservation access", async () => {
+    setup()
+    await screen.findByText("Horário comercial · 06:00 – 23:00")
+    expect(screen.queryByRole("button", { name: /^Ver reservas de / })).not.toBeInTheDocument()
+  })
+
+  it("renders the week as the same card: resource column, day cells with counts, today tinted, a click opens the day", async () => {
+    setup("?visao=semana&date=2026-11-10")
+    const cell = await screen.findByRole("button", { name: "Estúdio A 2026-11-10 1 Pedido" })
+    expect(within(cell).getByText("1")).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: /^Estúdio B 2026-11-10 \d+ Manutenção/ })).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "Câmera 2026-11-10 Livre" })).toBeInTheDocument()
+    expect(screen.getByRole("contentinfo")).toHaveTextContent("nesta semana")
+    expect(screen.getByText("Todos os seus recursos. Uma visão da semana.")).toBeInTheDocument()
+    await userEvent.click(cell)
+    expect(params().get("visao")).toBe("dia")
+    expect(params().get("date")).toBe("2026-11-10")
   })
 })
 

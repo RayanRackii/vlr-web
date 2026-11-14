@@ -1,15 +1,12 @@
 import { useTranslation } from "react-i18next"
 import { Skeleton } from "@/components/ui/skeleton"
+import { cn } from "@/lib/utils"
+import { agendaKindTone } from "./agendaKindTone"
 import { agendaTypes } from "./urlState"
-import type { AgendaBlock, AgendaWeekRow } from "./dayGridModel"
+import type { AgendaWeekRow } from "./dayGridModel"
 import type { AgendaSourceId } from "./useAgendaDay"
 
-const pipClass: Record<AgendaBlock["kind"], string> = {
-  pedido: "border-primary bg-primary/15 text-foreground",
-  reserva: "border-foreground/25 bg-accent text-accent-foreground",
-  manutencao: "border-dashed border-foreground/40 bg-muted text-foreground",
-  bloqueio: "border-border bg-muted text-muted-foreground",
-}
+const WEEK_COLUMNS = "sm:grid sm:grid-cols-[13.75rem_repeat(7,minmax(0,1fr))]"
 
 function weekdayLabel(civil: string, locale: string): string {
   const [year, month, day] = civil.split("-").map(Number)
@@ -36,7 +33,7 @@ export function AgendaWeek({ loading, failedSources, days, rows, today, onOpenDa
 
   if (loading) {
     return (
-      <div role="status" aria-label={t("staffAgenda.weekLoading")} className="space-y-3 rounded-xl border bg-card p-4">
+      <div role="status" aria-label={t("staffAgenda.weekLoading")} className="space-y-3 border-t p-4">
         <Skeleton className="h-8 w-full" />
         <Skeleton className="h-16 w-full" />
       </div>
@@ -44,70 +41,77 @@ export function AgendaWeek({ loading, failedSources, days, rows, today, onOpenDa
   }
 
   return (
-    <div className="space-y-3">
+    <div>
       {failedSources.map((source) => (
-        <p key={source} role="status" className="text-sm text-muted-foreground">
+        <p key={source} role="status" className="border-t px-5 py-2 text-sm text-muted-foreground">
           {t(`staffAgenda.sourceWarning.${source}`)}
         </p>
       ))}
-      <section aria-label={t("staffAgenda.weekGrid")} className="overflow-hidden rounded-xl border bg-card text-card-foreground">
-        <div className="hidden border-b sm:grid sm:grid-cols-[11rem_repeat(7,minmax(0,1fr))]">
-          <span className="px-3 py-2 text-xs font-medium text-muted-foreground">{t("staffAgenda.recurso")}</span>
+      <section aria-label={t("staffAgenda.weekGrid")}>
+        <div className={cn("hidden border-t", WEEK_COLUMNS)}>
+          <span className="px-5 py-3 text-xs font-medium uppercase tracking-wide text-muted-foreground">{t("staffAgenda.recurso")}</span>
           {days.map((date) => (
-            <span key={date} className={`border-l px-2 py-2 text-xs ${date === today ? "bg-primary/10 font-semibold text-foreground" : "text-muted-foreground"}`}>
+            <span key={date} className={cn("px-3 py-3 text-xs first-letter:uppercase", date === today ? "bg-muted/60 font-medium text-foreground" : "text-muted-foreground")}>
               {weekdayLabel(date, locale)}
             </span>
           ))}
         </div>
-        {rows.map((row) => (
-          <section key={row.id} aria-label={row.name} className="border-b last:border-b-0 sm:grid sm:grid-cols-[11rem_repeat(7,minmax(0,1fr))]">
-            <h2 className="px-3 py-3 text-sm font-medium">
-              {row.name}
-              {row.categoryName && <span className="mt-0.5 block text-xs font-normal text-muted-foreground">{row.categoryName}</span>}
-            </h2>
-            <div className="grid grid-cols-7 border-t sm:contents sm:border-t-0">
-              {row.cells.map((cell) => {
-                const summary = agendaTypes.flatMap((kind) => (
-                  cell.counts[kind] > 0 ? [`${cell.counts[kind]} ${t(`staffAgenda.types.${kind}`)}`] : []
-                ))
-                const label = `${row.name} ${cell.date} ${summary.length > 0 ? summary.join(", ") : t("staffAgenda.free")}`
-                return (
-                  <button
-                    key={cell.date}
-                    type="button"
-                    aria-label={label}
-                    aria-current={cell.date === today ? "date" : undefined}
-                    className={`flex min-h-16 flex-col items-center justify-center gap-1 border-l px-1 py-2 text-left first:border-l-0 sm:min-h-14 sm:items-start sm:first:border-l ${cell.date === today ? "bg-primary/10" : ""}`}
-                    onClick={() => onOpenDay(cell.date)}
-                  >
-                    <span className="text-[10px] text-muted-foreground sm:sr-only">{weekdayLabel(cell.date, locale)}</span>
-                    {summary.length === 0 ? (
-                      <span className="text-xs text-muted-foreground">{t("staffAgenda.free")}</span>
-                    ) : (
-                      <span className="flex flex-wrap justify-center gap-1 sm:justify-start">
-                        {agendaTypes.flatMap((kind) => {
-                          const total = cell.counts[kind]
-                          const selected = focusedRows
-                            ? kind === "pedido" ? Math.min(total, focusedRows.find((focused) => focused.id === row.id)?.cells.find((focused) => focused.date === cell.date)?.counts.pedido ?? 0) : 0
-                            : total
-                          return [{ count: selected, dim: false }, { count: total - selected, dim: true }]
-                            .filter(({ count }) => count > 0)
-                            .map(({ count, dim }) => <span key={`${kind}:${dim}`}
-                              aria-label={focusedRows ? t(dim ? "agendas.otherUses" : "agendas.selectedProductOrders", { count, kind: t(`staffAgenda.types.${kind}`) }) : undefined}
-                              className={`inline-flex rounded-md border px-1 text-xs font-semibold tabular-nums ${pipClass[kind]} ${dim ? "opacity-40" : ""}`}>
-                              {count}
-                            </span>)
-                        })}
-                      </span>
-                    )}
-                  </button>
-                )
-              })}
-            </div>
-          </section>
-        ))}
+        {rows.map((row) => {
+          const kind = row.resourceType ? t(`agendas.grid.resourceType.${row.resourceType}`) : null
+          const meta = [kind, row.categoryName?.trim()].filter(Boolean).join(" · ")
+          return (
+            <section key={row.id} aria-label={row.name} className={cn("border-t", WEEK_COLUMNS)}>
+              <h2 className="px-5 py-3 text-sm font-medium">
+                {row.name}
+                {meta && <span className="mt-0.5 block text-xs font-normal text-muted-foreground">{meta}</span>}
+              </h2>
+              <div className="grid grid-cols-7 border-t sm:contents sm:border-t-0">
+                {row.cells.map((cell) => {
+                  const summary = agendaTypes.flatMap((kind) => (
+                    cell.counts[kind] > 0 ? [`${cell.counts[kind]} ${t(`staffAgenda.types.${kind}`)}`] : []
+                  ))
+                  const label = `${row.name} ${cell.date} ${summary.length > 0 ? summary.join(", ") : t("staffAgenda.free")}`
+                  return (
+                    <button
+                      key={cell.date}
+                      type="button"
+                      aria-label={label}
+                      aria-current={cell.date === today ? "date" : undefined}
+                      className={cn(
+                        "touch-target flex min-h-[4.25rem] flex-col items-center justify-center gap-1 border-l px-1 py-2 text-left outline-none first:border-l-0 hover:bg-muted/40 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring sm:items-start sm:px-3 sm:first:border-l",
+                        cell.date === today && "bg-muted/60",
+                      )}
+                      onClick={() => onOpenDay(cell.date)}
+                    >
+                      <span className="text-xs text-muted-foreground sm:sr-only">{weekdayLabel(cell.date, locale)}</span>
+                      {summary.length === 0 ? (
+                        <span className="text-xs text-muted-foreground">{t("staffAgenda.free")}</span>
+                      ) : (
+                        <span className="flex flex-wrap justify-center gap-1 sm:justify-start">
+                          {agendaTypes.flatMap((kind) => {
+                            const total = cell.counts[kind]
+                            const selected = focusedRows
+                              ? kind === "pedido" ? Math.min(total, focusedRows.find((focused) => focused.id === row.id)?.cells.find((focused) => focused.date === cell.date)?.counts.pedido ?? 0) : 0
+                              : total
+                            return [{ count: selected, dim: false }, { count: total - selected, dim: true }]
+                              .filter(({ count }) => count > 0)
+                              .map(({ count, dim }) => <span key={`${kind}:${dim}`}
+                                aria-label={focusedRows ? t(dim ? "agendas.otherUses" : "agendas.selectedProductOrders", { count, kind: t(`staffAgenda.types.${kind}`) }) : undefined}
+                                className={cn("inline-flex rounded-md px-1.5 py-0.5 text-xs font-medium tabular-nums", agendaKindTone[kind].pill, dim && "opacity-40")}>
+                                {count}
+                              </span>)
+                          })}
+                        </span>
+                      )}
+                    </button>
+                  )
+                })}
+              </div>
+            </section>
+          )
+        })}
       </section>
-      <p className="text-xs text-muted-foreground">{t("staffAgenda.weekHint")}</p>
+      <p className="border-t px-5 py-3 text-xs text-muted-foreground">{t("staffAgenda.weekHint")}</p>
     </div>
   )
 }
