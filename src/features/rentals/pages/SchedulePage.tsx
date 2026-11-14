@@ -7,7 +7,8 @@ import {
   scheduleTabFromSearch,
 } from "@/features/rentals/components/resourceWizard/wizardSteps"
 import { Card, CardContent } from "@/components/ui/card"
-import { CalendarDays, CalendarRange, Tag } from "lucide-react"
+import { CalendarDays } from "lucide-react"
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useCallback, useContext, useEffect, useMemo, useRef, useState } from "react"
 import { useTranslation } from "react-i18next"
 import {
@@ -66,7 +67,6 @@ import {
   type UpsertOccupancyKindInput,
 } from "@/features/rentals/services/scheduleService"
 import { useTrialStatus } from "@/features/users/hooks/useTrialStatus"
-import { cn } from "@/lib/utils"
 import { usePermissions } from "@/features/users/permissions/PermissionContext"
 import { TeacherLessonsPage } from "@/features/rentals/pages/TeacherLessonsPage"
 
@@ -837,15 +837,10 @@ function AdminSchedulePage() {
     }
   }
 
-  const tabItems: {
-    id: ScheduleTab
-    labelKey: string
-    shortLabelKey: string
-    icon: typeof CalendarDays
-  }[] = [
-    { id: "daily", labelKey: "rentals.schedule.tabs.daily", shortLabelKey: "rentals.schedule.tabs.dailyShort", icon: CalendarDays },
-    { id: "templates", labelKey: "rentals.schedule.tabs.templates", shortLabelKey: "rentals.schedule.tabs.templatesShort", icon: CalendarRange },
-    { id: "kinds", labelKey: "rentals.schedule.tabs.kinds", shortLabelKey: "rentals.schedule.tabs.kindsShort", icon: Tag },
+  const tabItems: { id: ScheduleTab; labelKey: string }[] = [
+    { id: "daily", labelKey: "rentals.schedule.tabs.daily" },
+    { id: "templates", labelKey: "rentals.schedule.tabs.templates" },
+    { id: "kinds", labelKey: "rentals.schedule.tabs.kinds" },
   ]
 
   const scheduleTemplatesKey = selectedRentalAssetIds.join(",")
@@ -871,40 +866,26 @@ function AdminSchedulePage() {
           </p>
         </div>
 
-        <div
-          role="group"
-          aria-label={t("nav.menu")}
-          className="grid h-auto w-full grid-cols-3 gap-1 rounded-lg bg-muted p-1 text-muted-foreground sm:flex sm:w-max"
+        <Tabs
+          value={tab}
+          onValueChange={(value) => {
+            const next = value as ScheduleTab
+            if (next === tab) return
+            runOrAsk(() => {
+              if (next !== "templates") {
+                closeWeeklyRule()
+                closePolicy()
+              }
+              setTab(next)
+            })
+          }}
         >
-          {tabItems.map((item) => {
-            const isActive = tab === item.id
-            return (
-              <button
-                key={item.id}
-                type="button"
-                aria-pressed={isActive}
-                onClick={() => {
-                  if (item.id === tab) return
-                  runOrAsk(() => {
-                    if (item.id !== "templates") {
-                      closeWeeklyRule()
-                      closePolicy()
-                    }
-                    setTab(item.id)
-                  })
-                }}
-                className={cn(
-                  "touch-target inline-flex min-h-9 min-w-0 items-center justify-center gap-1.5 rounded-md px-2 py-1.5 text-sm font-medium motion-safe:transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring sm:px-3",
-                  isActive ? "bg-background text-foreground shadow-sm" : "hover:text-foreground",
-                )}
-              >
-                <item.icon aria-hidden className="size-4 shrink-0" />
-                <span className="truncate sm:hidden">{t(item.shortLabelKey)}</span>
-                <span className="hidden sm:inline">{t(item.labelKey)}</span>
-              </button>
-            )
-          })}
-        </div>
+          <TabsList variant="line" aria-label={t("nav.menu")}>
+            {tabItems.map((item) => (
+              <TabsTrigger key={item.id} value={item.id}>{t(item.labelKey)}</TabsTrigger>
+            ))}
+          </TabsList>
+        </Tabs>
       </div>
 
       <Card className="min-w-0 motion-reduce:transition-none">

@@ -1,11 +1,13 @@
 import type { ReactNode } from "react"
-import { FileText, Package, Search, ShoppingBag, Tag } from "lucide-react"
+import { FileText, Package, Search, ShoppingBag } from "lucide-react"
 import { Link } from "react-router-dom"
 import { useTranslation } from "react-i18next"
 
 import { PageHeader } from "@/components/layout/PageHeader"
+import { tabClass, tabCountClass, tabListClass } from "@/components/ui/tabs-style"
 import { EmptyState } from "@/components/ui/empty-state"
 import { Input } from "@/components/ui/input"
+import { cn } from "@/lib/utils"
 import { usePermissions } from "@/features/users/permissions/PermissionContext"
 import "./staffCatalog.css"
 
@@ -18,21 +20,17 @@ export function CatalogTabs({ active, counts = {} }: {
   const { t } = useTranslation()
   const { can } = usePermissions()
   const tabs = [
-    { key: "products", path: "/catalogo/produtos", permission: "catalog.products.read", icon: Tag },
-    { key: "orders", path: "/pedidos?aba=pedidos", permission: "catalog.orders.read", icon: ShoppingBag },
-    { key: "requests", path: "/pedidos?aba=solicitacoes", permission: "catalog.products.read", icon: FileText },
+    { key: "products", path: "/catalogo/produtos", permission: "catalog.products.read" },
+    { key: "orders", path: "/pedidos?aba=pedidos", permission: "catalog.orders.read" },
+    { key: "requests", path: "/pedidos?aba=solicitacoes", permission: "catalog.products.read" },
   ] as const
 
   return (
-    <nav className="staff-catalog-tabs" aria-label={t("nav.catalog")}>
-      {tabs.filter((tab) => can(tab.permission)).map(({ key, path, icon: Icon }) => (
-        <Link className="touch-target" key={key} to={path} aria-current={active === key ? "page" : undefined}>
-          <Icon size={20} aria-hidden="true" />
-          {key === "requests" ? <>
-            <span className="staff-catalog-tab-long">{t("catalog.requests.title")}</span>
-            <span className="staff-catalog-tab-short">{t("nav.catalogRequests")}</span>
-          </> : t(`catalog.${key}.title`)}
-          {counts[key] !== undefined ? <span className="staff-catalog-tab-count">{counts[key]}</span> : null}
+    <nav className={cn(tabListClass, "my-4")} aria-label={t("nav.catalog")}>
+      {tabs.filter((tab) => can(tab.permission)).map(({ key, path }) => (
+        <Link className={tabClass(active === key)} key={key} to={path} aria-current={active === key ? "page" : undefined}>
+          {key === "requests" ? t("catalog.requests.title") : t(`catalog.${key}.title`)}
+          {counts[key] !== undefined ? <span className={tabCountClass(active === key)}>{counts[key]}</span> : null}
         </Link>
       ))}
     </nav>

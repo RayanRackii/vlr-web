@@ -41,6 +41,7 @@ export function PageHeader({
     <div
       className={cn(
         "mb-6 flex flex-col gap-4 sm:mb-8 sm:flex-row sm:items-start sm:justify-between",
+        "motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-2 motion-safe:duration-[450ms]",
         className,
       )}
     >

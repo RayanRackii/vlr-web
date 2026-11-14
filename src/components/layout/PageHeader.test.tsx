@@ -15,6 +15,17 @@ describe("PageHeader", () => {
     ).toBeInTheDocument()
   })
 
+  it("fades in from below only when motion is allowed", () => {
+    const { container } = render(<PageHeader title="Reservas" />)
+
+    expect(container.firstElementChild).toHaveClass(
+      "motion-safe:animate-in",
+      "motion-safe:fade-in",
+      "motion-safe:slide-in-from-bottom-2",
+      "motion-safe:duration-[450ms]",
+    )
+  })
+
   it("renders the description when provided", () => {
     render(<PageHeader title="Reservas" description="Gerencie as reservas" />)
 

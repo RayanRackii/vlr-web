@@ -10,7 +10,7 @@ export function ReservationsHeader({ date }: { date?: string }) {
   const timeZoneId = useTenantTimeZone()
 
   return (
-    <header className="reservations-heading">
+    <header>
       <PageHeader
         icon={CalendarDays}
         title={t("rentals.reservations.title")}
