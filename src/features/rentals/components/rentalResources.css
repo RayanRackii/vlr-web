@@ -5,7 +5,6 @@
   color: var(--foreground);
 }
 .resources-header { display: flex; align-items: flex-end; justify-content: space-between; flex-wrap: wrap; gap: 16px; margin-bottom: 20px; }
-.resources-eyebrow { margin-bottom: 5px; color: var(--primary); font-size: 13px; font-weight: 650; }
 .resources-header h1 { font-size: clamp(24px, 2.2vw, 30px); font-weight: 700; letter-spacing: -.025em; line-height: 1.2; }
 .resources-description { margin-top: 6px; font-size: 15px; color: var(--muted-foreground); }
 .resources-header button { min-height: 44px; padding-inline: 16px; border-radius: 11px; }

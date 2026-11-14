@@ -36,7 +36,6 @@ export function NotificationsPage() {
   return (
     <div className="notifications-page mx-auto min-w-0 space-y-5">
       <header className="space-y-1">
-        <p className="notifications-eyebrow">{t("nav.sections.settings")}</p>
         <h1 className="text-xl font-semibold tracking-tight sm:text-2xl">{t("nav.notifications")}</h1>
         <p className="max-w-2xl text-sm text-muted-foreground">{t("notifications.page.subtitle")}</p>
         <div role="tablist" aria-label={t("nav.notifications")} className="notifications-tabs">

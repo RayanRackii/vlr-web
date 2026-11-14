@@ -201,7 +201,6 @@ export function CreateWorkOrderPage({ maintenance = false, sourcePlan }: { maint
 
   return (
     <div className="mx-auto w-full min-w-0 max-w-3xl space-y-6">
-      {maintenance && <p className="maintenance-eyebrow">{t("maintenance.eyebrow")}</p>}
       <PageHeader
         title={t(sourcePlan ? "maintenance.generate" : maintenance ? "maintenance.newOrder" : "workOrders.create.title")}
         description={t(sourcePlan ? "maintenance.generateDescription" : "workOrders.create.description")}

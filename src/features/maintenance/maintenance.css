@@ -1,6 +1,5 @@
 [data-shell-part="main"]:has(.maintenance-page) > div { max-width: none; }
 .maintenance-page { width: 100%; max-width: min(1240px, 100%); min-width: 0; overflow-wrap: anywhere; }
-.maintenance-eyebrow { color: var(--primary); font-size: .8125rem; font-weight: 600; letter-spacing: .025em; }
 .maintenance-tabs { display: flex; gap: 8px; min-width: 0; max-width: 100%; overflow-x: auto; border-bottom: 1px solid var(--border); padding-top: 16px; }
 .maintenance-tabs button { flex: none; min-height: 46px; padding: 8px 14px; border-bottom: 2px solid transparent; font-size: .875rem; font-weight: 600; color: var(--muted-foreground); }
 .maintenance-tabs button[aria-selected="true"] { color: var(--primary); border-bottom-color: var(--primary); }

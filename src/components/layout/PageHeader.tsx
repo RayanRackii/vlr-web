@@ -45,7 +45,7 @@ export function PageHeader({
       )}
     >
       <div className="flex min-w-0 items-start gap-3">
-        {Icon ? (
+        {Icon && !breadcrumbInHeader ? (
           <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
             <Icon className="size-5" strokeWidth={ICON_STROKE_WIDTH} aria-hidden />
           </div>

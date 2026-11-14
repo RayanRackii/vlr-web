@@ -29,7 +29,6 @@ export function MaintenancePage() {
     : data.access.createOrder ? { to: "/manutencao/ordens/nova", label: t("maintenance.newOrder") } : null
   return <div className="maintenance-page mx-auto min-w-0 space-y-5">
     <header className="space-y-1">
-      <p className="maintenance-eyebrow">{t("maintenance.eyebrow")}</p>
       <h1 className="text-xl font-semibold tracking-tight sm:text-2xl">{t("nav.manutencao")}</h1>
       <p className="max-w-2xl text-sm text-muted-foreground">{t("maintenance.subtitle")}</p>
       <div role="tablist" aria-label={t("nav.manutencao")} className="maintenance-tabs">
