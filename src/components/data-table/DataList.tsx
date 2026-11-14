@@ -129,11 +129,11 @@ export function DataList<T>(props: DataListProps<T>) {
             </TableBody>
           </Table>
         </div>
-        <ul role="list" aria-label={label} className="grid gap-3 p-3 md:hidden">
+        <ul role="list" aria-label={label} className="grid grid-cols-1 gap-3 p-3 md:hidden">
           {rows.map((row) => (
             <li
               key={getRowId(row)}
-              className="flex flex-col gap-3 rounded-lg border border-border p-4"
+              className="flex min-w-0 flex-col gap-3 rounded-lg border border-border p-4"
               {...rowAttributes?.(row)}
             >
               {renderCard(row)}

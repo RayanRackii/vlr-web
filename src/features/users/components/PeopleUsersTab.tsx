@@ -239,8 +239,8 @@ export function PeopleUsersTab({ roles }: PeopleUsersTabProps) {
       <div className="flex min-w-0 items-center gap-3">
         <span className="grid size-9 shrink-0 place-items-center rounded-full bg-accent text-xs font-semibold uppercase text-accent-foreground" aria-hidden>{member.fullName.trim().split(/\s+/).slice(0, 2).map((part) => part[0]).join("")}</span>
         <div className="min-w-0">
-          <p className="break-words font-semibold">{member.fullName}</p>
-          <p className="break-words text-sm text-muted-foreground">{member.email}</p>
+          <p className="font-semibold [overflow-wrap:anywhere]">{member.fullName}</p>
+          <p className="text-sm text-muted-foreground [overflow-wrap:anywhere]">{member.email}</p>
         </div>
       </div>
     )
@@ -265,10 +265,10 @@ export function PeopleUsersTab({ roles }: PeopleUsersTabProps) {
     )
   }
 
-  function assignAction(member: TenantMember) {
+  function assignAction(member: TenantMember, fullWidth = false) {
     return (
       <Can permission="core.users.assign_roles">
-        <Button type="button" variant="outline" size="sm" className="min-h-11 text-xs" aria-label={t("peopleAccess.users.assign")} onClick={() => { openAssign(member) }}>
+        <Button type="button" variant="outline" size="sm" className={fullWidth ? "h-auto min-h-11 w-full whitespace-normal text-xs" : "min-h-11 text-xs"} aria-label={t("peopleAccess.users.assign")} onClick={() => { openAssign(member) }}>
           <KeyRound aria-hidden strokeWidth={1.75} />
           <span>{t("peopleAccess.users.assign")}</span>
         </Button>
@@ -280,7 +280,7 @@ export function PeopleUsersTab({ roles }: PeopleUsersTabProps) {
     { id: "name", header: t("peopleAccess.users.fullName"), cell: identity },
     { id: "roles", header: t("peopleAccess.columns.roles"), cell: roleChips },
     { id: "status", header: t("peopleAccess.columns.status"), cell: statusBadge },
-    { id: "actions", header: t("peopleAccess.columns.actions"), align: "end", cell: assignAction },
+    { id: "actions", header: t("peopleAccess.columns.actions"), align: "end", cell: (member) => assignAction(member) },
   ]
 
   return (
@@ -331,7 +331,7 @@ export function PeopleUsersTab({ roles }: PeopleUsersTabProps) {
               {statusBadge(member)}
             </div>
             {roleChips(member)}
-            {assignAction(member)}
+            {assignAction(member, true)}
           </>
         )}
       />
