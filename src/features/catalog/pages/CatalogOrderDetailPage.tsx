@@ -9,7 +9,6 @@ import { useParams } from "react-router-dom"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 
-import "./pedidos.css"
 import { useBreadcrumbTitle } from "@/components/layout/useBreadcrumbTitle"
 import { PageHeader } from "@/components/layout/PageHeader"
 import { PageContentSkeleton } from "@/components/loading/PageContentSkeleton"
@@ -265,7 +264,7 @@ export function CatalogOrderDetailPage({ unified = false }: { unified?: boolean 
   })
 
   return (
-    <div className={unified ? "pedidos-page staff-catalog staff-catalog-detail mx-auto space-y-5" : "staff-catalog staff-catalog-detail space-y-6"}>
+    <div className={unified ? "staff-catalog staff-catalog-detail mx-auto min-w-0 space-y-5 [overflow-wrap:anywhere]" : "staff-catalog staff-catalog-detail space-y-6"}>
       <PageHeader
         className="min-w-0 [&_h1]:tabular-nums"
         title={unified ? t("pedidos.detailTitle") : order.displayNumber}
