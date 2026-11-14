@@ -1223,6 +1223,7 @@
       "badges": {
         "restricted": "Restricted · {{count}}"
       },
+      "filterAll": "All",
       "visibilityFilter": {
         "title": "Visibility",
         "public": "Public",

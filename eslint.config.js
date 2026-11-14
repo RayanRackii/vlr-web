@@ -93,8 +93,6 @@ const pageLegacy = [
 const tableLegacy = [
   "src/features/admin/pages/AdminAssetFamiliesPage.tsx",
   "src/features/assets/pages/AssetsPage.tsx",
-  "src/features/catalog/components/StaffCatalogChrome.tsx",
-  "src/features/catalog/pages/CatalogProductsPage.tsx",
 ]
 
 const pageRules = [
@@ -124,6 +122,8 @@ const testIgnores = ["**/*.test.{ts,tsx}", "**/__tests__/**"]
 // Flat config replaces (does not merge) a rule across blocks, so each combination of legacy
 // lists gets its own block with exactly the rules that apply.
 const onlyIn = (list, other) => list.filter((file) => !other.includes(file))
+// A flat-config block with an empty `files` array is a config error, so skip empty ones.
+const scopedBlock = (files, rules) => (files.length > 0 ? [{ files, rules }] : [])
 
 export default defineConfig([
   globalIgnores(["dist", "playwright-report", "test-results"]),
@@ -160,14 +160,8 @@ export default defineConfig([
     ignores: [...testIgnores, ...pageLegacy, ...tableLegacy],
     rules: { "no-restricted-syntax": ["error", ...pageRules, ...tableRules] },
   },
-  {
-    files: onlyIn(pageLegacy, tableLegacy),
-    rules: { "no-restricted-syntax": ["error", ...tableRules] },
-  },
-  {
-    files: onlyIn(tableLegacy, pageLegacy),
-    rules: { "no-restricted-syntax": ["error", ...pageRules] },
-  },
+  ...scopedBlock(onlyIn(pageLegacy, tableLegacy), { "no-restricted-syntax": ["error", ...tableRules] }),
+  ...scopedBlock(onlyIn(tableLegacy, pageLegacy), { "no-restricted-syntax": ["error", ...pageRules] }),
   {
     files: ["e2e/**/*.ts", "playwright.config.ts"],
     extends: [js.configs.recommended, tseslint.configs.recommended],
