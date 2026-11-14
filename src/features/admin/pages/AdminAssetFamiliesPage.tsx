@@ -80,24 +80,9 @@ function errorMessage(error: unknown, fallback: string): string {
   return fallback
 }
 
-type FamilyFilterKey = "key" | "label" | "sortOrder" | "fields" | "status"
-type FamilyFilters = Record<FamilyFilterKey, string>
+type StatusFilter = "all" | "active" | "inactive"
 
-const FAMILY_FILTER_KEYS: readonly FamilyFilterKey[] = [
-  "key",
-  "label",
-  "sortOrder",
-  "fields",
-  "status",
-]
-
-const emptyFamilyFilters: FamilyFilters = {
-  key: "",
-  label: "",
-  sortOrder: "",
-  fields: "",
-  status: "",
-}
+const STATUS_FILTERS: readonly StatusFilter[] = ["all", "active", "inactive"]
 
 export function AdminAssetFamiliesPage() {
   const { t } = useTranslation()
@@ -105,7 +90,8 @@ export function AdminAssetFamiliesPage() {
   const [includeInactive, setIncludeInactive] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const [loadError, setLoadError] = useState<string | null>(null)
-  const [filters, setFilters] = useState<FamilyFilters>(emptyFamilyFilters)
+  const [search, setSearch] = useState("")
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>("all")
   const [editor, setEditor] = useState<EditorState | null>(null)
   const [formError, setFormError] = useState<string | null>(null)
   const [isSaving, setIsSaving] = useState(false)
@@ -236,25 +222,17 @@ export function AdminAssetFamiliesPage() {
   )
 
   const visibleFamilies = useMemo(() => {
-    const values: Record<FamilyFilterKey, (family: AdminAssetFamily) => string> = {
-      key: (family) => family.key,
-      label: (family) => family.label,
-      sortOrder: (family) => String(family.sortOrder),
-      fields: (family) => String(family.fields.length),
-      status: statusLabel,
-    }
-    const active = FAMILY_FILTER_KEYS.filter((key) => filters[key] !== "")
+    const needle = search.trim().toLowerCase()
 
-    return families.filter((family) =>
-      active.every((key) =>
-        values[key](family).toLowerCase().includes(filters[key].toLowerCase()),
-      ),
+    return families.filter(
+      (family) =>
+        (statusFilter === "all" ||
+          family.isActive === (statusFilter === "active")) &&
+        (needle === "" ||
+          family.key.toLowerCase().includes(needle) ||
+          family.label.toLowerCase().includes(needle)),
     )
-  }, [families, filters, statusLabel])
-
-  function setFilter(key: FamilyFilterKey, value: string) {
-    setFilters((current) => ({ ...current, [key]: value }))
-  }
+  }, [families, search, statusFilter])
 
   const keyCell = (family: AdminAssetFamily) => (
     <div className="flex min-w-0 flex-wrap items-center gap-2">
@@ -349,14 +327,35 @@ export function AdminAssetFamiliesPage() {
     },
   ]
 
-  const filterChips = FAMILY_FILTER_KEYS.filter((key) => filters[key] !== "").map(
-    (key) => ({
-      label: `${t(`admin.assetFamilies.columns.${key}`)}: ${filters[key]}`,
-      onRemove: () => {
-        setFilter(key, "")
-      },
-    }),
-  )
+  const statusFilterLabel = (value: StatusFilter) =>
+    value === "all"
+      ? t("admin.assetFamilies.filters.all")
+      : value === "active"
+        ? t("admin.assetFamilies.statusActive")
+        : t("admin.assetFamilies.statusInactive")
+
+  const filterChips = [
+    ...(search.trim() !== ""
+      ? [
+          {
+            label: `${t("admin.assetFamilies.filters.searchLabel")}: ${search.trim()}`,
+            onRemove: () => {
+              setSearch("")
+            },
+          },
+        ]
+      : []),
+    ...(statusFilter !== "all"
+      ? [
+          {
+            label: `${t("admin.assetFamilies.filters.statusLabel")}: ${statusFilterLabel(statusFilter)}`,
+            onRemove: () => {
+              setStatusFilter("all")
+            },
+          },
+        ]
+      : []),
+  ]
 
   function closeEditor() {
     if (isSaving) {
@@ -472,20 +471,35 @@ export function AdminAssetFamiliesPage() {
         getRowId={(family) => family.id}
         toolbar={
           <FilterBar
-            label={t("common.filter")}
-            filters={FAMILY_FILTER_KEYS.map((key) => (
-              <Input
-                key={key}
-                autoComplete="off"
-                className="w-full sm:w-40"
-                placeholder={t(`admin.assetFamilies.columns.${key}`)}
-                aria-label={t(`admin.assetFamilies.columns.${key}`)}
-                value={filters[key]}
-                onChange={(event) => {
-                  setFilter(key, event.target.value)
-                }}
-              />
-            ))}
+            label={t("admin.assetFamilies.filters.label")}
+            search={{
+              value: search,
+              onChange: setSearch,
+              placeholder: t("admin.assetFamilies.filters.searchPlaceholder"),
+              label: t("admin.assetFamilies.filters.searchLabel"),
+            }}
+            filters={
+              <div
+                role="group"
+                aria-label={t("admin.assetFamilies.filters.statusLabel")}
+                className="flex flex-row flex-wrap justify-start gap-1"
+              >
+                {STATUS_FILTERS.map((value) => (
+                  <Button
+                    key={value}
+                    type="button"
+                    className="min-h-11 rounded-full px-3"
+                    variant={statusFilter === value ? "default" : "outline"}
+                    aria-pressed={statusFilter === value}
+                    onClick={() => {
+                      setStatusFilter(value)
+                    }}
+                  >
+                    {statusFilterLabel(value)}
+                  </Button>
+                ))}
+              </div>
+            }
             chips={filterChips}
           />
         }

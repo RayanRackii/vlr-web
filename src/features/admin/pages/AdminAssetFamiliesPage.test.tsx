@@ -315,68 +315,93 @@ describe("AdminAssetFamiliesPage", () => {
     ).toBeInTheDocument()
   })
 
-  async function filterBy(
-    user: ReturnType<typeof userEvent.setup>,
-    column: string,
-    value: string,
-  ) {
-    await user.type(
-      screen.getByRole("textbox", {
-        name: i18n.t(`admin.assetFamilies.columns.${column}`),
-      }),
-      value,
-    )
+  const dozen: AdminAssetFamily = {
+    ...courts,
+    id: "44444444-4444-4444-8444-444444444444",
+    key: "doze",
+    label: "Doze",
+    sortOrder: 12,
+    isActive: false,
   }
 
-  it("narrows rows with each filter bar control and clears it with its chip", async () => {
-    const user = userEvent.setup()
-    const dozen: AdminAssetFamily = {
-      ...courts,
-      id: "44444444-4444-4444-8444-444444444444",
-      key: "doze",
-      label: "Doze",
-      sortOrder: 12,
-      isActive: false,
-    }
-    listMock.mockResolvedValue([spaces, courts, dozen])
+  function searchBox() {
+    return screen.getByRole("searchbox", {
+      name: i18n.t("admin.assetFamilies.filters.searchLabel"),
+    })
+  }
 
+  async function renderThree() {
+    listMock.mockResolvedValue([spaces, courts, dozen])
     render(<AdminAssetFamiliesPage />)
     await findInTable("Doze")
+  }
 
-    const cases: { column: string; value: string; kept: string[]; dropped: string[] }[] = [
-      { column: "key", value: "quad", kept: ["Quadras"], dropped: ["Espaços", "Doze"] },
-      { column: "label", value: "doz", kept: ["Doze"], dropped: ["Espaços", "Quadras"] },
-      { column: "sortOrder", value: "12", kept: ["Doze"], dropped: ["Espaços", "Quadras"] },
-      { column: "fields", value: "1", kept: ["Quadras", "Doze"], dropped: ["Espaços"] },
-      {
-        column: "status",
-        value: i18n.t("admin.assetFamilies.statusInactive"),
-        kept: ["Doze"],
-        dropped: ["Espaços", "Quadras"],
-      },
-    ]
+  it("searches by key or label and clears with the chip", async () => {
+    const user = userEvent.setup()
+    await renderThree()
 
-    for (const { column, value, kept, dropped } of cases) {
-      await filterBy(user, column, value)
-      for (const name of kept) {
-        expect(within(table()).getByText(name)).toBeInTheDocument()
-      }
-      for (const name of dropped) {
-        expect(within(table()).queryByText(name)).not.toBeInTheDocument()
-      }
+    await user.type(searchBox(), "QUAD")
+    expect(within(table()).getByText("Quadras")).toBeInTheDocument()
+    expect(within(table()).queryByText("Espaços")).not.toBeInTheDocument()
+    expect(within(table()).queryByText("Doze")).not.toBeInTheDocument()
 
-      await user.click(screen.getByRole("button", { name: new RegExp(`: ${value}$`) }))
-      expect(within(table()).getByText("Espaços")).toBeInTheDocument()
-      expect(within(table()).getByText("Quadras")).toBeInTheDocument()
-      expect(within(table()).getByText("Doze")).toBeInTheDocument()
-    }
+    await user.click(screen.getByRole("button", { name: /: QUAD$/ }))
+    expect(searchBox()).toHaveValue("")
+    expect(within(table()).getByText("Doze")).toBeInTheDocument()
+    expect(within(table()).getByText("Espaços")).toBeInTheDocument()
+
+    await user.type(searchBox(), "doz")
+    expect(within(table()).getByText("Doze")).toBeInTheDocument()
+    expect(within(table()).queryByText("Quadras")).not.toBeInTheDocument()
+
+    await user.clear(searchBox())
+    await user.type(searchBox(), "espa")
+    expect(within(table()).getByText("Espaços")).toBeInTheDocument()
+    expect(within(table()).queryByText("Doze")).not.toBeInTheDocument()
+  })
+
+  it("narrows by status chips and clears the status chip", async () => {
+    const user = userEvent.setup()
+    await renderThree()
+
+    const group = screen.getByRole("group", {
+      name: i18n.t("admin.assetFamilies.filters.statusLabel"),
+    })
+    const all = within(group).getByRole("button", {
+      name: i18n.t("admin.assetFamilies.filters.all"),
+    })
+    expect(all).toHaveAttribute("aria-pressed", "true")
+
+    await user.click(
+      within(group).getByRole("button", {
+        name: i18n.t("admin.assetFamilies.statusInactive"),
+      }),
+    )
+    expect(within(table()).getByText("Doze")).toBeInTheDocument()
+    expect(within(table()).queryByText("Quadras")).not.toBeInTheDocument()
+
+    await user.click(
+      screen.getByRole("button", {
+        name: `${i18n.t("admin.assetFamilies.filters.statusLabel")}: ${i18n.t("admin.assetFamilies.statusInactive")}`,
+      }),
+    )
+    expect(all).toHaveAttribute("aria-pressed", "true")
+    expect(within(table()).getByText("Quadras")).toBeInTheDocument()
+
+    await user.click(
+      within(group).getByRole("button", {
+        name: i18n.t("admin.assetFamilies.statusActive"),
+      }),
+    )
+    expect(within(table()).getByText("Quadras")).toBeInTheDocument()
+    expect(within(table()).queryByText("Doze")).not.toBeInTheDocument()
   })
 
   it("shows the empty state when no family matches", async () => {
     const user = userEvent.setup()
     await renderLoaded()
 
-    await filterBy(user, "key", "zzz")
+    await user.type(searchBox(), "zzz")
 
     expect(
       await screen.findByText(i18n.t("admin.assetFamilies.emptyTitle")),

@@ -4692,6 +4692,13 @@
       "statusInactive": "Inactiva",
       "emptyTitle": "Ninguna familia encontrada",
       "emptyDescription": "Cree una familia o incluya las inactivas.",
+      "filters": {
+        "label": "Filtrar familias",
+        "searchLabel": "Buscar familias",
+        "searchPlaceholder": "Buscar por clave o etiqueta",
+        "statusLabel": "Estado",
+        "all": "Todas"
+      },
       "columns": {
         "key": "Clave",
         "label": "Etiqueta",
