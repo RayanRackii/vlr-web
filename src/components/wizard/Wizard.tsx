@@ -20,6 +20,8 @@ type WizardProps = {
   stepError?: ReactNode
   /** Accessible name for the stepper list. */
   ariaLabel?: string
+  /** Enter inside a single-line input of the step body runs the same action as Next. Off by default. */
+  advanceOnEnter?: boolean
   children: (stepIndex: number) => ReactNode
   finalReview?: ReactNode
   nextLabel: string
@@ -42,6 +44,7 @@ export function Wizard({
   onStepChange,
   stepError,
   ariaLabel,
+  advanceOnEnter = false,
   children,
   finalReview,
   nextLabel,
@@ -88,7 +91,17 @@ export function Wizard({
         <WizardPanelsStepper steps={steps} currentIndex={stepIndex} onStepClick={goTo} ariaLabel={ariaLabel} variant="compact" />
       </div>
 
-      <div className="mt-4">
+      <div
+        className="mt-4"
+        onKeyDown={advanceOnEnter ? (event) => {
+          if (event.key !== "Enter" || isFinalStep || busy || event.defaultPrevented) return
+          const target = event.target
+          if (target instanceof HTMLInputElement && !["checkbox", "radio", "button", "submit"].includes(target.type)) {
+            event.preventDefault()
+            void next()
+          }
+        } : undefined}
+      >
         {isFinalStep && finalReview ? finalReview : children(stepIndex)}
       </div>
 

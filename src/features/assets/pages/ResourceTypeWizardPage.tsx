@@ -160,6 +160,7 @@ export function ResourceTypeWizardPage() {
   const [step, setStep] = useState(0)
   const [missing, setMissing] = useState<string[]>([])
   const [stepError, setStepError] = useState<string | null>(null)
+  const [focusTick, setFocusTick] = useState(0)
   const [loadError, setLoadError] = useState<string | null>(null)
   const [loading, setLoading] = useState(Boolean(typeId))
   const [saving, setSaving] = useState(false)
@@ -181,6 +182,12 @@ export function ResourceTypeWizardPage() {
       })
     return () => controller.abort()
   }, [t, typeId])
+
+  useEffect(() => {
+    if (focusTick === 0) return
+    const frame = requestAnimationFrame(() => document.querySelector<HTMLElement>("[aria-invalid='true']")?.focus())
+    return () => cancelAnimationFrame(frame)
+  }, [focusTick])
 
   function updateField(localId: string, patch: Partial<DraftField>) {
     setDraft((current) => ({
@@ -205,7 +212,7 @@ export function ResourceTypeWizardPage() {
   function reportGaps(gaps: string[]): string | null {
     setMissing(gaps)
     if (gaps.length === 0) return null
-    queueMicrotask(() => document.querySelector<HTMLElement>("[aria-invalid='true']")?.focus())
+    setFocusTick((tick) => tick + 1)
     return `${t("assets.resourceTypes.wizard.missingTitle")} ${gaps.map(gapLabel).join(", ")}`
   }
 
@@ -213,6 +220,7 @@ export function ResourceTypeWizardPage() {
     const message = reportGaps(gapsFor("all"))
     if (message) {
       setStepError(message)
+      setStep(gapsFor("name").length > 0 ? 0 : 2)
       return
     }
     setStepError(null)
@@ -391,6 +399,7 @@ export function ResourceTypeWizardPage() {
           onFinish={save}
           busy={saving}
           stepError={stepError}
+          advanceOnEnter
           finalReview={review}
         >
           {body}
