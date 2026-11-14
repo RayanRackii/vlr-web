@@ -5219,6 +5219,25 @@
       "summarySpaces_many": "{{count}} spaces",
       "summaryItems_zero": "{{count}} items",
       "summaryItems_many": "{{count}} items",
+      "filters": {
+        "label": "Resource filters",
+        "searchLabel": "Search resources",
+        "searchPlaceholder": "Search by name",
+        "all": "All",
+        "spaces": "Spaces",
+        "items": "Items",
+        "kind": "Resource type",
+        "emptyTitle": "No resources found",
+        "emptyDescription": "Adjust the search or the filter."
+      },
+      "columns": {
+        "resource": "Resource",
+        "price": "Price",
+        "durations": "Durations",
+        "capacity": "Capacity",
+        "actions": "Actions"
+      },
+      "rowMenu": "Actions for {{name}}",
       "sheetTabs": {
         "basic": "Basic",
         "pricingRules": "Pricing & rules",
