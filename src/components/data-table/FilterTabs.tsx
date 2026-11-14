@@ -26,9 +26,8 @@ function Tab({ active, onClick, label, count }: { active: boolean; onClick: () =
       aria-pressed={active}
       onClick={onClick}
       className={cn(
-        "touch-target relative inline-flex min-h-11 shrink-0 cursor-pointer items-center gap-2 whitespace-nowrap px-1 text-sm outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring",
-        "after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 after:rounded-full",
-        active ? "font-medium text-primary after:bg-primary" : "text-muted-foreground after:bg-transparent hover:text-foreground",
+        "touch-target inline-flex min-h-11 shrink-0 cursor-pointer items-center gap-2 whitespace-nowrap border-b-2 px-1 text-sm outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring",
+        active ? "border-primary font-medium text-primary" : "border-transparent text-muted-foreground hover:text-foreground",
       )}
     >
       {label}

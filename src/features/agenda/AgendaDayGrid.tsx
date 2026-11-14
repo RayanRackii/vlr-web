@@ -14,7 +14,7 @@ import { clipBlock, formatClock, layoutLanes, type AgendaBlock, type AgendaRow }
 import type { AgendaSourceId } from "./useAgendaDay"
 import { AgendaProductPads } from "./AgendaProductPads"
 
-const RESOURCE_COLUMN = "grid-cols-[13.75rem_minmax(0,1fr)]"
+const RESOURCE_COLUMN = "grid-cols-[13.75rem_minmax(0,1fr)] lg:grid-cols-[16rem_minmax(0,1fr)]"
 // Row geometry: one lane is 3.5rem (block 3.25rem + gap); a single-lane row is 4.25rem.
 const LANE_REM = 3.5
 const ROW_PADDING_REM = 0.75
@@ -150,7 +150,7 @@ export function AgendaDayGrid({ loading, failedSources, rows, start: axisStart, 
                         onClick={() => setSelectedKey(block.key)}
                       >
                         {focusedProductId === block.productId && focusDate && <AgendaProductPads block={block} date={focusDate} timeZone={timeZone} />}
-                        <span className="relative shrink-0 text-xs tabular-nums text-muted-foreground">{formatClock(block.start)} – {formatClock(block.end)}</span>
+                        <span className="relative shrink-0 text-xs tabular-nums text-muted-foreground">{clipBlock(block, axisStart, axisEnd)?.allDay ? t("agendas.grid.allDay") : `${formatClock(block.start)} – ${formatClock(block.end)}`}</span>
                         <span className={cn("relative truncate font-medium", agendaKindTone[block.kind].title)}>{title}</span>
                       </button>
                     )
@@ -176,7 +176,7 @@ export function AgendaDayGrid({ loading, failedSources, rows, start: axisStart, 
       {hours.length > 14 && <p className="border-t px-5 py-1 text-right text-xs text-muted-foreground">{t("agendas.grid.scrollHint")}</p>}
       <div className="relative">
       <section aria-label={t("staffAgenda.grid")} className="overflow-x-auto">
-        <div style={{ minWidth: `calc(13.75rem + ${hours.length * 4.5}rem)` }}>
+        <div style={{ minWidth: `calc(16rem + ${hours.length * 4.5}rem)` }}>
           <div className={cn("grid border-t", RESOURCE_COLUMN)}>
             <span className="sticky left-0 z-10 bg-card px-5 py-3 text-xs font-medium uppercase tracking-wide text-muted-foreground">{t("staffAgenda.recurso")}</span>
             <div className="relative h-11" aria-hidden="true">
@@ -188,10 +188,12 @@ export function AgendaDayGrid({ loading, failedSources, rows, start: axisStart, 
             </div>
           </div>
           {rows.map((row) => {
-            const placed = layoutLanes(row.blocks).flatMap(({ block, lane }) => {
+            // Lanes follow what is drawn (the clipped range), so a block hidden by the axis cannot push others down.
+            const drawn = row.blocks.flatMap((block) => {
               const clip = clipBlock(block, axisStart, axisEnd)
-              return clip ? [{ block, lane, clip }] : []
+              return clip ? [{ block, clip, start: clip.start, end: clip.end }] : []
             })
+            const placed = layoutLanes(drawn).map(({ block: item, lane }) => ({ block: item.block, clip: item.clip, lane }))
             const hidden = row.blocks.length - placed.length
             const laneCount = Math.max(1, placed.reduce((max, item) => Math.max(max, item.lane + 1), 0))
             const empty = row.blocks.length === 0
@@ -207,7 +209,7 @@ export function AgendaDayGrid({ loading, failedSources, rows, start: axisStart, 
                 <section aria-label={row.name} className={cn("group/row grid border-t", RESOURCE_COLUMN)}>
                   <div className="sticky left-0 z-10 flex min-w-0 items-center justify-between gap-1 bg-card px-5 py-3">
                     <div className="min-w-0">
-                      <h2 className="truncate text-sm font-medium">{row.name}</h2>
+                      <h2 className="text-sm font-medium">{row.name}</h2>
                       <p className="truncate text-xs text-muted-foreground">{resourceMeta(row, t)}</p>
                       {hidden > 0 && <p className="truncate text-xs text-muted-foreground">{t("agendas.grid.outside", { count: hidden })}</p>}
                     </div>

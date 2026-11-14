@@ -6,7 +6,7 @@ import { agendaTypes } from "./urlState"
 import type { AgendaWeekRow } from "./dayGridModel"
 import type { AgendaSourceId } from "./useAgendaDay"
 
-const WEEK_COLUMNS = "sm:grid sm:grid-cols-[13.75rem_repeat(7,minmax(0,1fr))]"
+const WEEK_COLUMNS = "sm:grid sm:grid-cols-[13.75rem_repeat(7,minmax(0,1fr))] lg:grid-cols-[16rem_repeat(7,minmax(0,1fr))]"
 
 function weekdayLabel(civil: string, locale: string): string {
   const [year, month, day] = civil.split("-").map(Number)

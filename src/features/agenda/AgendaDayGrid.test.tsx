@@ -85,6 +85,36 @@ describe("agenda day grid (timeline)", () => {
   })
 })
 
+describe("polish", () => {
+  it("makes a full-day block span the whole track, with a visible tinted fill and the 3px kind border", () => {
+    setup([row({ blocks: [block({ start: 0, end: 1440, key: "long" })] })])
+    const item = within(section("Cortadora")).getByRole("button", { name: /Pedido/ })
+    expect(parseFloat(item.style.left)).toBe(0)
+    expect(parseFloat(item.style.width)).toBeCloseTo(100, 3)
+    expect(item.className).toContain("color-mix")
+    expect(item).toHaveClass("border-l-[3px]", "border-l-primary")
+  })
+
+  it("spans a block clipped at one edge from its visible start to the axis edge", () => {
+    setup([row({ blocks: [block({ start: 900, end: 1500, key: "late" })] })])
+    const item = within(section("Cortadora")).getByRole("button", { name: /Pedido/ })
+    expect(parseFloat(item.style.left)).toBeCloseTo(((900 - 480) / 720) * 100, 3)
+    expect(parseFloat(item.style.width)).toBeCloseTo(((1200 - 900) / 720) * 100, 3)
+  })
+
+  it("lanes by the clipped range: a block hidden before the axis does not push another down", () => {
+    setup([row({ blocks: [block({ key: "early", start: 0, end: 600 }), block({ key: "in", start: 540, end: 700, displayNumber: "#9" })] })])
+    const [first, second] = within(section("Cortadora")).getAllByRole("button", { name: /Pedido/ })
+    expect([first.style.top, second.style.top]).toEqual(["0.5rem", "4rem"])
+  })
+
+  it("uses a wider resource column from lg and lets the name wrap", () => {
+    setup([row({ name: "Cortadora Laser Gama" })])
+    expect(section("Cortadora Laser Gama")).toHaveClass("lg:grid-cols-[16rem_minmax(0,1fr)]")
+    expect(screen.getByRole("heading", { name: "Cortadora Laser Gama" })).not.toHaveClass("truncate")
+  })
+})
+
 describe("24 hour mode", () => {
   it("keeps the outside-hours hint in the resource cell, off the track", () => {
     setup([row({ blocks: [block({ start: 0, end: 300 })] })])
@@ -140,8 +170,16 @@ describe("below md", () => {
     expect(document.querySelector("[data-layout='list']")).not.toBeNull()
     const card = section("Cortadora")
     expect(within(card).getByText("09:00 – 11:00")).toBeInTheDocument()
+    expect(within(section("Kit Som")).queryByText("Dia inteiro")).not.toBeInTheDocument()
     expect(within(card).getByRole("button", { name: /Pedido/ })).toHaveTextContent("Pedido #30 · E2E Customer")
     await userEvent.click(within(section("Kit Som")).getByRole("button", { name: "Ver reservas de Kit Som" }))
     expect(onCreateReservation).toHaveBeenCalledWith("r2", 480)
+  })
+
+  it("shows Dia inteiro instead of 00:00 – 23:59 for a block covering the visible day", () => {
+    vi.stubGlobal("matchMedia", vi.fn(() => ({ matches: false, addEventListener: vi.fn(), removeEventListener: vi.fn() })))
+    setup([row({ blocks: [block({ start: 0, end: 1440 })] })])
+    expect(within(section("Cortadora")).getByText("Dia inteiro")).toBeInTheDocument()
+    expect(screen.queryByText(/00:00/)).not.toBeInTheDocument()
   })
 })
