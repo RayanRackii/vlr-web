@@ -163,7 +163,11 @@
   },
   "app": {
     "name": "Rolvix",
-    "authenticatedArea": "Área autenticada"
+    "authenticatedArea": "Área autenticada",
+    "errorBoundary": {
+      "title": "Algo deu errado nesta tela",
+      "home": "Voltar ao início"
+    }
   },
   "common": {
     "close": "Fechar",
@@ -317,7 +321,8 @@
     "loadTaxonomy": "Não foi possível carregar categorias e tags.",
     "saveTaxonomy": "Não foi possível salvar categorias e tags.",
     "deleteTaxonomy": "Não foi possível excluir a categoria ou tag.",
-    "loadCatalogAgenda": "Não foi possível carregar a agenda."
+    "loadCatalogAgenda": "Não foi possível carregar a agenda.",
+    "timeout": "A conexão demorou demais. Tente novamente."
   },
   "trial": {
     "banner": {
@@ -5772,6 +5777,38 @@
       "subtitle": "Ocupação dos recursos utilizados pelo produto no período."
     },
     "chooseProduct": "Escolha um produto para consultar sua agenda.",
+    "newReservation": "Nova reserva",
+    "nav": {
+      "previousDay": "Dia anterior",
+      "nextDay": "Próximo dia",
+      "previousWeek": "Semana anterior",
+      "nextWeek": "Próxima semana",
+      "pickDate": "Escolher data"
+    },
+    "chips": {
+      "pedido": "Pedidos",
+      "reserva": "Reservas",
+      "manutencao": "Manutenção",
+      "bloqueio": "Bloqueios"
+    },
+    "filters": {
+      "title": "Filtros",
+      "open": "Mostrar filtros",
+      "collapse": "Recolher filtros",
+      "resources": "Recursos · {{selected}} de {{total}}",
+      "resourcesList": "Recursos",
+      "noCategory": "Sem categoria",
+      "group": "Todos os recursos de {{name}}",
+      "noResources": "Nenhum recurso encontrado.",
+      "product": "Produto",
+      "allProducts": "Todos os produtos",
+      "pickProduct": "Escolha um produto",
+      "options": "Opções",
+      "onlyFree": "Só recursos com horário livre",
+      "showClosed": "Mostrar horas fechadas",
+      "clear": "Limpar filtros",
+      "sheetDescription": "Filtre os recursos e o produto exibidos na agenda."
+    },
     "prep": "Preparo",
     "cleanup": "Limpeza",
     "selectedProductOrders": "Pedidos do produto: {{count}}",

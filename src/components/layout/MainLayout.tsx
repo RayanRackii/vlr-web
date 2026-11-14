@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 
 import { AccessDeniedPage } from "@/components/layout/AccessDeniedPage"
+import { AppErrorBoundary } from "@/components/layout/AppErrorBoundary"
 import { AppShell } from "@/components/layout/AppShell"
 import { ModuleIntroLinksProvider } from "@/components/layout/ModuleIntroLinksContext"
 import { availableModuleIntros } from "@/components/layout/navigationIntros"
@@ -205,9 +206,11 @@ function MainLayoutShell({ children }: { children?: ReactNode }) {
     >
       <WorkOrderSyncHost />
       <Breadcrumb />
-      <Suspense fallback={<PageContentSkeleton rows={3} />}>
-        {children ?? <Outlet />}
-      </Suspense>
+      <AppErrorBoundary key={location.pathname}>
+        <Suspense fallback={<PageContentSkeleton rows={3} />}>
+          {children ?? <Outlet />}
+        </Suspense>
+      </AppErrorBoundary>
     </AppShell>
     </ModuleIntroLinksProvider>
   )

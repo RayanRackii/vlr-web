@@ -80,6 +80,7 @@ const loaders: Record<
 }
 
 const pending = new Map<string, Promise<void>>()
+const loadedBundles = new Map<string, CommonBundle>()
 
 /**
  * Makes sure the `common` bundle of `language` is registered on `instance`.
@@ -97,8 +98,7 @@ export function ensureLanguageBundle(
     return Promise.resolve()
   }
 
-  const key = `${language}`
-  const existing = pending.get(key)
+  const existing = pending.get(language)
   if (existing) {
     return existing.then(() => registerIfMissing(instance, language))
   }
@@ -109,13 +109,11 @@ export function ensureLanguageBundle(
       registerIfMissing(instance, language)
     })
     .finally(() => {
-      pending.delete(key)
+      pending.delete(language)
     })
-  pending.set(key, request)
+  pending.set(language, request)
   return request
 }
-
-const loadedBundles = new Map<string, CommonBundle>()
 
 function registerIfMissing(instance: I18nInstance, language: string): void {
   const bundle = loadedBundles.get(language)
