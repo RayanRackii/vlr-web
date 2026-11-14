@@ -3426,7 +3426,11 @@
         "category": "Tipo",
         "tag": "Tag",
         "location": "Localização",
-        "placeholder": "Filtrar..."
+        "placeholder": "Filtrar...",
+        "label": "Filtros de ativos",
+        "searchLabel": "Buscar ativos",
+        "searchPlaceholder": "Buscar por nome ou tag",
+        "all": "Todos"
       },
       "actions": {
         "add": "Adicionar",

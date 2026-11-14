@@ -3426,7 +3426,11 @@
         "category": "Type",
         "tag": "Tag",
         "location": "Location",
-        "placeholder": "Filter..."
+        "placeholder": "Filter...",
+        "label": "Assets filters",
+        "searchLabel": "Search assets",
+        "searchPlaceholder": "Search by name or tag",
+        "all": "All"
       },
       "actions": {
         "add": "Add",
