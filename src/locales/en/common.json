@@ -4148,10 +4148,35 @@
         "notes": "Notes",
         "notesPlaceholder": "Additional context for execution"
       },
+      "sections": {
+        "details": "Work order details"
+      },
+      "mode": {
+        "label": "Work order checklist",
+        "plan": "Use a plan checklist",
+        "adhoc": "Ad hoc"
+      },
+      "plan": {
+        "label": "Maintenance plan",
+        "placeholder": "Select a plan",
+        "hint": "The plan tasks become the work order checklist.",
+        "noTasks": "This plan has no tasks."
+      },
+      "checklist": {
+        "title": "Tasks",
+        "taskN": "Task {{n}}",
+        "taskPlaceholder": "E.g. Inspect equipment",
+        "mandatory": "Mandatory",
+        "add": "Add task",
+        "remove": "Remove task {{n}}",
+        "moveUp": "Move task {{n}} up",
+        "moveDown": "Move task {{n}} down"
+      },
       "validation": {
         "assetRequired": "Select an asset.",
         "dateRequired": "Enter the scheduled date.",
-        "taskRequired": "Enter at least one task."
+        "taskRequired": "Enter at least one task.",
+        "planRequired": "Select a plan."
       },
       "errors": {
         "loadLookupsFailed": "Could not load assets and technicians.",
@@ -4166,7 +4191,8 @@
     "execution": {
       "breadcrumb": "WO {{id}} · {{asset}}",
       "title": "Work Order Execution",
-      "subtitle": "Asset {{tag}} — {{name}}",
+      "subtitle": "{{tag}} · WO {{code}}",
+      "details": "Work order details",
       "loading": "Loading work order...",
       "back": "Back to list",
       "tasksTitle": "Checklist",
@@ -6012,26 +6038,21 @@
     "eyebrow": "Operations · Maintenance",
     "subtitle": "Recurring plans and equipment work orders in one place.",
     "tabs": {
-      "hoje": "Today",
+      "agenda": "Schedule",
       "ordens": "Work orders",
       "planos": "Plans"
     },
     "sections": {
-      "hoje": "Plans whose first date is due and open work orders, including upcoming ones.",
-      "ordens": "Track work orders and their execution.",
-      "planos": "Organize recurring maintenance plans."
+      "overdue": "Overdue",
+      "week": "This week",
+      "upcoming": "Upcoming"
     },
     "newPlan": "New plan",
     "newOrder": "New work order",
     "generate": "Generate work order",
-    "search": "Search plans, work orders or equipment",
+    "search": "Search equipment, plan or technician",
     "filters": "Filters",
     "status": "Status",
-    "type": "Type",
-    "allStatuses": "All statuses",
-    "allTypes": "All types",
-    "due": "First date due",
-    "firstDue": "First due date: {{date}}",
     "emptyTitle": "No items to display",
     "emptyDescription": "Available items will appear here. Adjust the filters or create a new item.",
     "clear": "Clear search/filters",
@@ -6039,7 +6060,41 @@
     "loadError": "Unable to load maintenance.",
     "generateDescription": "Choose eligible equipment and a date. The work order will use the plan checklist.",
     "checklist": "Plan checklist",
-    "sourcePlan": "Source plan: {{name}}"
+    "sourcePlan": "Source plan: {{name}}",
+    "noTechnician": "No technician",
+    "needsOrder": "Needs a WO",
+    "auto": "Automatic",
+    "agendaFilters": {
+      "label": "Filter the schedule",
+      "all": "All",
+      "overdue": "Overdue",
+      "unassigned": "No technician",
+      "mine": "Mine"
+    },
+    "columns": {
+      "equipment": "Equipment",
+      "plan": "Plan",
+      "technician": "Technician",
+      "date": "Date",
+      "status": "Status",
+      "action": "Action",
+      "frequency": "Frequency",
+      "nextDue": "Next due"
+    },
+    "overdueDays_one": "{{count}} day ago",
+    "overdueDays_other": "{{count}} days ago",
+    "overdueDays_many": "{{count}} days ago",
+    "every_one": "Every {{count}} day",
+    "every_other": "Every {{count}} days",
+    "every_many": "Every {{count}} days",
+    "generateOverdue": "Generate overdue WOs ({{count}})",
+    "generating": "Generating {{done}} of {{total}}…",
+    "bulkTitle": "Generate {{count}} overdue WOs?",
+    "bulkDescription": "One work order is created for each overdue equipment, dated today and without a technician. You can assign a technician later.",
+    "bulkSummary": "{{created}} WOs generated, {{skipped}} already existed, {{failed}} failed.",
+    "coverageFailed_one": "Could not compute coverage for {{count}} plan. The schedule may be incomplete.",
+    "coverageFailed_other": "Could not compute coverage for {{count}} plans. The schedule may be incomplete.",
+    "coverageFailed_many": "Could not compute coverage for {{count}} plans. The schedule may be incomplete."
   },
   "cadastro": {
     "saveBeforeContinue": "Save changes or restore the values before changing steps.",
