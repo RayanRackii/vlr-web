@@ -29,8 +29,6 @@ const pageLegacy = [
   "src/features/catalog/pages/CatalogPolicyPage.tsx",
   "src/features/catalog/pages/CatalogProductEditorPage.tsx",
   "src/features/catalog/pages/CustomerGroupsPage.tsx",
-  "src/features/catalog/pages/PedidoRequestDetailPage.tsx",
-  "src/features/catalog/pages/PedidosPage.tsx",
   "src/features/catalog/pages/PortalCartPage.tsx",
   "src/features/catalog/pages/PortalCatalogPage.tsx",
   "src/features/catalog/pages/PortalCatalogProductPage.tsx",

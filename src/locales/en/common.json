@@ -5875,6 +5875,7 @@
     "createdAt": "Created on",
     "files": "Files",
     "customer": "Customer",
+    "columns": { "order": "Order", "customer": "Customer", "total": "Total", "date": "Date" },
     "tabs": {
       "todos": "All",
       "pedidos": "Orders",
