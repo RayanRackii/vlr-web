@@ -10,6 +10,8 @@ type FormPageBaseProps = {
   /** Real dirty state of the form; Save is disabled while false. */
   dirty: boolean
   saving?: boolean
+  /** When false (create pages), Save is enabled by !saveDisabled alone. Default true. */
+  saveRequiresDirty?: boolean
   /** Disable Save while keeping the bar visible (e.g. invalid fields). */
   saveDisabled?: boolean
   saveLabel?: string
@@ -40,6 +42,7 @@ export function FormPage(props: FormPageProps) {
     header,
     dirty,
     saving = false,
+    saveRequiresDirty,
     saveDisabled,
     saveLabel,
     savingLabel,
@@ -66,6 +69,7 @@ export function FormPage(props: FormPageProps) {
       <SaveBar
         dirty={dirty}
         saving={saving}
+        saveRequiresDirty={saveRequiresDirty}
         saveDisabled={saveDisabled}
         saveLabel={saveLabel}
         savingLabel={savingLabel}

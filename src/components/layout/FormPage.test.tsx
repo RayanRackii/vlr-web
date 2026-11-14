@@ -41,6 +41,13 @@ describe("SaveBar", () => {
     expect(onDiscard).toHaveBeenCalledTimes(1)
   })
 
+  it("enables Save on a pristine form when saveRequiresDirty is false", () => {
+    const { rerender } = render(<SaveBar dirty={false} saveRequiresDirty={false} onSave={vi.fn()} />)
+    expect(screen.getByRole("button", { name: "Salvar" })).toBeEnabled()
+    rerender(<SaveBar dirty={false} saveRequiresDirty={false} saveDisabled onSave={vi.fn()} />)
+    expect(screen.getByRole("button", { name: "Salvar" })).toBeDisabled()
+  })
+
   it("disables Save while saveDisabled and shows the saving label", () => {
     const { rerender } = render(<SaveBar dirty saveDisabled onSave={vi.fn()} />)
     expect(screen.getByRole("button", { name: "Salvar" })).toBeDisabled()

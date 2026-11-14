@@ -20,6 +20,17 @@ describe("FormRow", () => {
     expect(error).toHaveAttribute("id", "n-error")
   })
 
+  it("forces the control id to htmlFor and sets aria-required", () => {
+    render(
+      <FormRow label="Nome" htmlFor="n" required>
+        <input id="other" />
+      </FormRow>,
+    )
+    const input = screen.getByLabelText("Nome")
+    expect(input).toHaveAttribute("id", "n")
+    expect(input).toHaveAttribute("aria-required", "true")
+  })
+
   it("omits describedby, invalid and alert when there is no hint or error", () => {
     render(
       <FormRow label="Nome" htmlFor="n">

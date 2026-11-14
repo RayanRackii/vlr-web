@@ -40,7 +40,12 @@ export function FormGrid({
   return <div className={cn("grid gap-4", columns === 2 && "sm:grid-cols-2")}>{children}</div>
 }
 
-type ControlProps = { id?: string; "aria-describedby"?: string; "aria-invalid"?: boolean }
+type ControlProps = {
+  id?: string
+  "aria-describedby"?: string
+  "aria-invalid"?: boolean
+  "aria-required"?: boolean
+}
 
 /**
  * One field row: label above the control, hint under the label, error under
@@ -70,10 +75,11 @@ export function FormRow({
 
   const control = isValidElement<ControlProps>(children)
     ? cloneElement(children as ReactElement<ControlProps>, {
-        id: children.props.id ?? htmlFor,
+        id: htmlFor,
         "aria-describedby":
           [children.props["aria-describedby"], describedBy].filter(Boolean).join(" ") || undefined,
         "aria-invalid": error ? true : children.props["aria-invalid"],
+        "aria-required": required ? true : children.props["aria-required"],
       })
     : children
 

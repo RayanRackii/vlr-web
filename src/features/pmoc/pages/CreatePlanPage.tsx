@@ -273,6 +273,7 @@ export function CreatePlanPage({ maintenance = false }: { maintenance?: boolean 
       submitFormId={formId}
       dirty={form.formState.isDirty}
       saving={form.formState.isSubmitting}
+      saveRequiresDirty={false}
       saveDisabled={!isPlanValid}
       saveLabel={t("pmoc.create.actions.save")}
       savingLabel={t("pmoc.create.actions.saving")}

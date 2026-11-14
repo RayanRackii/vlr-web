@@ -10,6 +10,8 @@ type SaveBarBaseProps = {
   /** Shows the unsaved-changes text (with the count) while dirty; omit to hide it. */
   unsavedCount?: number
   saving?: boolean
+  /** When false (create pages), Save is enabled by !saveDisabled alone. Default true. */
+  saveRequiresDirty?: boolean
   /** Disable Save while keeping the bar visible (e.g. invalid fields). */
   saveDisabled?: boolean
   saveLabel?: string
@@ -34,6 +36,7 @@ export function SaveBar({
   dirty,
   unsavedCount,
   saving = false,
+  saveRequiresDirty = true,
   saveDisabled = false,
   saveLabel,
   savingLabel,
@@ -79,7 +82,7 @@ export function SaveBar({
               className="min-h-11 w-full md:w-auto"
               loading={saving}
               loadingLabel={savingLabel}
-              disabled={!dirty || saveDisabled}
+              disabled={(saveRequiresDirty && !dirty) || saveDisabled}
               onClick={submitFormId ? undefined : onSave}
             >
               {label}
