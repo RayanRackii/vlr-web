@@ -16,8 +16,16 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { LoadingButton } from "@/components/ui/loading-button"
-import { PeopleEmptyState } from "@/features/users/components/PeopleEmptyState"
+import { EmptyState } from "@/components/ui/empty-state"
 import { useModuleIntroLink } from "@/hooks/useModuleIntroLink"
+import {
+  PEOPLE_ACTIONS_HINT,
+  PEOPLE_ROW_ACTIONS,
+  PEOPLE_ROW_ACTION_BUTTON,
+  PEOPLE_ROW_CHEVRON,
+  PEOPLE_ROW_DELETE_BUTTON,
+  PEOPLE_SURFACE,
+} from "@/features/users/components/peopleRowStyles"
 import { PeopleMobileActionSheet } from "@/features/users/components/PeopleMobileActionSheet"
 import { usePeopleMobileActions } from "@/features/users/hooks/usePeopleMobileActions"
 import { Can } from "@/features/users/permissions/Can"
@@ -30,6 +38,7 @@ import type {
   PermissionCatalogItemDto,
   RoleResponse,
 } from "@/features/users/schemas/roleSchemas"
+import { cn } from "@/lib/utils"
 import { deleteRole } from "@/features/users/services/rolesService"
 
 type PeopleRolesTabProps = {
@@ -100,7 +109,7 @@ export function PeopleRolesTab({ roles, onRolesChanged }: PeopleRolesTabProps) {
       </div>
 
       {visibleRoles.length === 0 ? (
-        <PeopleEmptyState
+        <EmptyState
           icon={ShieldCheck}
           title={t("peopleAccess.roles.empty")}
           description={t("peopleAccess.roles.emptyDescription")}
@@ -116,16 +125,16 @@ export function PeopleRolesTab({ roles, onRolesChanged }: PeopleRolesTabProps) {
         />
       ) : (
         <>
-          <p className="people-actions-hint">
+          <p className={PEOPLE_ACTIONS_HINT}>
             <ChevronRight aria-hidden strokeWidth={1.75} />
             {t("peopleAccess.mobileActions.hint")}
           </p>
-          <ul className="people-role-list">
+          <ul className={cn(PEOPLE_SURFACE, "divide-y divide-border overflow-hidden")}>
             {visibleRoles.map((role) => {
               const itemPolicy = getRoleEditorPolicy(role)
 
               return (
-                <li key={role.id} className="people-role-row">
+                <li key={role.id} className="relative flex items-center justify-between gap-4 p-4">
                   <div className="min-w-0 space-y-1">
                     <div className="flex flex-wrap items-center gap-2">
                       <p className="break-words text-sm font-medium [overflow-wrap:anywhere]">
@@ -141,12 +150,12 @@ export function PeopleRolesTab({ roles, onRolesChanged }: PeopleRolesTabProps) {
                       <p className="text-xs text-muted-foreground">{role.description}</p>
                     ) : null}
                   </div>
-                  <div className="people-row-actions">
+                  <div className={PEOPLE_ROW_ACTIONS}>
                     <Button
                       type="button"
                       variant="outline"
                       size="sm"
-                      className="people-card-action"
+                      className={PEOPLE_ROW_ACTION_BUTTON}
                       aria-label={
                         isMobile
                           ? role.name
@@ -176,7 +185,7 @@ export function PeopleRolesTab({ roles, onRolesChanged }: PeopleRolesTabProps) {
                         type="button"
                         variant="ghost"
                         size="sm"
-                        className="people-delete-action"
+                        className={PEOPLE_ROW_DELETE_BUTTON}
                         onClick={() => {
                           setRolePendingDelete(role)
                         }}
@@ -186,7 +195,7 @@ export function PeopleRolesTab({ roles, onRolesChanged }: PeopleRolesTabProps) {
                     ) : null}
                   </div>
                   <ChevronRight
-                    className="people-row-chevron"
+                    className={PEOPLE_ROW_CHEVRON}
                     aria-hidden
                     strokeWidth={1.75}
                   />

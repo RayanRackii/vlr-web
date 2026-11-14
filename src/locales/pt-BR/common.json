@@ -4331,6 +4331,7 @@
       "email": "E-mail",
       "sendInvite": "Enviar convite",
       "assign": "Atribuir funções",
+      "rowMenu": "Ações de {{name}}",
       "assignTitle": "Atribuir funções",
       "assignDescription": "Defina as funções de {{name}}.",
       "saveRoles": "Salvar funções",

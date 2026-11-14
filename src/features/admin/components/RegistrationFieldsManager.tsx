@@ -40,6 +40,7 @@ import {
 } from "@/components/ui/select"
 import { generateRegistrationFieldKey } from "@/features/admin/lib/generateRegistrationFieldKey"
 import { registrationFieldTypeLabelKey } from "@/features/admin/lib/registrationFieldTypeLabel"
+import { cn } from "@/lib/utils"
 import {
   FIELD_TYPE_OPTIONS,
   isReservedRegisterFieldKey,
@@ -53,8 +54,16 @@ import {
   listTenantRegistrationFields,
   updateRegistrationField,
 } from "@/features/tenantPortal/services/tenantPortalService"
-import "@/features/users/people-access.css"
-import { PeopleEmptyState } from "@/features/users/components/PeopleEmptyState"
+import {
+  PEOPLE_ACTIONS_HINT,
+  PEOPLE_ICON_TILE,
+  PEOPLE_ROW_ACTIONS,
+  PEOPLE_ROW_ACTION_BUTTON,
+  PEOPLE_ROW_CHEVRON,
+  PEOPLE_ROW_DELETE_BUTTON,
+  PEOPLE_SURFACE,
+} from "@/features/users/components/peopleRowStyles"
+import { EmptyState } from "@/components/ui/empty-state"
 import { PeopleMobileActionSheet } from "@/features/users/components/PeopleMobileActionSheet"
 import { usePeopleMobileActions } from "@/features/users/hooks/usePeopleMobileActions"
 
@@ -286,8 +295,8 @@ export function RegistrationFieldsManager({
   )
 
   return (
-    <div className="people-fields-grid min-w-0">
-      <section className="people-field-section people-built-in space-y-4">
+    <div className="grid min-w-0 gap-4 xl:grid-cols-[20rem_minmax(0,1fr)]">
+      <section className={cn(PEOPLE_SURFACE, "space-y-4 self-start p-4 sm:p-5")}>
         <div className="space-y-1">
           <h2 className="text-base font-semibold tracking-tight">
             {t("admin.registrationFields.builtIn.title")}
@@ -300,7 +309,7 @@ export function RegistrationFieldsManager({
           {BUILT_IN_FIELDS.map((field) => (
             <li
               key={field.id}
-              className="people-built-in-row flex-wrap"
+              className="flex flex-wrap items-center gap-2.5 rounded-lg bg-muted/60 px-3 py-2.5"
             >
               <LockKeyhole aria-hidden strokeWidth={1.75} className="size-4 shrink-0 text-muted-foreground" />
               <p className="min-w-0 flex-1 text-sm font-medium">{t(field.labelKey)}</p>
@@ -312,7 +321,7 @@ export function RegistrationFieldsManager({
         </ul>
       </section>
 
-      <section className="people-field-section space-y-4">
+      <section className={cn(PEOPLE_SURFACE, "space-y-4 self-start p-4 sm:p-5")}>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div className="space-y-1">
             <h2 className="text-base font-semibold tracking-tight">
@@ -328,33 +337,33 @@ export function RegistrationFieldsManager({
         {loading ? (
           <PageContentSkeleton rows={3} />
         ) : customFields.length === 0 ? (
-          <PeopleEmptyState
+          <EmptyState
             icon={ListPlus}
             title={t("admin.registrationFields.empty")}
             description={t("admin.registrationFields.emptyDescription")}
           />
         ) : (
           <>
-          {canWrite ? <p className="people-actions-hint"><ChevronRight aria-hidden strokeWidth={1.75} />{t("peopleAccess.mobileActions.hint")}</p> : null}
-          <ul className="people-custom-fields">
+          {canWrite ? <p className={PEOPLE_ACTIONS_HINT}><ChevronRight aria-hidden strokeWidth={1.75} />{t("peopleAccess.mobileActions.hint")}</p> : null}
+          <ul className="divide-y divide-border">
             {customFields.map((field) => {
               const Icon = FIELD_ICONS[field.fieldType] ?? Type
               return (
-                <li key={field.id} className="people-field-row">
-                  <span className="people-field-icon"><Icon aria-hidden strokeWidth={1.75} /></span>
-                  <div className="people-field-name">
+                <li key={field.id} className="relative flex flex-wrap items-center gap-3 py-3.5 transition-colors">
+                  <span className={PEOPLE_ICON_TILE}><Icon aria-hidden strokeWidth={1.75} /></span>
+                  <div className="min-w-0 flex-1">
                     <p className="text-sm font-semibold break-words">{field.label}</p>
                     <p className="text-xs font-mono text-muted-foreground break-all">{field.fieldKey}</p>
                   </div>
-                  <div className="people-field-tags min-w-0 max-w-full">
+                  <div className="flex min-w-0 max-w-full flex-wrap justify-end gap-1.5 max-lg:flex-col max-lg:items-end">
                     <Badge variant="outline">{t(registrationFieldTypeLabelKey(field.fieldType))}</Badge>
                     <Badge variant={field.isRequired ? "secondary" : "outline"}>
                       {t(field.isRequired ? "admin.registrationFields.required" : "admin.registrationFields.optional")}
                     </Badge>
                   </div>
                   {canWrite ? (
-                    <div className="people-row-actions">
-                      <Button type="button" variant="outline" size="sm" className="people-card-action" aria-label={isMobile ? field.label : t("common.edit")} aria-haspopup={isMobile ? "dialog" : undefined} aria-expanded={isMobile ? actionField?.id === field.id : undefined} onClick={(event) => {
+                    <div className={PEOPLE_ROW_ACTIONS}>
+                      <Button type="button" variant="outline" size="sm" className={PEOPLE_ROW_ACTION_BUTTON} aria-label={isMobile ? field.label : t("common.edit")} aria-haspopup={isMobile ? "dialog" : undefined} aria-expanded={isMobile ? actionField?.id === field.id : undefined} onClick={(event) => {
                         if (isMobile) {
                           actionTriggerRef.current = event.currentTarget
                           setActionField(field)
@@ -364,8 +373,8 @@ export function RegistrationFieldsManager({
                       }}>
                         <span>{t("common.edit")}</span>
                       </Button>
-                      <ChevronRight className="people-row-chevron" aria-hidden strokeWidth={1.75} />
-                      <Button type="button" variant="ghost" size="sm" className="people-delete-action" onClick={() => { setFieldPendingDelete(field) }}>
+                      <ChevronRight className={PEOPLE_ROW_CHEVRON} aria-hidden strokeWidth={1.75} />
+                      <Button type="button" variant="ghost" size="sm" className={PEOPLE_ROW_DELETE_BUTTON} onClick={() => { setFieldPendingDelete(field) }}>
                         {t("common.delete")}
                       </Button>
                     </div>

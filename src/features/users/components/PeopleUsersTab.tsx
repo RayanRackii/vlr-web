@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { KeyRound, UserPlus, Users } from "lucide-react"
+import { KeyRound, MoreHorizontal, Users } from "lucide-react"
 import { useForm, useWatch } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
@@ -10,6 +10,13 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import type { EmptyStateProps } from "@/components/ui/empty-state"
 import { Checkbox } from "@/components/ui/checkbox"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { StatusBadge } from "@/components/ui/status"
 import {
   Dialog,
   DialogContent,
@@ -57,9 +64,12 @@ import {
 
 type PeopleUsersTabProps = {
   roles: readonly RoleResponse[]
+  /** The invite dialog is opened from the page header, so the page owns its state. */
+  inviteOpen: boolean
+  onInviteOpenChange: (open: boolean) => void
 }
 
-export function PeopleUsersTab({ roles }: PeopleUsersTabProps) {
+export function PeopleUsersTab({ roles, inviteOpen, onInviteOpenChange }: PeopleUsersTabProps) {
   const { t } = useTranslation()
   const learnMore = useModuleIntroLink("peoplePortal")
   const { currentUser, refresh, can } = usePermissions()
@@ -71,7 +81,6 @@ export function PeopleUsersTab({ roles }: PeopleUsersTabProps) {
   const [searchError, setSearchError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [loadError, setLoadError] = useState<string | null>(null)
-  const [inviteOpen, setInviteOpen] = useState(false)
   const [assigning, setAssigning] = useState<TenantMember | null>(null)
 
   const assignableRoles = useMemo(() => listAssignableRoles(roles), [roles])
@@ -149,7 +158,7 @@ export function PeopleUsersTab({ roles }: PeopleUsersTabProps) {
     try {
       await inviteTenantMember(values)
       toast.success(t("peopleAccess.toasts.inviteSuccess"))
-      setInviteOpen(false)
+      onInviteOpenChange(false)
       inviteForm.reset({ fullName: "", email: "", roleIds: [] })
       await loadMembers()
     } catch (error: unknown) {
@@ -204,11 +213,13 @@ export function PeopleUsersTab({ roles }: PeopleUsersTabProps) {
     setAppliedQuery(next)
   }
 
-  function openInvite() {
-    inviteForm.reset({ fullName: "", email: "", roleIds: [] })
-    inviteForm.clearErrors()
-    setInviteOpen(true)
-  }
+  const { reset: resetInviteForm, clearErrors: clearInviteErrors } = inviteForm
+  useEffect(() => {
+    if (inviteOpen) {
+      resetInviteForm({ fullName: "", email: "", roleIds: [] })
+      clearInviteErrors()
+    }
+  }, [inviteOpen, resetInviteForm, clearInviteErrors])
 
   function openAssign(member: TenantMember) {
     setAssigning(member)
@@ -230,14 +241,14 @@ export function PeopleUsersTab({ roles }: PeopleUsersTabProps) {
     action: appliedQuery ? (
       <Button onClick={() => { setQuery(""); setAppliedQuery(""); setSearchError(null); setPage(1) }}>{t("emptyStates.clearSearch")}</Button>
     ) : (
-      <Can permission="core.users.invite"><Button onClick={openInvite}>{t("peopleAccess.users.invite")}</Button></Can>
+      <Can permission="core.users.invite"><Button onClick={() => { onInviteOpenChange(true) }}>{t("peopleAccess.users.invite")}</Button></Can>
     ),
   }
 
   function identity(member: TenantMember) {
     return (
       <div className="flex min-w-0 items-center gap-3">
-        <span className="grid size-9 shrink-0 place-items-center rounded-full bg-accent text-xs font-semibold uppercase text-accent-foreground" aria-hidden>{member.fullName.trim().split(/\s+/).slice(0, 2).map((part) => part[0]).join("")}</span>
+        <span className="grid size-9 shrink-0 place-items-center rounded-full bg-accent text-xs font-semibold uppercase text-accent-foreground" aria-hidden="true">{member.fullName.trim().split(/\s+/).slice(0, 2).map((part) => part[0]).join("")}</span>
         <div className="min-w-0">
           <p className="font-semibold [overflow-wrap:anywhere]">{member.fullName}</p>
           <p className="text-sm text-muted-foreground [overflow-wrap:anywhere]">{member.email}</p>
@@ -250,7 +261,7 @@ export function PeopleUsersTab({ roles }: PeopleUsersTabProps) {
     return (
       <div className="flex flex-wrap gap-1.5">
         {member.roles.length > 0
-          ? member.roles.map((role) => <span className="break-words rounded-lg bg-accent px-2 py-0.5 text-xs font-semibold text-accent-foreground" key={role.id}>{role.name}</span>)
+          ? member.roles.map((role) => <Badge variant="secondary" className="h-auto break-words px-2 py-0.5 text-xs font-semibold" key={role.id}>{role.name}</Badge>)
           : <span className="text-sm italic text-muted-foreground">{t("peopleAccess.users.noRoles")}</span>}
       </div>
     )
@@ -258,20 +269,36 @@ export function PeopleUsersTab({ roles }: PeopleUsersTabProps) {
 
   function statusBadge(member: TenantMember) {
     return (
-      <Badge className="h-auto min-h-6 gap-1.5 px-2.5 py-0.5 text-xs font-semibold" variant={member.isActive ? "success" : "secondary"}>
-        <span className="inline-block size-1.5 shrink-0 rounded-full bg-current" aria-hidden />
+      <StatusBadge tone={member.isActive ? "success" : "neutral"}>
         {t(member.isActive ? "peopleAccess.status.active" : "peopleAccess.status.inactive")}
-      </Badge>
+      </StatusBadge>
     )
   }
 
-  function assignAction(member: TenantMember, fullWidth = false) {
+  function rowMenu(member: TenantMember) {
     return (
       <Can permission="core.users.assign_roles">
-        <Button type="button" variant="outline" size="sm" className={fullWidth ? "h-auto min-h-11 w-full whitespace-normal text-xs" : "min-h-11 text-xs"} aria-label={t("peopleAccess.users.assign")} onClick={() => { openAssign(member) }}>
-          <KeyRound aria-hidden strokeWidth={1.75} />
-          <span>{t("peopleAccess.users.assign")}</span>
-        </Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger
+            render={
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="size-11"
+                aria-label={t("peopleAccess.users.rowMenu", { name: member.fullName })}
+              />
+            }
+          >
+            <MoreHorizontal aria-hidden="true" />
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem className="min-h-11 py-2.5" onClick={() => { openAssign(member) }}>
+              <KeyRound aria-hidden strokeWidth={1.75} />
+              {t("peopleAccess.users.assign")}
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </Can>
     )
   }
@@ -280,25 +307,12 @@ export function PeopleUsersTab({ roles }: PeopleUsersTabProps) {
     { id: "name", header: t("peopleAccess.users.fullName"), cell: identity },
     { id: "roles", header: t("peopleAccess.columns.roles"), cell: roleChips },
     { id: "status", header: t("peopleAccess.columns.status"), cell: statusBadge },
-    { id: "actions", header: t("peopleAccess.columns.actions"), align: "end", cell: (member) => assignAction(member) },
+    { id: "actions", header: t("peopleAccess.columns.actions"), align: "end", cell: rowMenu },
   ]
 
   return (
     <div className="space-y-6">
       <PeopleSearchForm
-        actions={
-          <Can permission="core.users.invite">
-            <Button
-              type="button"
-              size="sm"
-              className="people-invite"
-              onClick={openInvite}
-            >
-              <UserPlus aria-hidden strokeWidth={1.75} />
-              {t("peopleAccess.users.invite")}
-            </Button>
-          </Can>
-        }
         id="team-member-search"
         label={t("peopleAccess.users.searchLabel")}
         placeholder={t("peopleAccess.users.searchPlaceholder")}
@@ -328,10 +342,12 @@ export function PeopleUsersTab({ roles }: PeopleUsersTabProps) {
           <>
             <div className="flex items-start justify-between gap-3">
               {identity(member)}
-              {statusBadge(member)}
+              <div className="flex shrink-0 items-center gap-1">
+                {statusBadge(member)}
+                {rowMenu(member)}
+              </div>
             </div>
             {roleChips(member)}
-            {assignAction(member, true)}
           </>
         )}
       />
@@ -348,7 +364,7 @@ export function PeopleUsersTab({ roles }: PeopleUsersTabProps) {
           if (inviteForm.formState.isSubmitting) {
             return
           }
-          setInviteOpen(open)
+          onInviteOpenChange(open)
         }}
       >
         <DialogContent className="sm:max-w-md">

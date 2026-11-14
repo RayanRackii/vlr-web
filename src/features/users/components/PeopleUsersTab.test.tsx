@@ -55,7 +55,7 @@ describe("PeopleUsersTab", () => {
 
   it("renders members in the table with name, email, role, status and the assign action", async () => {
     listTenantMembersMock.mockResolvedValue(memberPage([MEMBER]))
-    render(<PeopleUsersTab roles={[]} />)
+    render(<PeopleUsersTab roles={[]} inviteOpen={false} onInviteOpenChange={() => undefined} />)
 
     const table = await screen.findByRole("table", { name: usersLabel })
     expect(within(table).getAllByRole("columnheader")).toHaveLength(4)
@@ -63,17 +63,41 @@ describe("PeopleUsersTab", () => {
     expect(within(table).getByText(MEMBER.email)).toBeInTheDocument()
     expect(within(table).getByText("Admin")).toBeInTheDocument()
     expect(within(table).getByText(i18n.t("peopleAccess.status.active"))).toBeInTheDocument()
-    expect(within(table).getByRole("button", { name: i18n.t("peopleAccess.users.assign") })).toBeInTheDocument()
+    expect(within(table).getByRole("button", { name: i18n.t("peopleAccess.users.rowMenu", { name: MEMBER.fullName }) })).toBeInTheDocument()
+    expect(within(table).queryByRole("button", { name: i18n.t("peopleAccess.users.assign") })).not.toBeInTheDocument()
+  })
+
+  it("opens the assign dialog from the row menu", async () => {
+    const user = userEvent.setup()
+    listTenantMembersMock.mockResolvedValue(memberPage([MEMBER]))
+    render(<PeopleUsersTab roles={[]} inviteOpen={false} onInviteOpenChange={() => undefined} />)
+
+    const table = await screen.findByRole("table", { name: usersLabel })
+    await user.click(within(table).getByRole("button", { name: i18n.t("peopleAccess.users.rowMenu", { name: MEMBER.fullName }) }))
+    await user.click(await screen.findByRole("menuitem", { name: i18n.t("peopleAccess.users.assign") }))
+
+    expect(await screen.findByRole("dialog")).toBeInTheDocument()
+  })
+
+  it("asks the page to open the invite dialog from the empty state", async () => {
+    const user = userEvent.setup()
+    const onInviteOpenChange = vi.fn()
+    listTenantMembersMock.mockResolvedValue(memberPage([]))
+    render(<PeopleUsersTab roles={[]} inviteOpen={false} onInviteOpenChange={onInviteOpenChange} />)
+
+    await user.click(await screen.findByRole("button", { name: i18n.t("peopleAccess.users.invite") }))
+    expect(onInviteOpenChange).toHaveBeenCalledWith(true)
   })
 
   it("opens the assign dialog from the card list used below md", async () => {
     const user = userEvent.setup()
     listTenantMembersMock.mockResolvedValue(memberPage([MEMBER]))
-    render(<PeopleUsersTab roles={[]} />)
+    render(<PeopleUsersTab roles={[]} inviteOpen={false} onInviteOpenChange={() => undefined} />)
 
     const list = await screen.findByRole("list", { name: usersLabel })
     expect(within(list).getByText(MEMBER.fullName)).toBeInTheDocument()
-    await user.click(within(list).getByRole("button", { name: i18n.t("peopleAccess.users.assign") }))
+    await user.click(within(list).getByRole("button", { name: i18n.t("peopleAccess.users.rowMenu", { name: MEMBER.fullName }) }))
+    await user.click(await screen.findByRole("menuitem", { name: i18n.t("peopleAccess.users.assign") }))
 
     const dialog = await screen.findByRole("dialog")
     expect(within(dialog).getByText(i18n.t("peopleAccess.users.assignDescription", { name: MEMBER.fullName }))).toBeInTheDocument()
@@ -81,7 +105,7 @@ describe("PeopleUsersTab", () => {
 
   it("shows a loading status while the list loads", async () => {
     listTenantMembersMock.mockReturnValue(new Promise(() => undefined))
-    render(<PeopleUsersTab roles={[]} />)
+    render(<PeopleUsersTab roles={[]} inviteOpen={false} onInviteOpenChange={() => undefined} />)
 
     expect(screen.getByRole("status", { name: usersLabel })).toBeInTheDocument()
     expect(screen.queryByRole("table")).not.toBeInTheDocument()
@@ -91,7 +115,7 @@ describe("PeopleUsersTab", () => {
     const user = userEvent.setup()
     listTenantMembersMock.mockRejectedValueOnce(new Error("boom"))
     listTenantMembersMock.mockResolvedValueOnce(memberPage([MEMBER]))
-    render(<PeopleUsersTab roles={[]} />)
+    render(<PeopleUsersTab roles={[]} inviteOpen={false} onInviteOpenChange={() => undefined} />)
 
     const alert = await screen.findByRole("alert")
     expect(within(alert).getByText("boom")).toBeInTheDocument()
@@ -106,7 +130,7 @@ describe("PeopleUsersTab", () => {
 
   it("shows the empty state with the invite action when there are no members", async () => {
     listTenantMembersMock.mockResolvedValue(memberPage([]))
-    render(<PeopleUsersTab roles={[]} />)
+    render(<PeopleUsersTab roles={[]} inviteOpen={false} onInviteOpenChange={() => undefined} />)
 
     expect(await screen.findByText(i18n.t("peopleAccess.users.empty"))).toBeInTheDocument()
     expect(screen.getByText(i18n.t("peopleAccess.users.emptyDescription"))).toBeInTheDocument()

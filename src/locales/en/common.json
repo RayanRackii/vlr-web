@@ -4331,6 +4331,7 @@
       "email": "Email",
       "sendInvite": "Send invite",
       "assign": "Assign functions",
+      "rowMenu": "Actions for {{name}}",
       "assignTitle": "Assign functions",
       "assignDescription": "Set the functions for {{name}}.",
       "saveRoles": "Save functions",

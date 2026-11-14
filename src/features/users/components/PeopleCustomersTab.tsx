@@ -4,7 +4,7 @@ import { Users } from "lucide-react"
 import { useTranslation } from "react-i18next"
 
 import { DataList, type DataListColumn } from "@/components/data-table/DataList"
-import { Badge } from "@/components/ui/badge"
+import { StatusBadge } from "@/components/ui/status"
 import { Button } from "@/components/ui/button"
 import type { EmptyStateProps } from "@/components/ui/empty-state"
 import { useModuleIntroLink } from "@/hooks/useModuleIntroLink"
@@ -135,10 +135,9 @@ export function PeopleCustomersTab() {
 
   function statusBadge(customer: TenantCustomer) {
     return (
-      <Badge className="h-auto min-h-6 gap-1.5 px-2.5 py-0.5 text-xs font-semibold" variant={customer.emailVerified ? "success" : "warning"}>
-        <span className="inline-block size-1.5 shrink-0 rounded-full bg-current" aria-hidden />
+      <StatusBadge tone={customer.emailVerified ? "success" : "warning"}>
         {t(customer.emailVerified ? "peopleAccess.customers.verified" : "peopleAccess.customers.unverified")}
-      </Badge>
+      </StatusBadge>
     )
   }
 
