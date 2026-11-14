@@ -5215,6 +5215,25 @@
       "summarySpaces_many": "{{count}} espaços",
       "summaryItems_zero": "{{count}} itens",
       "summaryItems_many": "{{count}} itens",
+      "filters": {
+        "label": "Filtros de recursos",
+        "searchLabel": "Buscar recurso",
+        "searchPlaceholder": "Buscar por nome",
+        "all": "Todos",
+        "spaces": "Espaços",
+        "items": "Itens",
+        "kind": "Tipo de recurso",
+        "emptyTitle": "Nenhum recurso encontrado",
+        "emptyDescription": "Ajuste a busca ou o filtro."
+      },
+      "columns": {
+        "resource": "Recurso",
+        "price": "Preço",
+        "durations": "Durações",
+        "capacity": "Capacidade",
+        "actions": "Ações"
+      },
+      "rowMenu": "Ações de {{name}}",
       "sheetTabs": {
         "basic": "Básico",
         "pricingRules": "Preço e regras",

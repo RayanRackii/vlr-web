@@ -64,7 +64,6 @@ const pageLegacy = [
   "src/features/rentals/pages/BookingPolicyPage.tsx",
   "src/features/rentals/pages/FirstStepsPage.tsx",
   "src/features/rentals/pages/RentalLayoutsPage.tsx",
-  "src/features/rentals/pages/RentalResourcesPage.tsx",
   "src/features/rentals/pages/SchedulePage.tsx",
   "src/features/rentals/pages/TeacherLessonsPage.tsx",
   "src/features/taxonomy/pages/TaxonomyPage.tsx",
