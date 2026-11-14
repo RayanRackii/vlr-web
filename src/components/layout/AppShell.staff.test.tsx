@@ -6,11 +6,12 @@ import { AppShell } from "@/components/layout/AppShell"
 import { PageHeader } from "@/components/layout/PageHeader"
 import i18n from "@/lib/i18n"
 
-function renderShell(variant: "staff" | "portal" = "staff") {
+function renderShell(variant: "staff" | "portal" = "staff", constrainContent = false) {
   return render(
     <MemoryRouter>
       <AppShell
         variant={variant}
+        constrainContent={constrainContent}
         sidebar={(opts) => <nav aria-label="Side">{opts.account}</nav>}
         pageTitle="Agendas"
         userLabel="Ana"
@@ -54,5 +55,12 @@ describe("AppShell target layout", () => {
     expect(within(header).getByRole("button", { name: i18n.t("account.openMenu") })).toBeInTheDocument()
     expect(within(header).queryByRole("navigation", { name: "Crumbs" })).not.toBeInTheDocument()
     expect(screen.getByText("Eyebrow")).toBeInTheDocument()
+  })
+
+  it("caps constrained content at the standard width and leaves unconstrained content alone", () => {
+    const capped = renderShell("staff", true).container.querySelector('[data-shell-part="main"] > div')
+    expect(capped).toHaveClass("max-w-7xl", "min-[2000px]:max-w-[1820px]")
+    const free = renderShell("staff", false).container.querySelector('[data-shell-part="main"] > div')
+    expect(free?.className ?? "").not.toContain("max-w-")
   })
 })

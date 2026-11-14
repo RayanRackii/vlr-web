@@ -2,11 +2,12 @@ import type { ReactNode } from "react"
 
 import { ErrorState } from "@/components/ErrorState"
 import { PageContentSkeleton } from "@/components/loading/PageContentSkeleton"
+import { CONTENT_WIDTH_CLASS } from "@/components/layout/contentWidth"
 import { PageHeader, type PageHeaderProps } from "@/components/layout/PageHeader"
 import { cn } from "@/lib/utils"
 
 const WIDTH_CLASS = {
-  wide: "w-full max-w-7xl",
+  wide: `w-full ${CONTENT_WIDTH_CLASS}`,
   form: "w-full max-w-3xl",
   full: "w-full",
 } as const

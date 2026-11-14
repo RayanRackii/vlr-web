@@ -3,6 +3,7 @@ import { CircleUser, LogOut, Menu } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { Link } from "react-router-dom"
 
+import { CONTENT_WIDTH_CLASS } from "@/components/layout/contentWidth"
 import { headerTouchTargetClassName } from "@/components/layout/headerTouchTarget"
 import { LanguageSwitcher } from "@/components/layout/LanguageSwitcher"
 import { ShellContext } from "@/components/layout/ShellContext"
@@ -349,7 +350,7 @@ export function AppShell({
 
         <main data-shell-part="main" className="min-w-0 max-w-full flex-1 overflow-x-auto overflow-y-auto p-4 md:p-6 lg:p-8">
           {constrainContent ? (
-            <div className="mx-auto min-w-0 w-full max-w-7xl">{children}</div>
+            <div className={cn("mx-auto min-w-0 w-full", CONTENT_WIDTH_CLASS)}>{children}</div>
           ) : (
             children
           )}
