@@ -1,5 +1,6 @@
 import type { AxiosProgressEvent } from "axios"
 
+import { API_UPLOAD_TIMEOUT_MS } from "@/lib/apiTimeouts"
 import i18n from "@/lib/i18n"
 import { localizeMaintenancePlanApiError } from "@/features/pmoc/lib/localizeMaintenancePlanError"
 import { api, getAxiosErrorPayload, isAxiosError, parseApiError } from "@/lib/api"
@@ -346,6 +347,7 @@ export async function uploadWorkOrderTaskFile(
       formData,
       {
         headers: { "Content-Type": "multipart/form-data" },
+        timeout: API_UPLOAD_TIMEOUT_MS,
         onUploadProgress: (event: AxiosProgressEvent) => {
           if (!onProgress) {
             return

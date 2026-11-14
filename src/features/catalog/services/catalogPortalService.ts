@@ -1,4 +1,5 @@
 import { portalCatalogPolicySchema, type PortalCatalogPolicy } from "@/features/catalog/schemas/catalogPolicySchemas"
+import { API_UPLOAD_TIMEOUT_MS } from "@/lib/apiTimeouts"
 import i18n from "@/lib/i18n"
 import { customerApi, getAxiosErrorPayload, isAxiosError } from "@/lib/api"
 import { localizeCatalogApiError } from "@/features/catalog/lib/catalogApiErrors"
@@ -171,7 +172,7 @@ export async function createPortalProductRequest(body: {
     const response = await customerApi.post(
       "/api/catalog/portal/product-requests",
       formData,
-      { headers: { "Content-Type": "multipart/form-data" } },
+      { headers: { "Content-Type": "multipart/form-data" }, timeout: API_UPLOAD_TIMEOUT_MS },
     )
     return parseOrThrow(productRequestSchema.safeParse(response.data))
   } catch (error) {

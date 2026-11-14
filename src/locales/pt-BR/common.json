@@ -163,7 +163,11 @@
   },
   "app": {
     "name": "Rolvix",
-    "authenticatedArea": "Área autenticada"
+    "authenticatedArea": "Área autenticada",
+    "errorBoundary": {
+      "title": "Algo deu errado nesta tela",
+      "home": "Voltar ao início"
+    }
   },
   "common": {
     "close": "Fechar",
@@ -317,7 +321,8 @@
     "loadTaxonomy": "Não foi possível carregar categorias e tags.",
     "saveTaxonomy": "Não foi possível salvar categorias e tags.",
     "deleteTaxonomy": "Não foi possível excluir a categoria ou tag.",
-    "loadCatalogAgenda": "Não foi possível carregar a agenda."
+    "loadCatalogAgenda": "Não foi possível carregar a agenda.",
+    "timeout": "A conexão demorou demais. Tente novamente."
   },
   "trial": {
     "banner": {
