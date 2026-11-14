@@ -462,6 +462,20 @@ describe("ReservationsPage filters and states", () => {
     expect(within(table).queryByRole("button")).not.toBeInTheDocument()
   })
 
+  it("shows one error state with Retry when the load fails with no rows, then recovers", async () => {
+    listMock.mockRejectedValueOnce(new Error("Network unavailable")).mockResolvedValue([makeReservation("Confirmed")])
+    renderPage()
+    const alerts = await screen.findAllByRole("alert")
+    expect(alerts).toHaveLength(1)
+    expect(alerts[0]).toHaveTextContent("Não foi possível carregar as reservas.")
+    expect(screen.queryByRole("table")).not.toBeInTheDocument()
+    const calls = listMock.mock.calls.length
+    await userEvent.click(within(alerts[0]).getByRole("button", { name: i18n.t("common.retry") }))
+    expect(await inTable().findByText("Ana Souza")).toBeInTheDocument()
+    expect(listMock.mock.calls.length).toBeGreaterThan(calls)
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument()
+  })
+
   it("keeps the visible reservation after an action succeeds but reloading fails", async () => {
     listMock.mockResolvedValueOnce([makeReservation("PendingDeposit")]).mockRejectedValue(new Error("Offline"))
     confirmMock.mockResolvedValue(makeReservation("Confirmed"))

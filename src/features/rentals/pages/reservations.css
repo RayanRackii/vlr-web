@@ -49,7 +49,7 @@
 .reservation-actions button:hover:not(:disabled) { transform: translateY(-1px); }
 .reservation-actions button:active:not(:disabled) { transform: scale(.96); }
 .reservation-cancel:hover:not(:disabled) { color: var(--destructive); border-color: var(--destructive); }
-[data-slot="table-row"][data-status="Canceled"] > td:not(:last-child) { opacity: .65; }
+[data-slot="table-row"][data-status="Canceled"] > td:not(:last-child), li[data-status="Canceled"] > :not(:last-child) { opacity: .65; }
 .reservations-cancel-dialog button { min-height: 44px; }
 .reservations-page :is(button, input):focus-visible, .reservations-screen [role="tab"]:focus-visible { outline: 3px solid color-mix(in srgb, var(--brand-primary) 60%, transparent); outline-offset: 2px; }
 

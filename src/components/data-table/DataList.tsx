@@ -82,7 +82,6 @@ export function DataList<T>(props: DataListProps<T>) {
   if (props.state === "loading") {
     body = (
       <div role="status" aria-label={loadingLabel ?? label} className="divide-y divide-border">
-        <span className="sr-only">{loadingLabel ?? label}</span>
         {Array.from({ length: loadingRows }, (_, index) => (
           <div key={index} aria-hidden="true" className="flex items-center gap-4 px-4 py-4">
             <Skeleton className="h-3 w-16" />
@@ -146,9 +145,9 @@ export function DataList<T>(props: DataListProps<T>) {
   }
 
   return (
-    <div className={cn("min-w-0 space-y-3", className)} aria-busy={props.state === "loading"}>
+    <div className={cn("min-w-0 space-y-3", className)}>
       {toolbar}
-      <section className="overflow-hidden rounded-xl border border-border bg-card text-card-foreground" aria-label={label}>
+      <section className="overflow-hidden rounded-xl border border-border bg-card text-card-foreground" aria-busy={props.state === "loading"}>
         {heading && ready && rows.length > 0 ? (
           <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-4 py-3 text-sm text-muted-foreground">
             {heading}

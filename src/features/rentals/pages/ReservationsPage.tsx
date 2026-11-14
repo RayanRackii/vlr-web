@@ -294,6 +294,8 @@ export function ReservationsPage({ showHeader = true, onDateChange }: Reservatio
         </Alert>
       )}
 
+      {filterBar}
+
       <div aria-busy={loading} className="reservations-results">
         {loadError && !loading && sortedRows.length > 0 && (
           <Alert variant="destructive" role="alert" className="reservations-error">
@@ -312,7 +314,6 @@ export function ReservationsPage({ showHeader = true, onDateChange }: Reservatio
             : loadError && sortedRows.length === 0
               ? { state: "error" as const, error: t("rentals.reservations.loadError"), onRetry: () => { void load() } }
               : {})}
-          toolbar={filterBar}
           empty={{
             icon: CalendarRange,
             title: t("rentals.reservations.empty"),
