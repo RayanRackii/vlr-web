@@ -8,11 +8,12 @@ import { cn } from "@/lib/utils"
 const WIDTH_CLASS = {
   wide: "w-full max-w-7xl",
   form: "w-full max-w-3xl",
+  full: "w-full",
 } as const
 
 type PageBaseProps = {
   header: PageHeaderProps
-  /** wide = lists/grids, form = single-column forms. */
+  /** wide = lists/grids, form = single-column forms, full = the whole content width (calendars). */
   width?: keyof typeof WIDTH_CLASS
   className?: string
   children: ReactNode
