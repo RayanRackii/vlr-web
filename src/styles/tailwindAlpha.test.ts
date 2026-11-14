@@ -32,4 +32,13 @@ describe("theme colour tokens", () => {
     expect(rule(css, "bg-primary")).toContain("var(--primary) calc(var(--tw-bg-opacity, 1) * 100%), transparent)")
     expect(rule(css, "bg-sidebar-accent")).toContain("var(--sidebar-accent) calc(var(--tw-bg-opacity, 1) * 100%)")
   })
+
+  it("leaves non-colour theme keys untouched", async () => {
+    const css = await compile("rounded-lg shadow-md")
+    expect(rule(css, "rounded-lg")).toContain("border-radius: var(--radius)")
+    const extend = config.theme?.extend as Record<string, unknown>
+    for (const key of ["borderRadius", "boxShadow"]) {
+      expect(JSON.stringify(extend[key])).not.toContain("color-mix")
+    }
+  })
 })
