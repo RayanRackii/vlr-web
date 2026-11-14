@@ -49,6 +49,15 @@ describe("DataList", () => {
     expect(items[1]).toHaveTextContent("card Bruno")
   })
 
+  it("keeps cards inside the frame: one shrinkable column and min-w-0 items", () => {
+    renderList()
+    const list = screen.getByRole("list", { name: "Pessoas" })
+    expect(list).toHaveClass("grid-cols-1")
+    for (const item of within(list).getAllByRole("listitem")) {
+      expect(item).toHaveClass("min-w-0")
+    }
+  })
+
   it("hides columns below lg and aligns end columns", () => {
     renderList()
     expect(screen.getByRole("columnheader", { name: "Cidade" })).toHaveClass("hidden", "lg:table-cell")

@@ -124,10 +124,10 @@ export function PeopleCustomersTab() {
       <div className="flex min-w-0 items-center gap-3">
         <span className="grid size-9 shrink-0 place-items-center rounded-full bg-accent text-xs font-semibold uppercase text-accent-foreground" aria-hidden>{customer.name.trim().split(/\s+/).slice(0, 2).map((part) => part[0]).join("")}</span>
         <div className="min-w-0">
-          <Link className="inline-flex min-h-11 items-center break-words font-semibold underline-offset-4 hover:underline" to={`/pessoas-e-acesso/clientes/${customer.id}`}>
+          <Link className="inline-flex min-h-11 items-center font-semibold underline-offset-4 [overflow-wrap:anywhere] hover:underline" to={`/pessoas-e-acesso/clientes/${customer.id}`}>
             {customer.name}
           </Link>
-          <p className="break-words text-sm text-muted-foreground">{customer.email ?? "—"}</p>
+          <p className="text-sm text-muted-foreground [overflow-wrap:anywhere]">{customer.email ?? "—"}</p>
         </div>
       </div>
     )
