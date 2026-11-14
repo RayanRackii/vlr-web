@@ -5,10 +5,10 @@ import { useForm, useWatch } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 
-import { PageContentSkeleton } from "@/components/loading/PageContentSkeleton"
-import { Alert, AlertDescription } from "@/components/ui/alert"
+import { DataList, type DataListColumn } from "@/components/data-table/DataList"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import type { EmptyStateProps } from "@/components/ui/empty-state"
 import { Checkbox } from "@/components/ui/checkbox"
 import {
   Dialog,
@@ -34,7 +34,6 @@ import {
   PeoplePager,
   PeopleSearchForm,
 } from "@/features/users/components/PeopleDirectoryControls"
-import { PeopleEmptyState } from "@/features/users/components/PeopleEmptyState"
 import { useModuleIntroLink } from "@/hooks/useModuleIntroLink"
 import { Can } from "@/features/users/permissions/Can"
 import {
@@ -222,6 +221,68 @@ export function PeopleUsersTab({ roles }: PeopleUsersTabProps) {
   const from = total === 0 ? 0 : (page - 1) * DIRECTORY_PAGE_SIZE + 1
   const to = Math.min(page * DIRECTORY_PAGE_SIZE, total)
 
+  const empty: EmptyStateProps = {
+    icon: Users,
+    title: t(appliedQuery ? "emptyStates.noResults" : "peopleAccess.users.empty"),
+    description: t(appliedQuery ? "emptyStates.filterDescription" : "peopleAccess.users.emptyDescription"),
+    example: !appliedQuery && can("core.users.invite") ? t("emptyStates.examples.users") : undefined,
+    learnMore: appliedQuery ? undefined : learnMore,
+    action: appliedQuery ? (
+      <Button onClick={() => { setQuery(""); setAppliedQuery(""); setSearchError(null); setPage(1) }}>{t("emptyStates.clearSearch")}</Button>
+    ) : (
+      <Can permission="core.users.invite"><Button onClick={openInvite}>{t("peopleAccess.users.invite")}</Button></Can>
+    ),
+  }
+
+  function identity(member: TenantMember) {
+    return (
+      <div className="flex min-w-0 items-center gap-3">
+        <span className="grid size-9 shrink-0 place-items-center rounded-full bg-accent text-xs font-semibold uppercase text-accent-foreground" aria-hidden>{member.fullName.trim().split(/\s+/).slice(0, 2).map((part) => part[0]).join("")}</span>
+        <div className="min-w-0">
+          <p className="break-words font-semibold">{member.fullName}</p>
+          <p className="break-words text-sm text-muted-foreground">{member.email}</p>
+        </div>
+      </div>
+    )
+  }
+
+  function roleChips(member: TenantMember) {
+    return (
+      <div className="flex flex-wrap gap-1.5">
+        {member.roles.length > 0
+          ? member.roles.map((role) => <span className="break-words rounded-lg bg-accent px-2 py-0.5 text-xs font-semibold text-accent-foreground" key={role.id}>{role.name}</span>)
+          : <span className="text-sm italic text-muted-foreground">{t("peopleAccess.users.noRoles")}</span>}
+      </div>
+    )
+  }
+
+  function statusBadge(member: TenantMember) {
+    return (
+      <Badge className="h-auto min-h-6 gap-1.5 px-2.5 py-0.5 text-xs font-semibold" variant={member.isActive ? "success" : "secondary"}>
+        <span className="inline-block size-1.5 shrink-0 rounded-full bg-current" aria-hidden />
+        {t(member.isActive ? "peopleAccess.status.active" : "peopleAccess.status.inactive")}
+      </Badge>
+    )
+  }
+
+  function assignAction(member: TenantMember) {
+    return (
+      <Can permission="core.users.assign_roles">
+        <Button type="button" variant="outline" size="sm" className="min-h-11 text-xs" aria-label={t("peopleAccess.users.assign")} onClick={() => { openAssign(member) }}>
+          <KeyRound aria-hidden strokeWidth={1.75} />
+          <span>{t("peopleAccess.users.assign")}</span>
+        </Button>
+      </Can>
+    )
+  }
+
+  const columns: DataListColumn<TenantMember>[] = [
+    { id: "name", header: t("peopleAccess.users.fullName"), cell: identity },
+    { id: "roles", header: t("peopleAccess.columns.roles"), cell: roleChips },
+    { id: "status", header: t("peopleAccess.columns.status"), cell: statusBadge },
+    { id: "actions", header: t("peopleAccess.columns.actions"), align: "end", cell: assignAction },
+  ]
+
   return (
     <div className="space-y-6">
       <PeopleSearchForm
@@ -248,82 +309,38 @@ export function PeopleUsersTab({ roles }: PeopleUsersTabProps) {
         onSubmit={submitSearch}
       />
 
-      {isLoading ? <PageContentSkeleton rows={4} /> : null}
+      <DataList<TenantMember>
+        {...(loadError !== null
+          ? { state: "error" as const, error: loadError, onRetry: () => { void loadMembers() } }
+          : { state: isLoading ? ("loading" as const) : ("ready" as const) })}
+        label={t("peopleAccess.tabs.users")}
+        columns={columns}
+        rows={members}
+        getRowId={(member) => member.id}
+        heading={
+          <>
+            <h2 className="font-semibold text-foreground">{t("peopleAccess.users.teamCount", { count: total })}</h2>
+            <p className="hidden sm:block">{t("peopleAccess.users.description")}</p>
+          </>
+        }
+        empty={empty}
+        renderCard={(member) => (
+          <>
+            <div className="flex items-start justify-between gap-3">
+              {identity(member)}
+              {statusBadge(member)}
+            </div>
+            {roleChips(member)}
+            {assignAction(member)}
+          </>
+        )}
+      />
 
-      {loadError !== null ? (
-        <Alert variant="destructive">
-          <AlertDescription>{loadError}</AlertDescription>
-        </Alert>
-      ) : null}
-
-      <section className="people-directory" aria-label={t("peopleAccess.tabs.users")}>
-        <div className="people-list-heading">
-          {!isLoading ? <h2>{t("peopleAccess.users.teamCount", { count: total })}</h2> : null}
-          <p>{t("peopleAccess.users.description")}</p>
-        </div>
-        {!isLoading && members.length === 0 && loadError === null ? (
-          <PeopleEmptyState
-            icon={Users}
-            title={t(appliedQuery ? "emptyStates.noResults" : "peopleAccess.users.empty")}
-            description={t(appliedQuery ? "emptyStates.filterDescription" : "peopleAccess.users.emptyDescription")}
-            example={!appliedQuery && can("core.users.invite") ? t("emptyStates.examples.users") : undefined}
-            learnMore={appliedQuery ? undefined : learnMore}
-            action={appliedQuery ? (
-              <Button onClick={() => { setQuery(""); setAppliedQuery(""); setSearchError(null); setPage(1) }}>{t("emptyStates.clearSearch")}</Button>
-            ) : (
-              <Can permission="core.users.invite"><Button onClick={openInvite}>{t("peopleAccess.users.invite")}</Button></Can>
-            )}
-          />
-        ) : members.length > 0 ? (
-          <table className="people-table people-team-table" aria-label={t("peopleAccess.tabs.users")}>
-            <thead><tr>
-              <th scope="col">{t("peopleAccess.users.fullName")}</th>
-              <th scope="col">{t("peopleAccess.columns.roles")}</th>
-              <th scope="col">{t("peopleAccess.columns.status")}</th>
-              <th scope="col" className="people-actions-heading">{t("peopleAccess.columns.actions")}</th>
-            </tr></thead>
-            <tbody>
-              {members.map((member) => (
-                <tr key={member.id}>
-                  <td className="people-identity-cell">
-                    <div className="people-person">
-                      <span className="people-avatar" aria-hidden>{member.fullName.trim().split(/\s+/).slice(0, 2).map((part) => part[0]).join("")}</span>
-                      <div className="min-w-0">
-                        <p className="people-person-name">{member.fullName}</p>
-                        <p className="people-person-email">{member.email}</p>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="people-roles-cell">
-                    <div className="people-role-chips">
-                      {member.roles.length > 0 ? member.roles.map((role) => <span className="people-role-chip" key={role.id}>{role.name}</span>) : <span className="people-no-roles">{t("peopleAccess.users.noRoles")}</span>}
-                    </div>
-                  </td>
-                  <td className="people-status-cell">
-                    <Badge className="people-status" variant={member.isActive ? "success" : "secondary"}>
-                      <span className="people-status-dot" aria-hidden />
-                      {t(member.isActive ? "peopleAccess.status.active" : "peopleAccess.status.inactive")}
-                    </Badge>
-                  </td>
-                  <td className="people-actions-cell">
-                    <Can permission="core.users.assign_roles">
-                      <Button type="button" variant="outline" size="sm" className="people-card-action" aria-label={t("peopleAccess.users.assign")} onClick={() => { openAssign(member) }}>
-                        <KeyRound aria-hidden strokeWidth={1.75} />
-                        <span>{t("peopleAccess.users.assign")}</span>
-                      </Button>
-                    </Can>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        ) : null}
         {!isLoading && loadError === null ? (
           <PeoplePager page={page} pageSize={DIRECTORY_PAGE_SIZE} total={total}
             summary={t("peopleAccess.pagination.summary", { from, to, total })}
             previousLabel={t("peopleAccess.pagination.previous")} nextLabel={t("peopleAccess.pagination.next")} onPageChange={setPage} />
         ) : null}
-      </section>
 
       <Dialog
         open={inviteOpen}

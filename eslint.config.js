@@ -95,8 +95,6 @@ const tableLegacy = [
   "src/features/assets/pages/AssetsPage.tsx",
   "src/features/catalog/components/StaffCatalogChrome.tsx",
   "src/features/catalog/pages/CatalogProductsPage.tsx",
-  "src/features/users/components/PeopleCustomersTab.tsx",
-  "src/features/users/components/PeopleUsersTab.tsx",
 ]
 
 const pageRules = [
