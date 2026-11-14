@@ -418,6 +418,18 @@ describe("ReservationsPage filters and states", () => {
     expect(listMock).toHaveBeenCalledTimes(1)
   })
 
+  it("shows the filtered empty state with counts when the selected status has no rows", async () => {
+    listMock.mockResolvedValue([makeReservation("PendingDeposit"), makeReservation("PendingDeposit")])
+    const user = userEvent.setup()
+    renderPage()
+    const group = await screen.findByRole("group", { name: "Status" })
+    await waitFor(() => expect(within(group).getByRole("button", { name: /^Todos/ })).toHaveTextContent("2"))
+    await user.click(within(group).getByRole("button", { name: /Concluída/ }))
+    expect(await screen.findByRole("button", { name: i18n.t("emptyStates.clearFilters") })).toBeInTheDocument()
+    expect(within(group).getByRole("button", { name: /^Todos/ })).toHaveTextContent("2")
+    expect(within(group).getByRole("button", { name: /Concluída/ })).toHaveTextContent("0")
+  })
+
   it("clears an empty filtered view and restores the example", async () => {
     const user = userEvent.setup()
     renderPage(["rentals.reservations.read"])

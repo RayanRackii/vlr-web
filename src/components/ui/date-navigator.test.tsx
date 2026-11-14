@@ -35,7 +35,7 @@ describe("DateNavigator", () => {
     const nodes = [
       screen.getByRole("radiogroup", { name: "Período" }),
       screen.getByRole("button", { name: "Anterior" }),
-      screen.getByText("sábado, 14 de novembro"),
+      screen.getByRole("button", { name: /Escolher data/ }),
       screen.getByRole("button", { name: "Próximo" }),
       screen.getByRole("button", { name: "Hoje" }),
     ]
@@ -58,7 +58,7 @@ describe("DateNavigator", () => {
 
   it("picks a date through the hidden native input", () => {
     const { onDateChange } = setup()
-    expect(screen.getByRole("button", { name: "Escolher data" })).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: /Escolher data.*sábado, 14 de novembro/ })).toBeInTheDocument()
     const input = document.querySelector("input[type='date']") as HTMLInputElement
     expect(input).toHaveValue("2026-11-14")
     fireEvent.change(input, { target: { value: "2026-12-25" } })
@@ -94,6 +94,6 @@ describe("DateNavigator", () => {
     const { onViewChange } = setup()
     await user.click(screen.getByRole("radio", { name: "Semana" }))
     expect(onViewChange).toHaveBeenCalledWith("week")
-    expect(screen.getByText("sábado, 14 de novembro")).toHaveAttribute("aria-live", "polite")
+    expect(document.querySelector("[aria-live='polite']")).toHaveTextContent("sábado, 14 de novembro")
   })
 })

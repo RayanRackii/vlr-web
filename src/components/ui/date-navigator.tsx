@@ -82,14 +82,17 @@ export function DateNavigator<V extends string>({
         <div className="relative min-w-0 flex-1 md:w-72 md:flex-none">
           <button
             type="button"
-            aria-label={labels.pickDate}
+            aria-label={`${labels.pickDate}: ${label}`}
             onClick={openPicker}
             className="touch-target min-h-11 w-full min-w-0 cursor-pointer rounded-lg px-2 text-center text-sm font-semibold tabular-nums outline-none transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring"
           >
-            <span aria-live="polite" className="first-letter:uppercase">
+            <span aria-hidden="true" className="first-letter:uppercase">
               {label}
             </span>
           </button>
+          <span aria-live="polite" className="sr-only">
+            {label}
+          </span>
           <input
             ref={pickerRef}
             type="date"
