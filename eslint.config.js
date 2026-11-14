@@ -20,7 +20,6 @@ const pageLegacy = [
   "src/features/admin/pages/TenantModuleMenuPage.tsx",
   "src/features/admin/pages/TenantRegistrationFieldsPage.tsx",
   "src/features/assets/components/AssetWizard.tsx",
-  "src/features/assets/pages/AssetsPage.tsx",
   "src/features/assets/pages/ResourceTypeWizardPage.tsx",
   "src/features/assets/pages/ResourceTypesPage.tsx",
   "src/features/assistant/CadastroShell.tsx",
@@ -90,7 +89,6 @@ const pageLegacy = [
 // remove entries as each feature migrates to DataList; never add new ones
 // (docs/plans/active/2026-11-13-ui-datalist.md)
 const tableLegacy = [
-  "src/features/assets/pages/AssetsPage.tsx",
 ]
 
 const pageRules = [

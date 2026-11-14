@@ -3426,7 +3426,11 @@
         "category": "Tipo",
         "tag": "Tag",
         "location": "Ubicación",
-        "placeholder": "Filtrar..."
+        "placeholder": "Filtrar...",
+        "label": "Filtros de activos",
+        "searchLabel": "Buscar activos",
+        "searchPlaceholder": "Buscar por nombre o tag",
+        "all": "Todos"
       },
       "actions": {
         "add": "Agregar",

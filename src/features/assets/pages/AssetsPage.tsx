@@ -1,25 +1,16 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
-import {
-  flexRender,
-  getCoreRowModel,
-  getFilteredRowModel,
-  useReactTable,
-  type ColumnDef,
-  type ColumnFiltersState,
-  type RowSelectionState,
-} from "@tanstack/react-table"
 import { CircleCheck, Layers, MoreHorizontal, Plus, Trash2 } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 import { useNavigate } from "react-router-dom"
 
-import { DataTableColumnFilterHeader } from "@/components/data-table/data-table-column-filter-header"
-import { RecordListSkeleton, TableRowsSkeleton } from "@/components/loading/PageContentSkeleton"
+import { DataList, type DataListColumn } from "@/components/data-table/DataList"
+import { FilterBar } from "@/components/data-table/FilterBar"
+import { Page } from "@/components/layout/Page"
 import { AssetWizard } from "@/features/assets/components/AssetWizard"
 import { useAssetCopyTone } from "@/features/assets/hooks/useAssetCopyTone"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { EmptyState } from "@/components/ui/empty-state"
 import { useModuleIntroLink } from "@/hooks/useModuleIntroLink"
 import {
   Dialog,
@@ -37,13 +28,12 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Input } from "@/components/ui/input"
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table"
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { useAuth } from "@/contexts/AuthContext"
 import { useTrialStatus } from "@/features/users/hooks/useTrialStatus"
 import { usePermissions } from "@/features/users/permissions/PermissionContext"
@@ -72,6 +62,8 @@ type AssetTableRow = Asset & {
 }
 
 type WizardMode = "create" | "bulk" | "edit"
+
+const ALL = "__all__"
 
 function getStatusBadgeVariant(
   status: AssetStatus,
@@ -119,8 +111,12 @@ export function AssetsPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [loadError, setLoadError] = useState<string | null>(null)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
-  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
-  const [rowSelection, setRowSelection] = useState<RowSelectionState>({})
+  const [search, setSearch] = useState("")
+  const [categoryFilter, setCategoryFilter] = useState(ALL)
+  const [locationFilter, setLocationFilter] = useState(ALL)
+  const [selectedIds, setSelectedIds] = useState<ReadonlySet<string>>(
+    () => new Set<string>(),
+  )
   const [assetToDelete, setAssetToDelete] = useState<AssetTableRow | null>(null)
   const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false)
   const [deleteTagConfirm, setDeleteTagConfirm] = useState("")
@@ -153,6 +149,8 @@ export function AssetsPage() {
         ])
 
       let nextError: string | null = null
+
+      setSelectedIds(new Set())
 
       if (assetsResult.status === "fulfilled") {
         setAssets(assetsResult.value)
@@ -226,6 +224,7 @@ export function AssetsPage() {
   }, [session, t])
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- initial fetch; loadPageData owns the loading and selection state
     void loadPageData()
   }, [loadPageData])
 
@@ -275,7 +274,7 @@ export function AssetsPage() {
       <Button
         type="button"
         variant="link"
-        className="h-auto min-h-11 max-w-full whitespace-normal p-0 text-left"
+        className="h-auto min-h-11 max-w-full whitespace-normal p-0 text-left [overflow-wrap:anywhere]"
         onClick={() => openWizard("edit", asset.id)}
       >
         {asset.name}
@@ -286,7 +285,7 @@ export function AssetsPage() {
 
   const renderStatusBadges = useCallback(
     (asset: AssetTableRow) => (
-      <div className="flex flex-wrap items-center justify-center gap-1.5">
+      <div className="flex flex-wrap items-center gap-1.5">
         <Badge variant={getStatusBadgeVariant(asset.status)}>
           {getStatusLabel(asset.status, t)}
         </Badge>
@@ -354,129 +353,101 @@ export function AssetsPage() {
     [isTrialReadOnly, openDeleteDialog, openWizard, t],
   )
 
-  const columns = useMemo<ColumnDef<AssetTableRow>[]>(
-    () => [
-      {
-        id: "select",
-        enableColumnFilter: false,
-        enableSorting: false,
-        header: ({ table }) => (
-          <input
-            type="checkbox"
-            className="touch-target size-4 accent-primary"
-            aria-label={t("assets.inventory.actions.selectAll")}
-            checked={table.getIsAllPageRowsSelected()}
-            ref={(element) => {
-              if (element) {
-                element.indeterminate =
-                  table.getIsSomePageRowsSelected() &&
-                  !table.getIsAllPageRowsSelected()
-              }
-            }}
-            onChange={table.getToggleAllPageRowsSelectedHandler()}
-            disabled={isTrialReadOnly}
-          />
-        ),
-        cell: ({ row }) => (
-          <input
-            type="checkbox"
-            className="touch-target size-4 accent-primary"
-            aria-label={t("assets.inventory.actions.selectRow", {
-              tag: row.original.tag,
-            })}
-            checked={row.getIsSelected()}
-            onChange={row.getToggleSelectedHandler()}
-            disabled={isTrialReadOnly}
-          />
-        ),
-      },
-      {
-        accessorKey: "name",
-        header: ({ column }) => (
-          <DataTableColumnFilterHeader
-            column={column}
-            title={t("assets.detail.fields.name")}
-            className="flex items-center justify-center gap-2"
-          />
-        ),
-        cell: ({ row }) => renderAssetName(row.original),
-      },
-      {
-        accessorKey: "tag",
-        header: ({ column }) => (
-          <DataTableColumnFilterHeader
-            column={column}
-            title={t("assets.inventory.columns.tag")}
-            className="flex items-center justify-center gap-2"
-          />
-        ),
-      },
-      {
-        accessorKey: "categoryName",
-        header: ({ column }) => (
-          <DataTableColumnFilterHeader
-            column={column}
-            title={t("assets.inventory.columns.category")}
-            className="flex items-center justify-center gap-2"
-          />
-        ),
-      },
-      {
-        accessorKey: "location",
-        header: ({ column }) => (
-          <DataTableColumnFilterHeader
-            column={column}
-            title={t("assets.inventory.columns.location")}
-            className="flex items-center justify-center gap-2"
-          />
-        ),
-        cell: ({ getValue }) => {
-          const value = getValue<string | null>()
-          return value ?? t("assets.inventory.emptyValue")
-        },
-      },
-      {
-        accessorKey: "status",
-        header: t("assets.inventory.columns.status"),
-        cell: ({ row }) => renderStatusBadges(row.original),
-      },
-      {
-        id: "actions",
-        enableColumnFilter: false,
-        header: () => null,
-        cell: ({ row }) => renderRowActions(row.original),
-      },
-    ],
-    [isTrialReadOnly, renderAssetName, renderRowActions, renderStatusBadges, t],
-  )
-
-  const tableColumns = useMemo(
+  const categoryOptions = useMemo(
     () =>
-      canWriteAssets
-        ? columns
-        : columns.filter(
-            (column) => column.id !== "select" && column.id !== "actions",
-          ),
-    [canWriteAssets, columns],
+      [...new Set(tableRows.map((row) => row.categoryName))].sort((x, y) =>
+        x.localeCompare(y),
+      ),
+    [tableRows],
+  )
+  const locationOptions = useMemo(
+    () =>
+      [
+        ...new Set(
+          tableRows.flatMap((row) => (row.location ? [row.location] : [])),
+        ),
+      ].sort((x, y) => x.localeCompare(y)),
+    [tableRows],
   )
 
-  const table = useReactTable({
-    data: tableRows,
-    columns: tableColumns,
-    state: {
-      columnFilters,
-      rowSelection,
-    },
-    getRowId: (row) => row.id,
-    enableRowSelection: canWriteAssets && !isTrialReadOnly,
-    onRowSelectionChange: setRowSelection,
-    onColumnFiltersChange: setColumnFilters,
-    getCoreRowModel: getCoreRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
-  })
+  const filteredRows = useMemo(() => {
+    const needle = search.trim().toLowerCase()
 
-  const filteredRows = table.getFilteredRowModel().rows
-  const selectedRows = table.getSelectedRowModel().rows.map((row) => row.original)
+    return tableRows.filter(
+      (row) =>
+        (categoryFilter === ALL || row.categoryName === categoryFilter) &&
+        (locationFilter === ALL || row.location === locationFilter) &&
+        (needle === "" ||
+          row.name.toLowerCase().includes(needle) ||
+          row.tag.toLowerCase().includes(needle)),
+    )
+  }, [tableRows, search, categoryFilter, locationFilter])
+
+  const hasActiveFilters =
+    search.trim() !== "" || categoryFilter !== ALL || locationFilter !== ALL
+
+  function clearFilters() {
+    setSearch("")
+    setCategoryFilter(ALL)
+    setLocationFilter(ALL)
+  }
+
+  const columns: DataListColumn<AssetTableRow>[] = [
+    {
+      id: "name",
+      header: t("assets.detail.fields.name"),
+      cell: renderAssetName,
+    },
+    {
+      id: "tag",
+      header: t("assets.inventory.columns.tag"),
+      hideBelow: "lg",
+      cell: (asset) => (
+        <span className="[overflow-wrap:anywhere]">{asset.tag}</span>
+      ),
+    },
+    {
+      id: "category",
+      header: t("assets.inventory.columns.category"),
+      hideBelow: "lg",
+      cell: (asset) => (
+        <span className="[overflow-wrap:anywhere]">{asset.categoryName}</span>
+      ),
+    },
+    {
+      id: "location",
+      header: t("assets.inventory.columns.location"),
+      hideBelow: "lg",
+      cell: (asset) => (
+        <span className="[overflow-wrap:anywhere]">
+          {asset.location ?? t("assets.inventory.emptyValue")}
+        </span>
+      ),
+    },
+    {
+      id: "status",
+      header: t("assets.inventory.columns.status"),
+      cell: renderStatusBadges,
+    },
+    ...(canWriteAssets
+      ? [
+          {
+            id: "actions",
+            header: (
+              <span className="sr-only">{t("assets.inventory.columns.actions")}</span>
+            ),
+            align: "end" as const,
+            cell: renderRowActions,
+          },
+        ]
+      : []),
+  ]
+
+  // Selected ids intersected with the loaded rows (also those a filter hides).
+  const selectedRows = useMemo(
+    () => tableRows.filter((row) => selectedIds.has(row.id)),
+    [tableRows, selectedIds],
+  )
   const selectedCount = selectedRows.length
   const scheduleCount = selectedRows.filter(
     (asset) => asset.scheduledDeletionAt == null,
@@ -630,7 +601,7 @@ export function AssetsPage() {
 
       deleteInFlightRef.current = false
       handleBulkDeleteOpenChange(false)
-      setRowSelection({})
+      setSelectedIds(new Set())
       setBlockedMessage(null)
 
       const message =
@@ -664,78 +635,153 @@ export function AssetsPage() {
     }
   }
 
-  const emptyState = (
-    <EmptyState
-      className="border-0"
-      title={columnFilters.length ? t("emptyStates.noResults") : categories.length === 0 && !categoriesDenied
-        ? tTone("assets.inventory.emptyNoTypes") : tTone("assets.inventory.empty")}
-      description={columnFilters.length ? t("emptyStates.filterDescription") : undefined}
-      example={!columnFilters.length && canWriteAssets ? t("emptyStates.examples.assets") : undefined}
-      learnMore={columnFilters.length ? undefined : learnMore}
-      action={columnFilters.length ? (
-        <Button onClick={() => setColumnFilters([])}>{t("emptyStates.clearFilters")}</Button>
-      ) : categories.length === 0 && !categoriesDenied && canWriteCategories ? (
-        <Button onClick={() => { void navigate("/ativos/tipos") }}>{t("assets.inventory.emptyNoTypesCta")}</Button>
-      ) : categories.length > 0 && canWriteAssets ? (
-        <Button disabled={!canOpenWizard} onClick={() => { void navigate("/ativos/novo") }}>{t("assets.inventory.emptyWithTypesCta")}</Button>
-      ) : undefined}
-    />
+  const filterOptionLabel = (value: string) =>
+    value === ALL ? t("assets.inventory.filters.all") : value
+
+  const filterSelect = (
+    id: string,
+    label: string,
+    value: string,
+    options: string[],
+    onChange: (next: string) => void,
+  ) => (
+    <div className="flex min-w-0 flex-col gap-1 sm:w-48">
+      <label htmlFor={id} className="text-xs font-medium text-muted-foreground">
+        {label}
+      </label>
+      <Select
+        modal={false}
+        value={value}
+        onValueChange={(next) => {
+          if (typeof next === "string") {
+            onChange(next)
+          }
+        }}
+        items={[ALL, ...options].map((option) => ({
+          value: option,
+          label: filterOptionLabel(option),
+        }))}
+      >
+        <SelectTrigger id={id} className="min-h-11 w-full">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          {[ALL, ...options].map((option) => (
+            <SelectItem key={option} value={option}>
+              {filterOptionLabel(option)}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </div>
   )
 
+  const filterChips = [
+    ...(search.trim() !== ""
+      ? [
+          {
+            label: `${t("assets.inventory.filters.searchLabel")}: ${search.trim()}`,
+            onRemove: () => {
+              setSearch("")
+            },
+          },
+        ]
+      : []),
+    ...(categoryFilter !== ALL
+      ? [
+          {
+            label: `${t("assets.inventory.filters.category")}: ${categoryFilter}`,
+            onRemove: () => {
+              setCategoryFilter(ALL)
+            },
+          },
+        ]
+      : []),
+    ...(locationFilter !== ALL
+      ? [
+          {
+            label: `${t("assets.inventory.filters.location")}: ${locationFilter}`,
+            onRemove: () => {
+              setLocationFilter(ALL)
+            },
+          },
+        ]
+      : []),
+  ]
+
+  const emptyProps = hasActiveFilters
+    ? {
+        title: t("emptyStates.noResults"),
+        description: t("emptyStates.filterDescription"),
+        action: <Button onClick={clearFilters}>{t("emptyStates.clearFilters")}</Button>,
+      }
+    : {
+        title:
+          categories.length === 0 && !categoriesDenied
+            ? tTone("assets.inventory.emptyNoTypes")
+            : tTone("assets.inventory.empty"),
+        example: canWriteAssets ? t("emptyStates.examples.assets") : undefined,
+        learnMore,
+        action:
+          categories.length === 0 && !categoriesDenied && canWriteCategories ? (
+            <Button onClick={() => { void navigate("/ativos/tipos") }}>{t("assets.inventory.emptyNoTypesCta")}</Button>
+          ) : categories.length > 0 && canWriteAssets ? (
+            <Button disabled={!canOpenWizard} onClick={() => { void navigate("/ativos/novo") }}>{t("assets.inventory.emptyWithTypesCta")}</Button>
+          ) : undefined,
+      }
+
+  // A failed asset list becomes an error with retry; a failed lookup keeps the rows and shows the alert.
+  const listFailed = loadError !== null && assets.length === 0
+
+  const headerActions = canWriteAssets ? (
+    <div className="flex flex-wrap gap-2">
+      <Button
+        type="button"
+        onClick={() => {
+          void navigate("/ativos/novo")
+        }}
+        disabled={!canOpenWizard}
+      >
+        <Plus data-icon="inline-start" />
+        {t("assets.inventory.actions.add")}
+      </Button>
+      <Button
+        type="button"
+        variant="outline"
+        onClick={() => {
+          openWizard("bulk")
+        }}
+        disabled={!canOpenWizard}
+      >
+        <Layers data-icon="inline-start" />
+        {t("assets.inventory.actions.bulkAdd")}
+      </Button>
+      <Button
+        type="button"
+        variant="destructive"
+        onClick={() => {
+          openBulkDeleteDialog()
+        }}
+        disabled={selectedCount === 0 || isTrialReadOnly}
+      >
+        <Trash2 data-icon="inline-start" />
+        {selectedCount > 0
+          ? t("assets.inventory.actions.bulkDeleteCount", {
+              count: selectedCount,
+            })
+          : t("assets.inventory.actions.bulkDelete")}
+      </Button>
+    </div>
+  ) : undefined
+
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <div className="space-y-1">
-          <h1 className="text-2xl font-semibold tracking-tight">
-            {t("nav.assets")}
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            {tTone("assets.inventory.description")}
-          </p>
-        </div>
-
-        {canWriteAssets ? (
-          <div className="flex flex-wrap gap-2">
-            <Button
-              type="button"
-              onClick={() => {
-                void navigate("/ativos/novo")
-              }}
-              disabled={!canOpenWizard}
-            >
-              <Plus data-icon="inline-start" />
-              {t("assets.inventory.actions.add")}
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => {
-                openWizard("bulk")
-              }}
-              disabled={!canOpenWizard}
-            >
-              <Layers data-icon="inline-start" />
-              {t("assets.inventory.actions.bulkAdd")}
-            </Button>
-            <Button
-              type="button"
-              variant="destructive"
-              onClick={() => {
-                openBulkDeleteDialog()
-              }}
-              disabled={selectedCount === 0 || isTrialReadOnly}
-            >
-              <Trash2 data-icon="inline-start" />
-              {selectedCount > 0
-                ? t("assets.inventory.actions.bulkDeleteCount", {
-                    count: selectedCount,
-                  })
-                : t("assets.inventory.actions.bulkDelete")}
-            </Button>
-          </div>
-        ) : null}
-      </div>
-
+    <Page
+      header={{
+        title: t("nav.assets"),
+        description: tTone("assets.inventory.description"),
+        actions: headerActions,
+      }}
+    >
       {isTrialReadOnly ? (
         <p className="text-sm text-amber-800 dark:text-amber-200" role="status">
           {t("trial.readOnlyHint")}
@@ -763,7 +809,7 @@ export function AssetsPage() {
         </div>
       ) : null}
 
-      {loadError !== null ? (
+      {loadError !== null && !listFailed ? (
         <div
           role="alert"
           className="rounded-lg border border-destructive/30 bg-destructive/10 p-4 text-sm text-destructive"
@@ -772,110 +818,84 @@ export function AssetsPage() {
         </div>
       ) : null}
 
-      <div className="hidden overflow-x-auto rounded-xl border border-border sm:block">
-        <Table>
-          <TableHeader>
-            {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id}>
-                {headerGroup.headers.map((header) => (
-                  <TableHead key={header.id} className="text-center">
-                    {header.isPlaceholder
-                      ? null
-                      : flexRender(
-                          header.column.columnDef.header,
-                          header.getContext(),
-                        )}
-                  </TableHead>
-                ))}
-              </TableRow>
-            ))}
-          </TableHeader>
-          <TableBody>
-            {isLoading ? (
-              <TableRowsSkeleton columns={tableColumns.length} />
-            ) : null}
-
-            {!isLoading && filteredRows.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={tableColumns.length} className="h-24 text-center">
-                  {emptyState}
-                </TableCell>
-              </TableRow>
-            ) : null}
-
-            {!isLoading
-              ? filteredRows.map((row) => (
-                  <TableRow
-                    key={row.id}
-                    data-state={row.getIsSelected() ? "selected" : undefined}
-                  >
-                    {row.getVisibleCells().map((cell) => (
-                      <TableCell
-                        key={cell.id}
-                        className="whitespace-normal text-center"
-                      >
-                        {flexRender(
-                          cell.column.columnDef.cell,
-                          cell.getContext(),
-                        )}
-                      </TableCell>
-                    ))}
-                  </TableRow>
-                ))
-              : null}
-          </TableBody>
-        </Table>
-      </div>
-
-      <div className="space-y-2 sm:hidden">
-        {isLoading ? (
-          <RecordListSkeleton />
-        ) : null}
-
-        {!isLoading && filteredRows.length === 0 ? emptyState : null}
-
-        {!isLoading
-          ? filteredRows.map((row) => {
-              const asset = row.original
-              return (
-                <div
-                  key={row.id}
-                  data-state={row.getIsSelected() ? "selected" : undefined}
-                  className="rounded-xl border border-border p-3 data-[state=selected]:border-primary"
-                >
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="flex min-w-0 items-start gap-2">
-                      {canWriteAssets ? (
-                        <label className="-m-3 flex size-11 shrink-0 cursor-pointer items-center justify-center">
-                          <input
-                            type="checkbox"
-                            className="size-5 accent-primary"
-                            aria-label={t("assets.inventory.actions.selectRow", {
-                              tag: asset.tag,
-                            })}
-                            checked={row.getIsSelected()}
-                            onChange={row.getToggleSelectedHandler()}
-                            disabled={isTrialReadOnly}
-                          />
-                        </label>
-                      ) : null}
-                      <div className="min-w-0">
-                        {renderAssetName(asset)}
-                        <p className="truncate font-medium">{asset.tag}</p>
-                        <p className="truncate text-xs text-muted-foreground">
-                          {asset.categoryName}
-                          {asset.location ? ` · ${asset.location}` : ""}
-                        </p>
-                      </div>
-                    </div>
-                    {canWriteAssets ? renderRowActions(asset) : null}
-                  </div>
-                  <div className="mt-2">{renderStatusBadges(asset)}</div>
-                </div>
-              )
-            })
-          : null}
-      </div>
+      <DataList<AssetTableRow>
+        {...(loadError !== null && listFailed
+          ? {
+              state: "error" as const,
+              error: loadError,
+              onRetry: () => {
+                void loadPageData()
+              },
+            }
+          : { state: isLoading ? ("loading" as const) : ("ready" as const) })}
+        label={t("nav.assets")}
+        columns={columns}
+        rows={filteredRows}
+        getRowId={(asset) => asset.id}
+        toolbar={
+          <FilterBar
+            label={t("assets.inventory.filters.label")}
+            search={{
+              value: search,
+              onChange: setSearch,
+              placeholder: t("assets.inventory.filters.searchPlaceholder"),
+              label: t("assets.inventory.filters.searchLabel"),
+            }}
+            filters={
+              <>
+                {filterSelect(
+                  "assets-filter-category",
+                  t("assets.inventory.filters.category"),
+                  categoryFilter,
+                  categoryOptions,
+                  setCategoryFilter,
+                )}
+                {filterSelect(
+                  "assets-filter-location",
+                  t("assets.inventory.filters.location"),
+                  locationFilter,
+                  locationOptions,
+                  setLocationFilter,
+                )}
+              </>
+            }
+            chips={filterChips}
+          />
+        }
+        heading={
+          <p className="font-semibold text-foreground">
+            {t("nav.assets")}: {filteredRows.length}
+          </p>
+        }
+        empty={emptyProps}
+        selection={
+          canWriteAssets && !isTrialReadOnly
+            ? {
+                selectedIds,
+                onChange: setSelectedIds,
+                rowLabel: (asset) =>
+                  t("assets.inventory.actions.selectRow", { tag: asset.tag }),
+                selectAllLabel: t("assets.inventory.actions.selectAll"),
+              }
+            : undefined
+        }
+        renderCard={(asset) => (
+          <>
+            <div className="flex min-w-0 items-start justify-between gap-3">
+              <div className="min-w-0">
+                {renderAssetName(asset)}
+                <p className="font-medium [overflow-wrap:anywhere]">{asset.tag}</p>
+                <p className="text-xs text-muted-foreground [overflow-wrap:anywhere]">
+                  {asset.categoryName}
+                  {asset.location ? ` · ${asset.location}` : ""}
+                </p>
+              </div>
+              {canWriteAssets ? renderRowActions(asset) : null}
+            </div>
+            {renderStatusBadges(asset)}
+          </>
+        )}
+      />
 
       <Dialog
         open={assetToDelete !== null}
@@ -1029,6 +1049,6 @@ export function AssetsPage() {
           }}
         />
       ) : null}
-    </div>
+    </Page>
   )
 }
