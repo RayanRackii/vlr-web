@@ -2136,6 +2136,7 @@
     "name": "Name",
     "namePlaceholder": "Ex.: Frequent customers",
     "nameHelp": "Shown to the team when unlocking products.",
+    "sectionDetails": "Group details",
     "nameRequired": "Enter the group name.",
     "description": "Description",
     "descriptionPlaceholder": "What this group is for",

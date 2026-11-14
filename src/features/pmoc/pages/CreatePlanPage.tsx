@@ -7,7 +7,9 @@ import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
-import { FormPrimaryButton } from "@/components/ui/form-primary-button"
+import { FormPage } from "@/components/layout/FormPage"
+import { Page } from "@/components/layout/Page"
+import { FormGrid, FormSection } from "@/components/ui/form-layout"
 import {
   FormValidationSummary,
   LiveFieldMessage,
@@ -53,6 +55,7 @@ export function CreatePlanPage({ maintenance = false }: { maintenance?: boolean 
   const [isLoadingLookups, setIsLoadingLookups] = useState(true)
   const [loadError, setLoadError] = useState<string | null>(null)
   const [submitError, setSubmitError] = useState<string | null>(null)
+  const [createdId, setCreatedId] = useState<string | null>(null)
 
   const formSchema = useMemo(
     () =>
@@ -150,8 +153,13 @@ export function CreatePlanPage({ maintenance = false }: { maintenance?: boolean 
   }, [session, t])
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- initial and session-driven fetch; loadLookups owns the loading state
     void loadLookups()
   }, [loadLookups])
+
+  useEffect(() => {
+    if (createdId !== null) void navigate(`/pmoc/${createdId}`)
+  }, [createdId, navigate])
 
   async function onSubmit(values: CreatePlanFormValues) {
     setSubmitError(null)
@@ -159,7 +167,8 @@ export function CreatePlanPage({ maintenance = false }: { maintenance?: boolean 
     try {
       const created = await createPlan(buildCreatePlanRequest(values))
       toast.success(t("pmoc.create.success.created"))
-      void navigate(`/pmoc/${created.id}`)
+      // Navigate from an effect so the unsaved-changes guard is already released.
+      setCreatedId(created.id)
     } catch (error: unknown) {
       console.error("CreatePlanPage onSubmit failed", error)
       if (isAxiosError(error)) {
@@ -211,20 +220,17 @@ export function CreatePlanPage({ maintenance = false }: { maintenance?: boolean 
     [t],
   )
 
-  return (
-    <div className="space-y-6">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <div className="space-y-1">
-          {maintenance && <p className="maintenance-eyebrow">{t("maintenance.eyebrow")}</p>}
-          <h1 className="text-2xl font-semibold tracking-tight">
-            {t(maintenance ? "maintenance.newPlan" : "pmoc.create.title")}
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            {t("pmoc.create.description")}
-          </p>
-        </div>
-      </div>
+  const header = {
+    eyebrow: maintenance ? t("maintenance.eyebrow") : undefined,
+    title: t(maintenance ? "maintenance.newPlan" : "pmoc.create.title"),
+    description: t("pmoc.create.description"),
+  }
+  const formReady = !isLoadingLookups && loadError === null && categories.length > 0
+  const formId = "create-plan-form"
 
+  if (!formReady) {
+    return (
+      <Page width="form" header={header}>
       {loadError !== null ? (
         <div
           role="alert"
@@ -256,9 +262,29 @@ export function CreatePlanPage({ maintenance = false }: { maintenance?: boolean 
             </p>
           </div>
         </div>
-      ) : (
+      ) : null}
+      </Page>
+    )
+  }
+
+  return (
+    <FormPage
+      header={header}
+      submitFormId={formId}
+      dirty={form.formState.isDirty}
+      saving={form.formState.isSubmitting}
+      saveDisabled={!isPlanValid}
+      saveLabel={t("pmoc.create.actions.save")}
+      savingLabel={t("pmoc.create.actions.saving")}
+      discardLabel={t("common.cancel")}
+      guardUnsaved={createdId === null}
+      onDiscard={() => {
+        void navigate(maintenance ? "/manutencao?aba=planos" : "/pmoc")
+      }}
+    >
         <Form {...form}>
           <form
+            id={formId}
             className={maintenance ? "maintenance-card space-y-8 p-[18px]" : "space-y-8"}
             noValidate
             onKeyDown={(event) => {
@@ -273,17 +299,11 @@ export function CreatePlanPage({ maintenance = false }: { maintenance?: boolean 
               void form.handleSubmit(onSubmit)(event)
             }}
           >
-            <section className="space-y-4 rounded-xl border border-border p-4 sm:p-6">
-              <div className="space-y-1">
-                <h2 className="text-lg font-medium">
-                  {t("pmoc.create.sections.main")}
-                </h2>
-                <p className="text-sm text-muted-foreground">
-                  {t("pmoc.create.sections.mainDescription")}
-                </p>
-              </div>
-
-              <div className="flex flex-col gap-4">
+            <FormSection
+              title={t("pmoc.create.sections.main")}
+              description={t("pmoc.create.sections.mainDescription")}
+            >
+              <FormGrid>
                 <FormField
                   control={form.control}
                   name="name"
@@ -500,20 +520,13 @@ export function CreatePlanPage({ maintenance = false }: { maintenance?: boolean 
                     </FormItem>
                   )}
                 />
-              </div>
-            </section>
+              </FormGrid>
+            </FormSection>
 
-            <section className="space-y-4 rounded-xl border border-border p-4 sm:p-6">
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                <div className="space-y-1">
-                  <h2 className="text-lg font-medium">
-                    {t("pmoc.create.sections.tasks")}
-                  </h2>
-                  <p className="text-sm text-muted-foreground">
-                    {t("pmoc.create.sections.tasksDescription")}
-                  </p>
-                </div>
-
+            <FormSection
+              title={t("pmoc.create.sections.tasks")}
+              description={t("pmoc.create.sections.tasksDescription")}
+              actions={
                 <Button
                   type="button"
                   variant="outline"
@@ -532,7 +545,8 @@ export function CreatePlanPage({ maintenance = false }: { maintenance?: boolean 
                   <Plus data-icon="inline-start" />
                   {t("pmoc.create.actions.addTask")}
                 </Button>
-              </div>
+              }
+            >
 
               <PlanTaskEditor
                 control={form.control}
@@ -542,7 +556,7 @@ export function CreatePlanPage({ maintenance = false }: { maintenance?: boolean 
                 onRemove={remove}
                 issueMessage={(path) => issueMessageAt(planError, path)}
               />
-            </section>
+            </FormSection>
 
             <FormValidationSummary messages={planMessages} />
 
@@ -554,30 +568,9 @@ export function CreatePlanPage({ maintenance = false }: { maintenance?: boolean 
                 {submitError}
               </div>
             ) : null}
-
-            <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
-              <Button
-                type="button"
-                variant={maintenance ? "ghost" : "outline"}
-                onClick={() => {
-                  void navigate(maintenance ? "/manutencao?aba=planos" : "/pmoc")
-                }}
-              >
-                {t("common.cancel")}
-              </Button>
-              <FormPrimaryButton
-                type="submit"
-                isValid={isPlanValid}
-                loading={form.formState.isSubmitting}
-                loadingLabel={t("pmoc.create.actions.saving")}
-              >
-                {t("pmoc.create.actions.save")}
-              </FormPrimaryButton>
-            </div>
           </form>
         </Form>
-      )}
-    </div>
+    </FormPage>
   )
 }
 

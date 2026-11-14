@@ -29,7 +29,6 @@ const pageLegacy = [
   "src/features/catalog/components/productWizard/ProductWizardOfferStep.tsx",
   "src/features/catalog/pages/CatalogPolicyPage.tsx",
   "src/features/catalog/pages/CatalogProductEditorPage.tsx",
-  "src/features/catalog/pages/CustomerGroupFormPage.tsx",
   "src/features/catalog/pages/CustomerGroupsPage.tsx",
   "src/features/catalog/pages/PedidoRequestDetailPage.tsx",
   "src/features/catalog/pages/PedidosPage.tsx",
@@ -59,7 +58,6 @@ const pageLegacy = [
   "src/features/notifications/pages/NotificationChannelsPanel.tsx",
   "src/features/notifications/pages/NotificationHistoryPanel.tsx",
   "src/features/notifications/pages/NotificationsPage.tsx",
-  "src/features/pmoc/pages/CreatePlanPage.tsx",
   "src/features/pmoc/pages/PmocLibraryPage.tsx",
   "src/features/pmoc/pages/PmocPlanDetailPage.tsx",
   "src/features/pmoc/pages/PmocTemplatePreviewPage.tsx",
@@ -91,6 +89,46 @@ const pageLegacy = [
 const tableLegacy = [
 ]
 
+// Legacy files with a raw <label> instead of FormRow/FormLabel — remove entries as each
+// screen migrates; never add new ones (docs/plans/active/2026-11-14-ui-form-page.md)
+const formLegacy = [
+  "src/features/admin/pages/ResourceVisualCatalogPage.tsx",
+  "src/features/agenda/AgendaFilters.tsx",
+  "src/features/assets/components/AssetWizard.tsx",
+  "src/features/assets/pages/AssetsPage.tsx",
+  "src/features/assets/pages/ResourceTypeWizardPage.tsx",
+  "src/features/assistant/CadastroTaxonomyStep.tsx",
+  "src/features/assistant/ResourceAssistantPage.tsx",
+  "src/features/assistant/ResourceCadastroDadosStep.tsx",
+  "src/features/auth/TenantPicker.tsx",
+  "src/features/catalog/components/CatalogOrderAllocationPanel.tsx",
+  "src/features/catalog/components/CatalogProductAccessSection.tsx",
+  "src/features/catalog/components/CatalogProductResourceRequirements.tsx",
+  "src/features/catalog/components/PortalCatalogFilters.tsx",
+  "src/features/catalog/components/StaffCatalogChrome.tsx",
+  "src/features/catalog/components/productWizard/ProductWizardAccessStep.tsx",
+  "src/features/catalog/pages/CatalogProductEditorPage.tsx",
+  "src/features/catalog/pages/CatalogProductsPage.tsx",
+  "src/features/catalog/pages/CustomerGroupsPage.tsx",
+  "src/features/module-guide/ModuleGuide.tsx",
+  "src/features/notifications/pages/NotificationChannelsPanel.tsx",
+  "src/features/notifications/pages/NotificationHistoryPanel.tsx",
+  "src/features/rentals/components/CategoryBookingPolicySection.tsx",
+  "src/features/rentals/components/RentalResourceEditorForm.tsx",
+  "src/features/rentals/components/resourceWizard/ResourceWizardPricesStep.tsx",
+  "src/features/rentals/components/schedule/DaySlotSheet.tsx",
+  "src/features/rentals/components/schedule/RentableMultiSelect.tsx",
+  "src/features/rentals/components/schedule/SchedulePolicyPanel.tsx",
+  "src/features/rentals/components/schedule/TemplateSheet.tsx",
+  "src/features/rentals/components/schedule/WeeklyRuleSheet.tsx",
+  "src/features/rentals/pages/RentalLayoutsPage.tsx",
+  "src/features/rentals/pages/ReservationsPage.tsx",
+  "src/features/taxonomy/components/TaxonomyFilters.tsx",
+  "src/features/tenantPortal/components/BookingMapExperience.tsx",
+  "src/features/tenantPortal/pages/TenantPortalAgendaPage.tsx",
+  "src/features/tenantPortal/pages/TenantPortalRegisterPage.tsx",
+]
+
 const pageRules = [
   {
     selector: "JSXOpeningElement[name.name='h1']",
@@ -99,6 +137,13 @@ const pageRules = [
   {
     selector: "JSXAttribute[name.name='className'] :matches(Literal[value=/^(?=.*mx-auto)(?=.*max-w-)/], TemplateElement[value.raw=/^(?=.*mx-auto)(?=.*max-w-)/])",
     message: "Use Page width instead of hand-set page widths.",
+  },
+]
+
+const formRules = [
+  {
+    selector: "JSXOpeningElement[name.name='label']",
+    message: "Use FormRow from @/components/ui/form-layout or FormLabel from @/components/ui/form (docs/plans/active/2026-11-14-ui-form-page.md).",
   },
 ]
 
@@ -117,9 +162,22 @@ const featureFiles = ["src/features/**/*.{ts,tsx}"]
 const testIgnores = ["**/*.test.{ts,tsx}", "**/__tests__/**"]
 // Flat config replaces (does not merge) a rule across blocks, so each combination of legacy
 // lists gets its own block with exactly the rules that apply.
-const onlyIn = (list, other) => list.filter((file) => !other.includes(file))
+const ruleSets = [
+  { legacy: pageLegacy, rules: pageRules },
+  { legacy: tableLegacy, rules: tableRules },
+  { legacy: formLegacy, rules: formRules },
+]
+const legacyFiles = [...new Set(ruleSets.flatMap((set) => set.legacy))]
 // A flat-config block with an empty `files` array is a config error, so skip empty ones.
 const scopedBlock = (files, rules) => (files.length > 0 ? [{ files, rules }] : [])
+// Group the legacy files by the exact rule sets they are still exempt from.
+const legacyBlocks = Object.values(
+  Object.groupBy(legacyFiles, (file) => ruleSets.map((set) => set.legacy.includes(file) ? "1" : "0").join("")),
+).flatMap((files) => {
+  const exempt = ruleSets.filter((set) => set.legacy.includes(files[0]))
+  const applied = ruleSets.filter((set) => !exempt.includes(set)).flatMap((set) => set.rules)
+  return scopedBlock(files, { "no-restricted-syntax": ["error", ...applied] })
+})
 
 export default defineConfig([
   globalIgnores(["dist", "playwright-report", "test-results"]),
@@ -153,11 +211,10 @@ export default defineConfig([
   },
   {
     files: featureFiles,
-    ignores: [...testIgnores, ...pageLegacy, ...tableLegacy],
-    rules: { "no-restricted-syntax": ["error", ...pageRules, ...tableRules] },
+    ignores: [...testIgnores, ...legacyFiles],
+    rules: { "no-restricted-syntax": ["error", ...ruleSets.flatMap((set) => set.rules)] },
   },
-  ...scopedBlock(onlyIn(pageLegacy, tableLegacy), { "no-restricted-syntax": ["error", ...tableRules] }),
-  ...scopedBlock(onlyIn(tableLegacy, pageLegacy), { "no-restricted-syntax": ["error", ...pageRules] }),
+  ...legacyBlocks,
   {
     files: ["e2e/**/*.ts", "playwright.config.ts"],
     extends: [js.configs.recommended, tseslint.configs.recommended],
