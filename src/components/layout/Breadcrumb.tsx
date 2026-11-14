@@ -42,6 +42,7 @@ export function Breadcrumb({ variant = "page", fallback = null }: BreadcrumbProp
   const { t } = useTranslation()
   const { pathname } = useLocation()
   const { sections } = useAppNavigationSections("module-intros")
+  const { sections: shellSections } = useAppNavigationSections("shell")
   const { title } = useContext(BreadcrumbTitleContext)
   const narrow = useSyncExternalStore(subscribeToViewport, isNarrowViewport, () => false)
   const match = matchNavigationPath(sections.flatMap((section) => section.items), pathname)
@@ -84,6 +85,25 @@ export function Breadcrumb({ variant = "page", fallback = null }: BreadcrumbProp
     }
   } else {
     crumbs.push({ label: t(getPageTitleKey(pathname)) })
+  }
+
+  // Header only: the module-intro sections above do not know child routes such as
+  // /agendas or the settings pages, so complete the trail from the shell navigation.
+  if (inHeader && crumbs.length < 2) {
+    const shellMatch = matchNavigationPath(shellSections.flatMap((section) => section.items), pathname)
+    if (shellMatch && !shellMatch.isDetail) {
+      const { item, child, tab } = shellMatch
+      const section = shellSections.find((candidate) => candidate.items.includes(item))
+      const current = t((tab ?? child ?? item).labelKey)
+      if (child) {
+        crumbs.splice(0, crumbs.length, { label: t(item.labelKey), to: undefined }, { label: current })
+      } else if (section && !section.standalone) {
+        const sectionLabel = t(section.titleKey)
+        if (sectionLabel !== current) {
+          crumbs.splice(0, crumbs.length, { label: sectionLabel }, { label: current })
+        }
+      }
+    }
   }
 
   const visibleCrumbs = narrow ? crumbs.slice(-2) : crumbs

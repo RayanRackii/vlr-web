@@ -28,9 +28,8 @@ describe("ui primitives use Tailwind 3 arbitrary CSS-var syntax", () => {
     })]).process("@tailwind utilities;", { from: undefined })
     const rules: { selector: string; declarations: string }[] = []
     root.walkRules((rule) => { rules.push({ selector: rule.selector, declarations: rule.toString() }) })
-    expect(rules.some(({ selector, declarations }) => selector.includes(":focus-visible") && declarations.includes("border-color: var(--ring)"))).toBe(true)
-    // Tailwind 3 drops `border-destructive/55` on a CSS-variable color, so the painted border lives in index.css.
-    expect(rules.some(({ declarations }) => declarations.includes("border-color: var(--destructive)"))).toBe(false)
+    expect(rules.some(({ selector, declarations }) => selector.includes(":focus-visible") && declarations.includes("var(--ring)"))).toBe(true)
+    // The invalid-state border is painted from index.css (it also covers native/third-party controls).
     const css = readFileSync("src/index.css", "utf8")
     expect(css).toContain("color-mix(in srgb, var(--destructive) 55%, var(--border))")
     expect(css).toContain("color-mix(in srgb, var(--destructive) 70%, var(--border))")

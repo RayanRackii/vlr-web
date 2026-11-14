@@ -16,6 +16,7 @@ const permissions = [
   "pmoc.plans.read", "pmoc.plans.write", "pmoc.templates.read", "os.work_orders.read",
   "inventory.assets.read", "inventory.categories.read", "core.users.read",
   "core.registration_fields.read", "rentals.reservations.read", "rentals.booking_policy.read",
+  "rentals.schedule.read", "rentals.assets.read", "core.units.read",
 ]
 
 function Detail({ title }: { title?: string }) {
@@ -23,12 +24,12 @@ function Detail({ title }: { title?: string }) {
   return <Link to="/os/another">Another detail</Link>
 }
 
-function renderBreadcrumb(path: string, title?: string) {
+function renderBreadcrumb(path: string, title?: string, variant?: "page" | "header") {
   return render(
     <MemoryRouter initialEntries={[path]}>
       <TestPermissionProvider permissions={permissions} activeModules={["pmoc", "os", "inventory", "rentals"]}>
         <BreadcrumbTitleProvider>
-          <Breadcrumb />
+          <Breadcrumb variant={variant} />
           <Routes>
             <Route path="/pedidos/:orderId" element={<Detail title={title} />} />
             <Route path="/pmoc/:id" element={<Detail title={title} />} />
@@ -187,6 +188,38 @@ it("gives breadcrumb links 44px tap targets without increasing the line height",
 it.each(["/agendas", "/agendas/recursos", "/agendas/produto"])("does not repeat the top-level agenda heading in a breadcrumb at %s", (path) => {
   renderBreadcrumb(path)
   expect(screen.queryByRole("navigation", { name: "Caminho de navegação" })).not.toBeInTheDocument()
+})
+
+describe("header breadcrumb parent crumb", () => {
+  const crumbItems = () => within(screen.getByRole("navigation", { name: "Caminho de navegação" })).getAllByRole("listitem")
+
+  it("prepends the parent nav item at /agendas", () => {
+    renderBreadcrumb("/agendas", undefined, "header")
+    const items = crumbItems()
+    expect(items).toHaveLength(2)
+    expect(items[0]).toHaveTextContent("Agendas")
+    expect(within(items[1]).getByText("Visão geral")).toHaveAttribute("aria-current", "page")
+  })
+
+  it.each([
+    ["/configuracoes/agenda", "Configurações", "Horários"],
+    ["/configuracoes/recursos", "Cadastro", "Recursos"],
+  ])("prepends the section title at %s", (path, section, page) => {
+    renderBreadcrumb(path, undefined, "header")
+    const items = crumbItems()
+    expect(items[0]).toHaveTextContent(section)
+    expect(within(items[items.length - 1]).getByText(page)).toHaveAttribute("aria-current", "page")
+  })
+
+  it("keeps the overview as a single title", () => {
+    renderBreadcrumb("/", undefined, "header")
+    expect(screen.queryByRole("navigation", { name: "Caminho de navegação" })).not.toBeInTheDocument()
+  })
+
+  it.each(["/agendas", "/configuracoes/agenda"])("leaves the page variant unchanged at %s", (path) => {
+    renderBreadcrumb(path)
+    expect(screen.queryByRole("navigation", { name: "Caminho de navegação" })).not.toBeInTheDocument()
+  })
 })
 
 describe("Pedidos child breadcrumb", () => {
