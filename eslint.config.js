@@ -20,7 +20,6 @@ const pageLegacy = [
   "src/features/admin/pages/TenantModuleMenuPage.tsx",
   "src/features/admin/pages/TenantRegistrationFieldsPage.tsx",
   "src/features/assets/components/AssetWizard.tsx",
-  "src/features/assets/pages/ResourceTypeWizardPage.tsx",
   "src/features/assets/pages/ResourceTypesPage.tsx",
   "src/features/assistant/CadastroShell.tsx",
   "src/features/assistant/ProductAssistantPage.tsx",
@@ -96,7 +95,6 @@ const formLegacy = [
   "src/features/agenda/AgendaFilters.tsx",
   "src/features/assets/components/AssetWizard.tsx",
   "src/features/assets/pages/AssetsPage.tsx",
-  "src/features/assets/pages/ResourceTypeWizardPage.tsx",
   "src/features/assistant/CadastroTaxonomyStep.tsx",
   "src/features/assistant/ResourceAssistantPage.tsx",
   "src/features/assistant/ResourceCadastroDadosStep.tsx",
@@ -129,6 +127,15 @@ const formLegacy = [
   "src/features/tenantPortal/pages/TenantPortalRegisterPage.tsx",
 ]
 
+// Files that still hand-build a step indicator (aria-current="step") instead of Wizard /
+// WizardPanelsStepper — remove entries as each migrates; never add new ones
+// (docs/plans/active/2026-11-14-resource-type-wizard.md)
+const stepperLegacy = [
+  "src/features/assistant/CadastroShell.tsx",
+  "src/features/catalog/components/PortalOrderStepper.tsx",
+  "src/features/module-guide/ModuleGuide.tsx",
+]
+
 const pageRules = [
   {
     selector: "JSXOpeningElement[name.name='h1']",
@@ -144,6 +151,13 @@ const formRules = [
   {
     selector: "JSXOpeningElement[name.name='label']",
     message: "Use FormRow from @/components/ui/form-layout or FormLabel from @/components/ui/form (docs/plans/active/2026-11-14-ui-form-page.md).",
+  },
+]
+
+const stepperRules = [
+  {
+    selector: "JSXAttribute[name.name='aria-current'] Literal[value='step']",
+    message: "Use Wizard / WizardPanelsStepper from src/components (docs/plans/active/2026-11-14-resource-type-wizard.md).",
   },
 ]
 
@@ -166,6 +180,7 @@ const ruleSets = [
   { legacy: pageLegacy, rules: pageRules },
   { legacy: tableLegacy, rules: tableRules },
   { legacy: formLegacy, rules: formRules },
+  { legacy: stepperLegacy, rules: stepperRules },
 ]
 const legacyFiles = [...new Set(ruleSets.flatMap((set) => set.legacy))]
 // A flat-config block with an empty `files` array is a config error, so skip empty ones.

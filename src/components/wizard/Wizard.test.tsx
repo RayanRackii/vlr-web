@@ -28,4 +28,16 @@ describe("Wizard", () => {
     expect(screen.getByText("Review")).toBeInTheDocument()
     expect(screen.getByRole("button", { name: "Finish" })).toBeInTheDocument()
   })
+
+  it("supports a controlled step and shows a parent-owned stepError", async () => {
+    const user = userEvent.setup()
+    const onStepChange = vi.fn()
+    render(<Wizard steps={[{ id: "one", label: "One" }, { id: "two", label: "Two" }]} stepIndex={1} onStepChange={onStepChange} stepError="Boom" ariaLabel="Passos" nextLabel="Next" backLabel="Back" finishLabel="Finish" onFinish={vi.fn()}>{(index) => <p>Step {index + 1}</p>}</Wizard>)
+
+    expect(screen.getByText("Step 2")).toBeInTheDocument()
+    expect(screen.getAllByRole("alert")[0]).toHaveTextContent("Boom")
+    await user.click(screen.getByRole("button", { name: "Back" }))
+    expect(onStepChange).toHaveBeenCalledWith(0)
+    expect(screen.getByText("Step 2")).toBeInTheDocument()
+  })
 })
