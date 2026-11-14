@@ -53,9 +53,7 @@ function renderAgenda() {
 }
 
 function tabButton(label: string) {
-  const button = screen.getByText(label).closest("button")
-  if (!button) throw new Error(`missing tab ${label}`)
-  return button
+  return screen.getByRole("tab", { name: label })
 }
 
 async function openHoursPanel(user: ReturnType<typeof userEvent.setup>) {
@@ -110,7 +108,7 @@ describe("weekly rule leave guard", () => {
     setDuration(rule, "60")
     await user.click(screen.getByText(i18n.t("rentals.schedule.tabs.daily")))
     expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument()
-    expect(tabButton(i18n.t("rentals.schedule.tabs.daily"))).toHaveAttribute("aria-pressed", "true")
+    expect(tabButton(i18n.t("rentals.schedule.tabs.daily"))).toHaveAttribute("aria-selected", "true")
   })
 
   it("asks before Agenda do dia leaves a duration edit and discards only on Sair", async () => {
@@ -124,11 +122,11 @@ describe("weekly rule leave guard", () => {
       await user.click(screen.getByText(i18n.t("rentals.schedule.tabs.daily")))
       expect(confirm).not.toHaveBeenCalled()
       await refuseLeave(user)
-      expect(tabButton(i18n.t("rentals.schedule.tabs.templates"))).toHaveAttribute("aria-pressed", "true")
+      expect(tabButton(i18n.t("rentals.schedule.tabs.templates"))).toHaveAttribute("aria-selected", "true")
       expect(within(rule).getByLabelText(i18n.t("rentals.schedule.policy.slotMinutes"))).toHaveValue(90)
       await user.click(screen.getByText(i18n.t("rentals.schedule.tabs.daily")))
       await acceptLeave(user)
-      expect(tabButton(i18n.t("rentals.schedule.tabs.daily"))).toHaveAttribute("aria-pressed", "true")
+      expect(tabButton(i18n.t("rentals.schedule.tabs.daily"))).toHaveAttribute("aria-selected", "true")
       expect(screen.queryByLabelText(i18n.t("rentals.schedule.policy.slotMinutes"))).not.toBeInTheDocument()
       expect(window.dispatchEvent(new Event("beforeunload", { cancelable: true }))).toBe(true)
     } finally {
@@ -220,13 +218,13 @@ describe("weekly rule leave guard", () => {
       await user.click(screen.getByText(i18n.t("rentals.schedule.tabs.daily")))
       expect(confirm).not.toHaveBeenCalled()
       await refuseLeave(user)
-      expect(tabButton(i18n.t("rentals.schedule.tabs.templates"))).toHaveAttribute("aria-pressed", "true")
+      expect(tabButton(i18n.t("rentals.schedule.tabs.templates"))).toHaveAttribute("aria-selected", "true")
       expect(duration).toHaveValue("60,90")
       fireEvent.change(duration, { target: { value: "60" } })
       await user.click(within(panel).getByRole("button", { name: new RegExp(`^${i18n.t("rentals.schedule.policy.openHours")}`) }))
       await user.click(screen.getByText(i18n.t("rentals.schedule.tabs.daily")))
       await acceptLeave(user)
-      expect(tabButton(i18n.t("rentals.schedule.tabs.daily"))).toHaveAttribute("aria-pressed", "true")
+      expect(tabButton(i18n.t("rentals.schedule.tabs.daily"))).toHaveAttribute("aria-selected", "true")
       expect(screen.queryByLabelText(i18n.t("rentals.schedule.policy.durationMinutes"))).not.toBeInTheDocument()
     } finally {
       confirm.mockRestore()

@@ -1,4 +1,5 @@
 import { cn } from "@/lib/utils"
+import { tabClass, tabCountClass } from "@/components/ui/tabs-style"
 
 export type FilterTabOption<T extends string> = {
   value: T
@@ -25,14 +26,11 @@ function Tab({ active, onClick, label, count }: { active: boolean; onClick: () =
       type="button"
       aria-pressed={active}
       onClick={onClick}
-      className={cn(
-        "touch-target inline-flex min-h-11 shrink-0 cursor-pointer items-center gap-2 whitespace-nowrap border-b-2 px-1 text-sm outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring",
-        active ? "border-primary font-medium text-primary" : "border-transparent text-muted-foreground hover:text-foreground",
-      )}
+      className={tabClass(active)}
     >
       {label}
       {count !== undefined ? (
-        <span className={cn("rounded-md px-1.5 text-xs font-medium tabular-nums", active ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground")}>{count}</span>
+        <span className={tabCountClass(active)}>{count}</span>
       ) : null}
     </button>
   )

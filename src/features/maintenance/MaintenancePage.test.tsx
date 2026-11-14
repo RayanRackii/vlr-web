@@ -81,7 +81,7 @@ it("filters with popovers and supports keyboard navigation between URL tabs", as
   await user.keyboard("{Escape}")
   const todayTab = screen.getByRole("tab", { name: i18n.t("maintenance.tabs.hoje") })
   todayTab.focus(); await user.keyboard("{End}")
-  expect(screen.getByTestId("location")).toHaveTextContent("aba=planos")
+  await waitFor(() => expect(screen.getByTestId("location")).toHaveTextContent("aba=planos"))
   expect(screen.getByRole("tab", { name: i18n.t("maintenance.tabs.planos") })).toHaveFocus()
   expect(screen.getByText(basePlanJson.name)).toBeInTheDocument()
   await user.click(screen.getByRole("button", { name: `${i18n.t("maintenance.status")} +` }))

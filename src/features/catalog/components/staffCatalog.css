@@ -18,11 +18,6 @@
 .staff-catalog-heading-actions :is(button, a) { border-radius: 11px; padding-inline: 16px; background: var(--primary); color: var(--primary-foreground); text-decoration: none; }
 .staff-catalog :is(button, a, input, select, textarea):focus-visible,
 .staff-catalog-editor :is(button, input, select, textarea):focus-visible { outline: 3px solid var(--catalog-accent); outline-offset: 3px; }
-.staff-catalog-tabs { display: flex; gap: 4px; flex-wrap: wrap; max-width: 100%; border-bottom: 1px solid var(--border); margin: 18px 0 16px; scrollbar-width: thin; }
-.staff-catalog-tabs a { display: inline-flex; align-items: center; gap: 8px; flex: none; min-height: 48px; padding: 10px 14px; font-size: 14px; font-weight: 600; color: var(--muted-foreground); border-bottom: 2px solid transparent; }
-.staff-catalog-tabs a[aria-current] { color: var(--catalog-accent); border-bottom-color: currentColor; }
-.staff-catalog-tab-count { border-radius: 999px; padding: 0 8px; font-size: 12px; background: var(--catalog-soft); }
-.staff-catalog-tab-short { display: none; }
 .staff-catalog-card { border: 1px solid var(--border); border-radius: 16px; background: var(--card); box-shadow: var(--catalog-shadow); min-width: 0; max-width: 100%; }
 .staff-catalog-search { display: flex; align-items: center; gap: 8px; padding-inline: 12px; flex: 1 1 220px; min-width: 0; border: 1px solid var(--border); border-radius: 10px; background: var(--background); color: var(--muted-foreground); }
 .staff-catalog-search input { border: 0; background: transparent; box-shadow: none; min-width: 0; min-height: 44px; padding-inline: 0; font-size: 14px; }
@@ -97,7 +92,6 @@
   .staff-catalog-heading { align-items: flex-start; flex-direction: column; gap: 14px; }
   /* The 12rem basis is a row width. In this column it became a tall blank under the title. */
   .staff-catalog-heading > div:first-child { flex: 0 1 auto; }
-  .staff-catalog-tabs a { padding-inline: 10px; }
   .staff-catalog-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .staff-catalog-table,
   .staff-catalog-table tbody { display: block; width: 100%; }
@@ -126,13 +120,6 @@
   .staff-catalog-editor [data-slot="dialog-footer"] { margin-inline: -16px; padding-inline: 16px; flex-direction: row; }
   .staff-catalog-editor [data-slot="dialog-footer"] button { flex: 1; }
 }
-@media (max-width: 519px) {
-  .staff-catalog-tabs { gap: 0; }
-  .staff-catalog-tabs a { padding-inline: 12px; gap: 7px; }
-  .staff-catalog-tab-count,
-  .staff-catalog-tab-long { display: none; }
-  .staff-catalog-tab-short { display: inline; }
-}
 body:has(.staff-catalog-editor) [data-slot="dialog-overlay"] { background: color-mix(in srgb, var(--foreground) 38%, transparent); }
 
 @media (pointer: coarse), (max-width: 767px) {
@@ -141,7 +128,7 @@ body:has(.staff-catalog-editor) [data-slot="dialog-overlay"] { background: color
 
 .staff-catalog [data-slot="table-container"] { min-width: 0; max-width: 100%; border-radius: 0 0 16px 16px; }
 .staff-catalog-heading > div, .staff-catalog-editor [data-slot="form-item"] { min-width: 0; }
-.staff-catalog-editor input:is([type="number"], [inputmode="decimal"]), .staff-catalog-tab-count { font-variant-numeric: tabular-nums; }
+.staff-catalog-editor input:is([type="number"], [inputmode="decimal"]) { font-variant-numeric: tabular-nums; }
 @media (prefers-reduced-motion: reduce) {
   .staff-catalog *, .staff-catalog-editor * { animation: none !important; transition: none !important; }
 }

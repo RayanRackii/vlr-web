@@ -1,8 +1,9 @@
-import { useRef, useState } from "react"
+import { useState } from "react"
 import { Link, useSearchParams } from "react-router-dom"
 import { useTranslation } from "react-i18next"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { useMaintenance, useMaintenanceList, type MaintenanceTab as Tab } from "./useMaintenance"
 import "./maintenance.css"
@@ -18,7 +19,6 @@ export function MaintenancePage() {
   const [status, setStatus] = useState("")
   const [kind, setKind] = useState("")
   const [mobileFilters, setMobileFilters] = useState(false)
-  const tabRefs = useRef<(HTMLButtonElement | null)[]>([])
   const clear = () => { setSearch(""); setStatus(""); setKind("") }
   function selectTab(value: Tab) {
     const next = new URLSearchParams(params); next.set("aba", value); setParams(next); clear()
@@ -31,13 +31,11 @@ export function MaintenancePage() {
     <header className="space-y-1">
       <h1 className="text-xl font-semibold tracking-tight sm:text-2xl">{t("nav.manutencao")}</h1>
       <p className="max-w-2xl text-sm text-muted-foreground">{t("maintenance.subtitle")}</p>
-      <div role="tablist" aria-label={t("nav.manutencao")} className="maintenance-tabs">
-        {tabs.map((value, index) => <button key={value} ref={node => { tabRefs.current[index] = node }} type="button" role="tab" id={`maintenance-tab-${value}`} aria-controls="maintenance-list" aria-selected={tab === value} tabIndex={tab === value ? 0 : -1} onClick={() => selectTab(value)} onKeyDown={event => {
-          const next = event.key === "ArrowRight" ? (index + 1) % tabs.length : event.key === "ArrowLeft" ? (index + tabs.length - 1) % tabs.length : event.key === "Home" ? 0 : event.key === "End" ? tabs.length - 1 : null
-          if (next === null) return
-          event.preventDefault(); selectTab(tabs[next]); tabRefs.current[next]?.focus()
-        }}>{t(`maintenance.tabs.${value}`)}</button>)}
-      </div>
+      <Tabs value={tab} onValueChange={value => selectTab(value as Tab)}>
+        <TabsList variant="line" activateOnFocus aria-label={t("nav.manutencao")} className="mt-4">
+          {tabs.map(value => <TabsTrigger key={value} value={value} id={`maintenance-tab-${value}`} aria-controls="maintenance-list">{t(`maintenance.tabs.${value}`)}</TabsTrigger>)}
+        </TabsList>
+      </Tabs>
     </header>
     <div className="flex flex-wrap items-center justify-between gap-3">
       <div><h2 className="text-base font-semibold">{t(`maintenance.tabs.${tab}`)}</h2><p className="text-sm text-muted-foreground">{t(`maintenance.sections.${tab}`)}</p></div>

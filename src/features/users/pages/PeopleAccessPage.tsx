@@ -128,13 +128,9 @@ export function PeopleAccessPage() {
       }}
     >
       <Tabs value={tab} onValueChange={(value) => { selectTab(value as PeopleAccessTab) }}>
-        <TabsList
-          variant="line"
-          aria-label={t("peopleAccess.title")}
-          className="max-w-full justify-start overflow-x-auto overflow-y-hidden px-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-        >
+        <TabsList variant="line" aria-label={t("peopleAccess.title")}>
           {tabItems.map((item) => (
-            <TabsTrigger key={item.id} value={item.id} className="min-h-11 flex-none px-3 first:pl-0">
+            <TabsTrigger key={item.id} value={item.id}>
               {t(item.labelKey)}
             </TabsTrigger>
           ))}
