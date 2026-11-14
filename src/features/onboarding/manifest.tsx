@@ -1,6 +1,8 @@
 import type { ReactElement } from "react"
+import { lazyPage } from "@/routes/lazyPage"
 
-import { OnboardingPage } from "@/features/onboarding/OnboardingPage"
+const OnboardingPage = lazyPage(() => import("@/features/onboarding/OnboardingPage"), "OnboardingPage")
+
 
 type FeatureRoute = { path: string; element: ReactElement }
 

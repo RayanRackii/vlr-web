@@ -1,9 +1,11 @@
 import type { ReactElement } from "react"
+import { lazyPage } from "@/routes/lazyPage"
 import { ClipboardPen } from "lucide-react"
 
 import type { AppNavigationItem } from "@/components/layout/navigation"
-import { WorkOrderExecutionPage } from "@/features/workOrders/pages/WorkOrderExecutionPage"
 import { MaintenanceListLegacyRedirect, RedirectKeepingLocation } from "@/routes/legacyScreenRedirect"
+
+const WorkOrderExecutionPage = lazyPage(() => import("@/features/workOrders/pages/WorkOrderExecutionPage"), "WorkOrderExecutionPage")
 
 type FeatureRoute = {
   path: string

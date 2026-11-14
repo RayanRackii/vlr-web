@@ -4,6 +4,15 @@ import { afterEach, vi } from "vitest"
 
 import { resetCurrentUserCacheForTests } from "@/features/users/services/currentUserCache"
 import i18n from "@/lib/i18n"
+import enCommon from "@/locales/en/common.json"
+import { enPermissionCopy } from "@/locales/en/permissionCopy"
+import esCommon from "@/locales/es/common.json"
+import { esPermissionCopy } from "@/locales/es/permissionCopy"
+import { mergePermissionCopy, registerLanguageBundle } from "@/lib/localeBundles"
+
+// Production loads en/es lazily; tests keep every locale available synchronously.
+registerLanguageBundle(i18n, "en", mergePermissionCopy(enCommon, enPermissionCopy))
+registerLanguageBundle(i18n, "es", mergePermissionCopy(esCommon, esPermissionCopy))
 
 await i18n.changeLanguage("pt-BR")
 

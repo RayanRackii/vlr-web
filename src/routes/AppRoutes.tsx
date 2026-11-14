@@ -1,6 +1,5 @@
-import { MaintenancePage } from "@/features/maintenance/MaintenancePage"
 import { MaintenanceRoute, MaintenanceCreatePlanPage, MaintenanceCreateOrderPage } from "@/features/maintenance/MaintenanceRoutes"
-import { useMemo } from "react"
+import { Suspense, useMemo } from "react"
 import { Navigate, Route, Routes, useLocation, useParams } from "react-router-dom"
 
 import { DashboardHomeRoute } from "@/components/layout/DashboardHomeRoute"
@@ -35,6 +34,9 @@ import { hasActiveStaffSession } from "@/lib/sessionRestoreGuard"
 import { usersManifest } from "@/features/users/manifest"
 import { workOrdersManifest } from "@/features/workOrders/manifest"
 import { UnknownPathRoute } from "@/routes/UnknownPathRoute"
+import { lazyPage } from "@/routes/lazyPage"
+
+const MaintenancePage = lazyPage(() => import("@/features/maintenance/MaintenancePage"), "MaintenancePage")
 
 function RedirectVerifyPhoneToEmail() {
   const location = useLocation()
@@ -106,156 +108,160 @@ export function AppRoutes() {
   // Host mode: ficc.rolvix.com.br → portal branded (sem landing).
   if (hostSubdomain) {
     return (
-      <Routes>
-        <Route element={<TenantPortalLayout />}>
-          {tenantPortalManifest.routes.public.map((route) =>
-            route.redirectToEmail ? (
-              <Route key={route.path} path={route.path} element={<RedirectVerifyPhoneToEmail />} />
-            ) : (
-              <Route key={route.path ?? "index"} index={route.path === undefined} path={route.path} element={route.element} />
-            ),
-          )}
-        </Route>
-        <Route element={<CustomerAppLayout />}>
-          {tenantPortalManifest.routes.customer.map((route) => <Route key={route.path} path={route.path} element={route.element} />)}
-          <Route element={<PortalModuleGuard moduleName="catalog" />}>
-            {catalogManifest.routes.customer.map((route) => <Route key={route.path} path={route.path} element={route.element} />)}
+      <Suspense fallback={null}>
+        <Routes>
+          <Route element={<TenantPortalLayout />}>
+            {tenantPortalManifest.routes.public.map((route) =>
+              route.redirectToEmail ? (
+                <Route key={route.path} path={route.path} element={<RedirectVerifyPhoneToEmail />} />
+              ) : (
+                <Route key={route.path ?? "index"} index={route.path === undefined} path={route.path} element={route.element} />
+              ),
+            )}
           </Route>
-        </Route>
-        <Route path="/t/:subdomain/*" element={<HostTenantPrefixRedirect hostSubdomain={hostSubdomain} />} />
-        <Route element={<TenantPortalLayout />}>
-          <Route path="*" element={<PortalNotFoundRoute />} />
-        </Route>
-      </Routes>
+          <Route element={<CustomerAppLayout />}>
+            {tenantPortalManifest.routes.customer.map((route) => <Route key={route.path} path={route.path} element={route.element} />)}
+            <Route element={<PortalModuleGuard moduleName="catalog" />}>
+              {catalogManifest.routes.customer.map((route) => <Route key={route.path} path={route.path} element={route.element} />)}
+            </Route>
+          </Route>
+          <Route path="/t/:subdomain/*" element={<HostTenantPrefixRedirect hostSubdomain={hostSubdomain} />} />
+          <Route element={<TenantPortalLayout />}>
+            <Route path="*" element={<PortalNotFoundRoute />} />
+          </Route>
+        </Routes>
+      </Suspense>
     )
   }
 
   return (
-    <Routes>
-      {landingManifest.routes.public.map((route) => <Route key={route.path} path={route.path} element={route.element} />)}
-      {onboardingManifest.routes.public.map((route) => <Route key={route.path} path={route.path} element={route.element} />)}
-      {authManifest.routes.public.map((route) => <Route key={route.path} path={route.path} element={route.element} />)}
-
-      <Route path="/t/:subdomain">
-        <Route path="configuracoes/*" element={<RedirectTenantStaffRoute />} />
-        <Route path="dashboard/*" element={<RedirectTenantStaffRoute />} />
-        <Route path="ativos/*" element={<RedirectTenantStaffRoute />} />
-        <Route path="pmoc/*" element={<RedirectTenantStaffRoute />} />
-        <Route path="os/*" element={<RedirectTenantStaffRoute />} />
-        <Route path="modulos/*" element={<RedirectTenantStaffRoute />} />
-        <Route path="pessoas-e-acesso/*" element={<RedirectTenantStaffRoute />} />
-        <Route path="perfil/*" element={<RedirectPerfilRoute />} />
-        <Route path="catalogo/configuracoes/*" element={<RedirectTenantStaffRoute />} />
-        <Route element={<TenantPortalLayout />}>
-          {tenantPortalManifest.routes.public.map((route) =>
-            route.redirectToEmail ? (
-              <Route key={route.path} path={route.path} element={<RedirectVerifyPhoneToEmail />} />
-            ) : (
-              <Route key={route.path ?? "index"} index={route.path === undefined} path={route.path} element={route.element} />
-            ),
-          )}
-        </Route>
-        <Route element={<CustomerAppLayout />}>
-          {tenantPortalManifest.routes.customer.map((route) => <Route key={route.path} path={route.path} element={route.element} />)}
-          <Route element={<PortalModuleGuard moduleName="catalog" />}>
-            {catalogManifest.routes.customer.map((route) => <Route key={route.path} path={route.path} element={route.element} />)}
+    <Suspense fallback={null}>
+      <Routes>
+        {landingManifest.routes.public.map((route) => <Route key={route.path} path={route.path} element={route.element} />)}
+        {onboardingManifest.routes.public.map((route) => <Route key={route.path} path={route.path} element={route.element} />)}
+        {authManifest.routes.public.map((route) => <Route key={route.path} path={route.path} element={route.element} />)}
+  
+        <Route path="/t/:subdomain">
+          <Route path="configuracoes/*" element={<RedirectTenantStaffRoute />} />
+          <Route path="dashboard/*" element={<RedirectTenantStaffRoute />} />
+          <Route path="ativos/*" element={<RedirectTenantStaffRoute />} />
+          <Route path="pmoc/*" element={<RedirectTenantStaffRoute />} />
+          <Route path="os/*" element={<RedirectTenantStaffRoute />} />
+          <Route path="modulos/*" element={<RedirectTenantStaffRoute />} />
+          <Route path="pessoas-e-acesso/*" element={<RedirectTenantStaffRoute />} />
+          <Route path="perfil/*" element={<RedirectPerfilRoute />} />
+          <Route path="catalogo/configuracoes/*" element={<RedirectTenantStaffRoute />} />
+          <Route element={<TenantPortalLayout />}>
+            {tenantPortalManifest.routes.public.map((route) =>
+              route.redirectToEmail ? (
+                <Route key={route.path} path={route.path} element={<RedirectVerifyPhoneToEmail />} />
+              ) : (
+                <Route key={route.path ?? "index"} index={route.path === undefined} path={route.path} element={route.element} />
+              ),
+            )}
+          </Route>
+          <Route element={<CustomerAppLayout />}>
+            {tenantPortalManifest.routes.customer.map((route) => <Route key={route.path} path={route.path} element={route.element} />)}
+            <Route element={<PortalModuleGuard moduleName="catalog" />}>
+              {catalogManifest.routes.customer.map((route) => <Route key={route.path} path={route.path} element={route.element} />)}
+            </Route>
+          </Route>
+          <Route element={<TenantPortalLayout />}>
+            <Route path="*" element={<PortalNotFoundRoute />} />
           </Route>
         </Route>
-        <Route element={<TenantPortalLayout />}>
-          <Route path="*" element={<PortalNotFoundRoute />} />
-        </Route>
-      </Route>
-
-      <Route element={<ProtectedRoute />}>
-        <Route element={<PlatformAdminRoute />}>
-          {adminManifest.routes.platformStandalone.map((route) => <Route key={route.path} path={route.path} element={route.element} />)}
-        </Route>
-
-        <Route element={<MainLayout />}>
-          {agendaManifest.routes.staff.map((route) => (
-            <Route key={route.path} element={<PermissionRoute anyOf={route.anyOf} modules={route.modules} />}>
-              <Route path={route.path} element={route.element} />
-            </Route>
-          ))}
-          <Route path="/modulos/:moduleKey" element={<ModuleIntroPage />} />
-          <Route element={<DashboardHomeRoute />}>
-            {dashboardManifest.routes.staff.map((route) => (
-              <Route key={route.path} path={route.path} element={route.element} />
-            ))}
+  
+        <Route element={<ProtectedRoute />}>
+          <Route element={<PlatformAdminRoute />}>
+            {adminManifest.routes.platformStandalone.map((route) => <Route key={route.path} path={route.path} element={route.element} />)}
           </Route>
-          {assetsManifest.routes.staff.map((route) => (
-            <Route key={route.path} element={<PermissionRoute permission={route.permission} />}>
-              <Route path={route.path} element={route.element} />
-            </Route>
-          ))}
-          <Route element={<MaintenanceRoute />}>
-            <Route path="/manutencao" element={<MaintenancePage />} />
-          </Route>
-          <Route element={<PermissionRoute permission="pmoc.plans.write" modules={["pmoc"]} />}>
-            <Route path="/manutencao/planos/novo" element={<MaintenanceCreatePlanPage />} />
-          </Route>
-          <Route element={<PermissionRoute permission="os.work_orders.create" modules={["os"]} />}>
-            <Route path="/manutencao/ordens/nova" element={<MaintenanceCreateOrderPage />} />
-          </Route>
-          {pmocManifest.routes.staff.map((route) => (
-            <Route key={route.path} element={<PermissionRoute permission={route.permission} />}>
-              <Route path={route.path} element={route.element} />
-            </Route>
-          ))}
-          {workOrdersManifest.routes.staff.map((route) => (
-            <Route key={route.path} element={<PermissionRoute permission={route.permission} />}>
-              <Route path={route.path} element={route.element} />
-            </Route>
-          ))}
-          {adminManifest.routes.staff.map((route) => (
-            <Route key={route.path} element={<PermissionRoute permission={route.permission} />}>
-              <Route path={route.path} element={route.element} />
-            </Route>
-          ))}
-          {taxonomyManifest.routes.staff.map((route) => (
-            <Route key={route.path} element={<PermissionRoute permission={route.permission} />}>
-              <Route path={route.path} element={route.element} />
-            </Route>
-          ))}
-          {notificationsManifest.routes.staff.map((route) => (
-            <Route key={route.path} element={<PermissionRoute permission={route.permission} anyOf={route.anyOf} />}>
-              <Route path={route.path} element={route.element} />
-            </Route>
-          ))}
-          {rentalsManifest.routes.staff.map((route) => (
-            <Route key={route.path} element={<PermissionRoute permissions={route.permissions} />}>
-              <Route path={route.path} element={route.element} />
-            </Route>
-          ))}
-          {catalogManifest.routes.staff.map((route) => (
-            route.permission ? (
-              <Route
-                key={route.path}
-                element={<PermissionRoute permission={route.permission} anyOf={route.anyOf} modules={route.modules} />}
-              >
+  
+          <Route element={<MainLayout />}>
+            {agendaManifest.routes.staff.map((route) => (
+              <Route key={route.path} element={<PermissionRoute anyOf={route.anyOf} modules={route.modules} />}>
                 <Route path={route.path} element={route.element} />
               </Route>
-            ) : (
-              <Route key={route.path} path={route.path} element={route.element} />
-            )
-          ))}
-          {usersManifest.routes.staff.map((route) =>
-            route.permission ? (
+            ))}
+            <Route path="/modulos/:moduleKey" element={<ModuleIntroPage />} />
+            <Route element={<DashboardHomeRoute />}>
+              {dashboardManifest.routes.staff.map((route) => (
+                <Route key={route.path} path={route.path} element={route.element} />
+              ))}
+            </Route>
+            {assetsManifest.routes.staff.map((route) => (
+              <Route key={route.path} element={<PermissionRoute permission={route.permission} />}>
+                <Route path={route.path} element={route.element} />
+              </Route>
+            ))}
+            <Route element={<MaintenanceRoute />}>
+              <Route path="/manutencao" element={<MaintenancePage />} />
+            </Route>
+            <Route element={<PermissionRoute permission="pmoc.plans.write" modules={["pmoc"]} />}>
+              <Route path="/manutencao/planos/novo" element={<MaintenanceCreatePlanPage />} />
+            </Route>
+            <Route element={<PermissionRoute permission="os.work_orders.create" modules={["os"]} />}>
+              <Route path="/manutencao/ordens/nova" element={<MaintenanceCreateOrderPage />} />
+            </Route>
+            {pmocManifest.routes.staff.map((route) => (
+              <Route key={route.path} element={<PermissionRoute permission={route.permission} />}>
+                <Route path={route.path} element={route.element} />
+              </Route>
+            ))}
+            {workOrdersManifest.routes.staff.map((route) => (
+              <Route key={route.path} element={<PermissionRoute permission={route.permission} />}>
+                <Route path={route.path} element={route.element} />
+              </Route>
+            ))}
+            {adminManifest.routes.staff.map((route) => (
+              <Route key={route.path} element={<PermissionRoute permission={route.permission} />}>
+                <Route path={route.path} element={route.element} />
+              </Route>
+            ))}
+            {taxonomyManifest.routes.staff.map((route) => (
+              <Route key={route.path} element={<PermissionRoute permission={route.permission} />}>
+                <Route path={route.path} element={route.element} />
+              </Route>
+            ))}
+            {notificationsManifest.routes.staff.map((route) => (
               <Route key={route.path} element={<PermissionRoute permission={route.permission} anyOf={route.anyOf} />}>
                 <Route path={route.path} element={route.element} />
               </Route>
-            ) : (
-              <Route key={route.path} path={route.path} element={route.element} />
-            ),
-          )}
-
-          <Route element={<PlatformAdminRoute />}>
-            {adminManifest.routes.platformShell.map((route) => <Route key={route.path} path={route.path} element={route.element} />)}
+            ))}
+            {rentalsManifest.routes.staff.map((route) => (
+              <Route key={route.path} element={<PermissionRoute permissions={route.permissions} />}>
+                <Route path={route.path} element={route.element} />
+              </Route>
+            ))}
+            {catalogManifest.routes.staff.map((route) => (
+              route.permission ? (
+                <Route
+                  key={route.path}
+                  element={<PermissionRoute permission={route.permission} anyOf={route.anyOf} modules={route.modules} />}
+                >
+                  <Route path={route.path} element={route.element} />
+                </Route>
+              ) : (
+                <Route key={route.path} path={route.path} element={route.element} />
+              )
+            ))}
+            {usersManifest.routes.staff.map((route) =>
+              route.permission ? (
+                <Route key={route.path} element={<PermissionRoute permission={route.permission} anyOf={route.anyOf} />}>
+                  <Route path={route.path} element={route.element} />
+                </Route>
+              ) : (
+                <Route key={route.path} path={route.path} element={route.element} />
+              ),
+            )}
+  
+            <Route element={<PlatformAdminRoute />}>
+              {adminManifest.routes.platformShell.map((route) => <Route key={route.path} path={route.path} element={route.element} />)}
+            </Route>
           </Route>
         </Route>
-      </Route>
-
-      <Route path="*" element={<UnknownPathRoute />} />
-    </Routes>
+  
+        <Route path="*" element={<UnknownPathRoute />} />
+      </Routes>
+    </Suspense>
   )
 }

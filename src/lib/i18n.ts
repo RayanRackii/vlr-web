@@ -2,63 +2,17 @@ import i18n from "i18next"
 import LanguageDetector from "i18next-browser-languagedetector"
 import { initReactI18next } from "react-i18next"
 
-import enCommon from "@/locales/en/common.json"
-import { enPermissionCopy } from "@/locales/en/permissionCopy"
-import esCommon from "@/locales/es/common.json"
-import { esPermissionCopy } from "@/locales/es/permissionCopy"
-import ptBRCommon from "@/locales/pt-BR/common.json"
-import { ptBRPermissionCopy } from "@/locales/pt-BR/permissionCopy"
+import {
+  DEFAULT_LANGUAGE,
+  defaultCommonBundle,
+  ensureLanguageBundle,
+} from "@/lib/localeBundles"
 import {
   persistLanguage,
   readPersistedLanguage,
   supportedLanguages,
   type SupportedLanguage,
 } from "@/lib/uiLanguage"
-
-type PermissionCopy = {
-  workOrders: {
-    emptyAssigned: {
-      Pending: string
-      InProgress: string
-      Completed: string
-      Canceled: string
-    }
-    execution: {
-      assigneeLoading: string
-      assigneeUpdated: string
-      assigneeCleared: string
-    }
-    errors: {
-      notAssignedOrForbidden: string
-      assignFailed: string
-    }
-  }
-}
-
-function mergePermissionCopy<
-  T extends {
-    workOrders: {
-      execution: object
-      errors: object
-    }
-  },
->(common: T, copy: PermissionCopy) {
-  return {
-    ...common,
-    workOrders: {
-      ...common.workOrders,
-      emptyAssigned: copy.workOrders.emptyAssigned,
-      execution: {
-        ...common.workOrders.execution,
-        ...copy.workOrders.execution,
-      },
-      errors: {
-        ...common.workOrders.errors,
-        ...copy.workOrders.errors,
-      },
-    },
-  }
-}
 
 export { supportedLanguages }
 export type { SupportedLanguage }
@@ -79,24 +33,36 @@ function syncDocumentLanguage(language: string): void {
 
 const initialLanguage = readPersistedLanguage()
 
+/** Downloads the language bundle first, then switches. Use instead of i18n.changeLanguage. */
+export async function changeLanguage(language: string): Promise<void> {
+  await ensureLanguageBundle(i18n, language)
+  await i18n.changeLanguage(language)
+}
+
+// Do not overwrite the saved choice while the startup restore is still downloading it.
+let restoringSavedLanguage = false
+
 i18n.on("languageChanged", (language) => {
   syncDocumentLanguage(language)
-  persistLanguage(language)
+  if (!restoringSavedLanguage) {
+    persistLanguage(language)
+  }
 })
 
-void i18n
+restoringSavedLanguage =
+  !!initialLanguage && initialLanguage !== DEFAULT_LANGUAGE
+
+const initPromise = i18n
   .use(LanguageDetector)
   .use(initReactI18next)
   .init({
     resources: {
-      "pt-BR": { common: mergePermissionCopy(ptBRCommon, ptBRPermissionCopy) },
-      en: { common: mergePermissionCopy(enCommon, enPermissionCopy) },
-      es: { common: mergePermissionCopy(esCommon, esPermissionCopy) },
+      "pt-BR": { common: defaultCommonBundle },
     },
     fallbackLng: "pt-BR",
     // Honor an explicit choice. Otherwise lock first paint to pt-BR.
     // Do not let a regional browser tag (es-ES, en-US) replace that.
-    lng: initialLanguage ?? "pt-BR",
+    lng: DEFAULT_LANGUAGE,
     supportedLngs: [...supportedLanguages],
     // Do NOT set nonExplicitSupportedLngs: true — i18next 26 breaks pt-BR lookup when
     // only regional codes (pt-BR) are listed (returns raw keys).
@@ -111,8 +77,20 @@ void i18n
       lookupLocalStorage: "rolvix.uiLanguage",
     },
   })
-  .then(() => {
+  .then(async () => {
+    // Non-default saved language: download its bundle, then switch (no raw keys).
+    if (initialLanguage && initialLanguage !== DEFAULT_LANGUAGE) {
+      try {
+        await changeLanguage(initialLanguage)
+      } catch {
+        // Offline/chunk error: stay on the default language, keep the saved choice.
+      }
+    }
+    restoringSavedLanguage = false
     syncDocumentLanguage(i18n.resolvedLanguage ?? i18n.language)
   })
+
+/** Resolves once i18n is initialised and the saved language (if any) is active. */
+export const i18nReady: Promise<void> = initPromise.then(() => undefined)
 
 export default i18n

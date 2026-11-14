@@ -1,13 +1,15 @@
 import { Navigate } from "react-router-dom"
+import { lazyPage } from "@/routes/lazyPage"
 import type { ReactElement } from "react"
 import { Wrench } from "lucide-react"
 
 import type { AppNavigationItem } from "@/components/layout/navigation"
 import { equipmentTabs } from "@/features/assets/navigationTabs"
-import { AssetCreatePage } from "@/features/assets/pages/AssetCreatePage"
-import { CategoryLegacyRedirect } from "@/features/assets/pages/CategoryLegacyRedirect"
-import { EquipmentPage } from "@/features/assets/pages/EquipmentPage"
-import { ResourceTypeWizardPage } from "@/features/assets/pages/ResourceTypeWizardPage"
+
+const AssetCreatePage = lazyPage(() => import("@/features/assets/pages/AssetCreatePage"), "AssetCreatePage")
+const CategoryLegacyRedirect = lazyPage(() => import("@/features/assets/pages/CategoryLegacyRedirect"), "CategoryLegacyRedirect")
+const EquipmentPage = lazyPage(() => import("@/features/assets/pages/EquipmentPage"), "EquipmentPage")
+const ResourceTypeWizardPage = lazyPage(() => import("@/features/assets/pages/ResourceTypeWizardPage"), "ResourceTypeWizardPage")
 
 type FeatureRoute = {
   path: string

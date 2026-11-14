@@ -1,16 +1,8 @@
-import { ProductCadastroCreatePage } from "@/features/assistant/ProductCadastroCreatePage"
-import { PedidosPage } from "./pages/PedidosPage"
-import { PedidoRequestDetailPage } from "./pages/PedidoRequestDetailPage"
 import type { ReactElement } from "react"
+import { lazyPage } from "@/routes/lazyPage"
 import { Package, Settings, Tag } from "lucide-react"
 
 import type { AppNavigationItem } from "@/components/layout/navigation"
-import { CatalogOrderDetailPage } from "@/features/catalog/pages/CatalogOrderDetailPage"
-import { CatalogPolicyPage } from "@/features/catalog/pages/CatalogPolicyPage"
-import { CustomerGroupFormPage } from "@/features/catalog/pages/CustomerGroupFormPage"
-import { CustomerGroupsPage } from "@/features/catalog/pages/CustomerGroupsPage"
-import { CatalogProductEditorPage } from "@/features/catalog/pages/CatalogProductEditorPage"
-import { ProductAssistantPage } from "@/features/assistant/ProductAssistantPage"
 import {
   CadastroLegacyRedirect,
   NotificationsLegacyRedirect,
@@ -18,15 +10,25 @@ import {
   RedirectKeepingLocation,
   RequestsListLegacyRedirect,
 } from "@/routes/legacyScreenRedirect"
-import { CatalogProductsPage } from "@/features/catalog/pages/CatalogProductsPage"
-import { PortalCartPage } from "@/features/catalog/pages/PortalCartPage"
-import { PortalCatalogPage } from "@/features/catalog/pages/PortalCatalogPage"
-import { PortalCatalogProductPage } from "@/features/catalog/pages/PortalCatalogProductPage"
-import { PortalOrderDetailPage } from "@/features/catalog/pages/PortalOrderDetailPage"
-import { PortalOrdersPage } from "@/features/catalog/pages/PortalOrdersPage"
-import { PortalProductRequestDetailPage } from "@/features/catalog/pages/PortalProductRequestDetailPage"
-import { PortalProductRequestPage } from "@/features/catalog/pages/PortalProductRequestPage"
-import { PortalProductRequestsPage } from "@/features/catalog/pages/PortalProductRequestsPage"
+
+const ProductCadastroCreatePage = lazyPage(() => import("@/features/assistant/ProductCadastroCreatePage"), "ProductCadastroCreatePage")
+const PedidosPage = lazyPage(() => import("./pages/PedidosPage"), "PedidosPage")
+const PedidoRequestDetailPage = lazyPage(() => import("./pages/PedidoRequestDetailPage"), "PedidoRequestDetailPage")
+const CatalogOrderDetailPage = lazyPage(() => import("@/features/catalog/pages/CatalogOrderDetailPage"), "CatalogOrderDetailPage")
+const CatalogPolicyPage = lazyPage(() => import("@/features/catalog/pages/CatalogPolicyPage"), "CatalogPolicyPage")
+const CustomerGroupFormPage = lazyPage(() => import("@/features/catalog/pages/CustomerGroupFormPage"), "CustomerGroupFormPage")
+const CustomerGroupsPage = lazyPage(() => import("@/features/catalog/pages/CustomerGroupsPage"), "CustomerGroupsPage")
+const CatalogProductEditorPage = lazyPage(() => import("@/features/catalog/pages/CatalogProductEditorPage"), "CatalogProductEditorPage")
+const ProductAssistantPage = lazyPage(() => import("@/features/assistant/ProductAssistantPage"), "ProductAssistantPage")
+const CatalogProductsPage = lazyPage(() => import("@/features/catalog/pages/CatalogProductsPage"), "CatalogProductsPage")
+const PortalCartPage = lazyPage(() => import("@/features/catalog/pages/PortalCartPage"), "PortalCartPage")
+const PortalCatalogPage = lazyPage(() => import("@/features/catalog/pages/PortalCatalogPage"), "PortalCatalogPage")
+const PortalCatalogProductPage = lazyPage(() => import("@/features/catalog/pages/PortalCatalogProductPage"), "PortalCatalogProductPage")
+const PortalOrderDetailPage = lazyPage(() => import("@/features/catalog/pages/PortalOrderDetailPage"), "PortalOrderDetailPage")
+const PortalOrdersPage = lazyPage(() => import("@/features/catalog/pages/PortalOrdersPage"), "PortalOrdersPage")
+const PortalProductRequestDetailPage = lazyPage(() => import("@/features/catalog/pages/PortalProductRequestDetailPage"), "PortalProductRequestDetailPage")
+const PortalProductRequestPage = lazyPage(() => import("@/features/catalog/pages/PortalProductRequestPage"), "PortalProductRequestPage")
+const PortalProductRequestsPage = lazyPage(() => import("@/features/catalog/pages/PortalProductRequestsPage"), "PortalProductRequestsPage")
 
 type FeatureRoute = {
   path: string

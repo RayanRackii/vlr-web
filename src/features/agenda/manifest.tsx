@@ -1,7 +1,9 @@
 import { CalendarDays } from "lucide-react"
+import { lazyPage } from "@/routes/lazyPage"
 import type { AppNavigationItem } from "@/components/layout/navigation"
 import { RedirectKeepingLocation } from "@/routes/legacyScreenRedirect"
-import { AgendasPage } from "./AgendasPage"
+
+const AgendasPage = lazyPage(() => import("./AgendasPage"), "AgendasPage")
 
 const modules = ["rentals", "catalog"] as const
 const permissions = ["rentals.schedule.read", "rentals.assets.read", "rentals.reservations.read", "catalog.orders.read", "catalog.products.read"] as const
