@@ -67,9 +67,14 @@ function table() {
   return screen.getByRole("table")
 }
 
+/** The table only exists once loading finishes, so wait for it before scoping. */
+async function findInTable(text: string) {
+  return within(await screen.findByRole("table")).findByText(text)
+}
+
 async function renderLoaded() {
   render(<AdminAssetFamiliesPage />)
-  await within(table()).findByText("Quadras")
+  await findInTable("Quadras")
 }
 
 describe("AdminAssetFamiliesPage", () => {
@@ -115,7 +120,7 @@ describe("AdminAssetFamiliesPage", () => {
       }),
     )
 
-    await within(table()).findByText("Arquivo")
+    await findInTable("Arquivo")
     expect(listMock).toHaveBeenCalledWith({ includeInactive: true })
   })
 
@@ -298,32 +303,123 @@ describe("AdminAssetFamiliesPage", () => {
     expect(screen.getByRole("alertdialog")).toBeInTheDocument()
   })
 
-  it("filters the order column by the digits typed, not a numeric range", async () => {
-    const user = userEvent.setup()
-    const dozen: AdminAssetFamily = {
-      ...courts,
-      id: "44444444-4444-4444-8444-444444444444",
-      key: "doze",
-      label: "Doze",
-      sortOrder: 12,
-    }
-    listMock.mockResolvedValue([courts, dozen])
+  it("renders the title as the single h1", async () => {
+    await renderLoaded()
 
-    render(<AdminAssetFamiliesPage />)
-    await within(table()).findByText("Doze")
-
-    const orderHeader = screen.getByRole("columnheader", { name: /Ordem/ })
-    await user.click(
-      within(orderHeader).getByRole("button", {
-        name: i18n.t("common.filter"),
+    expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1)
+    expect(
+      screen.getByRole("heading", {
+        level: 1,
+        name: i18n.t("admin.assetFamilies.title"),
       }),
-    )
-    await user.type(
-      screen.getByPlaceholderText(i18n.t("common.searchPlaceholder")),
-      "12",
-    )
+    ).toBeInTheDocument()
+  })
 
+  const dozen: AdminAssetFamily = {
+    ...courts,
+    id: "44444444-4444-4444-8444-444444444444",
+    key: "doze",
+    label: "Doze",
+    sortOrder: 12,
+    isActive: false,
+  }
+
+  function searchBox() {
+    return screen.getByRole("searchbox", {
+      name: i18n.t("admin.assetFamilies.filters.searchLabel"),
+    })
+  }
+
+  async function renderThree() {
+    listMock.mockResolvedValue([spaces, courts, dozen])
+    render(<AdminAssetFamiliesPage />)
+    await findInTable("Doze")
+  }
+
+  it("searches by key or label and clears with the chip", async () => {
+    const user = userEvent.setup()
+    await renderThree()
+
+    await user.type(searchBox(), "QUAD")
+    expect(within(table()).getByText("Quadras")).toBeInTheDocument()
+    expect(within(table()).queryByText("Espaços")).not.toBeInTheDocument()
+    expect(within(table()).queryByText("Doze")).not.toBeInTheDocument()
+
+    await user.click(screen.getByRole("button", { name: /: QUAD$/ }))
+    expect(searchBox()).toHaveValue("")
+    expect(within(table()).getByText("Doze")).toBeInTheDocument()
+    expect(within(table()).getByText("Espaços")).toBeInTheDocument()
+
+    await user.type(searchBox(), "doz")
     expect(within(table()).getByText("Doze")).toBeInTheDocument()
     expect(within(table()).queryByText("Quadras")).not.toBeInTheDocument()
+
+    await user.clear(searchBox())
+    await user.type(searchBox(), "espa")
+    expect(within(table()).getByText("Espaços")).toBeInTheDocument()
+    expect(within(table()).queryByText("Doze")).not.toBeInTheDocument()
+  })
+
+  it("narrows by status chips and clears the status chip", async () => {
+    const user = userEvent.setup()
+    await renderThree()
+
+    const group = screen.getByRole("group", {
+      name: i18n.t("admin.assetFamilies.filters.statusLabel"),
+    })
+    const all = within(group).getByRole("button", {
+      name: i18n.t("admin.assetFamilies.filters.all"),
+    })
+    expect(all).toHaveAttribute("aria-pressed", "true")
+
+    await user.click(
+      within(group).getByRole("button", {
+        name: i18n.t("admin.assetFamilies.statusInactive"),
+      }),
+    )
+    expect(within(table()).getByText("Doze")).toBeInTheDocument()
+    expect(within(table()).queryByText("Quadras")).not.toBeInTheDocument()
+
+    await user.click(
+      screen.getByRole("button", {
+        name: `${i18n.t("admin.assetFamilies.filters.statusLabel")}: ${i18n.t("admin.assetFamilies.statusInactive")}`,
+      }),
+    )
+    expect(all).toHaveAttribute("aria-pressed", "true")
+    expect(within(table()).getByText("Quadras")).toBeInTheDocument()
+
+    await user.click(
+      within(group).getByRole("button", {
+        name: i18n.t("admin.assetFamilies.statusActive"),
+      }),
+    )
+    expect(within(table()).getByText("Quadras")).toBeInTheDocument()
+    expect(within(table()).queryByText("Doze")).not.toBeInTheDocument()
+  })
+
+  it("shows the empty state when no family matches", async () => {
+    const user = userEvent.setup()
+    await renderLoaded()
+
+    await user.type(searchBox(), "zzz")
+
+    expect(
+      await screen.findByText(i18n.t("admin.assetFamilies.emptyTitle")),
+    ).toBeInTheDocument()
+    expect(screen.queryByRole("table")).not.toBeInTheDocument()
+  })
+
+  it("shows the load error and retries", async () => {
+    const user = userEvent.setup()
+    listMock.mockRejectedValueOnce(new Error("boom"))
+    render(<AdminAssetFamiliesPage />)
+
+    const retry = await screen.findByRole("button", {
+      name: i18n.t("admin.assetFamilies.actions.retry"),
+    })
+    await user.click(retry)
+
+    await findInTable("Quadras")
+    expect(listMock).toHaveBeenCalledTimes(2)
   })
 })

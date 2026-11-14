@@ -1,20 +1,13 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
-import {
-  flexRender,
-  getCoreRowModel,
-  getFilteredRowModel,
-  useReactTable,
-  type ColumnDef,
-  type ColumnFiltersState,
-} from "@tanstack/react-table"
 import { Plus, Trash2 } from "lucide-react"
 import { useFieldArray, useForm, useWatch } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 
-import { DataTableColumnFilterHeader } from "@/components/data-table/data-table-column-filter-header"
-import { RecordListSkeleton, TableRowsSkeleton } from "@/components/loading/PageContentSkeleton"
+import { DataList, type DataListColumn } from "@/components/data-table/DataList"
+import { FilterBar } from "@/components/data-table/FilterBar"
+import { Page } from "@/components/layout/Page"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -55,14 +48,6 @@ import {
 } from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table"
-import {
   adminAssetFamilyToFormValues,
   createAdminAssetFamilyFormSchema,
   emptyAdminAssetFamilyFormValues,
@@ -95,13 +80,18 @@ function errorMessage(error: unknown, fallback: string): string {
   return fallback
 }
 
+type StatusFilter = "all" | "active" | "inactive"
+
+const STATUS_FILTERS: readonly StatusFilter[] = ["all", "active", "inactive"]
+
 export function AdminAssetFamiliesPage() {
   const { t } = useTranslation()
   const [families, setFamilies] = useState<AdminAssetFamily[]>([])
   const [includeInactive, setIncludeInactive] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const [loadError, setLoadError] = useState<string | null>(null)
-  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
+  const [search, setSearch] = useState("")
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>("all")
   const [editor, setEditor] = useState<EditorState | null>(null)
   const [formError, setFormError] = useState<string | null>(null)
   const [isSaving, setIsSaving] = useState(false)
@@ -185,6 +175,7 @@ export function AdminAssetFamiliesPage() {
   }, [includeInactive, t])
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- initial and includeInactive-driven fetch; loadFamilies sets loading state before the request
     void loadFamilies()
   }, [loadFamilies])
 
@@ -222,130 +213,149 @@ export function AdminAssetFamiliesPage() {
     [form, t],
   )
 
-  const columns = useMemo<ColumnDef<AdminAssetFamily>[]>(
-    () => [
-      {
-        accessorKey: "key",
-        header: ({ column }) => (
-          <DataTableColumnFilterHeader
-            column={column}
-            title={t("admin.assetFamilies.columns.key")}
-          />
-        ),
-        cell: ({ row }) => (
-          <div className="flex items-center gap-2">
-            <span className="font-medium">{row.original.key}</span>
-            {isSeedAssetFamilyKey(row.original.key) ? (
-              <Badge variant="secondary">
-                {t("admin.assetFamilies.seedBadge")}
-              </Badge>
-            ) : null}
-          </div>
-        ),
-      },
-      {
-        accessorKey: "label",
-        header: ({ column }) => (
-          <DataTableColumnFilterHeader
-            column={column}
-            title={t("admin.assetFamilies.columns.label")}
-          />
-        ),
-      },
-      {
-        id: "sortOrder",
-        accessorFn: (row) => String(row.sortOrder),
-        header: ({ column }) => (
-          <DataTableColumnFilterHeader
-            column={column}
-            title={t("admin.assetFamilies.columns.sortOrder")}
-          />
-        ),
-      },
-      {
-        id: "fields",
-        accessorFn: (row) => String(row.fields.length),
-        header: ({ column }) => (
-          <DataTableColumnFilterHeader
-            column={column}
-            title={t("admin.assetFamilies.columns.fields")}
-          />
-        ),
-      },
-      {
-        id: "status",
-        accessorFn: (row) =>
-          row.isActive
-            ? t("admin.assetFamilies.statusActive")
-            : t("admin.assetFamilies.statusInactive"),
-        header: ({ column }) => (
-          <DataTableColumnFilterHeader
-            column={column}
-            title={t("admin.assetFamilies.columns.status")}
-          />
-        ),
-        cell: ({ row }) => (
-          <Badge variant={row.original.isActive ? "success" : "secondary"}>
-            {row.original.isActive
-              ? t("admin.assetFamilies.statusActive")
-              : t("admin.assetFamilies.statusInactive")}
-          </Badge>
-        ),
-      },
-      {
-        id: "actions",
-        enableColumnFilter: false,
-        header: () => (
-          <span className="sr-only">{t("admin.assetFamilies.columns.actions")}</span>
-        ),
-        cell: ({ row }) => {
-          const family = row.original
-          const seed = isSeedAssetFamilyKey(family.key)
-
-          return (
-            <div className="flex justify-end gap-1">
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={() => {
-                  void openEdit(family)
-                }}
-              >
-                {t("admin.assetFamilies.actions.edit")}
-              </Button>
-              {seed ? null : (
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  aria-label={t("admin.assetFamilies.actions.deleteNamed", {
-                    label: family.label,
-                  })}
-                  onClick={() => {
-                    setDeleteError(null)
-                    setFamilyPendingDelete(family)
-                  }}
-                >
-                  {t("admin.assetFamilies.actions.delete")}
-                </Button>
-              )}
-            </div>
-          )
-        },
-      },
-    ],
-    [openEdit, t],
+  const statusLabel = useCallback(
+    (family: AdminAssetFamily) =>
+      family.isActive
+        ? t("admin.assetFamilies.statusActive")
+        : t("admin.assetFamilies.statusInactive"),
+    [t],
   )
 
-  const table = useReactTable({
-    data: families,
-    columns,
-    state: { columnFilters },
-    onColumnFiltersChange: setColumnFilters,
-    getCoreRowModel: getCoreRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
-  })
+  const visibleFamilies = useMemo(() => {
+    const needle = search.trim().toLowerCase()
+
+    return families.filter(
+      (family) =>
+        (statusFilter === "all" ||
+          family.isActive === (statusFilter === "active")) &&
+        (needle === "" ||
+          family.key.toLowerCase().includes(needle) ||
+          family.label.toLowerCase().includes(needle)),
+    )
+  }, [families, search, statusFilter])
+
+  const keyCell = (family: AdminAssetFamily) => (
+    <div className="flex min-w-0 flex-wrap items-center gap-2">
+      <span className="font-medium [overflow-wrap:anywhere]">{family.key}</span>
+      {isSeedAssetFamilyKey(family.key) ? (
+        <Badge variant="secondary">{t("admin.assetFamilies.seedBadge")}</Badge>
+      ) : null}
+    </div>
+  )
+
+  const statusBadge = (family: AdminAssetFamily) => (
+    <Badge variant={family.isActive ? "success" : "secondary"}>
+      {statusLabel(family)}
+    </Badge>
+  )
+
+  const rowActions = (family: AdminAssetFamily, fullWidth = false) => {
+    const seed = isSeedAssetFamilyKey(family.key)
+    const buttonClass = fullWidth ? "min-h-11 flex-1" : undefined
+
+    return (
+      <div className={fullWidth ? "flex gap-2" : "flex justify-end gap-1"}>
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          className={buttonClass}
+          onClick={() => {
+            void openEdit(family)
+          }}
+        >
+          {t("admin.assetFamilies.actions.edit")}
+        </Button>
+        {seed ? null : (
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className={buttonClass}
+            aria-label={t("admin.assetFamilies.actions.deleteNamed", {
+              label: family.label,
+            })}
+            onClick={() => {
+              setDeleteError(null)
+              setFamilyPendingDelete(family)
+            }}
+          >
+            {t("admin.assetFamilies.actions.delete")}
+          </Button>
+        )}
+      </div>
+    )
+  }
+
+  const columns: DataListColumn<AdminAssetFamily>[] = [
+    {
+      id: "key",
+      header: t("admin.assetFamilies.columns.key"),
+      cell: keyCell,
+    },
+    {
+      id: "label",
+      header: t("admin.assetFamilies.columns.label"),
+      cell: (family) => (
+        <span className="[overflow-wrap:anywhere]">{family.label}</span>
+      ),
+    },
+    {
+      id: "sortOrder",
+      header: t("admin.assetFamilies.columns.sortOrder"),
+      hideBelow: "lg",
+      cell: (family) => String(family.sortOrder),
+    },
+    {
+      id: "fields",
+      header: t("admin.assetFamilies.columns.fields"),
+      hideBelow: "lg",
+      cell: (family) => String(family.fields.length),
+    },
+    {
+      id: "status",
+      header: t("admin.assetFamilies.columns.status"),
+      cell: statusBadge,
+    },
+    {
+      id: "actions",
+      header: (
+        <span className="sr-only">{t("admin.assetFamilies.columns.actions")}</span>
+      ),
+      align: "end",
+      cell: (family) => rowActions(family),
+    },
+  ]
+
+  const statusFilterLabel = (value: StatusFilter) =>
+    value === "all"
+      ? t("admin.assetFamilies.filters.all")
+      : value === "active"
+        ? t("admin.assetFamilies.statusActive")
+        : t("admin.assetFamilies.statusInactive")
+
+  const filterChips = [
+    ...(search.trim() !== ""
+      ? [
+          {
+            label: `${t("admin.assetFamilies.filters.searchLabel")}: ${search.trim()}`,
+            onRemove: () => {
+              setSearch("")
+            },
+          },
+        ]
+      : []),
+    ...(statusFilter !== "all"
+      ? [
+          {
+            label: `${t("admin.assetFamilies.filters.statusLabel")}: ${statusFilterLabel(statusFilter)}`,
+            onRemove: () => {
+              setStatusFilter("all")
+            },
+          },
+        ]
+      : []),
+  ]
 
   function closeEditor() {
     if (isSaving) {
@@ -416,192 +426,115 @@ export function AdminAssetFamiliesPage() {
   const editing = editor?.mode === "edit"
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <div className="space-y-1">
-          <h1 className="text-2xl font-semibold tracking-tight text-foreground">
-            {t("admin.assetFamilies.title")}
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            {t("admin.assetFamilies.description")}
-          </p>
-        </div>
-
-        <div className="flex flex-col gap-3 sm:items-end">
-          <div className="flex items-center gap-2">
-            <Switch
-              id="admin-asset-families-include-inactive"
-              checked={includeInactive}
-              onCheckedChange={(checked) => {
-                setIncludeInactive(checked)
-              }}
-            />
-            <Label
-              htmlFor="admin-asset-families-include-inactive"
-              className="text-sm font-normal"
-            >
-              {t("admin.assetFamilies.includeInactive")}
-            </Label>
+    <Page
+      header={{
+        title: t("admin.assetFamilies.title"),
+        description: t("admin.assetFamilies.description"),
+        actions: (
+          <div className="flex flex-col gap-3 sm:items-end">
+            <div className="flex items-center gap-2">
+              <Switch
+                id="admin-asset-families-include-inactive"
+                checked={includeInactive}
+                onCheckedChange={(checked) => {
+                  setIncludeInactive(checked)
+                }}
+              />
+              <Label
+                htmlFor="admin-asset-families-include-inactive"
+                className="text-sm font-normal"
+              >
+                {t("admin.assetFamilies.includeInactive")}
+              </Label>
+            </div>
+            <Button type="button" onClick={openCreate}>
+              <Plus data-icon="inline-start" />
+              {t("admin.assetFamilies.actions.create")}
+            </Button>
           </div>
-          <Button type="button" onClick={openCreate}>
-            <Plus data-icon="inline-start" />
-            {t("admin.assetFamilies.actions.create")}
-          </Button>
-        </div>
-      </div>
-
-      {loadError ? (
-        <div
-          role="alert"
-          className="flex flex-col gap-3 rounded-lg border border-destructive/30 bg-destructive/10 p-4 text-sm text-destructive sm:flex-row sm:items-center sm:justify-between"
-        >
-          <p>{loadError}</p>
-          <Button type="button" variant="outline" onClick={() => void loadFamilies()}>
-            {t("admin.assetFamilies.actions.retry")}
-          </Button>
-        </div>
-      ) : null}
-
-      <div className="hidden overflow-x-auto rounded-xl border border-border lg:block">
-        <Table>
-          <TableHeader>
-            {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id}>
-                {headerGroup.headers.map((header) => (
-                  <TableHead key={header.id}>
-                    {header.isPlaceholder
-                      ? null
-                      : flexRender(
-                          header.column.columnDef.header,
-                          header.getContext(),
-                        )}
-                  </TableHead>
+        ),
+      }}
+    >
+      <DataList<AdminAssetFamily>
+        {...(loadError !== null
+          ? {
+              state: "error" as const,
+              error: loadError,
+              onRetry: () => {
+                void loadFamilies()
+              },
+            }
+          : { state: isLoading ? ("loading" as const) : ("ready" as const) })}
+        label={t("admin.assetFamilies.title")}
+        columns={columns}
+        rows={visibleFamilies}
+        getRowId={(family) => family.id}
+        toolbar={
+          <FilterBar
+            label={t("admin.assetFamilies.filters.label")}
+            search={{
+              value: search,
+              onChange: setSearch,
+              placeholder: t("admin.assetFamilies.filters.searchPlaceholder"),
+              label: t("admin.assetFamilies.filters.searchLabel"),
+            }}
+            filters={
+              <div
+                role="group"
+                aria-label={t("admin.assetFamilies.filters.statusLabel")}
+                className="flex flex-row flex-wrap justify-start gap-1"
+              >
+                {STATUS_FILTERS.map((value) => (
+                  <Button
+                    key={value}
+                    type="button"
+                    className="min-h-11 rounded-full px-3"
+                    variant={statusFilter === value ? "default" : "outline"}
+                    aria-pressed={statusFilter === value}
+                    onClick={() => {
+                      setStatusFilter(value)
+                    }}
+                  >
+                    {statusFilterLabel(value)}
+                  </Button>
                 ))}
-              </TableRow>
-            ))}
-          </TableHeader>
-          <TableBody>
-            {isLoading ? <TableRowsSkeleton columns={columns.length} /> : null}
-
-            {!isLoading && table.getRowModel().rows.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={columns.length} className="h-32 text-center">
-                  <div className="space-y-1 text-muted-foreground">
-                    <p className="text-sm font-medium text-foreground">
-                      {t("admin.assetFamilies.emptyTitle")}
-                    </p>
-                    <p className="text-xs">
-                      {t("admin.assetFamilies.emptyDescription")}
-                    </p>
-                  </div>
-                </TableCell>
-              </TableRow>
-            ) : null}
-
-            {!isLoading
-              ? table.getRowModel().rows.map((row) => (
-                  <TableRow key={row.id}>
-                    {row.getVisibleCells().map((cell) => (
-                      <TableCell key={cell.id} className="whitespace-normal">
-                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                      </TableCell>
-                    ))}
-                  </TableRow>
-                ))
-              : null}
-          </TableBody>
-        </Table>
-      </div>
-
-      <div className="space-y-2 lg:hidden">
-        {isLoading ? (
-          <RecordListSkeleton />
-        ) : null}
-
-        {!isLoading && table.getRowModel().rows.length === 0 ? (
-          <div className="space-y-1 rounded-xl border border-border p-4 text-center text-muted-foreground">
-            <p className="text-sm font-medium text-foreground">
-              {t("admin.assetFamilies.emptyTitle")}
-            </p>
-            <p className="text-xs">{t("admin.assetFamilies.emptyDescription")}</p>
-          </div>
-        ) : null}
-
-        {!isLoading
-          ? table.getRowModel().rows.map((row) => {
-              const family = row.original
-              const seed = isSeedAssetFamilyKey(family.key)
-
-              return (
-                <div
-                  key={row.id}
-                  className="space-y-2 rounded-xl border border-border p-3"
-                >
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-2">
-                        <p className="truncate font-medium">{family.key}</p>
-                        {seed ? (
-                          <Badge variant="secondary">
-                            {t("admin.assetFamilies.seedBadge")}
-                          </Badge>
-                        ) : null}
-                      </div>
-                      <p className="break-words text-sm text-muted-foreground">
-                        {family.label}
-                      </p>
-                    </div>
-                    <Badge variant={family.isActive ? "success" : "secondary"}>
-                      {family.isActive
-                        ? t("admin.assetFamilies.statusActive")
-                        : t("admin.assetFamilies.statusInactive")}
-                    </Badge>
-                  </div>
-
-                  <div className="flex items-center justify-between text-xs text-muted-foreground">
-                    <span>
-                      {t("admin.assetFamilies.columns.sortOrder")}: {family.sortOrder}
-                    </span>
-                    <span>
-                      {t("admin.assetFamilies.columns.fields")}: {family.fields.length}
-                    </span>
-                  </div>
-
-                  <div className="flex justify-end gap-1">
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      className="min-h-11"
-                      onClick={() => {
-                        void openEdit(family)
-                      }}
-                    >
-                      {t("admin.assetFamilies.actions.edit")}
-                    </Button>
-                    {seed ? null : (
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        className="min-h-11"
-                        aria-label={t("admin.assetFamilies.actions.deleteNamed", {
-                          label: family.label,
-                        })}
-                        onClick={() => {
-                          setDeleteError(null)
-                          setFamilyPendingDelete(family)
-                        }}
-                      >
-                        {t("admin.assetFamilies.actions.delete")}
-                      </Button>
-                    )}
-                  </div>
-                </div>
-              )
-            })
-          : null}
-      </div>
+              </div>
+            }
+            chips={filterChips}
+          />
+        }
+        heading={
+          <p className="font-semibold text-foreground">
+            {t("admin.assetFamilies.title")}: {visibleFamilies.length}
+          </p>
+        }
+        empty={{
+          title: t("admin.assetFamilies.emptyTitle"),
+          description: t("admin.assetFamilies.emptyDescription"),
+        }}
+        renderCard={(family) => (
+          <>
+            <div className="flex min-w-0 items-start justify-between gap-3">
+              <div className="min-w-0">
+                {keyCell(family)}
+                <p className="text-sm text-muted-foreground [overflow-wrap:anywhere]">
+                  {family.label}
+                </p>
+              </div>
+              {statusBadge(family)}
+            </div>
+            <div className="flex items-center justify-between text-xs text-muted-foreground">
+              <span>
+                {t("admin.assetFamilies.columns.sortOrder")}: {family.sortOrder}
+              </span>
+              <span>
+                {t("admin.assetFamilies.columns.fields")}: {family.fields.length}
+              </span>
+            </div>
+            {rowActions(family, true)}
+          </>
+        )}
+      />
 
       <Dialog
         open={editor !== null}
@@ -958,6 +891,6 @@ export function AdminAssetFamiliesPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
+    </Page>
   )
 }
