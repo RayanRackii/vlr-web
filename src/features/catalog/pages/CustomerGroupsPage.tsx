@@ -1,11 +1,16 @@
-import { useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useState } from "react"
 import { Link } from "react-router-dom"
-import { Search } from "lucide-react"
+import { MoreHorizontal, Plus, Users } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 
+import { DataList, type DataListColumn } from "@/components/data-table/DataList"
+import { FilterBar } from "@/components/data-table/FilterBar"
+import { Page } from "@/components/layout/Page"
+import { Badge } from "@/components/ui/badge"
 import { Button, buttonVariants } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import type { EmptyStateProps } from "@/components/ui/empty-state"
 import { usePermissions } from "@/features/users/permissions/PermissionContext"
 import type { CustomerGroup } from "@/features/catalog/schemas/catalogSchemas"
 import {
@@ -14,7 +19,6 @@ import {
   listCatalogProducts,
   listCustomerGroups,
 } from "@/features/catalog/services/catalogService"
-import "@/features/catalog/pages/grupos.css"
 import { cn } from "@/lib/utils"
 
 const WHERE_USED_PRODUCT_CAP = 50
@@ -45,6 +49,7 @@ export function CustomerGroupsPage() {
   const [search, setSearch] = useState("")
   const [confirmId, setConfirmId] = useState<string | null>(null)
   const [deleting, setDeleting] = useState(false)
+  const [reloadKey, setReloadKey] = useState(0)
 
   useEffect(() => {
     let cancelled = false
@@ -64,7 +69,13 @@ export function CustomerGroupsPage() {
       if (!cancelled) setWhereUsed({})
     })
     return () => { cancelled = true }
-  }, [t])
+  }, [t, reloadKey])
+
+  const retry = useCallback(() => {
+    setLoading(true)
+    setLoadError(null)
+    setReloadKey((key) => key + 1)
+  }, [])
 
   const filtered = useMemo(() => {
     const term = search.trim().toLocaleLowerCase(i18n.language)
@@ -87,79 +98,118 @@ export function CustomerGroupsPage() {
     }
   }
 
-  const createLink = canManage ? (
-    <Link to="/grupos/novo" className={cn(buttonVariants({ variant: "default" }), "grupos-primary min-h-11")}>{t("grupos.create")}</Link>
-  ) : null
+  const searching = search.trim() !== ""
+  const usedCount = (group: CustomerGroup) => whereUsed[group.id]?.length ?? 0
+
+  function renderName(group: CustomerGroup) {
+    return (
+      <div className="min-w-0">
+        <Link to={`/grupos/${group.id}`} className="text-sm font-medium text-foreground [overflow-wrap:anywhere] hover:underline">{group.name}</Link>
+        <p className="mt-0.5 text-xs text-muted-foreground [overflow-wrap:anywhere]">{group.description?.trim() || t("grupos.noDescription")}</p>
+      </div>
+    )
+  }
+
+  function renderMembers(group: CustomerGroup) {
+    return <Badge variant="outline" className="w-fit whitespace-nowrap">{t("catalog.customerGroups.memberCount", { count: group.memberCustomerIds.length })}</Badge>
+  }
+
+  function renderActions(group: CustomerGroup) {
+    if (!canManage) return null
+    if (confirmId === group.id) {
+      return (
+        <div className="flex flex-wrap items-center justify-end gap-2">
+          <p className="text-sm">{t("grupos.deleteConfirm")}</p>
+          <Button type="button" variant="outline" size="sm" disabled={deleting} onClick={() => { void remove(group) }}>{t("grupos.delete")}</Button>
+          <Button type="button" variant="ghost" size="sm" disabled={deleting} onClick={() => setConfirmId(null)}>{t("common.cancel")}</Button>
+        </div>
+      )
+    }
+    return (
+      <DropdownMenu>
+        <DropdownMenuTrigger
+          render={<Button type="button" variant="ghost" size="icon" className="size-11" aria-label={t("grupos.rowMenu", { name: group.name })} />}
+        >
+          <MoreHorizontal aria-hidden="true" />
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuItem className="min-h-11 py-2.5" render={<Link to={`/grupos/${group.id}`} />}>{t("grupos.edit")}</DropdownMenuItem>
+          <DropdownMenuItem className="min-h-11 py-2.5" variant="destructive" onClick={() => setConfirmId(group.id)}>{t("grupos.delete")}</DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    )
+  }
+
+  const columns: DataListColumn<CustomerGroup>[] = [
+    { id: "name", header: t("grupos.colGroup"), cell: renderName },
+    { id: "members", header: t("grupos.colMembers"), cell: renderMembers },
+    {
+      id: "products",
+      header: t("grupos.colProducts"),
+      className: "whitespace-nowrap tabular-nums",
+      cell: (group) => usedCount(group) > 0 ? usedCount(group) : <span className="text-muted-foreground">{t("grupos.unused")}</span>,
+    },
+    ...(canManage
+      ? [{ id: "actions", header: <span className="sr-only">{t("grupos.colActions")}</span>, align: "end" as const, cell: renderActions }]
+      : []),
+  ]
+
+  const empty: EmptyStateProps = searching
+    ? {
+        icon: Users,
+        title: t("grupos.noResultsTitle"),
+        description: t("grupos.noResults"),
+        action: <Button type="button" variant="outline" className="min-h-11" onClick={() => setSearch("")}>{t("grupos.clear")}</Button>,
+      }
+    : {
+        icon: Users,
+        title: t("grupos.emptyTitle"),
+        description: t("grupos.emptyBody"),
+        action: canManage ? <Link to="/grupos/novo" className={cn(buttonVariants({ variant: "outline" }), "min-h-11")}>{t("grupos.emptyAction")}</Link> : undefined,
+      }
+
+  const header = {
+    title: t("grupos.title"),
+    description: t("grupos.subtitle"),
+    actions: canManage ? (
+      <Link to="/grupos/novo" className={cn(buttonVariants({ variant: "default" }), "min-h-11")}>
+        <Plus data-icon="inline-start" aria-hidden="true" />
+        {t("grupos.create")}
+      </Link>
+    ) : undefined,
+  }
+
+  if (loadError) return <Page header={header} state="error" error={loadError} onRetry={retry}>{null}</Page>
 
   return (
-    <div className="grupos-page mx-auto min-w-0 space-y-5">
-      <header className="grupos-header">
-        <div className="min-w-0">
-          <p className="grupos-eyebrow">{t("grupos.eyebrow")}</p>
-          <h1 className="text-xl font-semibold tracking-tight sm:text-2xl">{t("grupos.title")}</h1>
-          <p className="max-w-2xl text-sm text-muted-foreground">{t("grupos.subtitle")}</p>
-        </div>
-        {createLink}
-      </header>
-      {loadError ? <p role="alert" className="text-sm text-destructive">{loadError}</p> : null}
-      <section className="grupos-card" aria-label={t("grupos.title")} aria-busy={loading}>
-        {loading ? <p role="status" className="p-6 text-sm text-muted-foreground">{t("common.loading")}</p> : null}
-        {!loading && !loadError && groups.length === 0 ? (
-          <div className="grupos-empty" role="status">
-            <h2 className="text-base font-semibold">{t("grupos.emptyTitle")}</h2>
-            <p className="mx-auto mt-1 max-w-md text-sm text-muted-foreground">{t("grupos.emptyBody")}</p>
-            {canManage ? <Link to="/grupos/novo" className={cn(buttonVariants({ variant: "outline" }), "mt-4 min-h-11")}>{t("grupos.emptyAction")}</Link> : null}
-          </div>
-        ) : null}
-        {!loading && !loadError && groups.length > 0 ? (
+    <Page header={header}>
+      <DataList<CustomerGroup>
+        state={loading ? "loading" : "ready"}
+        label={t("grupos.title")}
+        loadingLabel={t("common.loading")}
+        toolbar={groups.length > 0 ? (
+          <FilterBar
+            label={t("grupos.search")}
+            search={{ value: search, onChange: setSearch, label: t("grupos.search"), placeholder: t("grupos.search") }}
+          />
+        ) : undefined}
+        columns={columns}
+        rows={filtered}
+        getRowId={(group) => group.id}
+        empty={empty}
+        renderCard={(group) => (
           <>
-            <div className="grupos-toolbar">
-              <label className="grupos-search">
-                <Search aria-hidden />
-                <Input type="search" aria-label={t("grupos.search")} placeholder={t("grupos.search")} value={search} onChange={(event) => setSearch(event.target.value)} />
-              </label>
+            <div className="flex min-w-0 items-start justify-between gap-2">
+              {renderName(group)}
+              {renderActions(group)}
             </div>
-            {filtered.length === 0 ? (
-              <div className="grupos-empty" role="status">
-                <h2 className="text-base font-semibold">{t("grupos.noResultsTitle")}</h2>
-                <p className="mx-auto mt-1 max-w-md text-sm text-muted-foreground">{t("grupos.noResults")}</p>
-                <Button type="button" variant="outline" className="mt-4 min-h-11" onClick={() => setSearch("")}>{t("grupos.clear")}</Button>
-              </div>
-            ) : filtered.map((group) => {
-              const used = whereUsed[group.id]?.length ?? 0
-              const description = group.description?.trim() || t("grupos.noDescription")
-              const usage = used > 0 ? t("grupos.usedIn", { count: used }) : t("grupos.unused")
-              return (
-                <article key={group.id} className="grupos-row">
-                  <div className="grupos-row-main">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <p className="text-sm font-medium">{group.name}</p>
-                      <span className="grupos-badge">{t("catalog.customerGroups.memberCount", { count: group.memberCustomerIds.length })}</span>
-                    </div>
-                    <p className="mt-1 text-xs text-muted-foreground">{description} · {usage}</p>
-                  </div>
-                  {canManage ? (
-                    <div className="grupos-actions">
-                      {confirmId === group.id ? (
-                        <>
-                          <p className="self-center text-sm">{t("grupos.deleteConfirm")}</p>
-                          <Button type="button" variant="outline" size="sm" disabled={deleting} onClick={() => { void remove(group) }}>{t("grupos.delete")}</Button>
-                          <Button type="button" variant="ghost" size="sm" disabled={deleting} onClick={() => setConfirmId(null)}>{t("common.cancel")}</Button>
-                        </>
-                      ) : (
-                        <>
-                          <Link to={`/grupos/${group.id}`} className={buttonVariants({ variant: "outline", size: "sm" })}>{t("grupos.edit")}</Link>
-                          <Button type="button" variant="ghost" size="sm" onClick={() => setConfirmId(group.id)}>{t("grupos.delete")}</Button>
-                        </>
-                      )}
-                    </div>
-                  ) : null}
-                </article>
-              )
-            })}
+            <div className="flex flex-wrap items-center gap-2">
+              {renderMembers(group)}
+              <Badge variant="outline" className="w-fit whitespace-nowrap">{usedCount(group) > 0 ? t("grupos.usedIn", { count: usedCount(group) }) : t("grupos.unused")}</Badge>
+            </div>
           </>
-        ) : null}
-      </section>
-    </div>
+        )}
+      />
+    </Page>
   )
 }

@@ -2114,7 +2114,11 @@
     }
   },
   "grupos": {
-    "eyebrow": "Clientes",
+    "colGroup": "Grupo",
+    "colMembers": "Miembros",
+    "colProducts": "Productos",
+    "colActions": "Acciones",
+    "rowMenu": "Acciones de {{name}}",
     "title": "Grupos de clientes",
     "subtitle": "Agrupe clientes para liberar productos y condiciones exclusivas.",
     "create": "Nuevo grupo",
