@@ -173,10 +173,12 @@ export function AgendaDayGrid({ loading, failedSources, rows, start: axisStart, 
   return (
     <div data-layout="grid">
       {warnings}
+      {hours.length > 14 && <p className="border-t px-5 py-1 text-right text-xs text-muted-foreground">{t("agendas.grid.scrollHint")}</p>}
+      <div className="relative">
       <section aria-label={t("staffAgenda.grid")} className="overflow-x-auto">
         <div style={{ minWidth: `calc(13.75rem + ${hours.length * 4.5}rem)` }}>
           <div className={cn("grid border-t", RESOURCE_COLUMN)}>
-            <span className="px-5 py-3 text-xs font-medium uppercase tracking-wide text-muted-foreground">{t("staffAgenda.recurso")}</span>
+            <span className="sticky left-0 z-10 bg-card px-5 py-3 text-xs font-medium uppercase tracking-wide text-muted-foreground">{t("staffAgenda.recurso")}</span>
             <div className="relative h-11" aria-hidden="true">
               {hours.map((minutes) => (
                 <span key={minutes} className="absolute top-3 whitespace-nowrap pl-2 text-xs tabular-nums text-muted-foreground" style={{ left: `${pct(minutes)}%` }}>
@@ -203,10 +205,11 @@ export function AgendaDayGrid({ loading, failedSources, rows, start: axisStart, 
             return (
               <div key={row.id}>
                 <section aria-label={row.name} className={cn("group/row grid border-t", RESOURCE_COLUMN)}>
-                  <div className="flex min-w-0 items-center justify-between gap-1 px-5 py-3">
+                  <div className="sticky left-0 z-10 flex min-w-0 items-center justify-between gap-1 bg-card px-5 py-3">
                     <div className="min-w-0">
                       <h2 className="truncate text-sm font-medium">{row.name}</h2>
                       <p className="truncate text-xs text-muted-foreground">{resourceMeta(row, t)}</p>
+                      {hidden > 0 && <p className="truncate text-xs text-muted-foreground">{t("agendas.grid.outside", { count: hidden })}</p>}
                     </div>
                     <RowMenu row={row} axisStart={axisStart} canBlock={canBlock} create={create} reveal />
                   </div>
@@ -254,7 +257,6 @@ export function AgendaDayGrid({ loading, failedSources, rows, start: axisStart, 
                         </button>
                       )
                     })}
-                    {hidden > 0 && <p className="pointer-events-none absolute bottom-1 right-2 text-xs text-muted-foreground">{t("agendas.grid.outside", { count: hidden })}</p>}
                   </div>
                 </section>
               </div>
@@ -262,6 +264,8 @@ export function AgendaDayGrid({ loading, failedSources, rows, start: axisStart, 
           })}
         </div>
       </section>
+      {hours.length > 14 && <div aria-hidden="true" data-testid="scroll-fade" className="pointer-events-none absolute inset-y-0 right-0 w-8 bg-gradient-to-l from-card to-transparent" />}
+      </div>
       {selected && <BlockDetail block={selected.block} resourceName={selected.row.name} onClose={() => setSelectedKey(null)} />}
     </div>
   )

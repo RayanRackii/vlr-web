@@ -5380,6 +5380,9 @@
       }
     },
     "reservations": {
+      "assetFilter": "Showing only the resource: {{name}}",
+      "assetFilterClear": "Show all resources",
+      "assetFilterUnknown": "This resource",
       "title": "Reservations",
       "description": "Confirm deposits, complete and cancel reservations made through the portal.",
       "date": "Date",
@@ -5820,10 +5823,11 @@
     "grid": {
       "available": "Available to book",
       "reserveOn": "Book {{name}}",
-      "reserveHere": "New reservation on this resource",
+      "reserveHere": "View reservations for this resource",
       "rowActions": "Actions for {{name}}",
       "allDay": "All day",
-      "continues": "continues",
+      "scrollHint": "Scroll to see more hours",
+        "continues": "continues",
       "outside_one": "{{count}} outside hours",
       "outside_other": "{{count}} outside hours",
       "resourceType": {

@@ -85,6 +85,27 @@ describe("agenda day grid (timeline)", () => {
   })
 })
 
+describe("24 hour mode", () => {
+  it("keeps the outside-hours hint in the resource cell, off the track", () => {
+    setup([row({ blocks: [block({ start: 0, end: 300 })] })])
+    const hint = screen.getByText("1 fora do horário")
+    expect(within(section("Cortadora")).getByRole("heading", { name: "Cortadora" }).parentElement).toContainElement(hint)
+  })
+
+  it("hints that the grid scrolls and keeps the resource column sticky", () => {
+    setup([row()], { start: 0, end: 1440 })
+    expect(screen.getByText("Role para ver mais horas")).toBeInTheDocument()
+    expect(screen.getByTestId("scroll-fade")).toBeInTheDocument()
+    expect(within(section("Cortadora")).getByRole("heading", { name: "Cortadora" }).parentElement?.parentElement).toHaveClass("sticky", "left-0")
+  })
+
+  it("shows no scroll hint for business hours", () => {
+    setup([row()])
+    expect(screen.queryByText("Role para ver mais horas")).not.toBeInTheDocument()
+    expect(screen.queryByTestId("scroll-fade")).not.toBeInTheDocument()
+  })
+})
+
 describe("empty slots", () => {
   it("shows Disponível para reserva on an empty row and opens the create flow with the resource and first slot", async () => {
     const { onCreateReservation } = setup([row()])

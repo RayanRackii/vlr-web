@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
+import { useSearchParams } from "react-router-dom"
 
 import { AlertTriangle, CalendarRange } from "lucide-react"
 
@@ -39,6 +40,7 @@ import {
   type AdminReservation,
   type ReservationStatus,
 } from "@/features/rentals/services/reservationsService"
+import { civilDateParam } from "@/features/catalog/components/agenda/agendaLayout"
 import { tenantTodayIsoDate } from "@/lib/tenantTimeZone"
 import { cn } from "@/lib/utils"
 
@@ -115,7 +117,10 @@ export function ReservationsPage({ showHeader = true, onDateChange }: Reservatio
   const { can } = usePermissions()
   const timeZoneId = useTenantTimeZone()
   const { isTrialReadOnly } = useTrialStatus()
-  const [date, setDate] = useState(() => tenantTodayIsoDate(timeZoneId))
+  // The agenda links here with `date` and `rentalAssetId` (an empty slot or a row's menu).
+  const [params] = useSearchParams()
+  const [date, setDate] = useState(() => civilDateParam(params.get("date")) ?? tenantTodayIsoDate(timeZoneId))
+  const [assetId, setAssetId] = useState(() => params.get("rentalAssetId")?.trim() || null)
   const [view, setView] = useState<ReservationsView>("day")
   const [status, setStatus] = useState<ReservationStatus | "">("")
   const [rows, setRows] = useState<AdminReservation[]>([])
@@ -125,7 +130,7 @@ export function ReservationsPage({ showHeader = true, onDateChange }: Reservatio
 
   const requestSeq = useRef(0)
   const [loadError, setLoadError] = useState(false)
-  const sortedRows = useMemo(() => [...rows].filter((row) => !status || row.status === status).sort((a, b) => Date.parse(a.startDateTime) - Date.parse(b.startDateTime)), [rows, status])
+  const sortedRows = useMemo(() => [...rows].filter((row) => (!status || row.status === status) && (!assetId || row.items.some((item) => item.rentalAssetId === assetId))).sort((a, b) => Date.parse(a.startDateTime) - Date.parse(b.startDateTime)), [rows, status, assetId])
 
   useEffect(() => { onDateChange?.(date) }, [date, onDateChange])
 
@@ -255,7 +260,7 @@ export function ReservationsPage({ showHeader = true, onDateChange }: Reservatio
   const dateLabel = date ? new Intl.DateTimeFormat(i18n.language, {
     weekday: "long", day: "numeric", month: "long", year: "numeric",
   }).format(new Date(`${date}T12:00:00`)) : ""
-  const hasActiveFilters = Boolean(status || date !== tenantTodayIsoDate(timeZoneId) || view !== "day")
+  const hasActiveFilters = Boolean(status || assetId || date !== tenantTodayIsoDate(timeZoneId) || view !== "day")
   const listDateLabel = view === "day" ? dateLabel : range.from && range.to
     ? `${new Intl.DateTimeFormat(i18n.language).format(new Date(`${range.from}T12:00:00`))} – ${new Intl.DateTimeFormat(i18n.language).format(new Date(`${range.to}T12:00:00`))}`
     : ""
@@ -271,6 +276,7 @@ export function ReservationsPage({ showHeader = true, onDateChange }: Reservatio
   // The range is loaded unfiltered and the status filter applies client-side, so counts are always complete.
   const statusCounts = countByStatus(rows)
 
+  const assetName = assetId ? rows.flatMap((row) => row.items).find((item) => item.rentalAssetId === assetId)?.assetName ?? t("rentals.reservations.assetFilterUnknown") : null
   const filterBar = (
     <FilterBar
       label={t("rentals.reservations.filters")}
@@ -334,6 +340,12 @@ export function ReservationsPage({ showHeader = true, onDateChange }: Reservatio
       )}
 
       {filterBar}
+      {assetId && (
+        <div role="status" className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+          <span>{t("rentals.reservations.assetFilter", { name: assetName })}</span>
+          <Button type="button" variant="outline" className="touch-target min-h-11" onClick={() => setAssetId(null)}>{t("rentals.reservations.assetFilterClear")}</Button>
+        </div>
+      )}
 
       <div aria-busy={loading} className="reservations-results">
         {loadError && !loading && sortedRows.length > 0 && (
@@ -360,7 +372,7 @@ export function ReservationsPage({ showHeader = true, onDateChange }: Reservatio
             example: hasActiveFilters ? undefined : t("emptyStates.examples.bookings"),
             learnMore: hasActiveFilters ? undefined : learnMore,
             action: hasActiveFilters ? (
-              <Button onClick={() => { setDate(tenantTodayIsoDate(timeZoneId)); setStatus(""); setView("day") }}>{t("emptyStates.clearFilters")}</Button>
+              <Button onClick={() => { setDate(tenantTodayIsoDate(timeZoneId)); setStatus(""); setAssetId(null); setView("day") }}>{t("emptyStates.clearFilters")}</Button>
             ) : (
               <Button className="min-h-11" onClick={() => setView("week")}>{t("rentals.reservations.showWeek")}</Button>
             ),

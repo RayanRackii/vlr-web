@@ -5380,6 +5380,9 @@
       }
     },
     "reservations": {
+      "assetFilter": "Mostrando só o recurso: {{name}}",
+      "assetFilterClear": "Mostrar todos os recursos",
+      "assetFilterUnknown": "Esse recurso",
       "title": "Reservas",
       "description": "Confirme depósitos, conclua e cancele reservas feitas pelo portal.",
       "date": "Data",
@@ -5820,10 +5823,11 @@
     "grid": {
       "available": "Disponível para reserva",
       "reserveOn": "Reservar {{name}}",
-      "reserveHere": "Nova reserva neste recurso",
+      "reserveHere": "Ver reservas neste recurso",
       "rowActions": "Ações de {{name}}",
       "allDay": "Dia inteiro",
-      "continues": "continua",
+      "scrollHint": "Role para ver mais horas",
+        "continues": "continua",
       "outside_one": "{{count}} fora do horário",
       "outside_other": "{{count}} fora do horário",
       "resourceType": {
