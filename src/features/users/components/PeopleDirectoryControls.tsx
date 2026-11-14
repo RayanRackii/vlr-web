@@ -1,13 +1,10 @@
-import type { ReactNode } from "react"
-import { ChevronLeft, ChevronRight, Search } from "lucide-react"
+import { ChevronLeft, ChevronRight } from "lucide-react"
+import { FilterBar } from "@/components/data-table/FilterBar"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 
 export const DIRECTORY_PAGE_SIZE = 20
 
 type PeopleSearchFormProps = {
-  actions?: ReactNode
   id: string
   label: string
   placeholder: string
@@ -18,8 +15,8 @@ type PeopleSearchFormProps = {
   onSubmit: () => void
 }
 
+/** One search input in the shared FilterBar; submitting applies the server-side query. */
 export function PeopleSearchForm({
-  actions,
   id,
   label,
   placeholder,
@@ -31,34 +28,23 @@ export function PeopleSearchForm({
 }: PeopleSearchFormProps) {
   return (
     <form
-      className="people-search-card"
+      id={id}
+      className="space-y-2"
       onSubmit={(event) => {
         event.preventDefault()
         onSubmit()
       }}
     >
-      <div className="people-search-input">
-        <Label className="sr-only" htmlFor={id}>{label}</Label>
-        <Search aria-hidden strokeWidth={1.75} className="people-search-icon" />
-        <Input
-          className="touch-target"
-          id={id}
-          value={value}
-          placeholder={placeholder}
-          onChange={(event) => {
-            onValueChange(event.target.value)
-          }}
-        />
-        {error ? (
-          <p className="text-xs text-destructive" role="alert">
-            {error}
-          </p>
-        ) : null}
-      </div>
-      <Button className="people-search-submit" type="submit" variant="outline" size="sm">
-        {actionLabel}
-      </Button>
-      {actions}
+      <FilterBar
+        label={actionLabel}
+        search={{ value, onChange: onValueChange, placeholder, label }}
+        actions={<Button type="submit" variant="outline" className="min-h-11">{actionLabel}</Button>}
+      />
+      {error ? (
+        <p className="text-xs text-destructive" role="alert">
+          {error}
+        </p>
+      ) : null}
     </form>
   )
 }
@@ -89,13 +75,14 @@ export function PeoplePager({
   const pageCount = Math.max(1, Math.ceil(total / pageSize))
 
   return (
-    <div className="people-pager">
+    <div className="flex flex-wrap items-center justify-end gap-3">
       <p className="min-w-0 text-xs tabular-nums text-muted-foreground">{summary}</p>
       <div className="flex gap-2">
         <Button
           type="button"
           variant="outline"
-          size="sm"
+          size="icon"
+          className="size-11"
           disabled={page <= 1}
           onClick={() => {
             onPageChange(page - 1)
@@ -107,7 +94,8 @@ export function PeoplePager({
         <Button
           type="button"
           variant="outline"
-          size="sm"
+          size="icon"
+          className="size-11"
           disabled={page >= pageCount}
           onClick={() => {
             onPageChange(page + 1)

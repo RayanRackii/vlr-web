@@ -1,15 +1,17 @@
 import { useCallback, useEffect, useState } from "react"
-import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom"
-import { ClipboardList, ShieldCheck, UserRound, Users } from "lucide-react"
+import { useLocation, useNavigate, useSearchParams } from "react-router-dom"
+import { UserPlus } from "lucide-react"
 import { useTranslation } from "react-i18next"
 
 import { filterNavigationTabs } from "@/components/layout/navigationTabs"
 import { TenantRegistrationFieldsPage } from "@/features/admin/pages/TenantRegistrationFieldsPage"
 import { peopleAccessTabs } from "@/features/users/navigationTabs"
 import { AccessDeniedPage } from "@/components/layout/AccessDeniedPage"
-import { PageHeader } from "@/components/layout/PageHeader"
+import { Page } from "@/components/layout/Page"
 import { PageContentSkeleton } from "@/components/loading/PageContentSkeleton"
 import { Alert, AlertDescription } from "@/components/ui/alert"
+import { Button } from "@/components/ui/button"
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { PeopleCustomersTab } from "@/features/users/components/PeopleCustomersTab"
 import { PeopleRolesTab } from "@/features/users/components/PeopleRolesTab"
 import { PeopleUsersTab } from "@/features/users/components/PeopleUsersTab"
@@ -22,10 +24,6 @@ import {
   listPermissions,
   listRoles,
 } from "@/features/users/services/rolesService"
-import { listVisibleRoles } from "@/features/users/permissions/rolePolicy"
-import { PeopleBottomNavigation } from "@/features/users/components/PeopleBottomNavigation"
-import "@/features/users/people-access.css"
-import { cn } from "@/lib/utils"
 
 type PeopleAccessTab = "users" | "customers" | "roles" | "registration"
 
@@ -46,6 +44,7 @@ export function PeopleAccessPage() {
   const [catalog, setCatalog] = useState<PermissionCatalogItemDto[]>([])
   const [isLoading, setIsLoading] = useState(canReadRoles)
   const [loadError, setLoadError] = useState<string | null>(null)
+  const [inviteOpen, setInviteOpen] = useState(false)
   const requestedTab = searchParams.get("tab")
   const tab: PeopleAccessTab = onRegistration ? "registration"
     : requestedTab === "roles" && canReadRoles ? "roles"
@@ -102,45 +101,45 @@ export function PeopleAccessPage() {
 
   if (onRegistration && !canReadRegistration) return <AccessDeniedPage />
 
-  return (
-    <div className={cn("people-access mx-auto w-full min-w-0 space-y-5", onRegistration && "people-access-registration")}>
-      <p className="people-eyebrow">{t("peopleAccess.eyebrow")}</p>
-      <PageHeader
-        title={t(onRegistration ? "admin.registrationFields.tenantPageTitle" : "peopleAccess.title")}
-        description={t(onRegistration ? "admin.registrationFields.tenantPageDescription" : "peopleAccess.description")}
-        className="mb-0 sm:mb-0"
-      />
+  function selectTab(next: PeopleAccessTab) {
+    if (next === "registration") void navigate("/configuracoes/cadastro")
+    else void navigate(next === "users" ? "/pessoas-e-acesso" : `/pessoas-e-acesso?tab=${next}`)
+  }
 
-      <nav className="people-tabs" aria-label={t("peopleAccess.title")}>
-        {tabItems.map((item) => {
-          const isActive = tab === item.id
-          const Icon = { users: Users, customers: UserRound, roles: ShieldCheck, registration: ClipboardList }[item.id]
-          const content = (
-            <>
-              <Icon aria-hidden strokeWidth={1.75} />
-              <span>{t(item.labelKey)}</span>
-            </>
-          )
-          const className = cn("people-tab touch-target", isActive && "people-tab-active")
-          return item.id === "registration" ? (
-            <Link key={item.id} to="/configuracoes/cadastro" className={className} aria-current={isActive ? "page" : undefined}>
-              {content}
-            </Link>
-          ) : (
-            <button
-              key={item.id}
-              type="button"
-              aria-current={isActive ? "page" : undefined}
-              onClick={() => {
-                void navigate(item.id === "users" ? "/pessoas-e-acesso" : `/pessoas-e-acesso?tab=${item.id}`)
-              }}
-              className={className}
-            >
-              {content}
-            </button>
-          )
-        })}
-      </nav>
+  const canInvite = tab === "users" && canReadUsers && can("core.users.invite")
+
+  return (
+    <Page
+      width="wide"
+      header={{
+        title: t(onRegistration ? "admin.registrationFields.tenantPageTitle" : "peopleAccess.title"),
+        description: t(onRegistration ? "admin.registrationFields.tenantPageDescription" : "peopleAccess.description"),
+        actions: canInvite ? (
+          <Button
+            type="button"
+            onClick={() => {
+              setInviteOpen(true)
+            }}
+          >
+            <UserPlus aria-hidden strokeWidth={1.75} />
+            {t("peopleAccess.users.invite")}
+          </Button>
+        ) : undefined,
+      }}
+    >
+      <Tabs value={tab} onValueChange={(value) => { selectTab(value as PeopleAccessTab) }}>
+        <TabsList
+          variant="line"
+          aria-label={t("peopleAccess.title")}
+          className="max-w-full justify-start overflow-x-auto overflow-y-hidden px-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        >
+          {tabItems.map((item) => (
+            <TabsTrigger key={item.id} value={item.id} className="min-h-11 flex-none px-3 first:pl-0">
+              {t(item.labelKey)}
+            </TabsTrigger>
+          ))}
+        </TabsList>
+      </Tabs>
 
       {tab !== "registration" && loadError !== null ? (
         <Alert variant="destructive">
@@ -153,42 +152,22 @@ export function PeopleAccessPage() {
       ) : canReadRoles && isLoading ? (
         <PageContentSkeleton rows={4} />
       ) : (
-        <div className={cn("people-content", canReadRoles && loadError === null && roles.length > 0 && tab !== "roles" && "people-content-with-summary")}>
-          <div className="min-w-0">
-            {tab === "users" && canReadUsers ? <PeopleUsersTab roles={roles} /> : null}
-  
-            {tab === "customers" && canReadCustomers ? (
-              <PeopleCustomersTab />
-            ) : null}
-  
-            {tab === "roles" && canReadRoles ? (
-              <PeopleRolesTab
-                roles={roles}
-                catalog={catalog}
-                onRolesChanged={loadRolesBundle}
-              />
-            ) : null}
-          </div>
-          {canReadRoles && loadError === null && roles.length > 0 && tab !== "roles" ? (
-            <aside className="people-role-summary" aria-label={t("peopleAccess.tabs.roles")}>
-              <h2>{t("peopleAccess.tabs.roles")}</h2>
-              <p className="people-summary-description">{t("peopleAccess.roleSummary.description")}</p>
-              <ul>
-                {listVisibleRoles(roles).map((role) => (
-                  <li key={role.id}>
-                    <div className="min-w-0">
-                      <p className="font-semibold break-words">{role.name}</p>
-                      <p className="text-xs tabular-nums text-muted-foreground">{t("peopleAccess.roleSummary.permissions", { count: role.permissionKeys.length })}</p>
-                    </div>
-                    <span className="people-role-kind">{t(role.isSystemRole ? "peopleAccess.badges.system" : "peopleAccess.badges.custom")}</span>
-                  </li>
-                ))}
-              </ul>
-            </aside>
+        <div className="min-w-0">
+          {tab === "users" && canReadUsers ? (
+            <PeopleUsersTab roles={roles} inviteOpen={inviteOpen} onInviteOpenChange={setInviteOpen} />
+          ) : null}
+
+          {tab === "customers" && canReadCustomers ? <PeopleCustomersTab /> : null}
+
+          {tab === "roles" && canReadRoles ? (
+            <PeopleRolesTab
+              roles={roles}
+              catalog={catalog}
+              onRolesChanged={loadRolesBundle}
+            />
           ) : null}
         </div>
       )}
-      <PeopleBottomNavigation />
-    </div>
+    </Page>
   )
 }
