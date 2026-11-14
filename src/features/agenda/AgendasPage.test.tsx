@@ -1,4 +1,4 @@
-import { render, screen, within } from "@testing-library/react"
+import { screen, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { MemoryRouter, useLocation } from "react-router-dom"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
@@ -6,7 +6,9 @@ import { TenantTimeZoneContext } from "@/contexts/TenantTimeZoneContext"
 import { usePermissions } from "@/features/users/permissions/PermissionContext"
 import { listCatalogOrders, listCatalogProducts, listCatalogResourceAgenda } from "@/features/catalog/services/catalogService"
 import { catalogOrderSchema, catalogProductSchema } from "@/features/catalog/schemas/catalogSchemas"
-import { fetchAdminScheduleDay, listAdminRentalAssets } from "@/features/rentals/services/scheduleService"
+import { listAdminReservations } from "@/features/rentals/services/reservationsService"
+import { fetchAdminScheduleDay, listAdminRentalAssets, listOccupancyKinds } from "@/features/rentals/services/scheduleService"
+import { renderWithQuery } from "@/test/renderWithQuery"
 import { asset, order, slot } from "./agendaFixtures"
 import { AgendasPage, type AgendasView } from "./AgendasPage"
 
@@ -36,7 +38,7 @@ function access(modules = ["rentals", "catalog"], granted = grants) {
 }
 function Location() { return <output data-testid="search">{useLocation().search}</output> }
 function setup(search = "?visao=dia&date=2026-11-10", view: AgendasView = "overview") {
-  return render(<TenantTimeZoneContext.Provider value="America/Sao_Paulo"><MemoryRouter initialEntries={[`/agendas${search}`]}><AgendasPage view={view} /><Location /></MemoryRouter></TenantTimeZoneContext.Provider>)
+  return renderWithQuery(<TenantTimeZoneContext.Provider value="America/Sao_Paulo"><MemoryRouter initialEntries={[`/agendas${search}`]}><AgendasPage view={view} /><Location /></MemoryRouter></TenantTimeZoneContext.Provider>)
 }
 function params() { return new URLSearchParams(screen.getByTestId("search").textContent ?? "") }
 function chip(name: RegExp) { return within(screen.getByRole("group", { name: "Tipo" })).getByRole("button", { name }) }
@@ -248,5 +250,25 @@ describe("agenda filter panel", () => {
     expect(within(dialog).getByRole("heading", { name: /Recursos · / })).toBeInTheDocument()
     await userEvent.click(await within(dialog).findByRole("checkbox", { name: "Estúdio B" }))
     expect(params().get("recursos")).toBeTruthy()
+  })
+})
+
+describe("agenda requests", () => {
+  const total = () => [listAdminRentalAssets, listCatalogResourceAgenda, listCatalogOrders, listCatalogProducts, fetchAdminScheduleDay, listAdminReservations, listOccupancyKinds]
+    .reduce((sum, fn) => sum + vi.mocked(fn).mock.calls.length, 0)
+
+  it("loads orders once for the labels and the order search, a day view in 6 requests", async () => {
+    setup()
+    await screen.findByRole("button", { name: /Pedidos\s*1/ })
+    expect(listCatalogOrders).toHaveBeenCalledTimes(1)
+    expect(vi.mocked(listCatalogOrders).mock.calls[0]![0]).toEqual({ from: "2026-11-10T03:00:00.000Z", to: "2026-11-11T03:00:00.000Z" })
+    expect(total()).toBe(6)
+  })
+
+  it("loads a week view in 12 requests", async () => {
+    setup("?visao=semana&date=2026-11-10")
+    await screen.findByRole("button", { name: /Pedidos\s*1/ })
+    expect(listCatalogOrders).toHaveBeenCalledTimes(1)
+    expect(total()).toBe(12)
   })
 })

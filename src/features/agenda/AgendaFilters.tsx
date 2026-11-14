@@ -4,9 +4,8 @@ import { useTranslation } from "react-i18next"
 import { Skeleton } from "@/components/ui/skeleton"
 import { ICON_SIZE, ICON_STROKE_WIDTH } from "@/lib/icon"
 import { fold } from "./agendaFilterModel"
-import { agendaOptionLoaders, useAgendaOptions, type AgendaOption } from "./useAgendaOptions"
-
-const emptyOptions = async (): Promise<AgendaOption[]> => []
+import type { AgendaRange } from "./agendaQueries"
+import { useAgendaOrderOptions, type AgendaOption } from "./useAgendaOptions"
 
 function matching(options: AgendaOption[], query: string) {
   const needle = fold(query.trim())
@@ -22,14 +21,17 @@ function optionLabel(options: AgendaOption[], value: string | null) {
 type AgendaFiltersProps = {
   /** Whether the user may read orders (the search is hidden otherwise). */
   order: boolean
+  tenantId: string | null
+  /** Visible range: the same orders request the day/week labels use. */
+  range: AgendaRange
   value: string | null
   onChange: (pedido: string | null) => void
 }
 
 /** "Pedido ou cliente" search of the agenda toolbar; the order id lives in the `pedido` URL param. */
-export function AgendaFilters({ order, value, onChange }: AgendaFiltersProps) {
+export function AgendaFilters({ order, tenantId, range, value, onChange }: AgendaFiltersProps) {
   const { t } = useTranslation()
-  const pedido = useAgendaOptions(order ? agendaOptionLoaders.pedido : emptyOptions)
+  const pedido = useAgendaOrderOptions(tenantId, range, order)
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState("")
   const rootRef = useRef<HTMLDivElement>(null)

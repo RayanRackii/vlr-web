@@ -1,4 +1,5 @@
 import type { CurrentUser } from "@/features/users/schemas/userSchemas"
+import { clearQueryCache } from "@/lib/queryClient"
 
 type CurrentUserLoader = () => Promise<CurrentUser>
 
@@ -38,6 +39,9 @@ export function staffSessionFingerprint(
 }
 
 export function invalidateCurrentUserCache(): void {
+  // Single choke point for tenant enter/exit/switch (refreshAuthSession), login and logout
+  // (syncCurrentUserCacheToAuthUser) and session restore: the data cache goes with the profile.
+  clearQueryCache()
   generation += 1
   cached = null
   inflight = null

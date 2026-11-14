@@ -13,13 +13,13 @@ import { useIsDesktop } from "./agendaFilterModel"
 import { AgendaFilters } from "./AgendaFilters"
 import { AgendaWeek } from "./AgendaWeek"
 import { useAgendaDay } from "./useAgendaDay"
-import { agendaOptionLoaders, useAgendaOptions, type AgendaOption } from "./useAgendaOptions"
+import { agendaRange } from "./agendaQueries"
+import { useAgendaProductOptions } from "./useAgendaOptions"
 import { agendaTypes, parseAgendaState, serializeAgendaState, type AgendaState } from "./urlState"
 import "./agendas.css"
 
 export type AgendasView = "overview" | "resources" | "product"
 
-const emptyOptions = async (): Promise<AgendaOption[]> => []
 const dayViews = ["dia", "semana"] as const
 // Chip order after "Todos".
 const chipKinds = ["pedido", "reserva", "manutencao", "bloqueio"] as const
@@ -31,6 +31,7 @@ export function AgendasPage({ view }: { view: AgendasView }) {
   const [params, setParams] = useSearchParams()
   const today = civilToday(timeZone)
   const state = parseAgendaState(params, today)
+  const tenantId = currentUser?.tenantId ?? null
   const update = (patch: Partial<AgendaState>) => setParams(serializeAgendaState({ ...state, ...patch }, params))
   const rentals = !isLoading && activeModules.includes("rentals")
   const catalog = !isLoading && activeModules.includes("catalog")
@@ -41,12 +42,12 @@ export function AgendasPage({ view }: { view: AgendasView }) {
     schedule: rentals && can("rentals.schedule.read"),
     reservations: rentals && can("rentals.reservations.read"),
     orders: catalog && can("catalog.orders.read"),
-  }, currentUser?.tenantId ?? null, !isLoading, productView ? state.produto : null)
+  }, tenantId, !isLoading, productView ? state.produto : null)
   const desktop = useIsDesktop()
   const canReserve = rentals && can("rentals.reservations.read")
   const canBlock = rentals && can("rentals.schedule.read") && can("rentals.assets.read")
   const canReadProducts = catalog && can("catalog.products.read")
-  const products = useAgendaOptions(canReadProducts ? agendaOptionLoaders.produto : emptyOptions)
+  const products = useAgendaProductOptions(tenantId, canReadProducts)
   const locale = i18n.resolvedLanguage ?? i18n.language
   const weekStart = startOfCivilWeek(state.date)
   const dateLabel = state.visao === "dia" ? formatDayLabel(state.date, locale)
@@ -113,7 +114,7 @@ export function AgendasPage({ view }: { view: AgendasView }) {
           />
         </div>
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-          <AgendaFilters key={currentUser?.tenantId ?? "current"} order={catalog && can("catalog.orders.read")} value={state.pedido} onChange={(pedido) => update({ pedido })} />
+          <AgendaFilters key={currentUser?.tenantId ?? "current"} order={catalog && can("catalog.orders.read")} tenantId={tenantId} range={agendaRange(state, timeZone)} value={state.pedido} onChange={(pedido) => update({ pedido })} />
           {!desktop && <AgendaFilterSheet {...filterProps} />}
         </div>
       </div>

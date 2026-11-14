@@ -1,9 +1,10 @@
-import { render, screen } from "@testing-library/react"
+import { screen } from "@testing-library/react"
 import { MemoryRouter, Outlet } from "react-router-dom"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import { usePermissions } from "@/features/users/permissions/PermissionContext"
 import { getHostTenantSubdomain } from "@/features/tenantPortal/services/tenantPortalService"
 import i18n from "@/lib/i18n"
+import { renderWithQuery } from "@/test/renderWithQuery"
 import { AppRoutes } from "./AppRoutes"
 
 vi.mock("@/components/layout/MainLayout", () => ({ MainLayout: () => <div data-testid="staff-layout"><Outlet /></div> }))
@@ -24,7 +25,7 @@ vi.mock("@/features/catalog/services/catalogService", async (original) => ({
 function access(modules: string[], permissions: string[]) {
   vi.mocked(usePermissions).mockReturnValue({ activeModules: modules, permissions, can: (key) => permissions.includes(key), isLoading: false, currentUser: null, error: null, refresh: vi.fn() })
 }
-function visit(path: string) { render(<MemoryRouter initialEntries={[path]}><AppRoutes /></MemoryRouter>) }
+function visit(path: string) { renderWithQuery(<MemoryRouter initialEntries={[path]}><AppRoutes /></MemoryRouter>) }
 beforeEach(() => { vi.mocked(getHostTenantSubdomain).mockReturnValue(null); access(["rentals"], []) })
 
 describe("staff agenda route", () => {
