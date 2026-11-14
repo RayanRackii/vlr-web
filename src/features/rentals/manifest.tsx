@@ -1,4 +1,5 @@
 import type { ReactElement } from "react"
+import { lazyPage } from "@/routes/lazyPage"
 import {
   Boxes,
   CalendarCheck,
@@ -8,14 +9,15 @@ import {
 
 import type { AppNavigationItem } from "@/components/layout/navigation"
 import { reservationTabs } from "@/features/rentals/navigationTabs"
-import { ReservationsScreen } from "@/features/rentals/pages/ReservationsScreen"
-import { RentalLayoutsPage } from "@/features/rentals/pages/RentalLayoutsPage"
-import { RentalResourceEditorPage } from "@/features/rentals/pages/RentalResourceEditorPage"
-import { RentalResourcesPage } from "@/features/rentals/pages/RentalResourcesPage"
-import { ResourceAssistantPage } from "@/features/assistant/ResourceAssistantPage"
 import { ResourceLegacyRedirect } from "@/routes/legacyScreenRedirect"
-import { FirstStepsPage } from "@/features/rentals/pages/FirstStepsPage"
-import { SchedulePage } from "@/features/rentals/pages/SchedulePage"
+
+const ReservationsScreen = lazyPage(() => import("@/features/rentals/pages/ReservationsScreen"), "ReservationsScreen")
+const RentalLayoutsPage = lazyPage(() => import("@/features/rentals/pages/RentalLayoutsPage"), "RentalLayoutsPage")
+const RentalResourceEditorPage = lazyPage(() => import("@/features/rentals/pages/RentalResourceEditorPage"), "RentalResourceEditorPage")
+const RentalResourcesPage = lazyPage(() => import("@/features/rentals/pages/RentalResourcesPage"), "RentalResourcesPage")
+const ResourceAssistantPage = lazyPage(() => import("@/features/assistant/ResourceAssistantPage"), "ResourceAssistantPage")
+const FirstStepsPage = lazyPage(() => import("@/features/rentals/pages/FirstStepsPage"), "FirstStepsPage")
+const SchedulePage = lazyPage(() => import("@/features/rentals/pages/SchedulePage"), "SchedulePage")
 
 type FeatureRoute = {
   path: string

@@ -5,9 +5,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { ICON_SIZE, ICON_STROKE_WIDTH } from "@/lib/icon"
 import { Button } from "@/components/ui/button"
 import { fold, useIsMedium } from "./agendaFilterModel"
-import { agendaOptionLoaders, useAgendaOptions, type AgendaOption } from "./useAgendaOptions"
-
-const emptyOptions = async (): Promise<AgendaOption[]> => []
+import { useAgendaOrderOptions, type AgendaOption } from "./useAgendaOptions"
 
 function matching(options: AgendaOption[], query: string) {
   const needle = fold(query.trim())
@@ -23,14 +21,15 @@ function optionLabel(options: AgendaOption[], value: string | null) {
 type AgendaFiltersProps = {
   /** Whether the user may read orders (the search is hidden otherwise). */
   order: boolean
+  tenantId: string | null
   value: string | null
   onChange: (pedido: string | null) => void
 }
 
 /** "Pedido ou cliente" search of the agenda toolbar; the order id lives in the `pedido` URL param. */
-export function AgendaFilters({ order, value, onChange }: AgendaFiltersProps) {
+export function AgendaFilters({ order, tenantId, value, onChange }: AgendaFiltersProps) {
   const { t } = useTranslation()
-  const pedido = useAgendaOptions(order ? agendaOptionLoaders.pedido : emptyOptions)
+  const pedido = useAgendaOrderOptions(tenantId, order)
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState("")
   const medium = useIsMedium()

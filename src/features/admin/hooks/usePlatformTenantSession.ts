@@ -8,6 +8,7 @@ import {
   writePlatformTenantExitedUserId,
 } from "@/features/admin/lib/platformTenantExit"
 import { invalidateCurrentUserCache } from "@/features/users/services/currentUserCache"
+import { clearQueryCache } from "@/lib/queryClient"
 import { supabase } from "@/lib/supabase"
 
 const TENANT_LABEL_KEY = "rolvix.activeTenantLabel"
@@ -45,16 +46,19 @@ function readTenantIdFromUser(user: {
 
 /** Local UI exit for this user. The JWT claim can lag behind POST /exit. */
 export function markPlatformTenantExited(userId: string) {
+  clearQueryCache()
   writeActiveTenantLabel(null)
   writePlatformTenantExitedUserId(userId)
 }
 
 /** Cleared on enter and after a successful sign-out so a later tenant session is visible. */
 export function clearPlatformTenantExited() {
+  clearQueryCache()
   writePlatformTenantExitedUserId(null)
 }
 
 export async function refreshAuthSession() {
+  clearQueryCache()
   invalidateCurrentUserCache()
   const { error } = await supabase.auth.refreshSession()
   if (error) {

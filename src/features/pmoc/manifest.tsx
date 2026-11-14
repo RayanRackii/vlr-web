@@ -1,12 +1,14 @@
 import type { ReactElement } from "react"
+import { lazyPage } from "@/routes/lazyPage"
 import { ClipboardList } from "lucide-react"
 
 import type { AppNavigationItem } from "@/components/layout/navigation"
 import { newPlanTabs } from "@/features/pmoc/navigationTabs"
-import { NewPlanPage } from "@/features/pmoc/pages/NewPlanPage"
 import { MaintenanceListLegacyRedirect, RedirectKeepingLocation } from "@/routes/legacyScreenRedirect"
-import { PmocPlanDetailPage } from "@/features/pmoc/pages/PmocPlanDetailPage"
-import { PmocTemplatePreviewPage } from "@/features/pmoc/pages/PmocTemplatePreviewPage"
+
+const NewPlanPage = lazyPage(() => import("@/features/pmoc/pages/NewPlanPage"), "NewPlanPage")
+const PmocPlanDetailPage = lazyPage(() => import("@/features/pmoc/pages/PmocPlanDetailPage"), "PmocPlanDetailPage")
+const PmocTemplatePreviewPage = lazyPage(() => import("@/features/pmoc/pages/PmocTemplatePreviewPage"), "PmocTemplatePreviewPage")
 
 type FeatureRoute = {
   path: string

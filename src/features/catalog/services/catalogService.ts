@@ -345,9 +345,9 @@ export async function listCatalogOrders(query?: {
   customerId?: string
   from?: string
   to?: string
-}): Promise<CatalogOrder[]> {
+}, { signal }: { signal?: AbortSignal } = {}): Promise<CatalogOrder[]> {
   try {
-    const response = await api.get("/api/catalog/orders", { params: query })
+    const response = await api.get("/api/catalog/orders", { params: query, ...(signal ? { signal } : {}) })
     return parseOrThrow(catalogOrderListSchema.safeParse(response.data))
   } catch (error) {
     if (error instanceof Error && error.message === i18n.t("apiErrors.invalidPayload")) {

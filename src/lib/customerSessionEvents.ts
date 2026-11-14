@@ -5,7 +5,7 @@ export function notifyCustomerSessionChanged(): void {
   window.dispatchEvent(new Event(CUSTOMER_SESSION_CHANGED))
 }
 
-export function subscribeCustomerSession(listener: () => void): () => void {
+export function subscribeCustomerSession(listener: (event: Event) => void): () => void {
   window.addEventListener(CUSTOMER_SESSION_CHANGED, listener)
   window.addEventListener("storage", listener)
   return () => {

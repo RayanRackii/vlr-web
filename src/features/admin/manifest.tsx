@@ -1,16 +1,18 @@
 import type { ReactElement } from "react"
+import { lazyPage } from "@/routes/lazyPage"
 import { Shield } from "lucide-react"
 import { Navigate } from "react-router-dom"
 
 import type { AppNavigationItem } from "@/components/layout/navigation"
-import { AdminAssetFamiliesPage } from "@/features/admin/pages/AdminAssetFamiliesPage"
-import { AdminDashboardPage } from "@/features/admin/pages/AdminDashboardPage"
-import { AdminUsersPage } from "@/features/admin/pages/AdminUsersPage"
-import { EditTenantPage } from "@/features/admin/pages/EditTenantPage"
-import { NewTenantPage } from "@/features/admin/pages/NewTenantPage"
-import { ResourceVisualCatalogPage } from "@/features/admin/pages/ResourceVisualCatalogPage"
-import { TenantModuleMenuPage } from "@/features/admin/pages/TenantModuleMenuPage"
-import { PeopleAccessPage } from "@/features/users/pages/PeopleAccessPage"
+
+const AdminAssetFamiliesPage = lazyPage(() => import("@/features/admin/pages/AdminAssetFamiliesPage"), "AdminAssetFamiliesPage")
+const AdminDashboardPage = lazyPage(() => import("@/features/admin/pages/AdminDashboardPage"), "AdminDashboardPage")
+const AdminUsersPage = lazyPage(() => import("@/features/admin/pages/AdminUsersPage"), "AdminUsersPage")
+const EditTenantPage = lazyPage(() => import("@/features/admin/pages/EditTenantPage"), "EditTenantPage")
+const NewTenantPage = lazyPage(() => import("@/features/admin/pages/NewTenantPage"), "NewTenantPage")
+const ResourceVisualCatalogPage = lazyPage(() => import("@/features/admin/pages/ResourceVisualCatalogPage"), "ResourceVisualCatalogPage")
+const TenantModuleMenuPage = lazyPage(() => import("@/features/admin/pages/TenantModuleMenuPage"), "TenantModuleMenuPage")
+const PeopleAccessPage = lazyPage(() => import("@/features/users/pages/PeopleAccessPage"), "PeopleAccessPage")
 
 type FeatureRoute = { path: string; element: ReactElement; permission?: string }
 

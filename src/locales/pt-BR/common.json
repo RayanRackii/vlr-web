@@ -5822,7 +5822,7 @@
     "openSearch": "Abrir busca de pedido",
     "grid": {
       "available": "Disponível para reserva",
-      "reserveOn": "Reservar {{name}}",
+      "reserveOn": "Ver reservas de {{name}}",
       "reserveHere": "Ver reservas neste recurso",
       "rowActions": "Ações de {{name}}",
       "allDay": "Dia inteiro",

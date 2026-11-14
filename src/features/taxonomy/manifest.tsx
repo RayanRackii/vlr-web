@@ -1,8 +1,10 @@
 import type { ReactElement } from "react"
+import { lazyPage } from "@/routes/lazyPage"
 import { Tags } from "lucide-react"
 
 import type { AppNavigationItem } from "@/components/layout/navigation"
-import { TaxonomyPage } from "@/features/taxonomy/pages/TaxonomyPage"
+
+const TaxonomyPage = lazyPage(() => import("@/features/taxonomy/pages/TaxonomyPage"), "TaxonomyPage")
 
 type FeatureRoute = {
   path: string

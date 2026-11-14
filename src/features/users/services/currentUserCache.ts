@@ -1,4 +1,5 @@
 import type { CurrentUser } from "@/features/users/schemas/userSchemas"
+import { clearQueryCache } from "@/lib/queryClient"
 
 type CurrentUserLoader = () => Promise<CurrentUser>
 
@@ -55,6 +56,9 @@ export function syncCurrentUserCacheToAuthUser(user: AuthUserLike): void {
   }
 
   lastFingerprint = next
+  // Identity or tenant changed (login, logout, tenant enter/exit/switch): drop cached tenant data.
+  // A forced profile refresh (invalidateCurrentUserCache alone) keeps it.
+  clearQueryCache()
   invalidateCurrentUserCache()
 }
 

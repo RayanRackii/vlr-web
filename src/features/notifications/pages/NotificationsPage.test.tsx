@@ -92,7 +92,8 @@ describe("NotificationsPage", () => {
       { path: "/notificacoes", permission: "core.notifications.read", anyOf: ["catalog.notifications.read"] },
       { path: "/configuracoes/notificacoes", permission: "core.notifications.read", anyOf: ["catalog.notifications.read"] },
     ])
-    expect(notificationsManifest.routes.staff[0]?.element.type).toBe(NotificationsPage)
+    // The route page is lazy-loaded: the manifest holds a React.lazy element.
+    expect((notificationsManifest.routes.staff[0]?.element.type as { $$typeof?: symbol }).$$typeof).toBe(Symbol.for("react.lazy"))
     expect(notificationsManifest.navigationItems[0]?.to).toBe("/notificacoes")
   })
 
