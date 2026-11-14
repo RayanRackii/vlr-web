@@ -23,7 +23,6 @@ import { StaffReturnLink } from "@/features/rentals/components/resourceWizard/St
 import { usePermissions } from "@/features/users/permissions/PermissionContext"
 import type { TenantCustomer } from "@/features/users/schemas/userSchemas"
 import { listTenantCustomers } from "@/features/users/services/usersService"
-import "@/features/catalog/pages/grupos.css"
 
 export function CustomerGroupFormPage() {
   const { id } = useParams()
@@ -198,17 +197,16 @@ export function CustomerGroupFormPage() {
   }
 
   const header = {
-    eyebrow: t("grupos.eyebrow"),
     title,
     description: t(editing ? "grupos.editSubtitle" : "grupos.createSubtitle"),
     actions: <StaffReturnLink />,
   }
 
-  if (loading || missing) {
+  if (loading) return <Page width="form" header={header} state="loading">{null}</Page>
+  if (missing) {
     return (
       <Page width="form" header={header}>
-        {loading ? <p role="status" className="text-sm text-muted-foreground">{t("common.loading")}</p> : null}
-        {!loading && missing ? <p role="alert" className="text-sm text-destructive">{nameError ?? t("catalog.customerGroups.page.notFound")}</p> : null}
+        <p role="alert" className="text-sm text-destructive">{nameError ?? t("catalog.customerGroups.page.notFound")}</p>
       </Page>
     )
   }
@@ -259,8 +257,8 @@ export function CustomerGroupFormPage() {
               />
             </FormRow>
             {!editing && canManage && canReadCustomers ? (
-              <div className="grupos-expander">
-                <button type="button" aria-expanded={membersOpen} aria-controls="group-members" onClick={() => setMembersOpen((open) => !open)}>
+              <div className="rounded-xl border border-border">
+                <button type="button" className="flex min-h-12 w-full items-center justify-between gap-3 px-3.5 text-left font-medium" aria-expanded={membersOpen} aria-controls="group-members" onClick={() => setMembersOpen((open) => !open)}>
                   <span>{t("grupos.members")}</span>
                   <span aria-hidden="true">{membersOpen ? "−" : "+"}</span>
                 </button>
@@ -288,8 +286,8 @@ export function CustomerGroupFormPage() {
               </div>
             ) : null}
             {editing && canManage ? (
-              <div className="grupos-expander">
-                <button type="button" aria-expanded={membersOpen} aria-controls="group-edit-members" onClick={() => setMembersOpen((open) => !open)}>
+              <div className="rounded-xl border border-border">
+                <button type="button" className="flex min-h-12 w-full items-center justify-between gap-3 px-3.5 text-left font-medium" aria-expanded={membersOpen} aria-controls="group-edit-members" onClick={() => setMembersOpen((open) => !open)}>
                   <span>{t("grupos.membersEdit")}</span>
                   <span aria-hidden="true">{membersOpen ? "−" : "+"}</span>
                 </button>

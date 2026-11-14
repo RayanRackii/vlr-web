@@ -2114,7 +2114,11 @@
     }
   },
   "grupos": {
-    "eyebrow": "Customers",
+    "colGroup": "Group",
+    "colMembers": "Members",
+    "colProducts": "Products",
+    "colActions": "Actions",
+    "rowMenu": "Actions for {{name}}",
     "title": "Customer groups",
     "subtitle": "Group customers to unlock products and exclusive terms.",
     "create": "New group",
