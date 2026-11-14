@@ -1,4 +1,4 @@
-import { render, screen, within } from "@testing-library/react"
+import { render, screen } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { MemoryRouter, Route, Routes } from "react-router-dom"
 import { beforeEach, describe, expect, it, vi } from "vitest"
@@ -38,9 +38,8 @@ describe("ResourceTypeWizardPage", () => {
   it("walks the numbered steps, hides internal fields, and saves the type", async () => {
     const user = userEvent.setup()
     renderWizard()
-    const steps = screen.getByRole("list", { name: "Passos" })
-    expect(steps.querySelector("svg")).toBeNull()
-    expect(within(steps).getByRole("button", { name: "1 Nome e vocabulário" })).toHaveAttribute("aria-current", "step")
+    expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1)
+    expect(document.querySelector('[aria-current="step"]')).toHaveTextContent("Nome e vocabulário")
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument()
 
     await user.click(screen.getByRole("button", { name: "Continuar" }))
@@ -84,5 +83,25 @@ describe("ResourceTypeWizardPage", () => {
       ],
     }))
     expect(getResourceType).not.toHaveBeenCalled()
+  })
+
+  it("keeps entered values when going back and shows a submit error on the review step", async () => {
+    const user = userEvent.setup()
+    createResourceType.mockRejectedValue(new Error("Falha de rede"))
+    renderWizard()
+    await user.type(screen.getByRole("textbox", { name: "Nome do tipo" }), "Quadra")
+    await user.type(screen.getByRole("textbox", { name: "Como o cliente fala de um" }), "quadra")
+    await user.type(screen.getByRole("textbox", { name: "Como o cliente fala de vários" }), "quadras")
+    await user.click(screen.getByRole("button", { name: "Continuar" }))
+    await user.click(screen.getByRole("button", { name: "Voltar" }))
+    expect(screen.getByRole("textbox", { name: "Nome do tipo" })).toHaveValue("Quadra")
+
+    await user.click(screen.getByRole("button", { name: "Continuar" }))
+    await user.click(screen.getByRole("button", { name: "Continuar" }))
+    await user.click(screen.getByRole("button", { name: "Continuar" }))
+    await user.click(screen.getByRole("button", { name: "Salvar" }))
+    expect(await screen.findByText("Falha de rede")).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "Salvar" })).toBeEnabled()
+    expect(screen.queryByText("lista de tipos")).not.toBeInTheDocument()
   })
 })

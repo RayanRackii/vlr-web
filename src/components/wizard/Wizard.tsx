@@ -13,6 +13,13 @@ export type WizardStep = {
 type WizardProps = {
   steps: readonly WizardStep[]
   initialStep?: number
+  /** Controlled current step. Omit to let the wizard own it (use with `onStepChange` to observe). */
+  stepIndex?: number
+  onStepChange?: (index: number) => void
+  /** Parent-owned error (e.g. a failed submit) shown above the footer. */
+  stepError?: ReactNode
+  /** Accessible name for the stepper list. */
+  ariaLabel?: string
   children: (stepIndex: number) => ReactNode
   finalReview?: ReactNode
   nextLabel: string
@@ -31,6 +38,10 @@ type WizardProps = {
 export function Wizard({
   steps,
   initialStep = 0,
+  stepIndex: controlledIndex,
+  onStepChange,
+  stepError,
+  ariaLabel,
   children,
   finalReview,
   nextLabel,
@@ -41,11 +52,22 @@ export function Wizard({
   busy = false,
   className,
 }: WizardProps) {
-  const [stepIndex, setStepIndex] = useState(() =>
-    Math.min(Math.max(initialStep, 0), Math.max(steps.length - 1, 0)),
-  )
+  const maxIndex = Math.max(steps.length - 1, 0)
+  const [ownIndex, setOwnIndex] = useState(() => Math.min(Math.max(initialStep, 0), maxIndex))
+  const stepIndex = Math.min(Math.max(controlledIndex ?? ownIndex, 0), maxIndex)
+  const setStepIndex = (update: number | ((current: number) => number)) => {
+    const value = typeof update === "function" ? update(stepIndex) : update
+    const clamped = Math.min(Math.max(value, 0), maxIndex)
+    setOwnIndex(clamped)
+    onStepChange?.(clamped)
+  }
   const [validationError, setValidationError] = useState<string | null>(null)
   const isFinalStep = stepIndex === steps.length - 1
+
+  function goTo(index: number) {
+    setValidationError(null)
+    setStepIndex(index)
+  }
 
   async function next() {
     const message = await steps[stepIndex]?.validate?.()
@@ -60,10 +82,10 @@ export function Wizard({
   return (
     <section className={className}>
       <div className="hidden sm:block">
-        <WizardPanelsStepper steps={steps} currentIndex={stepIndex} onStepClick={setStepIndex} />
+        <WizardPanelsStepper steps={steps} currentIndex={stepIndex} onStepClick={goTo} ariaLabel={ariaLabel} />
       </div>
       <div className="sm:hidden">
-        <WizardPanelsStepper steps={steps} currentIndex={stepIndex} onStepClick={setStepIndex} variant="compact" />
+        <WizardPanelsStepper steps={steps} currentIndex={stepIndex} onStepClick={goTo} ariaLabel={ariaLabel} variant="compact" />
       </div>
 
       <div className="mt-4">
@@ -75,6 +97,7 @@ export function Wizard({
           {validationError}
         </p>
       ) : null}
+      {stepError ? <div className="mt-3 text-sm text-destructive" role="alert">{stepError}</div> : null}
 
       <div className="mt-5 flex items-center justify-between gap-3 border-t pt-4">
         <Button
@@ -89,11 +112,11 @@ export function Wizard({
           {backLabel}
         </Button>
         {isFinalStep ? (
-          <Button type="button" disabled={busy || finishDisabled} onClick={() => void onFinish()}>
+          <Button type="button" className="max-md:flex-1" disabled={busy || finishDisabled} onClick={() => void onFinish()}>
             {finishLabel}
           </Button>
         ) : (
-          <Button type="button" disabled={busy} onClick={() => void next()}>
+          <Button type="button" className="max-md:flex-1" disabled={busy} onClick={() => void next()}>
             {nextLabel}
           </Button>
         )}
