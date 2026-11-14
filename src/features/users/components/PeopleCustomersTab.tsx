@@ -127,7 +127,7 @@ export function PeopleCustomersTab() {
           <Link className="inline-flex min-h-11 items-center font-semibold underline-offset-4 [overflow-wrap:anywhere] hover:underline" to={`/pessoas-e-acesso/clientes/${customer.id}`}>
             {customer.name}
           </Link>
-          <p className="text-sm text-muted-foreground [overflow-wrap:anywhere]">{customer.email ?? "—"}</p>
+          <p className="truncate text-sm text-muted-foreground" title={customer.email ?? undefined}>{customer.email ?? "—"}</p>
         </div>
       </div>
     )
@@ -182,13 +182,13 @@ export function PeopleCustomersTab() {
         empty={empty}
         renderCard={(customer) => (
           <>
-            <div className="flex items-start justify-between gap-3">
-              {identity(customer)}
+            <div className="min-w-0">{identity(customer)}</div>
+            <div className="flex flex-wrap items-center gap-2">
               {statusBadge(customer)}
+              <small className="text-muted-foreground">
+                {t("peopleAccess.customers.createdAt")} {formatCreatedAt(customer.createdAt, i18n.language)}
+              </small>
             </div>
-            <small className="text-muted-foreground">
-              {t("peopleAccess.customers.createdAt")} {formatCreatedAt(customer.createdAt, i18n.language)}
-            </small>
           </>
         )}
       />

@@ -5888,6 +5888,8 @@
     "emptyTitle": "Nothing found",
     "emptyDescription": "No orders or requests match your search and filters.",
     "clear": "Clear search/filters",
+    "loadMore": "Load more",
+    "showing": "Showing {{shown}} of {{total}}",
     "loading": "Loading orders…",
     "quantity": "Quantity: {{count}}",
     "detailTitle": "Order details",
