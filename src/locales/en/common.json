@@ -3211,6 +3211,12 @@
       "permanentSuccess": "Item permanently deleted."
     },
     "resourceTypes": {
+      "colType": "Type",
+      "colCapabilities": "Capabilities",
+      "colResources": "Resources",
+      "colActions": "Actions",
+      "rowMenu": "Actions for {{name}}",
+      "all": "All",
       "title": "Resource types",
       "subtitle": "Families of what your company books. Behavior comes from capabilities, not from the name.",
       "search": "Search types",
@@ -3883,6 +3889,12 @@
       }
     },
     "library": {
+      "colModel": "Template",
+      "colVersion": "Version",
+      "colCategory": "Category",
+      "colTasks": "Tasks",
+      "colActions": "Actions",
+      "tasksCount": "{{count}} tasks",
       "title": "Rolvix Library",
       "description": "Standard templates from the platform. Clone into your tenant and customize the checklist.",
       "loading": "Loading library...",
