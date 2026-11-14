@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from "react"
+import { Suspense, useEffect, useState, type ReactNode } from "react"
 import { Outlet, useLocation, useNavigate } from "react-router-dom"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
@@ -206,7 +206,11 @@ function MainLayoutShell({ children }: { children?: ReactNode }) {
     >
       <WorkOrderSyncHost />
       <Breadcrumb />
-      <AppErrorBoundary key={location.pathname}>{children ?? <Outlet />}</AppErrorBoundary>
+      <AppErrorBoundary key={location.pathname}>
+        <Suspense fallback={<PageContentSkeleton rows={3} />}>
+          {children ?? <Outlet />}
+        </Suspense>
+      </AppErrorBoundary>
     </AppShell>
     </ModuleIntroLinksProvider>
   )

@@ -1,16 +1,18 @@
 import type { ReactElement } from "react"
+import { lazyPage } from "@/routes/lazyPage"
 
 import type { AppNavigationItem } from "@/components/layout/navigation"
-import { TenantPortalAgendaPage } from "@/features/tenantPortal/pages/TenantPortalAgendaPage"
-import { TenantPortalForgotPasswordPage } from "@/features/tenantPortal/pages/TenantPortalForgotPasswordPage"
-import { TenantPortalHomePage } from "@/features/tenantPortal/pages/TenantPortalHomePage"
-import { TenantPortalInvalidResetLinkPage } from "@/features/tenantPortal/pages/TenantPortalInvalidResetLinkPage"
-import { TenantPortalLoginPage } from "@/features/tenantPortal/pages/TenantPortalLoginPage"
-import { TenantPortalLoginRedirectRoute } from "@/features/tenantPortal/pages/TenantPortalLoginRedirectRoute"
-import { TenantPortalProfilePage } from "@/features/tenantPortal/pages/TenantPortalProfilePage"
-import { TenantPortalRegisterPage } from "@/features/tenantPortal/pages/TenantPortalRegisterPage"
-import { TenantPortalResetPasswordPage } from "@/features/tenantPortal/pages/TenantPortalResetPasswordPage"
-import { TenantPortalVerifyEmailPage } from "@/features/tenantPortal/pages/TenantPortalVerifyEmailPage"
+
+const TenantPortalAgendaPage = lazyPage(() => import("@/features/tenantPortal/pages/TenantPortalAgendaPage"), "TenantPortalAgendaPage")
+const TenantPortalForgotPasswordPage = lazyPage(() => import("@/features/tenantPortal/pages/TenantPortalForgotPasswordPage"), "TenantPortalForgotPasswordPage")
+const TenantPortalHomePage = lazyPage(() => import("@/features/tenantPortal/pages/TenantPortalHomePage"), "TenantPortalHomePage")
+const TenantPortalInvalidResetLinkPage = lazyPage(() => import("@/features/tenantPortal/pages/TenantPortalInvalidResetLinkPage"), "TenantPortalInvalidResetLinkPage")
+const TenantPortalLoginPage = lazyPage(() => import("@/features/tenantPortal/pages/TenantPortalLoginPage"), "TenantPortalLoginPage")
+const TenantPortalLoginRedirectRoute = lazyPage(() => import("@/features/tenantPortal/pages/TenantPortalLoginRedirectRoute"), "TenantPortalLoginRedirectRoute")
+const TenantPortalProfilePage = lazyPage(() => import("@/features/tenantPortal/pages/TenantPortalProfilePage"), "TenantPortalProfilePage")
+const TenantPortalRegisterPage = lazyPage(() => import("@/features/tenantPortal/pages/TenantPortalRegisterPage"), "TenantPortalRegisterPage")
+const TenantPortalResetPasswordPage = lazyPage(() => import("@/features/tenantPortal/pages/TenantPortalResetPasswordPage"), "TenantPortalResetPasswordPage")
+const TenantPortalVerifyEmailPage = lazyPage(() => import("@/features/tenantPortal/pages/TenantPortalVerifyEmailPage"), "TenantPortalVerifyEmailPage")
 
 type FeatureRoute =
   | {
