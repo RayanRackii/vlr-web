@@ -254,7 +254,7 @@ describe("Pedidos child breadcrumb", () => {
 
 it.each([
   ["/manutencao/planos/novo", "Novo plano"],
-  ["/manutencao/ordens/nova", "Nova ordem"],
+  ["/manutencao/ordens/nova", "Nova OS"],
 ])("links the new child breadcrumb back to maintenance at %s", (path, title) => {
   renderBreadcrumb(path)
   const nav = screen.getByRole("navigation", { name: i18n.t("nav.breadcrumbLabel") })
