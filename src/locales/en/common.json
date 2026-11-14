@@ -5772,6 +5772,38 @@
       "subtitle": "Occupancy of the resources used by the product in this period."
     },
     "chooseProduct": "Choose a product to view its agenda.",
+    "newReservation": "New reservation",
+    "nav": {
+      "previousDay": "Previous day",
+      "nextDay": "Next day",
+      "previousWeek": "Previous week",
+      "nextWeek": "Next week",
+      "pickDate": "Pick a date"
+    },
+    "chips": {
+      "pedido": "Orders",
+      "reserva": "Reservations",
+      "manutencao": "Maintenance",
+      "bloqueio": "Blocks"
+    },
+    "filters": {
+      "title": "Filters",
+      "open": "Show filters",
+      "collapse": "Collapse filters",
+      "resources": "Resources · {{selected}} of {{total}}",
+      "resourcesList": "Resources",
+      "noCategory": "No category",
+      "group": "All resources in {{name}}",
+      "noResources": "No resources found.",
+      "product": "Product",
+      "allProducts": "All products",
+      "pickProduct": "Choose a product",
+      "options": "Options",
+      "onlyFree": "Only resources with free time",
+      "showClosed": "Show closed hours",
+      "clear": "Clear filters",
+      "sheetDescription": "Filter the resources and product shown on the agenda."
+    },
     "prep": "Preparation",
     "cleanup": "Cleanup",
     "selectedProductOrders": "Product orders: {{count}}",

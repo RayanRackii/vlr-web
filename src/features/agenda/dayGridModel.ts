@@ -42,6 +42,9 @@ export type AgendaRow = {
   name: string
   categoryId?: string | null
   categoryName?: string | null
+  /** Opening hours in minutes, when the resource declares them. */
+  open?: number | null
+  close?: number | null
   blocks: AgendaBlock[]
 }
 
@@ -90,8 +93,10 @@ export function buildAgendaDay(
     hours.push(start, end <= start ? 1440 : end)
   }
   for (const asset of data.assets) {
-    Object.assign(ensure(asset.id, asset.name), { categoryId: asset.categoryId, categoryName: asset.categoryName })
-    addHours(clockMinutes(asset.openTime), clockMinutes(asset.closeTime))
+    const open = clockMinutes(asset.openTime)
+    const close = clockMinutes(asset.closeTime)
+    Object.assign(ensure(asset.id, asset.name), { categoryId: asset.categoryId, categoryName: asset.categoryName, open, close: close !== null && open !== null && close <= open ? 1440 : close })
+    addHours(open, close)
   }
   for (const resource of data.catalog.resources) {
     const row = ensure(resource.id, resource.name)
@@ -158,17 +163,40 @@ export function buildAgendaDay(
       color: slot.occupancyKindColorHex,
     })
   }
+  const allBlocks = new Map<string, AgendaBlock[]>()
   for (const block of blocks) {
     hours.push(block.start, block.end)
+    allBlocks.set(block.resourceId, [...(allBlocks.get(block.resourceId) ?? []), block])
     if (state.tipo && state.tipo !== block.kind) continue
     if (block.kind === "pedido" && ((state.produto && state.produto !== block.productId) || (state.pedido && state.pedido !== block.orderId))) continue
     rows.get(block.resourceId)?.blocks.push(withOrderLabel(block, labels))
   }
+  const start = hours.length ? Math.floor(Math.min(...hours) / 60) * 60 : null
+  const end = hours.length ? Math.ceil(Math.max(...hours) / 60) * 60 : null
+  const selected = new Set(state.recursos)
   return {
-    rows: [...rows.values()].filter((row) => !state.recurso || row.categoryId === state.recurso),
-    start: hours.length ? Math.floor(Math.min(...hours) / 60) * 60 : null,
-    end: hours.length ? Math.ceil(Math.max(...hours) / 60) * 60 : null,
+    rows: [...rows.values()].filter((row) => {
+      // A selected id may also be a category id (legacy `recurso` links carried one).
+      if (selected.size > 0 && !selected.has(row.id) && !(row.categoryId && selected.has(row.categoryId))) return false
+      return !state.livres || hasFreeTime(row, allBlocks.get(row.id) ?? [], start, end)
+    }),
+    start,
+    end,
   }
+}
+
+/** True when the blocks (of every kind) leave part of the open window uncovered. */
+function hasFreeTime(row: AgendaRow, blocks: AgendaBlock[], axisStart: number | null, axisEnd: number | null) {
+  const open = row.open ?? axisStart
+  const close = row.close ?? axisEnd
+  if (open === null || close === null || close <= open) return false
+  let cursor = open
+  for (const block of [...blocks].sort((a, b) => a.start - b.start)) {
+    if (block.start > cursor) return true
+    cursor = Math.max(cursor, block.end)
+    if (cursor >= close) return false
+  }
+  return cursor < close
 }
 
 export type AgendaWeekCell = {

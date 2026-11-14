@@ -54,3 +54,13 @@ it("copies the order onto a slot block instead of keeping the raw slot label", (
   expect(day.rows[0].blocks).toHaveLength(1)
   expect(day.rows[0].blocks[0]).toMatchObject({ kind: "pedido", productName: "Podcast", orderStatus: "Approved", label: null })
 })
+
+it("filters by selected resource ids and by free time", () => {
+  const busy = { ...asset, id: "busy", name: "Estúdio B", openTime: "09:00:00", closeTime: "12:00:00" }
+  const data = sources({ assets: [asset, busy], slots: [slot({ id: "all-day", rentalAssetId: "busy", startTime: "09:00:00", endTime: "12:00:00", occupancyKindKey: "maintenance" })] })
+  expect(buildAgendaDay(data, state("recursos=busy"), "America/Sao_Paulo").rows.map((r) => r.id)).toEqual(["busy"])
+  expect(buildAgendaDay(data, state(`recursos=${asset.id},busy`), "America/Sao_Paulo").rows.map((r) => r.id)).toEqual([asset.id, "busy"])
+  expect(buildAgendaDay(data, state("livres=1"), "America/Sao_Paulo").rows.map((r) => r.id)).toEqual([asset.id])
+  // A tipo filter must not change what counts as free time.
+  expect(buildAgendaDay(data, state("livres=1&tipo=reserva"), "America/Sao_Paulo").rows.map((r) => r.id)).toEqual([asset.id])
+})
