@@ -231,9 +231,9 @@ export function agendaAxis(rows: AgendaRow[], blocks: AgendaBlock[], full: boole
 /** A block cut to the axis: where it sits and whether the edges were clipped. */
 export type ClippedBlock = { start: number; end: number; clippedStart: boolean; clippedEnd: boolean; allDay: boolean }
 
-/** Packs overlapping blocks of one row into lanes (0-based), earliest first. */
-export function layoutLanes(blocks: AgendaBlock[]): { block: AgendaBlock; lane: number }[] {
-  const sorted = [...blocks].sort((a, b) => a.start - b.start || a.end - b.end)
+/** Packs overlapping items of one row into lanes (0-based), earliest first. Pass the clipped range to lane what is drawn. */
+export function layoutLanes<T extends { start: number; end: number }>(items: T[]): { block: T; lane: number }[] {
+  const sorted = [...items].sort((a, b) => a.start - b.start || a.end - b.end)
   const ends: number[] = []
   return sorted.map((block) => {
     const open = ends.findIndex((end) => end <= block.start)

@@ -14,6 +14,12 @@ describe("FilterTabs", () => {
     expect(buttons[0]).toHaveAttribute("aria-pressed", "false")
   })
 
+  it("draws the active indicator on the bottom edge of the tab", () => {
+    render(<FilterTabs label="Tipo" allLabel="Todos" value="a" onChange={() => {}} options={options} />)
+    expect(screen.getByRole("button", { name: /Alpha/ })).toHaveClass("border-b-2", "border-primary")
+    expect(screen.getByRole("button", { name: /Todos/ })).toHaveClass("border-b-2", "border-transparent")
+  })
+
   it("selects an option and returns to all with null", async () => {
     const onChange = vi.fn()
     render(<FilterTabs label="Tipo" allLabel="Todos" value="a" onChange={onChange} options={options} />)
