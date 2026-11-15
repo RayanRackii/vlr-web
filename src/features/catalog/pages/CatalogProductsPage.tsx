@@ -42,6 +42,7 @@ import {
 } from "@/features/catalog/schemas/catalogSchemas"
 import { catalogMenuIsActive } from "@/features/catalog/components/productWizard/sellableChecklist"
 import { productWizardPath } from "@/features/catalog/components/productWizard/wizardSteps"
+import { productEditorPath } from "@/features/catalog/lib/productEditorPath"
 import { productItemStatus } from "@/features/assistant/itemStatus"
 import { CatalogEmptyState, CatalogHeading } from "@/features/catalog/components/StaffCatalogChrome"
 import {
@@ -575,7 +576,7 @@ function ProductMenu({ product, state, onToggle, busyId }: {
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
         {canManage ? (
-          <DropdownMenuItem className="min-h-11 py-2.5" render={<Link to={productWizardPath(product.id, "access")} />}>
+          <DropdownMenuItem className="min-h-11 py-2.5" render={<Link to={productEditorPath(product.id, "access")} />}>
             {t("catalog.products.menuAccess")}
           </DropdownMenuItem>
         ) : null}
