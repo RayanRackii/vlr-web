@@ -12,7 +12,11 @@ export type StepSubmitRegistry = {
   register: (submit: StepSubmit | null) => void
 }
 
-/** Provided by the cadastro shell; absent everywhere else (e.g. the product editor tabs). */
+/**
+ * Provided by the cadastro shell; absent everywhere else (e.g. the product editor tabs).
+ * The shell must pass a stable value (useMemo) whose `register` stores into a ref, not state,
+ * so registering never re-renders the shell.
+ */
 export const StepSubmitContext = createContext<StepSubmitRegistry | null>(null)
 
 /**
