@@ -83,19 +83,28 @@ it("sends the product as Inactive with no price and the default currency", async
 it("asks whether the product uses the schedule on rentals tenants (default Sim) and sends the choice", async () => {
   const user = userEvent.setup()
   renderCreate(["rentals"])
-  expect(screen.getByRole("radio", { name: i18n.t("cadastro.product.usesScheduleYes") })).toHaveAttribute("aria-checked", "true")
+  expect(screen.getByRole("radio", { name: i18n.t("cadastro.product.salesMode.titleWith") })).toHaveAttribute("aria-checked", "true")
   await user.type(nameField(), "Raquete")
-  await user.click(screen.getByRole("radio", { name: i18n.t("cadastro.product.usesScheduleNo") }))
+  await user.click(screen.getByRole("radio", { name: i18n.t("cadastro.product.salesMode.titleWithout") }))
   await user.click(screen.getByRole("button", { name: "Salvar e continuar" }))
   await screen.findByRole("heading", { name: "Cadastro salvo" })
   expect(createProductMock.mock.calls[0][0]).toMatchObject({ usesSchedule: false })
   expect(screen.getByTestId("location")).toHaveTextContent("passo=categorias")
 })
 
+it("places the sales mode field between the code and the description", () => {
+  renderCreate(["rentals"])
+  const code = screen.getByRole("textbox", { name: "Código interno" })
+  const group = screen.getByRole("radiogroup", { name: i18n.t("cadastro.product.salesMode.label") })
+  const description = screen.getByRole("textbox", { name: "Descrição" })
+  expect(code.compareDocumentPosition(group) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+  expect(group.compareDocumentPosition(description) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+})
+
 it("sends usesSchedule true by default and hides the question without the rentals module", async () => {
   const user = userEvent.setup()
   renderCreate()
-  expect(screen.queryByRole("radio", { name: i18n.t("cadastro.product.usesScheduleNo") })).not.toBeInTheDocument()
+  expect(screen.queryByRole("radio", { name: i18n.t("cadastro.product.salesMode.titleWithout") })).not.toBeInTheDocument()
   await user.type(nameField(), "Raquete")
   await user.click(screen.getByRole("button", { name: "Salvar e continuar" }))
   await screen.findByRole("heading", { name: "Cadastro salvo" })

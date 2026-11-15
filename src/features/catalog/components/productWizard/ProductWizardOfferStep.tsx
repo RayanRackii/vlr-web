@@ -217,6 +217,17 @@ export function ProductWizardOfferStep({ product, mode = "full", readOnly, showU
                 </FormItem>
               )}
             />
+            {mode === "dados" && showUsesSchedule ? (
+              <FormField
+                control={form.control}
+                name="usesSchedule"
+                render={({ field }) => (
+                  <FormItem>
+                    <ProductUsesScheduleField value={field.value ?? true} onChange={(next) => field.onChange(next)} disabled={readOnly || saving} />
+                  </FormItem>
+                )}
+              />
+            ) : null}
             <FormField
               control={form.control}
               name="description"
@@ -237,17 +248,6 @@ export function ProductWizardOfferStep({ product, mode = "full", readOnly, showU
               )}
             />
           </>
-        ) : null}
-        {mode === "dados" && showUsesSchedule ? (
-          <FormField
-            control={form.control}
-            name="usesSchedule"
-            render={({ field }) => (
-              <FormItem>
-                <ProductUsesScheduleField value={field.value ?? true} onChange={(next) => field.onChange(next)} disabled={readOnly || saving} />
-              </FormItem>
-            )}
-          />
         ) : null}
         {mode === "dados" ? (
           <p className="rounded-lg bg-muted px-3 py-3 text-xs text-muted-foreground">{t("cadastro.offerPricingInfo")}</p>

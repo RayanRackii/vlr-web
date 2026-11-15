@@ -129,6 +129,17 @@ function CreateProductFields({ form, creating, showUsesSchedule, onCreate }: Cre
               </FormItem>
             )}
           />
+          {showUsesSchedule ? (
+            <FormField
+              control={form.control}
+              name="usesSchedule"
+              render={({ field }) => (
+                <FormItem>
+                  <ProductUsesScheduleField value={field.value ?? true} onChange={(next) => field.onChange(next)} disabled={creating} />
+                </FormItem>
+              )}
+            />
+          ) : null}
           <FormField
             control={form.control}
             name="description"
@@ -144,17 +155,6 @@ function CreateProductFields({ form, creating, showUsesSchedule, onCreate }: Cre
               </FormItem>
             )}
           />
-          {showUsesSchedule ? (
-            <FormField
-              control={form.control}
-              name="usesSchedule"
-              render={({ field }) => (
-                <FormItem>
-                  <ProductUsesScheduleField value={field.value ?? true} onChange={(next) => field.onChange(next)} disabled={creating} />
-                </FormItem>
-              )}
-            />
-          ) : null}
         </fieldset>
         <p className="flex items-center gap-2 rounded-lg bg-muted px-4 py-3 text-xs text-muted-foreground">
           <Wallet className="size-4 shrink-0" aria-hidden="true" />

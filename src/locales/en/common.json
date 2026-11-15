@@ -6226,10 +6226,16 @@
     "crumbCatalog": "Catalog",
     "product": {
       "nameLabel": "Product name *",
-      "usesScheduleLabel": "Does this product use the schedule?",
-      "usesScheduleYes": "Yes, it books a schedule resource",
-      "usesScheduleNo": "No, it is sold without a time slot",
-      "usesScheduleHelp": "Choose \"No\" for products sold without a time slot: Schedule and Queue are no longer needed.",
+      "salesMode": {
+        "label": "How is this product sold?",
+        "description": "This defines whether availability needs to be configured.",
+        "titleWith": "With scheduling",
+        "descWith": "The customer books a resource for a date or time.",
+        "titleWithout": "Without scheduling",
+        "descWithout": "The product is sold without booking a date or time.",
+        "helperWith": "The Schedule and Queue steps will be included in the setup.",
+        "helperWithout": "The Schedule and Queue steps do not apply to this product."
+      },
       "nameHelp": "This name is shown in the catalog and in bookings.",
       "codeLabel": "Internal code",
       "codeHelp": "Use a unique code to find the product in your operation.",
