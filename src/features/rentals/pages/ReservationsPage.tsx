@@ -16,7 +16,6 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { Button } from "@/components/ui/button"
-import { FilterBar } from "@/components/data-table/FilterBar"
 import { StatusChips } from "@/components/data-table/StatusChips"
 import { DateNavigator } from "@/components/ui/date-navigator"
 import { useModuleIntroLink } from "@/hooks/useModuleIntroLink"
@@ -278,11 +277,10 @@ export function ReservationsPage({ showHeader = true, onDateChange }: Reservatio
 
   const assetName = assetId ? rows.flatMap((row) => row.items).find((item) => item.rentalAssetId === assetId)?.assetName ?? t("rentals.reservations.assetFilterUnknown") : null
   const filterBar = (
-    <FilterBar
-      label={t("rentals.reservations.filters")}
-      filters={
-        <>
+    <>
+      <div role="group" aria-label={t("rentals.reservations.filters")}>
           <DateNavigator
+            layout="toolbar"
             date={date}
             onDateChange={setDate}
             view={view}
@@ -311,6 +309,7 @@ export function ReservationsPage({ showHeader = true, onDateChange }: Reservatio
               pickDate: t("rentals.reservations.pickDate"),
             }}
           />
+      </div>
           <StatusChips
             label={t("rentals.reservations.status")}
             allLabel={t("rentals.reservations.statusAll")}
@@ -324,9 +323,7 @@ export function ReservationsPage({ showHeader = true, onDateChange }: Reservatio
               count: statusCounts[value],
             }))}
           />
-        </>
-      }
-    />
+    </>
   )
 
   return (

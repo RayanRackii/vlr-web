@@ -813,7 +813,7 @@ export function AssetsPage() {
   return (
     <Page
       header={{
-        title: t("nav.assets"),
+        title: tTone("assets.inventory.title"),
         description: tTone("assets.inventory.description"),
         actions: headerActions,
       }}
