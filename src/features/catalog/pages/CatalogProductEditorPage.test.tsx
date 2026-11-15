@@ -70,6 +70,7 @@ import {
   updateCatalogProduct,
 } from "@/features/catalog/services/catalogService"
 import { getCatalogTaxonomyOptions } from "@/features/taxonomy/services/taxonomyService"
+import { listTaxonomyCategories } from "@/features/taxonomy/services/taxonomyService"
 import { getCatalogProductResourceRequirements } from "@/features/catalog/services/catalogService"
 
 const getProductMock = vi.mocked(getCatalogProduct)
@@ -802,5 +803,24 @@ describe("CatalogProductEditorPage", () => {
     await screen.findByLabelText(i18n.t("catalog.products.form.name"))
     await waitFor(() => expect(screen.queryByRole("link", { name: i18n.t("catalog.products.editor.continueSetup") })).not.toBeInTheDocument())
     expect(screen.getAllByText(i18n.t("catalog.products.active")).length).toBeGreaterThan(0)
+  })
+  it("sends the freshly saved categories when the main form is saved afterwards", async () => {
+    const category = { id: "cccccccc-cccc-4ccc-8ccc-cccccccccccc", name: "Hospedagem", slug: "hospedagem", parentId: null, icon: null, sortOrder: 0 }
+    vi.mocked(listTaxonomyCategories).mockResolvedValue([category])
+    const withTaxonomy = { ...PRODUCT, taxonomy: { categories: [], tags: [] } } as CatalogProduct
+    const saved = { ...PRODUCT, taxonomy: { categories: [{ id: category.id, name: category.name }], tags: [] } } as unknown as CatalogProduct
+    getProductMock.mockResolvedValue(withTaxonomy)
+    updateProductMock.mockResolvedValue(saved)
+    const user = userEvent.setup()
+    renderPage(["catalog.products.manage", "core.taxonomy.read"])
+    await user.click(await screen.findByRole("button", { name: "Hospedagem" }))
+    getProductMock.mockResolvedValue(saved)
+    await user.click(screen.getByRole("button", { name: i18n.t("assistant.saveStep") }))
+    await waitFor(() => expect(updateProductMock).toHaveBeenCalledTimes(1))
+    await waitFor(() => expect(getProductMock.mock.calls.length).toBeGreaterThan(1))
+    await user.type(screen.getByLabelText(i18n.t("catalog.products.form.name")), " pro")
+    await user.click(save())
+    await waitFor(() => expect(updateProductMock).toHaveBeenCalledTimes(2))
+    expect(updateProductMock.mock.calls[1]![1]).toMatchObject({ name: "Raquete pro", taxonomy: { categoryIds: [category.id], tagIds: [] } })
   })
 })
