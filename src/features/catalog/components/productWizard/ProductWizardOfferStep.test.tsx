@@ -1,0 +1,119 @@
+import { act, render, screen, waitFor } from "@testing-library/react"
+import userEvent from "@testing-library/user-event"
+import { beforeEach, describe, expect, it, vi } from "vitest"
+
+import { createStepShell } from "@/features/assistant/testStepShell"
+import { ProductWizardOfferStep } from "@/features/catalog/components/productWizard/ProductWizardOfferStep"
+import type { CatalogProduct } from "@/features/catalog/schemas/catalogSchemas"
+import { updateCatalogProduct } from "@/features/catalog/services/catalogService"
+
+vi.mock("sonner", () => ({ toast: { success: vi.fn(), error: vi.fn() } }))
+vi.mock("@/features/catalog/services/catalogService", () => ({
+  activateCatalogProduct: vi.fn(),
+  deactivateCatalogProduct: vi.fn(),
+  updateCatalogProduct: vi.fn(),
+}))
+
+const product = {
+  id: "p1",
+  name: "Kit",
+  code: "KIT-1",
+  description: "",
+  price: 10,
+  currency: "BRL",
+  isActive: false,
+  taxonomy: { categories: [], tags: [] },
+} as unknown as CatalogProduct
+
+function renderStep(mode?: "dados" | "precos") {
+  const onSaved = vi.fn()
+  const { StepShell, shell } = createStepShell()
+  const view = render(<StepShell><ProductWizardOfferStep product={product} mode={mode} readOnly={false} onSaved={onSaved} /></StepShell>)
+  return { shell, onSaved, ...view }
+}
+
+describe("ProductWizardOfferStep", () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    vi.mocked(updateCatalogProduct).mockResolvedValue(product)
+  })
+
+  it("keeps its own Save button and the full form outside a shell", () => {
+    render(<ProductWizardOfferStep product={product} readOnly={false} onSaved={vi.fn()} />)
+    expect(screen.getByRole("button", { name: "Salvar" })).toBeInTheDocument()
+    expect(screen.getByLabelText("Preço")).toBeInTheDocument()
+    expect(screen.getByLabelText("Nome")).toBeInTheDocument()
+    expect(screen.getByRole("radiogroup")).toBeInTheDocument()
+  })
+
+  it("dados mode shows only name, code and description and hides Save inside a shell", () => {
+    renderStep("dados")
+    expect(screen.getByLabelText("Nome")).toBeInTheDocument()
+    expect(screen.getByLabelText(/Código/)).toBeInTheDocument()
+    expect(screen.getByLabelText(/Descrição/)).toBeInTheDocument()
+    expect(screen.queryByLabelText("Preço")).not.toBeInTheDocument()
+    expect(screen.queryByRole("radiogroup")).not.toBeInTheDocument()
+    expect(screen.queryByRole("button", { name: "Salvar" })).not.toBeInTheDocument()
+  })
+
+  it("precos mode shows price and currency only", () => {
+    renderStep("precos")
+    expect(screen.getByLabelText("Preço")).toBeInTheDocument()
+    expect(screen.queryByLabelText("Nome")).not.toBeInTheDocument()
+    expect(screen.queryByRole("radiogroup")).not.toBeInTheDocument()
+  })
+
+  it("submit resolves true without a request when nothing changed", async () => {
+    const { shell } = renderStep("dados")
+    let result: boolean | null = null
+    await act(async () => { result = await shell.submit() })
+    expect(result).toBe(true)
+    expect(updateCatalogProduct).not.toHaveBeenCalled()
+  })
+
+  it("submit saves the edits and resolves true", async () => {
+    const user = userEvent.setup()
+    const { shell, onSaved } = renderStep("dados")
+    await user.type(screen.getByLabelText("Nome"), " 2")
+    let result: boolean | null = null
+    await act(async () => { result = await shell.submit() })
+    expect(result).toBe(true)
+    expect(updateCatalogProduct).toHaveBeenCalledWith("p1", expect.objectContaining({ name: "Kit 2", price: 10 }))
+    expect(onSaved).toHaveBeenCalled()
+  })
+
+  it("submit resolves false with the error next to the field when validation fails", async () => {
+    const user = userEvent.setup()
+    const { shell } = renderStep("dados")
+    await user.clear(screen.getByLabelText("Nome"))
+    let result: boolean | null = null
+    await act(async () => { result = await shell.submit() })
+    expect(result).toBe(false)
+    expect(updateCatalogProduct).not.toHaveBeenCalled()
+    expect(document.querySelector('[aria-invalid="true"]')).not.toBeNull()
+  })
+
+  it("submit resolves false and shows an inline alert when the request fails, keeping values", async () => {
+    const user = userEvent.setup()
+    vi.mocked(updateCatalogProduct).mockRejectedValue(new Error("Falha na API"))
+    const { shell } = renderStep("precos")
+    await user.clear(screen.getByLabelText("Preço"))
+    await user.type(screen.getByLabelText("Preço"), "25")
+    let result: boolean | null = null
+    await act(async () => { result = await shell.submit() })
+    expect(result).toBe(false)
+    expect(await screen.findByRole("alert")).toHaveTextContent("Falha na API")
+    expect(screen.getByLabelText("Preço")).toHaveValue("25")
+  })
+
+  it("submit rejects an invalid price in precos mode", async () => {
+    const user = userEvent.setup()
+    const { shell } = renderStep("precos")
+    await user.clear(screen.getByLabelText("Preço"))
+    await user.type(screen.getByLabelText("Preço"), "abc")
+    let result: boolean | null = null
+    await act(async () => { result = await shell.submit() })
+    expect(result).toBe(false)
+    await waitFor(() => expect(updateCatalogProduct).not.toHaveBeenCalled())
+  })
+})

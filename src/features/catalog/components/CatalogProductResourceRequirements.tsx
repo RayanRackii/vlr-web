@@ -6,6 +6,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { LoadingButton } from "@/components/ui/loading-button"
+import { useStepSubmit } from "@/features/assistant/stepSubmit"
 import {
   CatalogPlanningVersionConflictError,
   CatalogRetryableError,
@@ -162,11 +163,13 @@ export function CatalogProductResourceRequirements({
     setRows((current) => [...current, emptyRow()])
   }
 
-  async function save() {
+  async function save(): Promise<boolean> {
     const invalid = rowsRef.current.some((row) => !row.rentalAssetId)
     if (invalid) {
-      toast.error(t("catalog.resourcePlanning.errors.resourceRequired"))
-      return
+      const message = t("catalog.resourcePlanning.errors.resourceRequired")
+      setSaveError({ message, blocking: false })
+      toast.error(message)
+      return false
     }
 
     const sent = rowSnapshot(rowsRef.current)
@@ -193,11 +196,13 @@ export function CatalogProductResourceRequirements({
       }
       toast.success(t("catalog.resourcePlanning.toastSaved"))
       await onSaved?.()
+      return true
     } catch (error) {
       if (error instanceof CatalogPlanningVersionConflictError) {
+        setSaveError({ message: error.message, blocking: false })
         toast.error(error.message)
         reload()
-        return
+        return false
       }
       const message =
         error instanceof Error && error.message
@@ -207,11 +212,24 @@ export function CatalogProductResourceRequirements({
       // Validation/business refusals (4xx) block re-saving the same rows.
       setSaveError({ message, blocking: !(error instanceof CatalogRetryableError) })
       toast.error(message)
+      return false
     } finally {
       setSaving(false)
       onSavingChange?.(false)
     }
   }
+
+  const dirty = !loading && baseline !== null && rowSnapshot(rows) !== baseline
+  // Inside the cadastro shell the footer saves; the step's own Save button is hidden.
+  const shellDrivesSave = useStepSubmit(async () => {
+    if (readOnly || !dirty) {
+      return true
+    }
+    if (saving || (saveError?.blocking ?? false)) {
+      return false
+    }
+    return save()
+  })
 
   if (loading) {
     return (
@@ -365,15 +383,17 @@ export function CatalogProductResourceRequirements({
           <Button type="button" variant="outline" size="sm" disabled={saving} onClick={addRow}>
             {t("catalog.resourcePlanning.addRequirement")}
           </Button>
-          <LoadingButton
-            type="button"
-            size="sm"
-            loading={saving}
-            disabled={saving || (saveError?.blocking ?? false)}
-            onClick={() => void save()}
-          >
-            {t("catalog.resourcePlanning.save")}
-          </LoadingButton>
+          {shellDrivesSave ? null : (
+            <LoadingButton
+              type="button"
+              size="sm"
+              loading={saving}
+              disabled={saving || (saveError?.blocking ?? false)}
+              onClick={() => void save()}
+            >
+              {t("catalog.resourcePlanning.save")}
+            </LoadingButton>
+          )}
         </div>
       )}
     </div>

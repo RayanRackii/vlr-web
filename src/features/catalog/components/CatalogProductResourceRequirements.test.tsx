@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react"
+import { act, render, screen, waitFor } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 
@@ -11,6 +11,7 @@ import {
 } from "@/features/catalog/services/catalogService"
 import { listAdminRentalAssets } from "@/features/rentals/services/scheduleService"
 import i18n from "@/lib/i18n"
+import { createStepShell } from "@/features/assistant/testStepShell"
 import { toast } from "sonner"
 
 vi.mock("sonner", () => ({ toast: { success: vi.fn(), error: vi.fn() } }))
@@ -161,5 +162,68 @@ describe("CatalogProductResourceRequirements", () => {
     expect(alert).toHaveTextContent(message)
     // Transient failure: the error shows but the user may retry the same save.
     expect(screen.getByRole("button", { name: i18n.t("catalog.resourcePlanning.save") })).toBeEnabled()
+  })
+
+  describe("inside the cadastro shell", () => {
+    const requirement = {
+      id: null,
+      rentalAssetId: RESOURCE.id,
+      assetCategoryId: null,
+      resourceQuantity: 1,
+      durationMinutesPerUnit: 60,
+      prepMinutes: 0,
+      cleanupMinutes: 0,
+    }
+
+    async function renderInShell(requirements: typeof requirement[] = [requirement]) {
+      vi.mocked(getCatalogProductResourceRequirements).mockResolvedValue({ expectedVersion: 1, requirements })
+      const { StepShell, shell } = createStepShell()
+      const user = userEvent.setup()
+      render(<StepShell><CatalogProductResourceRequirements productId="product-1" /></StepShell>)
+      await screen.findByText(i18n.t("catalog.resourcePlanning.title"))
+      return { shell, user }
+    }
+
+    it("hides its Save button and resolves true without a request when unchanged", async () => {
+      const { shell } = await renderInShell()
+      expect(screen.queryByRole("button", { name: i18n.t("catalog.resourcePlanning.save") })).not.toBeInTheDocument()
+      let result: boolean | null = null
+      await act(async () => { result = await shell.submit() })
+      expect(result).toBe(true)
+      expect(replaceCatalogProductResourceRequirements).not.toHaveBeenCalled()
+    })
+
+    it("saves edited rows and resolves true", async () => {
+      vi.mocked(replaceCatalogProductResourceRequirements).mockResolvedValue({ expectedVersion: 2, requirements: [requirement] })
+      const { shell, user } = await renderInShell()
+      await user.click(screen.getByRole("button", { name: i18n.t("catalog.resourcePlanning.addRequirement") }))
+      const choices = await screen.findAllByRole("button", { name: "Churrasqueira 1" })
+      await user.click(choices[1])
+      let result: boolean | null = null
+      await act(async () => { result = await shell.submit() })
+      expect(result).toBe(true)
+      expect(replaceCatalogProductResourceRequirements).toHaveBeenCalledWith("product-1", expect.objectContaining({ expectedVersion: 1 }))
+    })
+
+    it("resolves false with an inline alert when a row has no resource", async () => {
+      const { shell, user } = await renderInShell()
+      await user.click(screen.getByRole("button", { name: i18n.t("catalog.resourcePlanning.addRequirement") }))
+      let result: boolean | null = null
+      await act(async () => { result = await shell.submit() })
+      expect(result).toBe(false)
+      expect(await screen.findByRole("alert")).toHaveTextContent(i18n.t("catalog.resourcePlanning.errors.resourceRequired"))
+      expect(replaceCatalogProductResourceRequirements).not.toHaveBeenCalled()
+    })
+
+    it("resolves false when the API refuses the rows", async () => {
+      vi.mocked(replaceCatalogProductResourceRequirements).mockRejectedValue(new Error("Recusado"))
+      const { shell, user } = await renderInShell([])
+      await user.click(screen.getByRole("button", { name: i18n.t("catalog.resourcePlanning.addRequirement") }))
+      await user.click(await screen.findByRole("button", { name: "Churrasqueira 1" }))
+      let result: boolean | null = null
+      await act(async () => { result = await shell.submit() })
+      expect(result).toBe(false)
+      expect(await screen.findByRole("alert")).toHaveTextContent("Recusado")
+    })
   })
 })
