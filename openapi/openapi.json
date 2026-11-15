@@ -76,6 +76,35 @@
         },
         "type": "object"
       },
+      "AllocationPreviewWorkStart": {
+        "additionalProperties": false,
+        "properties": {
+          "orderItemId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "workStart": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "orderItemId",
+          "workStart"
+        ],
+        "type": "object"
+      },
+      "AllocationStatus": {
+        "enum": [
+          0,
+          1,
+          2,
+          3,
+          4
+        ],
+        "format": "int32",
+        "type": "integer"
+      },
       "ApplyDailyOccurrenceRequestDto": {
         "additionalProperties": false,
         "properties": {
@@ -587,12 +616,22 @@
             "nullable": true,
             "type": "string"
           },
+          "depositPercent": {
+            "format": "int32",
+            "nullable": true,
+            "type": "integer"
+          },
           "maxActiveReservationsPerCustomerPerDay": {
             "format": "int32",
             "nullable": true,
             "type": "integer"
           },
           "maxAdvanceBookingDays": {
+            "format": "int32",
+            "nullable": true,
+            "type": "integer"
+          },
+          "minimumBookingLeadMinutes": {
             "format": "int32",
             "nullable": true,
             "type": "integer"
@@ -790,6 +829,16 @@
             "nullable": true,
             "type": "string"
           },
+          "depositPercent": {
+            "format": "int32",
+            "nullable": true,
+            "type": "integer"
+          },
+          "minimumBookingLeadMinutes": {
+            "format": "int32",
+            "nullable": true,
+            "type": "integer"
+          },
           "openTime": {
             "format": "time",
             "nullable": true,
@@ -830,6 +879,53 @@
         },
         "type": "object"
       },
+      "CatalogAccessAuditResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "action": {
+            "nullable": true,
+            "type": "string"
+          },
+          "actorName": {
+            "nullable": true,
+            "type": "string"
+          },
+          "actorType": {
+            "nullable": true,
+            "type": "string"
+          },
+          "actorUserId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "afterJson": {
+            "nullable": true,
+            "type": "string"
+          },
+          "beforeJson": {
+            "nullable": true,
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "entityId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "entityType": {
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
       "CatalogActorType": {
         "enum": [
           0,
@@ -838,6 +934,107 @@
         ],
         "format": "int32",
         "type": "integer"
+      },
+      "CatalogAgendaItemResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "allocationStatus": {
+            "$ref": "#/components/schemas/AllocationStatus"
+          },
+          "customerName": {
+            "nullable": true,
+            "type": "string"
+          },
+          "displayNumber": {
+            "nullable": true,
+            "type": "string"
+          },
+          "occupiedEnd": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "occupiedStart": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "orderId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "orderStatus": {
+            "$ref": "#/components/schemas/CatalogOrderStatus"
+          },
+          "productId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "productName": {
+            "nullable": true,
+            "type": "string"
+          },
+          "rentalAssetId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "resourceName": {
+            "nullable": true,
+            "type": "string"
+          },
+          "timeZoneId": {
+            "nullable": true,
+            "type": "string"
+          },
+          "workEnd": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "workStart": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "CatalogAgendaResourceResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "category": {
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "name": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "CatalogAgendaResourcesResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/CatalogAgendaItemResponse"
+            },
+            "nullable": true,
+            "type": "array"
+          },
+          "resources": {
+            "items": {
+              "$ref": "#/components/schemas/CatalogAgendaResourceResponse"
+            },
+            "nullable": true,
+            "type": "array"
+          }
+        },
+        "type": "object"
       },
       "CatalogCancellationUpToStatus": {
         "additionalProperties": false,
@@ -867,6 +1064,15 @@
         },
         "type": "object"
       },
+      "CatalogFileStatus": {
+        "enum": [
+          0,
+          1,
+          2
+        ],
+        "format": "int32",
+        "type": "integer"
+      },
       "CatalogFileUrlResponse": {
         "additionalProperties": false,
         "properties": {
@@ -888,12 +1094,51 @@
         "format": "int32",
         "type": "integer"
       },
+      "CatalogNotificationAttemptResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "attemptNumber": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "channel": {
+            "$ref": "#/components/schemas/NotificationChannel"
+          },
+          "errorMessage": {
+            "nullable": true,
+            "type": "string"
+          },
+          "finishedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "outcome": {
+            "$ref": "#/components/schemas/NotificationAttemptOutcome"
+          },
+          "startedAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
       "CatalogNotificationDeliveryResponse": {
         "additionalProperties": false,
         "properties": {
           "attemptCount": {
             "format": "int32",
             "type": "integer"
+          },
+          "attempts": {
+            "items": {
+              "$ref": "#/components/schemas/CatalogNotificationAttemptResponse"
+            },
+            "nullable": true,
+            "type": "array"
+          },
+          "canResend": {
+            "type": "boolean"
           },
           "channel": {
             "$ref": "#/components/schemas/NotificationChannel"
@@ -936,11 +1181,127 @@
         },
         "type": "object"
       },
+      "CatalogOrderAllocationPreviewRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "unitId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "workStarts": {
+            "items": {
+              "$ref": "#/components/schemas/AllocationPreviewWorkStart"
+            },
+            "nullable": true,
+            "type": "array"
+          }
+        },
+        "required": [
+          "unitId",
+          "workStarts"
+        ],
+        "type": "object"
+      },
+      "CatalogOrderAllocationPreviewResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "conflictCode": {
+            "nullable": true,
+            "type": "string"
+          },
+          "estimatedReadyAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "isFeasible": {
+            "type": "boolean"
+          },
+          "occupiedEnd": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "occupiedStart": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "orderItemId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "reason": {
+            "nullable": true,
+            "type": "string"
+          },
+          "rentalAssetId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "workEnd": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "workStart": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "CatalogOrderAllocationUsageRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "action": {
+            "nullable": true,
+            "type": "string"
+          },
+          "expectedVersion": {
+            "format": "int32",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "action",
+          "expectedVersion"
+        ],
+        "type": "object"
+      },
+      "CatalogOrderApprovePlanningRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "expectedVersion": {
+            "format": "int32",
+            "nullable": true,
+            "type": "integer"
+          },
+          "unitId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "workStart": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
       "CatalogOrderHistoryResponse": {
         "additionalProperties": false,
         "properties": {
           "actorId": {
             "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "actorName": {
             "nullable": true,
             "type": "string"
           },
@@ -965,9 +1326,64 @@
         },
         "type": "object"
       },
+      "CatalogOrderItemAllocationResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "actualReleaseAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "actualStartAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "actualWorkFinishedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "plannedWorkEnd": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "plannedWorkStart": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "planningRevision": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "rentalAssetId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "requirementId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/AllocationStatus"
+          },
+          "timeZoneId": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
       "CatalogOrderItemResponse": {
         "additionalProperties": false,
         "properties": {
+          "allocation": {
+            "$ref": "#/components/schemas/CatalogOrderItemAllocationResponse"
+          },
           "currency": {
             "nullable": true,
             "type": "string"
@@ -987,6 +1403,9 @@
           "productName": {
             "nullable": true,
             "type": "string"
+          },
+          "productionSummary": {
+            "$ref": "#/components/schemas/ProductionSummaryStatus"
           },
           "quantity": {
             "format": "int32",
@@ -1044,6 +1463,11 @@
             "nullable": true,
             "type": "string"
           },
+          "estimatedReadyAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
           "history": {
             "items": {
               "$ref": "#/components/schemas/CatalogOrderHistoryResponse"
@@ -1065,6 +1489,17 @@
           "orderNumber": {
             "format": "int32",
             "type": "integer"
+          },
+          "orderVersion": {
+            "nullable": true,
+            "type": "string"
+          },
+          "planningRevision": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "productionSummary": {
+            "$ref": "#/components/schemas/ProductionSummaryStatus"
           },
           "rejectedReason": {
             "nullable": true,
@@ -1116,6 +1551,46 @@
         },
         "type": "object"
       },
+      "CatalogProductAccessResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "customerIds": {
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "nullable": true,
+            "type": "array"
+          },
+          "customerNames": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "nullable": true,
+            "type": "object"
+          },
+          "groupIds": {
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "nullable": true,
+            "type": "array"
+          },
+          "productId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "restrictedWithoutGrants": {
+            "type": "boolean"
+          },
+          "visibility": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
       "CatalogProductFileDto": {
         "additionalProperties": false,
         "properties": {
@@ -1135,12 +1610,73 @@
             "format": "int64",
             "type": "integer"
           },
+          "status": {
+            "$ref": "#/components/schemas/CatalogFileStatus"
+          },
           "url": {
             "nullable": true,
             "type": "string"
           },
           "visibility": {
             "$ref": "#/components/schemas/CatalogFileVisibility"
+          }
+        },
+        "type": "object"
+      },
+      "CatalogProductResourceRequirementDto": {
+        "additionalProperties": false,
+        "properties": {
+          "assetCategoryId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "cleanupMinutes": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "durationMinutesPerUnit": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "id": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "prepMinutes": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "rentalAssetId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "resourceQuantity": {
+            "format": "int32",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "durationMinutesPerUnit",
+          "resourceQuantity"
+        ],
+        "type": "object"
+      },
+      "CatalogProductResourceRequirementsResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "expectedVersion": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "requirements": {
+            "items": {
+              "$ref": "#/components/schemas/CatalogProductResourceRequirementDto"
+            },
+            "nullable": true,
+            "type": "array"
           }
         },
         "type": "object"
@@ -1171,6 +1707,18 @@
             "nullable": true,
             "type": "array"
           },
+          "grantedCustomerCount": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "grantedGroupCount": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "hasFiles": {
+            "readOnly": true,
+            "type": "boolean"
+          },
           "id": {
             "format": "uuid",
             "type": "string"
@@ -1189,9 +1737,23 @@
           },
           "taxonomy": {
             "$ref": "#/components/schemas/TaxonomyResponse"
+          },
+          "usesSchedule": {
+            "type": "boolean"
+          },
+          "visibility": {
+            "$ref": "#/components/schemas/CatalogProductVisibility"
           }
         },
         "type": "object"
+      },
+      "CatalogProductVisibility": {
+        "enum": [
+          0,
+          1
+        ],
+        "format": "int32",
+        "type": "integer"
       },
       "CatalogReasonRequest": {
         "additionalProperties": false,
@@ -1219,7 +1781,17 @@
             "nullable": true,
             "type": "string"
           },
+          "depositPercent": {
+            "format": "int32",
+            "nullable": true,
+            "type": "integer"
+          },
           "maxAdvanceBookingDays": {
+            "format": "int32",
+            "nullable": true,
+            "type": "integer"
+          },
+          "minimumBookingLeadMinutes": {
             "format": "int32",
             "nullable": true,
             "type": "integer"
@@ -1273,13 +1845,13 @@
           "isAvailable": {
             "type": "boolean"
           },
-          "pricingUnit": {
-            "$ref": "#/components/schemas/PricingUnit"
-          },
           "pricedUnits": {
             "format": "double",
             "nullable": true,
             "type": "number"
+          },
+          "pricingUnit": {
+            "$ref": "#/components/schemas/PricingUnit"
           },
           "reason": {
             "nullable": true,
@@ -1411,6 +1983,11 @@
           "requiresMaintenance": {
             "type": "boolean"
           },
+          "resourceTypeId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
           "serialNumber": {
             "nullable": true,
             "type": "string"
@@ -1468,8 +2045,16 @@
             "nullable": true,
             "type": "number"
           },
+          "status": {
+            "nullable": true,
+            "type": "string"
+          },
           "taxonomy": {
             "$ref": "#/components/schemas/TaxonomyAssignmentRequest"
+          },
+          "usesSchedule": {
+            "nullable": true,
+            "type": "boolean"
           }
         },
         "required": [
@@ -1509,6 +2094,12 @@
         "properties": {
           "assetCategoryId": {
             "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "assetId": {
+            "format": "uuid",
+            "nullable": true,
             "type": "string"
           },
           "autoGenerateEnabled": {
@@ -1543,7 +2134,6 @@
           }
         },
         "required": [
-          "assetCategoryId",
           "firstDueDate",
           "intervalDays",
           "templateId",
@@ -1556,6 +2146,12 @@
         "properties": {
           "assetCategoryId": {
             "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "assetId": {
+            "format": "uuid",
+            "nullable": true,
             "type": "string"
           },
           "autoGenerateEnabled": {
@@ -1593,7 +2189,6 @@
           }
         },
         "required": [
-          "assetCategoryId",
           "firstDueDate",
           "intervalDays",
           "name",
@@ -1692,6 +2287,11 @@
           "confirmVisualSuggestions": {
             "type": "boolean"
           },
+          "depositPercent": {
+            "format": "int32",
+            "nullable": true,
+            "type": "integer"
+          },
           "familyId": {
             "format": "uuid",
             "type": "string"
@@ -1701,6 +2301,11 @@
             "type": "string"
           },
           "maxAdvanceBookingDays": {
+            "format": "int32",
+            "nullable": true,
+            "type": "integer"
+          },
+          "minimumBookingLeadMinutes": {
             "format": "int32",
             "nullable": true,
             "type": "integer"
@@ -1723,6 +2328,11 @@
           "requiresDeposit": {
             "nullable": true,
             "type": "boolean"
+          },
+          "resourceTypeId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
           },
           "tag": {
             "nullable": true,
@@ -2254,6 +2864,62 @@
           },
           "tenantId": {
             "format": "uuid",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "CustomerGroupMembersRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "customerIds": {
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "nullable": true,
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "CustomerGroupResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "description": {
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "memberCustomerIds": {
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "nullable": true,
+            "type": "array"
+          },
+          "memberNames": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "nullable": true,
+            "type": "object"
+          },
+          "name": {
+            "nullable": true,
+            "type": "string"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "nullable": true,
             "type": "string"
           }
         },
@@ -2963,6 +3629,12 @@
         "properties": {
           "assetCategoryId": {
             "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "assetId": {
+            "format": "uuid",
+            "nullable": true,
             "type": "string"
           },
           "autoGenerateEnabled": {
@@ -3031,6 +3703,141 @@
         },
         "type": "object"
       },
+      "MarkNotificationsReadRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "all": {
+            "nullable": true,
+            "type": "boolean"
+          },
+          "eventType": {
+            "nullable": true,
+            "type": "string"
+          },
+          "ids": {
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "nullable": true,
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "MarkNotificationsReadResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "updated": {
+            "format": "int32",
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "MeNotificationGroup": {
+        "additionalProperties": false,
+        "properties": {
+          "count": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "eventType": {
+            "nullable": true,
+            "type": "string"
+          },
+          "latestAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "module": {
+            "nullable": true,
+            "type": "string"
+          },
+          "targetRoute": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "MeNotificationItem": {
+        "additionalProperties": false,
+        "properties": {
+          "aggregateId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "aggregateType": {
+            "nullable": true,
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "eventType": {
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "module": {
+            "nullable": true,
+            "type": "string"
+          },
+          "readAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "targetRoute": {
+            "nullable": true,
+            "type": "string"
+          },
+          "title": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "MeNotificationSummaryResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "groups": {
+            "items": {
+              "$ref": "#/components/schemas/MeNotificationGroup"
+            },
+            "nullable": true,
+            "type": "array"
+          },
+          "unreadTotal": {
+            "format": "int32",
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "MeNotificationsListResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/MeNotificationItem"
+            },
+            "nullable": true,
+            "type": "array"
+          },
+          "nextCursor": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
       "ModuleMenuItemDto": {
         "additionalProperties": false,
         "properties": {
@@ -3075,6 +3882,15 @@
         },
         "type": "object"
       },
+      "NotificationAttemptOutcome": {
+        "enum": [
+          0,
+          1,
+          2
+        ],
+        "format": "int32",
+        "type": "integer"
+      },
       "NotificationChannel": {
         "enum": [
           0,
@@ -3118,12 +3934,129 @@
         },
         "type": "object"
       },
+      "NotificationDeliveryAttemptResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "attemptNumber": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "channel": {
+            "$ref": "#/components/schemas/NotificationChannel"
+          },
+          "errorMessage": {
+            "nullable": true,
+            "type": "string"
+          },
+          "finishedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "outcome": {
+            "$ref": "#/components/schemas/NotificationAttemptOutcome"
+          },
+          "startedAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "NotificationDeliveryPageResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/NotificationDeliveryResponse"
+            },
+            "nullable": true,
+            "type": "array"
+          },
+          "page": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "pageSize": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "totalCount": {
+            "format": "int32",
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "NotificationDeliveryResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "attemptCount": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "attempts": {
+            "items": {
+              "$ref": "#/components/schemas/NotificationDeliveryAttemptResponse"
+            },
+            "nullable": true,
+            "type": "array"
+          },
+          "canResend": {
+            "type": "boolean"
+          },
+          "channel": {
+            "$ref": "#/components/schemas/NotificationChannel"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "errorMessage": {
+            "nullable": true,
+            "type": "string"
+          },
+          "eventKey": {
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "module": {
+            "nullable": true,
+            "type": "string"
+          },
+          "notificationId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "recipientId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "recipientKind": {
+            "$ref": "#/components/schemas/NotificationRecipientKind"
+          },
+          "recipientName": {
+            "nullable": true,
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/NotificationDeliveryStatus"
+          }
+        },
+        "type": "object"
+      },
       "NotificationDeliveryStatus": {
         "enum": [
           0,
           1,
           2,
-          3
+          3,
+          4
         ],
         "format": "int32",
         "type": "integer"
@@ -3586,6 +4519,9 @@
             "format": "uuid",
             "type": "string"
           },
+          "isExclusive": {
+            "type": "boolean"
+          },
           "name": {
             "nullable": true,
             "type": "string"
@@ -3676,6 +4612,19 @@
         "enum": [
           0,
           1
+        ],
+        "format": "int32",
+        "type": "integer"
+      },
+      "ProductionSummaryStatus": {
+        "enum": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6
         ],
         "format": "int32",
         "type": "integer"
@@ -3967,12 +4916,30 @@
             "format": "date-time",
             "type": "string"
           },
+          "depositPercent": {
+            "format": "int32",
+            "nullable": true,
+            "type": "integer"
+          },
+          "directRental": {
+            "type": "boolean"
+          },
           "effectiveCancelCutoffHours": {
             "format": "int32",
             "nullable": true,
             "type": "integer"
           },
+          "effectiveDepositPercent": {
+            "format": "int32",
+            "nullable": true,
+            "type": "integer"
+          },
           "effectiveMaxAdvanceBookingDays": {
+            "format": "int32",
+            "nullable": true,
+            "type": "integer"
+          },
+          "effectiveMinimumBookingLeadMinutes": {
             "format": "int32",
             "nullable": true,
             "type": "integer"
@@ -3998,6 +4965,11 @@
             "nullable": true,
             "type": "integer"
           },
+          "minimumBookingLeadMinutes": {
+            "format": "int32",
+            "nullable": true,
+            "type": "integer"
+          },
           "name": {
             "nullable": true,
             "type": "string"
@@ -4018,11 +4990,20 @@
           "requiresDeposit": {
             "type": "boolean"
           },
+          "resourceTypeId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
           "schedulePolicy": {
             "$ref": "#/components/schemas/SchedulePolicy"
           },
           "scheduledDeletionAt": {
             "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "tag": {
             "nullable": true,
             "type": "string"
           },
@@ -4271,6 +5252,27 @@
             "type": "boolean"
           }
         },
+        "type": "object"
+      },
+      "ReplaceCatalogProductResourceRequirementsRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "expectedVersion": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "requirements": {
+            "items": {
+              "$ref": "#/components/schemas/CatalogProductResourceRequirementDto"
+            },
+            "nullable": true,
+            "type": "array"
+          }
+        },
+        "required": [
+          "expectedVersion",
+          "requirements"
+        ],
         "type": "object"
       },
       "ReplacePlanTaskDto": {
@@ -4613,6 +5615,160 @@
             "type": "array"
           }
         },
+        "type": "object"
+      },
+      "ResourceTypeCapabilitiesDto": {
+        "additionalProperties": false,
+        "properties": {
+          "bookable": {
+            "type": "boolean"
+          },
+          "deliverable": {
+            "type": "boolean"
+          },
+          "maintenance": {
+            "type": "boolean"
+          }
+        },
+        "type": "object"
+      },
+      "ResourceTypeFieldDto": {
+        "additionalProperties": false,
+        "properties": {
+          "askOnBooking": {
+            "type": "boolean"
+          },
+          "filterable": {
+            "type": "boolean"
+          },
+          "key": {
+            "nullable": true,
+            "type": "string"
+          },
+          "label": {
+            "nullable": true,
+            "type": "string"
+          },
+          "name": {
+            "nullable": true,
+            "type": "string"
+          },
+          "options": {
+            "items": {
+              "type": "string"
+            },
+            "nullable": true,
+            "type": "array"
+          },
+          "required": {
+            "type": "boolean"
+          },
+          "responseType": {
+            "nullable": true,
+            "type": "string"
+          },
+          "type": {
+            "nullable": true,
+            "type": "string"
+          },
+          "visibility": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "key"
+        ],
+        "type": "object"
+      },
+      "ResourceTypeResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "article": {
+            "nullable": true,
+            "type": "string"
+          },
+          "capabilities": {
+            "$ref": "#/components/schemas/ResourceTypeCapabilitiesDto"
+          },
+          "fields": {
+            "items": {
+              "$ref": "#/components/schemas/ResourceTypeFieldDto"
+            },
+            "nullable": true,
+            "type": "array"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "key": {
+            "nullable": true,
+            "type": "string"
+          },
+          "name": {
+            "nullable": true,
+            "type": "string"
+          },
+          "plural": {
+            "nullable": true,
+            "type": "string"
+          },
+          "resourceCount": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "seeded": {
+            "type": "boolean"
+          },
+          "singular": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "ResourceTypeWriteRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "article": {
+            "nullable": true,
+            "type": "string"
+          },
+          "capabilities": {
+            "$ref": "#/components/schemas/ResourceTypeCapabilitiesDto"
+          },
+          "fields": {
+            "items": {
+              "$ref": "#/components/schemas/ResourceTypeFieldDto"
+            },
+            "nullable": true,
+            "type": "array"
+          },
+          "key": {
+            "nullable": true,
+            "type": "string"
+          },
+          "name": {
+            "nullable": true,
+            "type": "string"
+          },
+          "plural": {
+            "nullable": true,
+            "type": "string"
+          },
+          "singular": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "article",
+          "capabilities",
+          "name",
+          "plural",
+          "singular"
+        ],
         "type": "object"
       },
       "ResourceVisualTagKind": {
@@ -5127,6 +6283,73 @@
         },
         "type": "object"
       },
+      "SetDirectRentalRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "directRental": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "directRental"
+        ],
+        "type": "object"
+      },
+      "SetupChecklistItemResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "key": {
+            "nullable": true,
+            "type": "string"
+          },
+          "state": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "SetupResourceStateResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "missing": {
+            "items": {
+              "type": "string"
+            },
+            "nullable": true,
+            "type": "array"
+          },
+          "state": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "SetupStatusResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "checklist": {
+            "items": {
+              "$ref": "#/components/schemas/SetupChecklistItemResponse"
+            },
+            "nullable": true,
+            "type": "array"
+          },
+          "resources": {
+            "items": {
+              "$ref": "#/components/schemas/SetupResourceStateResponse"
+            },
+            "nullable": true,
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
       "SlotOccurrenceSource": {
         "enum": [
           0,
@@ -5164,6 +6387,9 @@
           "isDerived": {
             "type": "boolean"
           },
+          "isInternalUseOrigin": {
+            "type": "boolean"
+          },
           "label": {
             "nullable": true,
             "type": "string"
@@ -5181,6 +6407,11 @@
             "type": "string"
           },
           "occupancyKindLabel": {
+            "nullable": true,
+            "type": "string"
+          },
+          "owningCatalogOrderId": {
+            "format": "uuid",
             "nullable": true,
             "type": "string"
           },
@@ -5218,6 +6449,16 @@
           },
           "supportsEntireRecurrence": {
             "type": "boolean"
+          },
+          "workEndTime": {
+            "format": "time",
+            "nullable": true,
+            "type": "string"
+          },
+          "workStartTime": {
+            "format": "time",
+            "nullable": true,
+            "type": "string"
           }
         },
         "type": "object"
@@ -5230,6 +6471,103 @@
         ],
         "format": "int32",
         "type": "integer"
+      },
+      "StaffReservationQueueDto": {
+        "additionalProperties": false,
+        "properties": {
+          "activeCount": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "openingDate": {
+            "format": "date",
+            "type": "string"
+          },
+          "opensAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "phase": {
+            "$ref": "#/components/schemas/QueuePhase"
+          },
+          "queueEnabled": {
+            "type": "boolean"
+          },
+          "rentalAssetId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "serverNow": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "tickets": {
+            "items": {
+              "$ref": "#/components/schemas/StaffReservationQueueTicketDto"
+            },
+            "nullable": true,
+            "type": "array"
+          },
+          "waitingCount": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "waitingRoomOpensAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "StaffReservationQueueTicketDto": {
+        "additionalProperties": false,
+        "properties": {
+          "completedReservationId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "customerId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "customerName": {
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "joinedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "position": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "sequence": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "status": {
+            "$ref": "#/components/schemas/QueueTicketStatus"
+          },
+          "turnExpiresAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "turnStartedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "type": "object"
       },
       "StaffTenantMembershipDto": {
         "additionalProperties": false,
@@ -5789,6 +7127,11 @@
           "requiresMaintenance": {
             "type": "boolean"
           },
+          "resourceTypeId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
           "serialNumber": {
             "nullable": true,
             "type": "string"
@@ -5823,6 +7166,32 @@
         ],
         "type": "object"
       },
+      "UpdateCatalogProductAccessRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "customerIds": {
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "nullable": true,
+            "type": "array"
+          },
+          "groupIds": {
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "nullable": true,
+            "type": "array"
+          },
+          "visibility": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
       "UpdateCatalogProductRequest": {
         "additionalProperties": false,
         "properties": {
@@ -5849,6 +7218,10 @@
           },
           "taxonomy": {
             "$ref": "#/components/schemas/TaxonomyAssignmentRequest"
+          },
+          "usesSchedule": {
+            "nullable": true,
+            "type": "boolean"
           }
         },
         "required": [
@@ -5911,6 +7284,12 @@
         "properties": {
           "assetCategoryId": {
             "format": "uuid",
+            "nullable": true,
+            "type": "string"
+          },
+          "assetId": {
+            "format": "uuid",
+            "nullable": true,
             "type": "string"
           },
           "autoGenerateEnabled": {
@@ -5941,7 +7320,6 @@
           }
         },
         "required": [
-          "assetCategoryId",
           "autoGenerateEnabled",
           "firstDueDate",
           "intervalDays",
@@ -6037,6 +7415,11 @@
           "confirmVisualSuggestions": {
             "type": "boolean"
           },
+          "depositPercent": {
+            "format": "int32",
+            "nullable": true,
+            "type": "integer"
+          },
           "familyId": {
             "format": "uuid",
             "type": "string"
@@ -6046,6 +7429,11 @@
             "type": "string"
           },
           "maxAdvanceBookingDays": {
+            "format": "int32",
+            "nullable": true,
+            "type": "integer"
+          },
+          "minimumBookingLeadMinutes": {
             "format": "int32",
             "nullable": true,
             "type": "integer"
@@ -6067,6 +7455,11 @@
           },
           "requiresDeposit": {
             "type": "boolean"
+          },
+          "resourceTypeId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "string"
           },
           "tag": {
             "nullable": true,
@@ -6149,6 +7542,16 @@
             "format": "time",
             "nullable": true,
             "type": "string"
+          },
+          "depositPercent": {
+            "format": "int32",
+            "nullable": true,
+            "type": "integer"
+          },
+          "minimumBookingLeadMinutes": {
+            "format": "int32",
+            "nullable": true,
+            "type": "integer"
           },
           "openTime": {
             "format": "time",
@@ -6273,12 +7676,22 @@
             "nullable": true,
             "type": "string"
           },
+          "depositPercent": {
+            "format": "int32",
+            "nullable": true,
+            "type": "integer"
+          },
           "maxActiveReservationsPerCustomerPerDay": {
             "format": "int32",
             "nullable": true,
             "type": "integer"
           },
           "maxAdvanceBookingDays": {
+            "format": "int32",
+            "nullable": true,
+            "type": "integer"
+          },
+          "minimumBookingLeadMinutes": {
             "format": "int32",
             "nullable": true,
             "type": "integer"
@@ -6344,10 +7757,34 @@
             "nullable": true,
             "type": "integer"
           },
+          "depositPercent": {
+            "format": "int32",
+            "nullable": true,
+            "type": "integer"
+          },
           "maxAdvanceBookingDays": {
             "format": "int32",
             "nullable": true,
             "type": "integer"
+          },
+          "minimumBookingLeadMinutes": {
+            "format": "int32",
+            "nullable": true,
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "UpsertCustomerGroupRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "description": {
+            "nullable": true,
+            "type": "string"
+          },
+          "name": {
+            "nullable": true,
+            "type": "string"
           }
         },
         "type": "object"
@@ -10019,6 +11456,484 @@
         ]
       }
     },
+    "/api/catalog/agenda/products": {
+      "get": {
+        "parameters": [
+          {
+            "in": "query",
+            "name": "from",
+            "schema": {
+              "format": "date-time",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "to",
+            "schema": {
+              "format": "date-time",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "productId",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/CatalogAgendaItemResponse"
+                  },
+                  "type": "array"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/CatalogAgendaItemResponse"
+                  },
+                  "type": "array"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/CatalogAgendaItemResponse"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "CatalogAgenda"
+        ]
+      }
+    },
+    "/api/catalog/agenda/resources": {
+      "get": {
+        "parameters": [
+          {
+            "in": "query",
+            "name": "from",
+            "schema": {
+              "format": "date-time",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "to",
+            "schema": {
+              "format": "date-time",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "rentalAssetId",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CatalogAgendaResourcesResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CatalogAgendaResourcesResponse"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/CatalogAgendaResourcesResponse"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "ResourceAgenda"
+        ]
+      }
+    },
+    "/api/catalog/customer-groups": {
+      "get": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/CustomerGroupResponse"
+                  },
+                  "type": "array"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/CustomerGroupResponse"
+                  },
+                  "type": "array"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/CustomerGroupResponse"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "CustomerGroups"
+        ]
+      },
+      "post": {
+        "requestBody": {
+          "content": {
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/UpsertCustomerGroupRequest"
+              }
+            },
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpsertCustomerGroupRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpsertCustomerGroupRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CustomerGroupResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CustomerGroupResponse"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/CustomerGroupResponse"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "CustomerGroups"
+        ]
+      }
+    },
+    "/api/catalog/customer-groups/{id}": {
+      "delete": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "CustomerGroups"
+        ]
+      },
+      "get": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CustomerGroupResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CustomerGroupResponse"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/CustomerGroupResponse"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "CustomerGroups"
+        ]
+      },
+      "put": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/UpsertCustomerGroupRequest"
+              }
+            },
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpsertCustomerGroupRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpsertCustomerGroupRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CustomerGroupResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CustomerGroupResponse"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/CustomerGroupResponse"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "CustomerGroups"
+        ]
+      }
+    },
+    "/api/catalog/customer-groups/{id}/history": {
+      "get": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/CatalogAccessAuditResponse"
+                  },
+                  "type": "array"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/CatalogAccessAuditResponse"
+                  },
+                  "type": "array"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/CatalogAccessAuditResponse"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "CustomerGroups"
+        ]
+      }
+    },
+    "/api/catalog/customer-groups/{id}/members": {
+      "post": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/CustomerGroupMembersRequest"
+              }
+            },
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CustomerGroupMembersRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CustomerGroupMembersRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CustomerGroupResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CustomerGroupResponse"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/CustomerGroupResponse"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "CustomerGroups"
+        ]
+      }
+    },
+    "/api/catalog/customer-groups/{id}/members/{customerId}": {
+      "delete": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "customerId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CustomerGroupResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CustomerGroupResponse"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/CustomerGroupResponse"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "CustomerGroups"
+        ]
+      }
+    },
     "/api/catalog/notification-channels": {
       "get": {
         "responses": {
@@ -10346,6 +12261,133 @@
         ]
       }
     },
+    "/api/catalog/orders/{id}/allocation-preview": {
+      "post": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/CatalogOrderAllocationPreviewRequest"
+              }
+            },
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CatalogOrderAllocationPreviewRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CatalogOrderAllocationPreviewRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CatalogOrderAllocationPreviewResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CatalogOrderAllocationPreviewResponse"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/CatalogOrderAllocationPreviewResponse"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "CatalogOrders"
+        ]
+      }
+    },
+    "/api/catalog/orders/{id}/allocations/{allocationId}/usage": {
+      "post": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "allocationId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/CatalogOrderAllocationUsageRequest"
+              }
+            },
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CatalogOrderAllocationUsageRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CatalogOrderAllocationUsageRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CatalogOrderResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CatalogOrderResponse"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/CatalogOrderResponse"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "CatalogOrders"
+        ]
+      }
+    },
     "/api/catalog/orders/{id}/approve": {
       "post": {
         "parameters": [
@@ -10359,6 +12401,25 @@
             }
           }
         ],
+        "requestBody": {
+          "content": {
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/CatalogOrderApprovePlanningRequest"
+              }
+            },
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CatalogOrderApprovePlanningRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CatalogOrderApprovePlanningRequest"
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "content": {
@@ -11565,6 +13626,152 @@
         ]
       }
     },
+    "/api/catalog/products/{id}/access": {
+      "get": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CatalogProductAccessResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CatalogProductAccessResponse"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/CatalogProductAccessResponse"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "CustomerGroups"
+        ]
+      },
+      "put": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateCatalogProductAccessRequest"
+              }
+            },
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateCatalogProductAccessRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateCatalogProductAccessRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CatalogProductAccessResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CatalogProductAccessResponse"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/CatalogProductAccessResponse"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "CustomerGroups"
+        ]
+      }
+    },
+    "/api/catalog/products/{id}/access/history": {
+      "get": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/CatalogAccessAuditResponse"
+                  },
+                  "type": "array"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/CatalogAccessAuditResponse"
+                  },
+                  "type": "array"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/CatalogAccessAuditResponse"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "CustomerGroups"
+        ]
+      }
+    },
     "/api/catalog/products/{id}/activate": {
       "post": {
         "parameters": [
@@ -11781,6 +13988,103 @@
               "text/plain": {
                 "schema": {
                   "$ref": "#/components/schemas/CatalogFileUrlResponse"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "CatalogProducts"
+        ]
+      }
+    },
+    "/api/catalog/products/{id}/resource-requirements": {
+      "get": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CatalogProductResourceRequirementsResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CatalogProductResourceRequirementsResponse"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/CatalogProductResourceRequirementsResponse"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "CatalogProducts"
+        ]
+      },
+      "put": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/ReplaceCatalogProductResourceRequirementsRequest"
+              }
+            },
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReplaceCatalogProductResourceRequirementsRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReplaceCatalogProductResourceRequirementsRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CatalogProductResourceRequirementsResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CatalogProductResourceRequirementsResponse"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/CatalogProductResourceRequirementsResponse"
                 }
               }
             },
@@ -12534,6 +14838,289 @@
         ]
       }
     },
+    "/api/me/customer-notifications": {
+      "get": {
+        "parameters": [
+          {
+            "in": "query",
+            "name": "cursor",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "unreadOnly",
+            "schema": {
+              "default": false,
+              "type": "boolean"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "schema": {
+              "default": 20,
+              "format": "int32",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeNotificationsListResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeNotificationsListResponse"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeNotificationsListResponse"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "CustomerNotifications"
+        ]
+      }
+    },
+    "/api/me/customer-notifications/read-all": {
+      "post": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MarkNotificationsReadResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MarkNotificationsReadResponse"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/MarkNotificationsReadResponse"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "CustomerNotifications"
+        ]
+      }
+    },
+    "/api/me/customer-notifications/summary": {
+      "get": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeNotificationSummaryResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeNotificationSummaryResponse"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeNotificationSummaryResponse"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "CustomerNotifications"
+        ]
+      }
+    },
+    "/api/me/customer-notifications/{id}/read": {
+      "post": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MarkNotificationsReadResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MarkNotificationsReadResponse"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/MarkNotificationsReadResponse"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "CustomerNotifications"
+        ]
+      }
+    },
+    "/api/me/notifications": {
+      "get": {
+        "parameters": [
+          {
+            "in": "query",
+            "name": "cursor",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "unreadOnly",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "schema": {
+              "format": "int32",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeNotificationsListResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeNotificationsListResponse"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeNotificationsListResponse"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "MeNotifications"
+        ]
+      }
+    },
+    "/api/me/notifications/read": {
+      "post": {
+        "requestBody": {
+          "content": {
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/MarkNotificationsReadRequest"
+              }
+            },
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MarkNotificationsReadRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MarkNotificationsReadRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MarkNotificationsReadResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MarkNotificationsReadResponse"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/MarkNotificationsReadResponse"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "MeNotifications"
+        ]
+      }
+    },
+    "/api/me/notifications/summary": {
+      "get": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeNotificationSummaryResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeNotificationSummaryResponse"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeNotificationSummaryResponse"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "MeNotifications"
+        ]
+      }
+    },
     "/api/module-menu-items": {
       "get": {
         "responses": {
@@ -12779,6 +15366,132 @@
         },
         "tags": [
           "NotificationChannelConfigs"
+        ]
+      }
+    },
+    "/api/notifications/deliveries": {
+      "get": {
+        "parameters": [
+          {
+            "in": "query",
+            "name": "from",
+            "schema": {
+              "format": "date-time",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "to",
+            "schema": {
+              "format": "date-time",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "event",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "channel",
+            "schema": {
+              "$ref": "#/components/schemas/NotificationChannel"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "schema": {
+              "$ref": "#/components/schemas/NotificationDeliveryStatus"
+            }
+          },
+          {
+            "in": "query",
+            "name": "page",
+            "schema": {
+              "default": 1,
+              "format": "int32",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "pageSize",
+            "schema": {
+              "default": 20,
+              "format": "int32",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationDeliveryPageResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationDeliveryPageResponse"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationDeliveryPageResponse"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "NotificationDeliveries"
+        ]
+      }
+    },
+    "/api/notifications/deliveries/{id}/resend": {
+      "post": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationDeliveryResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationDeliveryResponse"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationDeliveryResponse"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "NotificationDeliveries"
         ]
       }
     },
@@ -14057,6 +16770,65 @@
         ]
       }
     },
+    "/api/rental-assets/{id}/direct-rental": {
+      "put": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/SetDirectRentalRequest"
+              }
+            },
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetDirectRentalRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetDirectRentalRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RentalAssetResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RentalAssetResponse"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/RentalAssetResponse"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "RentalAssets"
+        ]
+      }
+    },
     "/api/rental-assets/{id}/queue": {
       "get": {
         "parameters": [
@@ -14743,6 +17515,54 @@
         ]
       }
     },
+    "/api/rentals/rental-assets/{rentalAssetId}/queue": {
+      "get": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "rentalAssetId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "openingDate",
+            "schema": {
+              "format": "date",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffReservationQueueDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffReservationQueueDto"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffReservationQueueDto"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "StaffRentalAssetQueue"
+        ]
+      }
+    },
     "/api/rentals/resource-segments": {
       "get": {
         "responses": {
@@ -14781,6 +17601,216 @@
         },
         "tags": [
           "TenantResourceSegments"
+        ]
+      }
+    },
+    "/api/rentals/resource-types": {
+      "get": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ResourceTypeResponse"
+                  },
+                  "type": "array"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ResourceTypeResponse"
+                  },
+                  "type": "array"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ResourceTypeResponse"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "ResourceTypes"
+        ]
+      },
+      "post": {
+        "requestBody": {
+          "content": {
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/ResourceTypeWriteRequest"
+              }
+            },
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResourceTypeWriteRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResourceTypeWriteRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResourceTypeResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResourceTypeResponse"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResourceTypeResponse"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "ResourceTypes"
+        ]
+      }
+    },
+    "/api/rentals/resource-types/{id}": {
+      "get": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResourceTypeResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResourceTypeResponse"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResourceTypeResponse"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "ResourceTypes"
+        ]
+      },
+      "put": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/ResourceTypeWriteRequest"
+              }
+            },
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResourceTypeWriteRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResourceTypeWriteRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResourceTypeResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResourceTypeResponse"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResourceTypeResponse"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "ResourceTypes"
+        ]
+      }
+    },
+    "/api/rentals/setup-status": {
+      "get": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SetupStatusResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SetupStatusResponse"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/SetupStatusResponse"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "SetupStatus"
         ]
       }
     },
@@ -17575,6 +20605,9 @@
       "name": "BookingPolicy"
     },
     {
+      "name": "CatalogAgenda"
+    },
+    {
       "name": "CatalogNotifications"
     },
     {
@@ -17596,6 +20629,12 @@
       "name": "CustomerAuth"
     },
     {
+      "name": "CustomerGroups"
+    },
+    {
+      "name": "CustomerNotifications"
+    },
+    {
       "name": "CustomerProfile"
     },
     {
@@ -17614,10 +20653,16 @@
       "name": "MaintenancePlans"
     },
     {
+      "name": "MeNotifications"
+    },
+    {
       "name": "ModuleMenuItems"
     },
     {
       "name": "NotificationChannelConfigs"
+    },
+    {
+      "name": "NotificationDeliveries"
     },
     {
       "name": "OccupancyKinds"
@@ -17656,6 +20701,12 @@
       "name": "Reservations"
     },
     {
+      "name": "ResourceAgenda"
+    },
+    {
+      "name": "ResourceTypes"
+    },
+    {
       "name": "ResourceVisualPicker"
     },
     {
@@ -17663,6 +20714,12 @@
     },
     {
       "name": "Schedule"
+    },
+    {
+      "name": "SetupStatus"
+    },
+    {
+      "name": "StaffRentalAssetQueue"
     },
     {
       "name": "StaffTenantMemberships"

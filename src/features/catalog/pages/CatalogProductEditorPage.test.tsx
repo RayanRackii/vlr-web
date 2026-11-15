@@ -87,6 +87,7 @@ const PRODUCT: CatalogProduct = {
   price: 10.5,
   currency: "BRL",
   isActive: true,
+  usesSchedule: true,
   createdAt: "2026-10-14T00:00:00.000Z",
   files: [],
   visibility: "Public",
@@ -606,6 +607,7 @@ describe("CatalogProductEditorPage", () => {
         description: "Carbono",
         price: 10.5,
         currency: "BRL",
+        usesSchedule: true,
       })
     })
     await waitFor(() => {
@@ -678,7 +680,7 @@ describe("CatalogProductEditorPage", () => {
     await user.click(save())
     await waitFor(() => expect(toastSuccess).toHaveBeenCalledWith(i18n.t("catalog.products.toastUpdated")))
     expect(updateProductMock).toHaveBeenCalledExactlyOnceWith(PRODUCT.id, {
-      name: "Raquete", code: "RAQ", description: "Carbono", price: 10.5, currency: "BRL",
+      name: "Raquete", code: "RAQ", description: "Carbono", price: 10.5, usesSchedule: true, currency: "BRL",
     })
     expect(putCatalogProductAccess).toHaveBeenCalledExactlyOnceWith(PRODUCT.id, {
       visibility: "Restricted", customerIds: ["customer-1"], groupIds: ["group-1"],
@@ -783,6 +785,31 @@ describe("CatalogProductEditorPage", () => {
     const before = vi.mocked(getCatalogProductResourceRequirements).mock.calls.length
     await user.click(saveRequirements)
     await waitFor(() => expect(vi.mocked(getCatalogProductResourceRequirements).mock.calls.length).toBeGreaterThan(before))
+  })
+
+  it("hides the Agenda tab when the product does not use the schedule", async () => {
+    getProductMock.mockResolvedValue({ ...PRODUCT, usesSchedule: false })
+    renderPage(["catalog.products.manage"], false, { activeModules: ["rentals"] })
+    await screen.findByLabelText(i18n.t("catalog.products.form.name"))
+    expect(screen.queryByRole("tab", { name: i18n.t("catalog.products.tabs.agenda") })).not.toBeInTheDocument()
+    expect(screen.getByRole("radio", { name: i18n.t("cadastro.product.usesScheduleNo") })).toHaveAttribute("aria-checked", "true")
+  })
+
+  it("saves the Sim/Nao choice with the main form and then hides Agenda", async () => {
+    updateProductMock.mockResolvedValue({ ...PRODUCT, usesSchedule: false })
+    const user = userEvent.setup()
+    renderPage(["catalog.products.manage"], false, { activeModules: ["rentals"] })
+    await screen.findByRole("tab", { name: i18n.t("catalog.products.tabs.agenda") })
+    await user.click(screen.getByRole("radio", { name: i18n.t("cadastro.product.usesScheduleNo") }))
+    await user.click(save())
+    await waitFor(() => expect(updateProductMock).toHaveBeenCalledWith(PRODUCT.id, expect.objectContaining({ usesSchedule: false })))
+    await waitFor(() => expect(screen.queryByRole("tab", { name: i18n.t("catalog.products.tabs.agenda") })).not.toBeInTheDocument())
+  })
+
+  it("does not show the Sim/Nao control without the rentals module", async () => {
+    renderPage()
+    await screen.findByLabelText(i18n.t("catalog.products.form.name"))
+    expect(screen.queryByRole("radio", { name: i18n.t("cadastro.product.usesScheduleNo") })).not.toBeInTheDocument()
   })
 
   it("opens the Agenda tab from the aba query", async () => {

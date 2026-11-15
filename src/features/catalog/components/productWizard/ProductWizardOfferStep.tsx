@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
+import { ProductUsesScheduleField } from "@/features/catalog/components/ProductUsesScheduleField"
 import { useStepSubmit } from "@/features/assistant/stepSubmit"
 import { toCatalogProductWriteBody } from "@/features/catalog/lib/createCatalogProductWithFiles"
 import {
@@ -37,6 +38,8 @@ type ProductWizardOfferStepProps = {
   product: CatalogProduct
   mode?: ProductWizardOfferMode
   readOnly: boolean
+  /** Show the "usa agenda" question (tenant has the rentals module). */
+  showUsesSchedule?: boolean
   onSaved: () => void | Promise<void>
   onDirtyChange?: (dirty: boolean) => void
   onSavingChange?: (saving: boolean) => void
@@ -72,9 +75,10 @@ function sameOfferDraft(left: CatalogProductFormValues, right: CatalogProductFor
     && left.description === right.description
     && left.price === right.price
     && left.currency === right.currency
+    && left.usesSchedule === right.usesSchedule
 }
 
-export function ProductWizardOfferStep({ product, mode = "full", readOnly, onSaved, onDirtyChange, onSavingChange }: ProductWizardOfferStepProps) {
+export function ProductWizardOfferStep({ product, mode = "full", readOnly, showUsesSchedule = false, onSaved, onDirtyChange, onSavingChange }: ProductWizardOfferStepProps) {
   const { t } = useTranslation()
   const [active, setActive] = useState(product.isActive)
   const [savedActive, setSavedActive] = useState(product.isActive)
@@ -91,6 +95,7 @@ export function ProductWizardOfferStep({ product, mode = "full", readOnly, onSav
       description: product.description ?? "",
       price: product.price == null ? "" : String(product.price),
       currency: product.currency || "BRL",
+      usesSchedule: product.usesSchedule,
       taxonomy: {
         categoryIds: product.taxonomy?.categories.map((category) => category.id) ?? [],
         tagIds: product.taxonomy?.tags.map((tag) => tag.id) ?? [],
@@ -160,7 +165,7 @@ export function ProductWizardOfferStep({ product, mode = "full", readOnly, onSav
       return true
     }
     const visibleFields = mode === "dados"
-      ? (["name", "code", "description"] as const)
+      ? (["name", "code", "description", "usesSchedule"] as const)
       : mode === "precos"
         ? (["price", "currency"] as const)
         : undefined
@@ -232,6 +237,17 @@ export function ProductWizardOfferStep({ product, mode = "full", readOnly, onSav
               )}
             />
           </>
+        ) : null}
+        {mode === "dados" && showUsesSchedule ? (
+          <FormField
+            control={form.control}
+            name="usesSchedule"
+            render={({ field }) => (
+              <FormItem>
+                <ProductUsesScheduleField value={field.value ?? true} onChange={(next) => field.onChange(next)} disabled={readOnly || saving} />
+              </FormItem>
+            )}
+          />
         ) : null}
         {mode === "dados" ? (
           <p className="rounded-lg bg-muted px-3 py-3 text-xs text-muted-foreground">{t("cadastro.offerPricingInfo")}</p>

@@ -6216,6 +6216,7 @@
     "stage": "Etapa {{count}} de {{total}}",
     "optional": "Opcional",
     "doneLabel": "concluída",
+    "notApplicable": "Não se aplica",
     "timeTitle": "No seu tempo",
     "timeBody": "O produto só ficará disponível aos clientes depois da publicação.",
     "productDescription": "Configure seu produto e deixe tudo pronto para receber reservas.",
@@ -6225,6 +6226,10 @@
     "crumbCatalog": "Catálogo",
     "product": {
       "nameLabel": "Nome do produto *",
+      "usesScheduleLabel": "Este produto usa a agenda?",
+      "usesScheduleYes": "Sim, reserva um recurso da agenda",
+      "usesScheduleNo": "Não, é vendido sem horário",
+      "usesScheduleHelp": "Escolha \"Não\" para produtos vendidos sem horário: Agenda e Fila deixam de ser necessárias.",
       "nameHelp": "Este nome será exibido no catálogo e nas reservas.",
       "codeLabel": "Código interno",
       "codeHelp": "Use um código único para localizar o produto na sua operação.",

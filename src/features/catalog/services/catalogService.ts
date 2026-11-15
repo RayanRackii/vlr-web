@@ -60,6 +60,8 @@ export type CatalogProductWriteRequest = {
   price?: number | null
   currency?: string
   taxonomy?: { categoryIds: string[]; tagIds: string[] }
+  /** Absent = true on create, unchanged on update. */
+  usesSchedule?: boolean
   /** Create-only: initial status. Omitting it defaults to Active on the API. */
   status?: "Active" | "Inactive"
 }
