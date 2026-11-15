@@ -6163,6 +6163,8 @@
     "productCreate": "New product",
     "resourceCreate": "New resource",
     "subtitle": "Step {{count}} of {{total}} · {{step}}. Save changes before continuing.",
+    "stepOf": "Step {{count}} of {{total}}",
+    "stepCompact": "{{count}} of {{total}}",
     "steps": "Registration steps",
     "back": "Back",
     "next": "Continue",

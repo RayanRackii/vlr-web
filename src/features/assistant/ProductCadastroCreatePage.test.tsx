@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react"
+import { render, screen, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom"
 import { beforeEach, expect, it, vi } from "vitest"
@@ -57,4 +57,27 @@ it("creates from the full cadastro page and opens the saved product", async () =
   await user.click(screen.getByRole("button", { name: "Continuar" }))
   expect(await screen.findByRole("heading", { name: "Cadastro salvo" })).toBeInTheDocument()
   expect(screen.getByTestId("location")).toHaveTextContent(`/catalogo/produtos/${CREATED_ID}/cadastro`)
+})
+
+it("shows every step name in the stepper and has no status choice", async () => {
+  const user = userEvent.setup()
+  render(<MemoryRouter initialEntries={["/catalogo/produtos/cadastro"]}>
+    <TestPermissionProvider permissions={["catalog.products.manage"]}>
+      <Routes>
+        <Route path="/catalogo/produtos/cadastro" element={<ProductCadastroCreatePage />} />
+        <Route path="/catalogo/produtos/:id/cadastro" element={<h1>Cadastro salvo</h1>} />
+      </Routes>
+    </TestPermissionProvider>
+  </MemoryRouter>)
+  const nav = screen.getByRole("navigation", { name: i18n.t("cadastro.steps") })
+  for (const step of ["dados", "categorias", "agenda", "fila", "regras", "precos", "publicacao"]) {
+    expect(within(nav).getAllByText(i18n.t(`assistant.steps.${step}`)).length).toBeGreaterThan(0)
+  }
+  expect(screen.getByText(i18n.t("cadastro.stepOf", { count: 1, total: 7 }))).toBeInTheDocument()
+  expect(screen.queryByRole("radio")).not.toBeInTheDocument()
+  expect(screen.queryByText(i18n.t("catalog.products.columns.status"))).not.toBeInTheDocument()
+  await user.type(screen.getByLabelText(i18n.t("catalog.products.form.name")), "Raquete")
+  await user.click(screen.getByRole("button", { name: "Continuar" }))
+  await screen.findByRole("heading", { name: "Cadastro salvo" })
+  expect(createProductMock.mock.calls[0][0]).toMatchObject({ status: "Active" })
 })
