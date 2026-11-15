@@ -1,10 +1,10 @@
 import type { ReactElement } from "react"
 import { lazyPage } from "@/routes/lazyPage"
+import { ProductEditorRedirect } from "@/features/catalog/components/ProductEditorRedirect"
 import { Package, Settings, Tag } from "lucide-react"
 
 import type { AppNavigationItem } from "@/components/layout/navigation"
 import {
-  CadastroLegacyRedirect,
   NotificationsLegacyRedirect,
   OrdersListLegacyRedirect,
   RedirectKeepingLocation,
@@ -118,12 +118,12 @@ export const catalogManifest = {
       },
       {
         path: "/catalogo/produtos/:id/assistente",
-        element: <CadastroLegacyRedirect area="produtos" />,
+        element: <ProductEditorRedirect />,
         permission: "catalog.products.read",
       },
       {
         path: "/catalogo/produtos/:id/passos",
-        element: <CadastroLegacyRedirect area="produtos" />,
+        element: <ProductEditorRedirect />,
         permission: "catalog.products.read",
       },
       {

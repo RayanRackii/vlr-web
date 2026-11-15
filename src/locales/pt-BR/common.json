@@ -1103,6 +1103,7 @@
       "tabs": {
         "dados": "Dados",
         "price": "Preço",
+        "agenda": "Agenda",
         "access": "Visibilidade e acesso",
         "history": "Histórico"
       },
@@ -1110,6 +1111,9 @@
         "createStatusFailed": "Produto criado, mas continua ativo porque não foi possível desativá-lo. Tente novamente para concluir.",
         "accessSaveFailed": "Não foi possível salvar o acesso. Tente novamente.",
         "breadcrumbRoot": "Catálogo",
+        "incomplete_one": "Configuração incompleta · falta {{count}} passo",
+        "incomplete_other": "Configuração incompleta · falta {{count}} passos",
+        "continueSetup": "Continuar configuração",
         "notFound": "Produto não encontrado.",
         "back": "Voltar para produtos"
       },
