@@ -1542,6 +1542,11 @@
       }
     },
     "policy": {
+      "generalTitle": "Regras de cancelamento",
+      "ordersBefore": "Clientes podem cancelar pedidos até o status",
+      "requestsBefore": "Clientes podem cancelar solicitações enquanto estiverem",
+      "notAllowed": "não permitir",
+      "addText": "Adicionar texto de cancelamento",
       "title": "Vendas",
       "description": "Defina quando clientes podem cancelar pedidos e solicitações neste catálogo.",
       "ordersEnabled": "Cliente pode cancelar pedidos",

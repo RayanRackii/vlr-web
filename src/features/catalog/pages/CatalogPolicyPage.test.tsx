@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react"
+import { render, screen, waitFor, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import { CatalogPolicyPage } from "./CatalogPolicyPage"
@@ -15,16 +15,36 @@ function renderPage(permissions = ["catalog.products.manage"]) {
 }
 describe("CatalogPolicyPage", () => {
   beforeEach(() => { vi.clearAllMocks(); vi.mocked(getCatalogPolicy).mockResolvedValue(policy); vi.mocked(saveCatalogPolicy).mockImplementation(async (data) => data) })
-  it("loads and saves the complete tenant policy, including toggles and optional text", async () => {
+  it("saves the sentence rows with the same payload, opening the optional text on demand", async () => {
     const user = userEvent.setup()
     renderPage()
+    expect(await screen.findByTestId("rule-orders")).toBeInTheDocument()
+    expect(screen.queryByRole("textbox")).not.toBeInTheDocument()
+    await user.click(screen.getByRole("button", { name: i18n.t("catalog.policy.addText") }))
     const text = await screen.findByRole("textbox", { name: i18n.t("catalog.policy.text") })
     expect(text).toHaveAttribute("maxlength", "2000")
+    expect(screen.queryByText(/2000/)).not.toBeInTheDocument()
+    await user.click(text)
+    expect(screen.getByText(/0 \/ 2000/)).toBeInTheDocument()
     await user.type(text, "Sem reembolso.")
-    await user.click(screen.getByRole("switch", { name: i18n.t("catalog.policy.requestsEnabled") }))
-    await user.click(screen.getByRole("radio", { name: i18n.t("catalog.status.Ready") }))
+    await user.click(within(screen.getByTestId("rule-requests")).getByRole("checkbox"))
+    await user.click(screen.getByRole("combobox", { name: i18n.t("catalog.policy.ordersUpTo") }))
+    await user.click(await screen.findByRole("option", { name: i18n.t("catalog.status.Ready") }))
+    expect(screen.getAllByRole("button", { name: i18n.t("common.save") })).toHaveLength(1)
     await user.click(screen.getByRole("button", { name: i18n.t("common.save") }))
     await waitFor(() => expect(saveCatalogPolicy).toHaveBeenCalledWith({ ...policy, customerCanCancelRequests: true, orderCancelableUpToStatus: "Ready", cancellationPolicyText: "Sem reembolso." }))
+    expect(saveCatalogPolicy).toHaveBeenCalledTimes(1)
+  })
+  it("hides the status select when cancellation is not allowed and saves the flag", async () => {
+    const user = userEvent.setup(); renderPage()
+    await screen.findByTestId("rule-orders")
+    expect(screen.getByRole("combobox", { name: i18n.t("catalog.policy.ordersUpTo") })).toBeInTheDocument()
+    await user.click(within(screen.getByTestId("rule-orders")).getByRole("checkbox"))
+    expect(screen.queryByRole("combobox")).not.toBeInTheDocument()
+    expect(within(screen.getByTestId("rule-requests")).getByRole("checkbox")).toBeChecked()
+    expect(within(screen.getByTestId("rule-requests")).queryByRole("combobox")).not.toBeInTheDocument()
+    await user.click(screen.getByRole("button", { name: i18n.t("common.save") }))
+    await waitFor(() => expect(saveCatalogPolicy).toHaveBeenCalledWith({ ...policy, customerCanCancelOrders: false }))
   })
   it("sends null to clear optional text", async () => {
     vi.mocked(getCatalogPolicy).mockResolvedValue({ ...policy, cancellationPolicyText: "Old policy" })
@@ -37,6 +57,7 @@ describe("CatalogPolicyPage", () => {
     const { toast } = await import("sonner")
     vi.mocked(saveCatalogPolicy).mockRejectedValue(new Error("Policy rejected"))
     const user = userEvent.setup(); renderPage()
+    await user.click(await screen.findByRole("button", { name: i18n.t("catalog.policy.addText") }))
     const text = await screen.findByRole("textbox", { name: i18n.t("catalog.policy.text") })
     await user.type(text, "Policy text")
     await user.click(screen.getByRole("button", { name: i18n.t("common.save") }))
@@ -55,6 +76,6 @@ describe("CatalogPolicyPage", () => {
     expect(await screen.findByRole("alert")).toHaveTextContent("Policy unavailable")
     expect(screen.queryByRole("textbox")).not.toBeInTheDocument()
     await user.click(screen.getByRole("button", { name: i18n.t("catalog.retry") }))
-    expect(await screen.findByRole("textbox")).toBeInTheDocument()
+    expect(await screen.findByTestId("rule-orders")).toBeInTheDocument()
   })
 })
