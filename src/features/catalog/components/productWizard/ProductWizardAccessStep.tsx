@@ -3,8 +3,10 @@ import { Link } from "react-router-dom"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 
+import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { useStepSubmit } from "@/features/assistant/stepSubmit"
 import { isSameTabPrimaryClick } from "@/features/catalog/components/productWizard/plainClick"
 import { productGroupDeepLink } from "@/features/catalog/components/productWizard/wizardSteps"
 import type { CatalogProductVisibility, CustomerGroup } from "@/features/catalog/schemas/catalogSchemas"
@@ -63,6 +65,7 @@ export function ProductWizardAccessStep({
   const [searched, setSearched] = useState<Record<string, boolean>>({})
   const [saving, setSaving] = useState(false)
   const [addingId, setAddingId] = useState<string | null>(null)
+  const [saveError, setSaveError] = useState<string | null>(null)
   const dirty = visibility !== savedVisibility || !sameIds(groupIds, savedGroupIds)
   const draftRef = useRef({ visibility, groupIds })
 
@@ -82,13 +85,14 @@ export function ProductWizardAccessStep({
     [groupIds, groups],
   )
 
-  async function save() {
+  async function save(): Promise<boolean> {
     if (readOnly || saving) {
-      return
+      return false
     }
     const sentVisibility = visibility
     const sentGroupIds = [...groupIds]
     setSaving(true)
+    setSaveError(null)
     onSavingChange?.(true)
     try {
       await putCatalogProductAccess(productId, {
@@ -103,13 +107,25 @@ export function ProductWizardAccessStep({
       }
       toast.success(t("catalog.productWizard.accessSaved"))
       await onSaved()
+      return true
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : t("catalog.customerGroups.errors.saveAccess"))
+      const message = error instanceof Error && error.message ? error.message : t("catalog.customerGroups.errors.saveAccess")
+      setSaveError(message)
+      toast.error(message)
+      return false
     } finally {
       setSaving(false)
       onSavingChange?.(false)
     }
   }
+
+  // Inside the cadastro shell the footer saves; the step's own Save button is hidden.
+  const shellDrivesSave = useStepSubmit(async () => {
+    if (readOnly || !dirty) {
+      return true
+    }
+    return save()
+  })
 
   async function searchMembers(groupId: string) {
     const query = (queries[groupId] ?? "").trim()
@@ -150,11 +166,13 @@ export function ProductWizardAccessStep({
   }
 
   return (
-    <div className="mx-auto w-full max-w-xl space-y-4">
-      <div>
-        <h2 className="text-lg font-semibold">{t("catalog.productWizard.steps.access")}</h2>
-        <p className="mt-1 text-sm text-muted-foreground">{t("catalog.productWizard.accessHint")}</p>
-      </div>
+    <div className={shellDrivesSave ? "w-full space-y-4" : "mx-auto w-full max-w-xl space-y-4"}>
+      {shellDrivesSave ? null : (
+        <div>
+          <h2 className="text-lg font-semibold">{t("catalog.productWizard.steps.access")}</h2>
+          <p className="mt-1 text-sm text-muted-foreground">{t("catalog.productWizard.accessHint")}</p>
+        </div>
+      )}
       <div className="flex flex-col gap-2" role="radiogroup" aria-label={t("catalog.products.access.title")}>
         <Button
           type="button"
@@ -278,7 +296,12 @@ export function ProductWizardAccessStep({
           </div>
         )
       })}
-      {readOnly ? null : (
+      {saveError ? (
+        <Alert variant="destructive" role="alert">
+          <AlertDescription>{saveError}</AlertDescription>
+        </Alert>
+      ) : null}
+      {readOnly || shellDrivesSave ? null : (
         <Button type="button" className="min-h-11 w-full sm:w-auto" disabled={saving} aria-busy={saving} onClick={() => void save()}>
           {saving ? t("common.saveStatus.saving") : t("common.save")}
         </Button>
