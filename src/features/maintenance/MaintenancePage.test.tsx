@@ -56,6 +56,8 @@ it("groups the Agenda into overdue and upcoming with human titles, badges and a 
   expect(within(overdue).getByRole("link", { name: i18n.t("maintenance.generate") })).toHaveAttribute("href", `/manutencao/ordens/nova?plano=${basePlanJson.id}`)
   const upcoming = screen.getAllByRole("table")[1]
   expect(within(upcoming).getByRole("link", { name: /Split sala 1/ })).toHaveAttribute("href", "/os/99999999-9999-4999-8999-999999999999")
+  // Flex drops the whitespace text node between name and tag; the gap keeps them apart visually.
+  expect(within(upcoming).getByRole("link", { name: /Split sala 1/ })).toHaveClass("gap-1.5")
   expect(within(upcoming).getByText(i18n.t("maintenance.noTechnician"))).toBeInTheDocument()
   expect(document.body).not.toHaveTextContent(/\b\d{4}-\d{2}-\d{2}\b/)
   expect(document.body).not.toHaveTextContent("99999999")
