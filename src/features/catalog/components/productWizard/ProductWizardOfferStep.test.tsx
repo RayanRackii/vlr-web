@@ -48,8 +48,8 @@ describe("ProductWizardOfferStep", () => {
 
   it("dados mode shows only name, code and description and hides Save inside a shell", () => {
     renderStep("dados")
-    expect(screen.getByLabelText("Nome")).toBeInTheDocument()
-    expect(screen.getByLabelText(/Código/)).toBeInTheDocument()
+    expect(screen.getByLabelText("Nome do produto *")).toBeInTheDocument()
+    expect(screen.getByLabelText("Código interno")).toBeInTheDocument()
     expect(screen.getByLabelText(/Descrição/)).toBeInTheDocument()
     expect(screen.queryByLabelText("Preço")).not.toBeInTheDocument()
     expect(screen.queryByRole("radiogroup")).not.toBeInTheDocument()
@@ -74,7 +74,7 @@ describe("ProductWizardOfferStep", () => {
   it("submit saves the edits and resolves true", async () => {
     const user = userEvent.setup()
     const { shell, onSaved } = renderStep("dados")
-    await user.type(screen.getByLabelText("Nome"), " 2")
+    await user.type(screen.getByLabelText("Nome do produto *"), " 2")
     let result: boolean | null = null
     await act(async () => { result = await shell.submit() })
     expect(result).toBe(true)
@@ -85,7 +85,7 @@ describe("ProductWizardOfferStep", () => {
   it("submit resolves false with the error next to the field when validation fails", async () => {
     const user = userEvent.setup()
     const { shell } = renderStep("dados")
-    await user.clear(screen.getByLabelText("Nome"))
+    await user.clear(screen.getByLabelText("Nome do produto *"))
     let result: boolean | null = null
     await act(async () => { result = await shell.submit() })
     expect(result).toBe(false)

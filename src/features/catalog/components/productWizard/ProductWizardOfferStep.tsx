@@ -194,7 +194,7 @@ export function ProductWizardOfferStep({ product, mode = "full", readOnly, showU
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>{t("catalog.products.form.name")}</FormLabel>
+                  <FormLabel>{t(mode === "dados" ? "cadastro.product.nameLabel" : "catalog.products.form.name")}</FormLabel>
                   <FormControl>
                     <Input {...field} disabled={readOnly || saving} />
                   </FormControl>
@@ -208,7 +208,7 @@ export function ProductWizardOfferStep({ product, mode = "full", readOnly, showU
               name="code"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>{t("catalog.products.form.code")}</FormLabel>
+                  <FormLabel>{t(mode === "dados" ? "cadastro.product.codeLabel" : "catalog.products.form.code")}</FormLabel>
                   <FormControl>
                     <Input {...field} disabled={readOnly || saving} />
                   </FormControl>
@@ -222,7 +222,7 @@ export function ProductWizardOfferStep({ product, mode = "full", readOnly, showU
               name="description"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>{t("catalog.products.form.description")}</FormLabel>
+                  <FormLabel>{t(mode === "dados" ? "cadastro.product.descriptionLabel" : "catalog.products.form.description")}</FormLabel>
                   <FormControl>
                     <Textarea
                       {...field}
