@@ -5104,8 +5104,11 @@
         "empty": "Empty time slot",
         "noSelection": "Select one or more spaces / goods to view the grid.",
         "legendLabel": "Legend",
-        "minimumLeadTime": "Outside the minimum advance notice"
+        "minimumLeadTime": "Outside the minimum advance notice",
+        "addSlot": "Add a time slot to {{name}}",
+        "addSlotShort": "Add time slot"
       },
+      "dayOnlyNote": "Changes apply to {{date}} only.",
       "dayOnlyBanner": "Changes in this grid apply only to {{date}}. To change the weekly rule, use Weekly setup.",
       "weeklyBanner": "This grid repeats weekly on {{day}}. Day agenda only changes one date.",
       "weeklyCellHint": "The change applies to this weekday on all future dates.",
