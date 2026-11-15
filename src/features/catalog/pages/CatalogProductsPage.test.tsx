@@ -4,6 +4,7 @@ import { MemoryRouter, useLocation, useSearchParams } from "react-router-dom"
 import { toast } from "sonner"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 
+import { productWizardPath } from "@/features/catalog/components/productWizard/wizardSteps"
 import { CatalogProductsPage } from "@/features/catalog/pages/CatalogProductsPage"
 import type { CatalogProduct } from "@/features/catalog/schemas/catalogSchemas"
 import { TestPermissionProvider } from "@/features/users/permissions/PermissionContext"
@@ -101,18 +102,22 @@ describe("CatalogProductsPage validity gate", () => {
     )
   }
 
-  it("badges restricted products and filters by visibility", async () => {
+  it("badges restricted products next to the name and filters by visibility in More filters", async () => {
     const restricted = { ...PRODUCT, id: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb", name: "Kit VIP", visibility: "Restricted" as const, grantedCustomerCount: 1, grantedGroupCount: 2 }
     listProductsMock.mockResolvedValue([PRODUCT, restricted])
     const user = userEvent.setup()
     renderPage()
-    await within(await screen.findByRole("table")).findByText(i18n.t("catalog.products.badges.restricted", { count: 3 }))
-    await user.click(screen.getByRole("radio", { name: i18n.t("catalog.products.visibilityFilter.restricted") }))
+    const table = await screen.findByRole("table")
+    await within(table).findByText(i18n.t("catalog.products.badges.restricted", { count: 3 }))
+    expect(within(table).queryByRole("columnheader", { name: i18n.t("catalog.products.visibilityFilter.title") })).not.toBeInTheDocument()
+    await user.click(screen.getByRole("button", { name: new RegExp(i18n.t("catalog.products.moreFilters")) }))
+    await user.click(await screen.findByRole("radio", { name: i18n.t("catalog.products.visibilityFilter.restricted") }))
     expect(within(productsTable()).queryByText("Raquete")).not.toBeInTheDocument()
     expect(within(productsTable()).getByText("Kit VIP")).toBeInTheDocument()
-    await user.click(screen.getByRole("button", { name: new RegExp(i18n.t("catalog.products.visibilityFilter.title")) }))
+    expect(screen.getByTestId("more-filters-count")).toHaveTextContent("1")
+    await user.click(screen.getByRole("button", { name: new RegExp(`^${i18n.t("catalog.products.visibilityFilter.title")}:`) }))
     expect(within(productsTable()).getByText("Raquete")).toBeInTheDocument()
-    expect(screen.getByRole("radio", { name: i18n.t("catalog.products.visibilityFilter.restricted") })).toHaveAttribute("aria-checked", "false")
+    expect(screen.queryByTestId("more-filters-count")).not.toBeInTheDocument()
   })
 
   it("keeps requests out of the products list", async () => {
@@ -142,7 +147,7 @@ describe("CatalogProductsPage validity gate", () => {
     )
     expect(await screen.findByText("Suporte para equipamento")).toBeInTheDocument()
     expect(screen.getByRole("table", { name: i18n.t("catalog.requests.title") })).toBeInTheDocument()
-    expect(screen.getByRole("link", { name: new RegExp(i18n.t("catalog.requests.title")) })).toHaveAttribute("aria-current", "page")
+    expect(screen.queryByRole("navigation", { name: i18n.t("nav.catalog") })).not.toBeInTheDocument()
     expect(screen.queryByText(PRODUCT.name)).not.toBeInTheDocument()
     expect(screen.queryByRole("button", { name: i18n.t("catalog.products.create") })).not.toBeInTheDocument()
     expect(listRequestsMock).toHaveBeenCalledWith({ signal: expect.any(AbortSignal) })
@@ -165,21 +170,68 @@ describe("CatalogProductsPage validity gate", () => {
     expect(screen.queryByRole("table")).not.toBeInTheDocument()
   })
 
-  it("filters active products from the filter bar and removes the filter with its chip", async () => {
-    listProductsMock.mockResolvedValue([PRODUCT, { ...PRODUCT, id: "inactive", name: "Item inativo", isActive: false }])
+  it("filters by status chips with counts", async () => {
+    listProductsMock.mockResolvedValue([PRODUCT, { ...PRODUCT, id: "inactive", name: "Item inativo", isActive: false }, { ...PRODUCT, id: "inc", name: "Sem preco", price: null }])
     const user = userEvent.setup()
     renderPage()
     await within(await screen.findByRole("table")).findByText("Item inativo")
-    await user.click(screen.getByRole("radio", { name: i18n.t("catalog.products.active") }))
+    const chip = (label: string) => screen.getByRole("button", { name: new RegExp(`^${label}`) })
+    expect(chip(i18n.t("catalog.products.filterAll"))).toHaveTextContent("3")
+    expect(chip(i18n.t("catalog.products.filterActive"))).toHaveTextContent("1")
+    expect(chip(i18n.t("catalog.products.filterInactive"))).toHaveTextContent("1")
+    expect(chip(i18n.t("catalog.products.filterIncomplete"))).toHaveTextContent("1")
+    await user.click(chip(i18n.t("catalog.products.filterActive")))
     expect(within(productsTable()).getByText(PRODUCT.name)).toBeInTheDocument()
     expect(within(productsTable()).queryByText("Item inativo")).not.toBeInTheDocument()
-    expect(listProductsMock).toHaveBeenCalledTimes(1)
-    await user.click(screen.getByRole("radio", { name: i18n.t("catalog.products.inactive") }))
-    expect(within(productsTable()).queryByText(PRODUCT.name)).not.toBeInTheDocument()
+    expect(within(productsTable()).queryByText("Sem preco")).not.toBeInTheDocument()
+    await user.click(chip(i18n.t("catalog.products.filterInactive")))
     expect(within(productsTable()).getByText("Item inativo")).toBeInTheDocument()
-    await user.click(screen.getByRole("button", { name: new RegExp(`^${i18n.t("catalog.products.columns.status")}:`) }))
+    expect(within(productsTable()).queryByText(PRODUCT.name)).not.toBeInTheDocument()
+    await user.click(chip(i18n.t("catalog.products.filterIncomplete")))
+    expect(within(productsTable()).getByText("Sem preco")).toBeInTheDocument()
+    expect(within(productsTable()).queryByText("Item inativo")).not.toBeInTheDocument()
+    await user.click(chip(i18n.t("catalog.products.filterAll")))
     expect(within(productsTable()).getByText(PRODUCT.name)).toBeInTheDocument()
     expect(within(productsTable()).getByText("Item inativo")).toBeInTheDocument()
+    expect(listProductsMock).toHaveBeenCalledTimes(1)
+  })
+
+  it("shows one status column value per product and no separate published badge", async () => {
+    listProductsMock.mockResolvedValue([PRODUCT, { ...PRODUCT, id: "inactive", name: "Item inativo", isActive: false }, { ...PRODUCT, id: "inc", name: "Sem preco", price: null }])
+    renderPage()
+    const table = await screen.findByRole("table")
+    await within(table).findByText("Item inativo")
+    const rowOf = (name: string) => within(table).getByText(name).closest("tr") as HTMLElement
+    expect(within(rowOf(PRODUCT.name)).getByText(i18n.t("catalog.products.active"))).toBeInTheDocument()
+    expect(within(rowOf("Item inativo")).getByText(i18n.t("catalog.products.inactive"))).toBeInTheDocument()
+    expect(within(rowOf("Sem preco")).getByText(i18n.t("catalog.products.statusIncomplete", { count: 1 }))).toBeInTheDocument()
+    expect(within(table).queryByText(i18n.t("assistant.status.published"))).not.toBeInTheDocument()
+    expect(within(table).queryByText(i18n.t("assistant.status.draft"))).not.toBeInTheDocument()
+  })
+
+  it("shows no catalog tabs on the products page", async () => {
+    listProductsMock.mockResolvedValue([PRODUCT])
+    renderPage()
+    await within(await screen.findByRole("table")).findByText(PRODUCT.name)
+    expect(screen.queryByRole("navigation", { name: i18n.t("nav.catalog") })).not.toBeInTheDocument()
+    expect(screen.queryByRole("link", { name: new RegExp(i18n.t("catalog.requests.title")) })).not.toBeInTheDocument()
+  })
+
+  it("hides Categorias and Tags columns when no row has them and shows them otherwise", async () => {
+    listProductsMock.mockResolvedValue([PRODUCT])
+    const { unmount } = renderPage()
+    await within(await screen.findByRole("table")).findByText(PRODUCT.name)
+    expect(screen.queryByRole("columnheader", { name: i18n.t("taxonomy.categories") })).not.toBeInTheDocument()
+    expect(screen.queryByRole("columnheader", { name: i18n.t("taxonomy.tags") })).not.toBeInTheDocument()
+    unmount()
+    listProductsMock.mockResolvedValue([{
+      ...PRODUCT,
+      taxonomy: { categories: [{ id: "c1", name: "Quadras", slug: "quadras", parentId: null, icon: null, sortOrder: 0 }], tags: [] },
+    }])
+    renderPage()
+    await within(await screen.findByRole("table")).findByText("Quadras")
+    expect(screen.getByRole("columnheader", { name: i18n.t("taxonomy.categories") })).toBeInTheDocument()
+    expect(screen.queryByRole("columnheader", { name: i18n.t("taxonomy.tags") })).not.toBeInTheDocument()
   })
 
   it("combines search with the status filter", async () => {
@@ -192,7 +244,7 @@ describe("CatalogProductsPage validity gate", () => {
     renderPage()
     await within(await screen.findByRole("table")).findByText("Garrafa")
     await user.type(screen.getByRole("searchbox", { name: i18n.t("catalog.staff.productsSearch") }), "raquete")
-    await user.click(screen.getByRole("radio", { name: i18n.t("catalog.products.inactive") }))
+    await user.click(screen.getByRole("button", { name: new RegExp(`^${i18n.t("catalog.products.filterInactive")}`) }))
     expect(within(productsTable()).getByText("Raquete velha")).toBeInTheDocument()
     expect(within(productsTable()).queryByText("Raquete")).not.toBeInTheDocument()
     expect(within(productsTable()).queryByText("Garrafa")).not.toBeInTheDocument()
@@ -204,7 +256,8 @@ describe("CatalogProductsPage validity gate", () => {
     const cards = await screen.findByRole("list", { name: i18n.t("catalog.products.title") })
     expect(within(cards).getAllByRole("listitem")).toHaveLength(1)
     expect(within(cards).getByText(PRODUCT.name)).toBeInTheDocument()
-    expect(within(cards).getByRole("button", { name: new RegExp(`^${i18n.t("common.edit")}`) })).toBeInTheDocument()
+    expect(within(cards).getByRole("button", { name: PRODUCT.name })).toBeInTheDocument()
+    expect(within(cards).getByRole("button", { name: i18n.t("catalog.products.rowMenu", { name: PRODUCT.name }) })).toBeInTheDocument()
   })
 
   it("shows the empty state when there are no products", async () => {
@@ -224,34 +277,57 @@ describe("CatalogProductsPage validity gate", () => {
     expect(listProductsMock).toHaveBeenCalledTimes(2)
   })
 
-  it("pins product actions on tablets and keeps editing available", async () => {
+  it("opens the editor from the name and offers a single row menu instead of loose buttons", async () => {
     listProductsMock.mockResolvedValue([PRODUCT])
     const user = userEvent.setup()
     renderPage()
-    const edit = await within(await screen.findByRole("table")).findByRole("button", { name: new RegExp(`^${i18n.t("common.edit")}`) })
-    const actions = edit.closest("td")
-    const header = screen.getByRole("columnheader", { name: i18n.t("catalog.products.columns.actions") })
-    expect(actions).toHaveClass("md:max-lg:sticky", "md:max-lg:right-0", "md:max-lg:bg-card")
-    const assistants = screen.getAllByRole("link", { name: new RegExp(`^${i18n.t("catalog.productWizard.open")}`) })
-    expect(assistants.length).toBeGreaterThan(0)
-    for (const assistant of assistants) {
-      expect(assistant).toHaveAttribute("href", `/catalogo/produtos/${PRODUCT.id}/cadastro`)
-    }
-    expect(header).toHaveClass("md:max-lg:right-0")
-    await user.click(edit)
-    expect(await screen.findByTestId("location")).toHaveTextContent(
-      `/catalogo/produtos/${PRODUCT.id}`,
-    )
+    const table = await screen.findByRole("table")
+    await within(table).findByText(PRODUCT.name)
+    expect(within(table).queryByRole("link", { name: new RegExp(i18n.t("catalog.productWizard.open")) })).not.toBeInTheDocument()
+    expect(within(table).queryByRole("button", { name: new RegExp(`^${i18n.t("common.edit")}`) })).not.toBeInTheDocument()
+    expect(within(table).queryByRole("link", { name: new RegExp(i18n.t("catalog.products.quickEdit")) })).not.toBeInTheDocument()
+    // name button + row menu only
+    expect(within(table).getAllByRole("button")).toHaveLength(2)
+    await user.click(within(table).getByRole("button", { name: PRODUCT.name }))
+    expect(await screen.findByTestId("location")).toHaveTextContent(`/catalogo/produtos/${PRODUCT.id}`)
   })
 
-  it("links Novo produto and quick edit to full pages", async () => {
+  it("row menu: Acesso links to the access step, Desativar confirms then deactivates, no Continuar when complete", async () => {
+    listProductsMock.mockResolvedValue([PRODUCT])
+    vi.mocked(deactivateCatalogProduct).mockResolvedValue(undefined as never)
+    const user = userEvent.setup()
+    renderPage()
+    const table = await screen.findByRole("table")
+    await user.click(await within(table).findByRole("button", { name: i18n.t("catalog.products.rowMenu", { name: PRODUCT.name }) }))
+    expect(await screen.findByRole("menuitem", { name: i18n.t("catalog.products.menuAccess") })).toHaveAttribute("href", productWizardPath(PRODUCT.id, "access"))
+    expect(screen.queryByRole("menuitem", { name: i18n.t("catalog.products.menuContinue") })).not.toBeInTheDocument()
+    await user.click(screen.getByRole("menuitem", { name: i18n.t("catalog.products.deactivate") }))
+    expect(deactivateCatalogProduct).not.toHaveBeenCalled()
+    await user.click(await screen.findByRole("button", { name: i18n.t("catalog.products.deactivate") }))
+    await waitFor(() => expect(deactivateCatalogProduct).toHaveBeenCalledWith(PRODUCT.id))
+    expect(toastSuccess).toHaveBeenCalledWith(i18n.t("catalog.products.toastDeactivated"))
+  })
+
+  it("row menu: Ativar acts at once and Continuar configuração appears only for incomplete products", async () => {
+    const incomplete = { ...PRODUCT, id: "inc", name: "Sem preco", price: null, isActive: false }
+    listProductsMock.mockResolvedValue([incomplete])
+    vi.mocked(activateCatalogProduct).mockResolvedValue(undefined as never)
+    const user = userEvent.setup()
+    renderPage()
+    const table = await screen.findByRole("table")
+    await user.click(await within(table).findByRole("button", { name: i18n.t("catalog.products.rowMenu", { name: "Sem preco" }) }))
+    const proceed = await screen.findByRole("menuitem", { name: i18n.t("catalog.products.menuContinue") })
+    expect(proceed.getAttribute("href")).toContain("/catalogo/produtos/inc/cadastro")
+    await user.click(screen.getByRole("menuitem", { name: i18n.t("catalog.products.activate") }))
+    await waitFor(() => expect(activateCatalogProduct).toHaveBeenCalledWith("inc"))
+  })
+
+  it("links Novo produto to the full page", async () => {
     listProductsMock.mockResolvedValue([PRODUCT])
     const user = userEvent.setup()
     renderPage()
     const create = await screen.findByRole("link", { name: i18n.t("catalog.products.create") })
     expect(create).toHaveAttribute("href", "/catalogo/produtos/cadastro")
-    const quick = within(productsTable()).getByRole("link", { name: new RegExp(`^${i18n.t("catalog.products.quickEdit")}`) })
-    expect(quick).toHaveAttribute("href", `/catalogo/produtos/${PRODUCT.id}/cadastro?passo=precos`)
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument()
     await user.click(create)
     expect(screen.getByTestId("location")).toHaveTextContent("/catalogo/produtos/cadastro")
@@ -280,7 +356,7 @@ describe("CatalogProductsPage validity gate", () => {
     const user = userEvent.setup()
     renderPage(`/?category=${category}`)
     const chip = await screen.findByRole("button", { name: new RegExp(`${i18n.t("taxonomy.categories")}: Quadras`) })
-    expect(screen.getByRole("button", { name: i18n.t("taxonomy.categories") })).toHaveAttribute("data-active", "true")
+    expect(screen.getByRole("button", { name: new RegExp(i18n.t("catalog.products.moreFilters")) })).toHaveAttribute("data-active", "true")
     await user.click(chip)
     await waitFor(() => expect(screen.getByTestId("search")).toHaveTextContent(/^$/))
     expect(screen.queryByRole("button", { name: /Quadras/ })).not.toBeInTheDocument()
@@ -300,7 +376,7 @@ describe("CatalogProductsPage validity gate", () => {
     const user = userEvent.setup()
     renderPage(`/?tags=${tag}`)
     const chip = await screen.findByRole("button", { name: new RegExp(`${i18n.t("taxonomy.tags")}: Premium`) })
-    expect(screen.getByRole("button", { name: i18n.t("taxonomy.tags") })).toHaveAttribute("data-active", "true")
+    expect(screen.getByRole("button", { name: new RegExp(i18n.t("catalog.products.moreFilters")) })).toHaveAttribute("data-active", "true")
     await user.click(chip)
     await waitFor(() => expect(screen.getByTestId("search")).toHaveTextContent(/^$/))
     expect(screen.queryByRole("button", { name: /Premium/ })).not.toBeInTheDocument()

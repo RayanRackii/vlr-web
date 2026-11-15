@@ -3,13 +3,6 @@ import { describe, expect, it } from "vitest"
 
 const css = readFileSync("src/features/catalog/components/staffCatalog.css", "utf8")
 
-describe("staff catalog products table", () => {
-  it("compacts row actions to fixed icon buttons and a labeled assistant", () => {
-    expect(css).toMatch(/\.staff-catalog-action\s*\{[^}]*width:\s*44px/)
-    expect(css).toMatch(/\.staff-catalog-assistant\b/)
-  })
-})
-
 describe("staff catalog heading on a narrow screen", () => {
   it("does not keep the title's 12rem row basis once the heading stacks", () => {
     const start = css.indexOf("@media (max-width: 760px)")
