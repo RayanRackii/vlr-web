@@ -1,12 +1,14 @@
-import { CalendarDays, ChevronLeft, ChevronRight, SlidersHorizontal } from "lucide-react"
+import { CalendarDays, SlidersHorizontal } from "lucide-react"
 import { useEffect, useMemo, useState } from "react"
 import { useTranslation } from "react-i18next"
-import { LocaleDateInput } from "@/components/LocaleDateInput"
 import { formatLocaleCivilDate } from "@/lib/localeFormat"
 import { useNavigate } from "react-router-dom"
 
 import { useTenantTimeZone } from "@/contexts/TenantTimeZoneContext"
 import { Button } from "@/components/ui/button"
+import { Checkbox } from "@/components/ui/checkbox"
+import { DateNavigator } from "@/components/ui/date-navigator"
+import { Label } from "@/components/ui/label"
 import { LoadingButton } from "@/components/ui/loading-button"
 import {
   Popover,
@@ -20,7 +22,6 @@ import {
 import { RentableMultiSelect } from "@/features/rentals/components/schedule/RentableMultiSelect"
 import { ScheduleDaySlotsSkeleton } from "@/features/rentals/components/schedule/ScheduleDaySlotsSkeleton"
 import { ScheduleEmptyState } from "@/features/rentals/components/schedule/ScheduleEmptyState"
-import { todayIsoDate } from "@/features/rentals/components/schedule/scheduleFormDefaults"
 import { isPastTenantSlotStart } from "@/features/rentals/lib/offerableSlot"
 import { tenantCivilDateTime, tenantTodayIsoDate } from "@/lib/tenantTimeZone"
 import { cn } from "@/lib/utils"
@@ -143,6 +144,17 @@ function addDays(isoDate: string, amount: number): string {
   return date.toISOString().slice(0, 10)
 }
 
+function longDateParts(civil: string, locale: string, t: (key: string, options: Record<string, string | number>) => string) {
+  const [year, month, day] = civil.split("-").map(Number)
+  const date = new Date(Date.UTC(year, month - 1, day))
+  const part = (options: Intl.DateTimeFormatOptions) =>
+    new Intl.DateTimeFormat(locale, { ...options, timeZone: "UTC" }).format(date)
+  return {
+    label: t("agendas.dateLong", { day, month: part({ month: "long" }), year }),
+    weekday: part({ weekday: "long" }),
+  }
+}
+
 export function DailyAgendaTab({
   assets,
   selectedRentalAssetIds,
@@ -166,6 +178,8 @@ export function DailyAgendaTab({
   const clock = useTenantClock()
   const now = useMemo(() => new Date(clock), [clock])
   const isMobile = useIsMobileViewport()
+  // Presentational only: the axis follows business hours unless the whole day is requested.
+  const [showFullDay, setShowFullDay] = useState(false)
 
   const selectedAssets = useMemo(
     () =>
@@ -265,54 +279,37 @@ export function DailyAgendaTab({
     )
   }
 
+  const dateParts = longDateParts(date, i18n.language, t)
   const showInlineRefresh = loading && surface === "grid" && day !== null
 
   return (
     <div className="min-w-0 w-full space-y-4">
-      <div className="flex min-w-0 flex-wrap items-center gap-2 rounded-xl border border-border bg-card p-2 shadow-sm">
-        <div className="flex shrink-0 items-center divide-x divide-border rounded-lg border border-border">
-          <Button
-            type="button"
-            size="icon-sm"
-            variant="ghost"
-            className="rounded-r-none"
-            aria-label={t("rentals.schedule.toolbar.prev")}
-            onClick={() => onDateChange(addDays(date, -1))}
-          >
-            <ChevronLeft aria-hidden />
-          </Button>
-          <Button
-            type="button"
-            size="sm"
-            variant="ghost"
-            className="rounded-none"
-            onClick={() => onDateChange(todayIsoDate(timeZoneId))}
-          >
-            {t("rentals.schedule.toolbar.today")}
-          </Button>
-          <Button
-            type="button"
-            size="icon-sm"
-            variant="ghost"
-            className="rounded-l-none"
-            aria-label={t("rentals.schedule.toolbar.next")}
-            onClick={() => onDateChange(addDays(date, 1))}
-          >
-            <ChevronRight aria-hidden />
-          </Button>
-        </div>
-        <LocaleDateInput
-          value={date}
-          locale={i18n.language}
+      <div role="group" aria-label={t("staffAgenda.dateNavigation")}>
+        <DateNavigator
+          layout="toolbar"
+          date={date}
+          onDateChange={onDateChange}
+          view="dia"
+          views={[{ value: "dia", label: t("staffAgenda.dia") }]}
+          onViewChange={() => undefined}
+          step={(current, _view, direction) => addDays(current, direction)}
           today={tenantTodayIsoDate(timeZoneId, now)}
-          className="min-w-0 max-w-full"
-          onChange={(value) => {
-            if (value) onDateChange(value)
+          label={dateParts.label}
+          secondaryLabel={dateParts.weekday}
+          labels={{
+            previous: t("agendas.nav.previousDay"),
+            next: t("agendas.nav.nextDay"),
+            today: t("rentals.schedule.toolbar.today"),
+            view: t("staffAgenda.view"),
+            pickDate: t("agendas.nav.pickDate"),
           }}
         />
+      </div>
+
+      <div className="flex min-w-0 flex-wrap items-center gap-x-4 gap-y-2">
         <Popover>
           <PopoverTrigger
-            render={<Button type="button" variant="outline" size="sm" />}
+            render={<Button type="button" variant="outline" className="touch-target min-h-11" />}
           >
             <SlidersHorizontal aria-hidden />
             {t("rentals.schedule.toolbar.resources", {
@@ -328,11 +325,17 @@ export function DailyAgendaTab({
             />
           </PopoverContent>
         </Popover>
+        <Label className="flex min-h-11 cursor-pointer items-center gap-2 text-sm">
+          <Checkbox
+            checked={showFullDay}
+            onChange={(event) => setShowFullDay(event.target.checked)}
+          />
+          {t("agendas.filters.showClosed")}
+        </Label>
         {hasSlotGrid ? (
           <LoadingButton
             type="button"
-            size="sm"
-            className="ml-auto"
+            className="touch-target ml-auto min-h-11"
             loading={busyAction === "publish"}
             disabled={busy || readOnly}
             onClick={onPublish}
@@ -342,14 +345,17 @@ export function DailyAgendaTab({
         ) : null}
       </div>
 
-      <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-primary/20 bg-primary/5 px-3 py-2 text-xs text-muted-foreground">
-        <span>{t("rentals.schedule.dayOnlyBanner", { date: formatLocaleCivilDate(date, i18n.language) })}</span>
+      <p className="text-xs text-muted-foreground">
+        {t("rentals.schedule.dayOnlyNote", { date: formatLocaleCivilDate(date, i18n.language) })}
         {onGoWeeklySetup ? (
-          <Button type="button" variant="link" size="xs" onClick={onGoWeeklySetup}>
-            {t("rentals.schedule.tabs.templates")}
-          </Button>
+          <>
+            {" "}
+            <Button type="button" variant="link" size="xs" onClick={onGoWeeklySetup}>
+              {t("rentals.schedule.tabs.templates")}
+            </Button>
+          </>
         ) : null}
-      </div>
+      </p>
 
       <section className="min-w-0">
         {showInlineRefresh ? (
@@ -383,6 +389,8 @@ export function DailyAgendaTab({
               busyTargetKey={busyTargetKey}
               readOnly={readOnly}
               nowMinutes={nowMinutes}
+              compact
+              showFullDay={showFullDay}
               isStartClosed={(startTime) =>
                 date === tenantTodayIsoDate(timeZoneId, now) &&
                 isPastTenantSlotStart(date, startTime, timeZoneId, now)
