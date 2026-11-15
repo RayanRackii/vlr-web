@@ -1,5 +1,5 @@
 import { displayEndClock } from "@/lib/tenantTimeZone"
-import { Ban, CalendarCheck2, CircleCheck, Plus } from "lucide-react"
+import { Ban, CalendarCheck2, ChevronDown, ChevronUp, CircleCheck, Plus } from "lucide-react"
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react"
 import { useTranslation } from "react-i18next"
 
@@ -152,28 +152,32 @@ function ResourceGrid({
     const assetEnds = assets
       .map((asset) => asset.closeTime && timeToMinutes(asset.closeTime))
       .filter((value): value is number => typeof value === "number")
-    const durations = [
-      ...occupancies.map(
-        (item) => timeToMinutes(item.endTime) - timeToMinutes(item.startTime),
-      ),
-      ...assets.flatMap(durationValues),
-    ].filter((value) => value > 0)
+    const assetDurations = assets.flatMap(durationValues).filter((value) => value > 0)
+    // Compact: the row step comes from the resources' slot durations, so a long block
+    // (e.g. a full-day closure) cannot shrink every row to 15 minutes.
+    const durations =
+      compact && assetDurations.length > 0
+        ? assetDurations
+        : [
+            ...occupancies.map(
+              (item) => timeToMinutes(item.endTime) - timeToMinutes(item.startTime),
+            ),
+            ...assets.flatMap(durationValues),
+          ].filter((value) => value > 0)
     const rawStep = durations.reduce((current, value) => gcd(current, value), 0)
     const step = Math.min(60, Math.max(15, rawStep || 60))
-    // Compact axis: business hours of the visible resources (08:00-20:00 when unknown),
-    // widened only by slots that are not plain free ones so nothing actionable is hidden.
-    const busy = occupancies.filter((item) => item.status !== "available")
+    // Compact axis: business hours of the visible resources (08:00-20:00 when unknown).
+    // Never widened by slots: long ones are clipped to the axis (see RowCells), and
+    // "show 24 hours" reveals everything.
     const observedStarts = compact
-      ? [
-          ...(assetStarts.length > 0 ? assetStarts : [DEFAULT_OPEN_MINUTES]),
-          ...busy.map((item) => timeToMinutes(item.startTime)),
-        ]
+      ? assetStarts.length > 0
+        ? assetStarts
+        : [DEFAULT_OPEN_MINUTES]
       : [...starts, ...assetStarts]
     const observedEnds = compact
-      ? [
-          ...(assetEnds.length > 0 ? assetEnds : [DEFAULT_CLOSE_MINUTES]),
-          ...busy.map((item) => timeToMinutes(item.endTime)),
-        ]
+      ? assetEnds.length > 0
+        ? assetEnds
+        : [DEFAULT_CLOSE_MINUTES]
       : [...ends, ...assetEnds]
     const fullDay = compact && showFullDay
     const start = fullDay
@@ -317,6 +321,7 @@ function ResourceGrid({
                   rowIndex={rowIndex}
                   axisStart={axis.start}
                   axisStep={axis.step}
+                  axisEnd={axis.end}
                   rowHeight={rowHeight}
                   busyTargetKey={busyTargetKey}
                   readOnly={readOnly}
@@ -467,6 +472,7 @@ function RowCells({
   rowIndex,
   axisStart,
   axisStep,
+  axisEnd,
   rowHeight,
   busyTargetKey,
   readOnly,
@@ -482,6 +488,7 @@ function RowCells({
   rowIndex: number
   axisStart: number
   axisStep: number
+  axisEnd: number
   rowHeight: number
   busyTargetKey: string | null
   readOnly: boolean
@@ -511,10 +518,14 @@ function RowCells({
           const end = timeToMinutes(item.endTime)
           return start < rowEnd && end > rowStart
         })
+        // Compact mode clips long slots to the axis: a slot that begins before it is drawn
+        // from the first row, and one that ends after it stops at the last row.
+        const clippedStart = (item: ScheduleGridOccupancy) =>
+          compact
+            ? Math.max(timeToMinutes(item.startTime), axisStart)
+            : timeToMinutes(item.startTime)
         const starting = covering.filter(
-          (item) =>
-            Math.floor((timeToMinutes(item.startTime) - axisStart) / axisStep) ===
-            rowIndex,
+          (item) => Math.floor((clippedStart(item) - axisStart) / axisStep) === rowIndex,
         )
         const isCovered = covering.length > 0
         return (
@@ -569,18 +580,23 @@ function RowCells({
               </button>
             ) : null}
             {starting.map((item, stackIndex) => {
-              const itemStart = timeToMinutes(item.startTime)
+              const itemStart = clippedStart(item)
+              const continuesBefore = compact && timeToMinutes(item.startTime) < axisStart
+              const continuesAfter = compact && timeToMinutes(item.endTime) > axisEnd
               const overlapIndex =
                 assetItems.filter(
                   (other) =>
                     other.id !== item.id &&
-                    timeToMinutes(other.startTime) < itemStart &&
+                    clippedStart(other) < itemStart &&
                     timeToMinutes(other.endTime) > itemStart,
                 ).length + stackIndex
               const rows = Math.max(
                 1,
                 Math.ceil(
-                  (timeToMinutes(item.endTime) - timeToMinutes(item.startTime)) /
+                  ((compact
+                    ? Math.min(timeToMinutes(item.endTime), axisEnd)
+                    : timeToMinutes(item.endTime)) -
+                    itemStart) /
                     axisStep,
                 ),
               )
@@ -682,6 +698,24 @@ function RowCells({
               const singleColumn = rowHeight === SINGLE_COLUMN_ROW_HEIGHT
               const cardContent = (
                 <>
+                  {continuesBefore ? (
+                    <span
+                      data-continues="before"
+                      className="pointer-events-none absolute inset-x-0 top-0 z-10 flex items-center justify-end gap-0.5 bg-background/70 px-1.5 text-[10px] font-medium leading-4 text-muted-foreground"
+                    >
+                      <ChevronUp className="size-3" aria-hidden />
+                      {t("rentals.schedule.grid.continues")}
+                    </span>
+                  ) : null}
+                  {continuesAfter ? (
+                    <span
+                      data-continues="after"
+                      className="pointer-events-none absolute inset-x-0 bottom-0 z-10 flex items-center justify-end gap-0.5 bg-background/70 px-1.5 text-[10px] font-medium leading-4 text-muted-foreground"
+                    >
+                      <ChevronDown className="size-3" aria-hidden />
+                      {t("rentals.schedule.grid.continues")}
+                    </span>
+                  ) : null}
                   {prepPct > 0 ? (
                     <span
                       aria-hidden
