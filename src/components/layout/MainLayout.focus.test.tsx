@@ -50,7 +50,7 @@ function renderAt(pathname: string) {
   )
 }
 
-describe("MainLayout focus layout", () => {
+describe("MainLayout on cadastro routes", () => {
   beforeEach(() => {
     resetCurrentUserCacheForTests()
     apiGet.mockReset()
@@ -61,21 +61,20 @@ describe("MainLayout focus layout", () => {
     "/catalogo/produtos/cadastro",
     "/catalogo/produtos/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa/cadastro",
     "/configuracoes/recursos/bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb/cadastro",
-  ])("hides the sidebar and keeps the brand, breadcrumb and account menu on %s", async (path) => {
+  ])("keeps the sidebar and shows the wizard breadcrumb in the top bar on %s", async (path) => {
     const { container } = renderAt(path)
     await screen.findByRole("heading", { level: 1 })
-    expect(container.querySelector('[data-shell-part="sidebar"]')).toBeNull()
-    expect(container.querySelector('[data-shell-variant="focus"]')).not.toBeNull()
-    const header = screen.getAllByRole("banner")[0]
-    expect(within(header).getByText("Rolvix")).toBeInTheDocument()
+    expect(container.querySelector('[data-shell-part="sidebar"]')).not.toBeNull()
+    expect(container.querySelector('[data-shell-variant="focus"]')).toBeNull()
+    const header = container.querySelector('[data-shell-part="header"]') as HTMLElement
     expect(within(header).getByRole("navigation")).toBeInTheDocument()
-    expect(within(header).getByRole("button", { name: "Abrir menu da conta" })).toBeInTheDocument()
   })
 
   it("links the Produtos crumb back to the list on the creation route", async () => {
     renderAt("/catalogo/produtos/cadastro")
     await screen.findByRole("heading", { name: "Novo" })
-    const nav = within(screen.getAllByRole("banner")[0]).getByRole("navigation")
+    const header = document.querySelector('[data-shell-part="header"]') as HTMLElement
+    const nav = within(header).getByRole("navigation")
     expect(within(nav).getByRole("link", { name: "Produtos" })).toHaveAttribute("href", "/catalogo/produtos")
     expect(within(nav).getByText("Novo produto")).toHaveAttribute("aria-current", "page")
   })

@@ -141,7 +141,7 @@ function MainLayoutShell({ children }: { children?: ReactNode }) {
     t("account.userFallback"),
   )
   const pageTitle = t(getPageTitleKey(location.pathname))
-  const focus = isCadastroFocusPath(location.pathname)
+  const cadastro = isCadastroFocusPath(location.pathname)
   const initials = getUserInitials(currentUser?.fullName, user?.email)
   const onPlatformPanel = isPlatformAdmin && location.pathname.startsWith("/admin")
   // The first tenant role name labels the user card; the platform panel has no tenant role.
@@ -203,10 +203,8 @@ function MainLayoutShell({ children }: { children?: ReactNode }) {
       enlargeHeaderTargets
       userEmail={currentUser?.email ?? user?.email ?? undefined}
       userRoleLabel={roleLabel}
-      focus={focus}
-      workspaceName={workspaceName}
       headerStart={
-        focus ? <CadastroFocusCrumbs /> : <Breadcrumb
+        cadastro ? <CadastroFocusCrumbs /> : <Breadcrumb
           variant="header"
           fallback={
             <p className="hidden min-w-0 truncate text-sm font-medium text-foreground lg:block">
@@ -257,7 +255,7 @@ function MainLayoutShell({ children }: { children?: ReactNode }) {
     >
       <WorkOrderSyncHost />
       {/* Below lg the breadcrumb stays in the content (with its narrow back-arrow mode). */}
-      {focus ? null : (
+      {cadastro ? null : (
         <div data-shell-part="content-breadcrumb" className="lg:hidden">
           <Breadcrumb />
         </div>
