@@ -6211,6 +6211,65 @@
     "taxonomyLimit": "The limit is 20 categories and 20 tags.",
     "resourceTaxonomyHelp": "You can create shared categories and tags here, but they are not assigned to this resource. The operational resource type is configured separately.",
     "taxonomyNoRead": "You need permission to view categories and tags.",
+    "progressCaptionProduct": "Product setup",
+    "progressCaptionResource": "Resource setup",
+    "stage": "Step {{count}} of {{total}}",
+    "optional": "Optional",
+    "doneLabel": "done",
+    "timeTitle": "At your own pace",
+    "timeBody": "The product only becomes available to customers after it is published.",
+    "productDescription": "Set up your product and get everything ready to receive bookings.",
+    "saveAndContinue": "Save and continue",
+    "saveAndExit": "Save and exit",
+    "requiredNote": "* Required field",
+    "crumbCatalog": "Catalog",
+    "product": {
+      "nameLabel": "Product name *",
+      "nameHelp": "This name is shown in the catalog and in bookings.",
+      "codeLabel": "Internal code",
+      "codeHelp": "Use a unique code to find the product in your operation.",
+      "descriptionLabel": "Description",
+      "descriptionPlaceholder": "Describe what is included, the highlights and the main information for the customer.",
+      "descriptionHelp": "Optional. You can add more details later.",
+      "pricingInfo": "Prices and billing conditions are set in the Pricing step."
+    },
+    "productSteps": {
+      "dados": {
+        "title": "Product details",
+        "subtitle": "Name and identification",
+        "description": "Start with the information that identifies your product."
+      },
+      "categorias": {
+        "title": "Categories and tags",
+        "subtitle": "Catalog organization",
+        "description": "Make search easier and keep your catalog organized."
+      },
+      "agenda": {
+        "title": "Schedule",
+        "subtitle": "Availability and hours",
+        "description": "Choose which resources serve this product and for how long."
+      },
+      "fila": {
+        "title": "Queue",
+        "subtitle": "Service order",
+        "description": "See how the queue of the linked resources works."
+      },
+      "regras": {
+        "title": "Rules",
+        "subtitle": "Terms of use",
+        "description": "Choose who can see and buy this product."
+      },
+      "precos": {
+        "title": "Pricing",
+        "subtitle": "Values and billing",
+        "description": "Set the price and billing conditions."
+      },
+      "publicacao": {
+        "title": "Publishing",
+        "subtitle": "Review and visibility",
+        "description": "Review what is missing and publish to customers."
+      }
+    },
     "categoriesHelp": "Group similar products to make browsing easier.",
     "categorySearchPlaceholder": "Search or select categories",
     "categorySearchLabel": "Search categories",

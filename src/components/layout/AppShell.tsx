@@ -72,8 +72,17 @@ export type AppShellProps = {
   constrainContent?: boolean
   headerActions?: ReactNode
   banner?: ReactNode
+  /**
+   * Focus layout (staff only, cadastro wizards): no sidebar. Compact top bar with the brand mark,
+   * `headerStart` (breadcrumb) and, on the right, the workspace name plus the account menu.
+   */
+  focus?: boolean
+  /** Focus layout: workspace name shown beside the avatar. */
+  workspaceName?: string
   children: ReactNode
 }
+
+const FOCUS_SHELL_CONTEXT = { breadcrumbInHeader: true }
 
 const SIDEBAR_COLLAPSED_STORAGE_KEY = "rolvix.shell.sidebarCollapsed"
 
@@ -106,6 +115,8 @@ export function AppShell({
   constrainContent = false,
   headerActions,
   banner = null,
+  focus = false,
+  workspaceName,
   children,
 }: AppShellProps) {
   const { t } = useTranslation()
@@ -157,7 +168,7 @@ export function AppShell({
     [variant, headerStart],
   )
 
-  function renderAccount(opts: { collapsed?: boolean; touchTargets?: boolean }) {
+  function renderAccount(opts: { collapsed?: boolean; touchTargets?: boolean; side?: "top" | "bottom" }) {
     return (
       <SidebarAccount
         userLabel={userLabel}
@@ -171,7 +182,37 @@ export function AppShell({
         }}
         collapsed={opts.collapsed}
         touchTargets={opts.touchTargets}
+        side={opts.side}
       />
+    )
+  }
+
+  if (focus && variant === "staff") {
+    const brandName = t("app.name")
+    return (
+      <ShellContext.Provider value={FOCUS_SHELL_CONTEXT}>
+        <div data-shell-part="root" data-shell-variant="focus" className="flex min-h-screen max-w-full bg-background text-foreground">
+          <div data-shell-part="body" className="flex min-w-0 flex-1 flex-col">
+            <header data-shell-part="header" className="sticky top-0 z-20 flex h-14 min-w-0 max-w-full items-center justify-between gap-3 border-b border-border bg-background px-4 lg:px-8">
+              <div className="flex min-w-0 flex-1 items-center gap-4 lg:gap-12">
+                <span className="flex shrink-0 items-center gap-2.5">
+                  <span aria-hidden="true" className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary text-sm font-semibold text-primary-foreground">{brandName.charAt(0).toUpperCase()}</span>
+                  <span className="text-base font-semibold tracking-tight">{brandName}</span>
+                </span>
+                <div data-shell-part="header-start" className="hidden min-w-0 sm:block">{headerStart}</div>
+              </div>
+              <div className="flex shrink-0 items-center gap-2">
+                {workspaceName ? <span data-shell-part="workspace-name" className="hidden max-w-48 truncate text-sm text-muted-foreground sm:block">{workspaceName}</span> : null}
+                {renderAccount({ collapsed: true, touchTargets: true, side: "bottom" })}
+              </div>
+            </header>
+            {banner}
+            <main data-shell-part="main" className="min-w-0 max-w-full flex-1 overflow-x-auto bg-muted/30 p-4 md:p-6 lg:px-8 lg:py-10">
+              {children}
+            </main>
+          </div>
+        </div>
+      </ShellContext.Provider>
     )
   }
 

@@ -44,3 +44,13 @@ export function useCadastroStep() {
   }) }
 }
 
+
+/** Cadastro pages rendered inside the shell (product create/edit, resource edit) use the focus layout: no sidebar. */
+export function isCadastroFocusPath(pathname: string): boolean {
+  const path = pathname.replace(/\/+$/, "")
+  return /^\/catalogo\/produtos\/(?:[^/]+\/)?cadastro$/.test(path) || /^\/configuracoes\/recursos\/[^/]+\/cadastro$/.test(path)
+}
+
+export function cadastroArea(pathname: string): CadastroArea {
+  return pathname.startsWith("/catalogo/produtos") ? "produtos" : "recursos"
+}

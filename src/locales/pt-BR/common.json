@@ -6211,6 +6211,65 @@
     "taxonomyLimit": "O limite é 20 categorias e 20 tags.",
     "resourceTaxonomyHelp": "Categorias e tags compartilhadas podem ser criadas aqui, mas não são vinculadas a este recurso. O tipo operacional do recurso é configurado separadamente.",
     "taxonomyNoRead": "Você precisa de permissão para consultar categorias e tags.",
+    "progressCaptionProduct": "Configuração do produto",
+    "progressCaptionResource": "Configuração do recurso",
+    "stage": "Etapa {{count}} de {{total}}",
+    "optional": "Opcional",
+    "doneLabel": "concluída",
+    "timeTitle": "No seu tempo",
+    "timeBody": "O produto só ficará disponível aos clientes depois da publicação.",
+    "productDescription": "Configure seu produto e deixe tudo pronto para receber reservas.",
+    "saveAndContinue": "Salvar e continuar",
+    "saveAndExit": "Salvar e sair",
+    "requiredNote": "* Campo obrigatório",
+    "crumbCatalog": "Catálogo",
+    "product": {
+      "nameLabel": "Nome do produto *",
+      "nameHelp": "Este nome será exibido no catálogo e nas reservas.",
+      "codeLabel": "Código interno",
+      "codeHelp": "Use um código único para localizar o produto na sua operação.",
+      "descriptionLabel": "Descrição",
+      "descriptionPlaceholder": "Descreva o que está incluído, os diferenciais e as principais informações para o cliente.",
+      "descriptionHelp": "Opcional. Você pode complementar essas informações depois.",
+      "pricingInfo": "Valores e condições de cobrança serão definidos na etapa Preços."
+    },
+    "productSteps": {
+      "dados": {
+        "title": "Dados do produto",
+        "subtitle": "Nome e identificação",
+        "description": "Comece pelas informações que identificam seu produto."
+      },
+      "categorias": {
+        "title": "Categorias e tags",
+        "subtitle": "Organização do catálogo",
+        "description": "Facilite a busca e mantenha seu catálogo organizado."
+      },
+      "agenda": {
+        "title": "Agenda",
+        "subtitle": "Disponibilidade e horários",
+        "description": "Defina quais recursos atendem este produto e por quanto tempo."
+      },
+      "fila": {
+        "title": "Fila",
+        "subtitle": "Ordem de atendimento",
+        "description": "Veja como funciona a fila dos recursos vinculados."
+      },
+      "regras": {
+        "title": "Regras",
+        "subtitle": "Condições de uso",
+        "description": "Escolha quem pode ver e comprar este produto."
+      },
+      "precos": {
+        "title": "Preços",
+        "subtitle": "Valores e cobrança",
+        "description": "Defina o valor e as condições de cobrança."
+      },
+      "publicacao": {
+        "title": "Publicação",
+        "subtitle": "Revisão e visibilidade",
+        "description": "Revise o que falta e publique para os clientes."
+      }
+    },
     "categoriesHelp": "Agrupe produtos semelhantes para facilitar a navegação.",
     "categorySearchPlaceholder": "Buscar ou selecionar categorias",
     "categorySearchLabel": "Buscar categorias",
