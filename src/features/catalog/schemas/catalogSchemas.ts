@@ -81,6 +81,8 @@ export const catalogProductSchema = z.object({
   price: z.number().nullable(),
   currency: z.string(),
   isActive: z.boolean(),
+  /** Whether Agenda and Fila apply to this product. Absent on older responses: true. */
+  usesSchedule: z.boolean().optional().default(true),
   createdAt: z.string(),
   files: z.array(catalogProductFileSchema),
   hasFiles: z.boolean().optional(),
@@ -112,6 +114,7 @@ export const catalogProductFormSchema = z.object({
     categoryIds: z.array(z.string().uuid()).max(20),
     tagIds: z.array(z.string().uuid()).max(20),
   }).optional(),
+  usesSchedule: z.boolean().optional(),
 })
 
 export type CatalogProductFormValues = z.infer<typeof catalogProductFormSchema>

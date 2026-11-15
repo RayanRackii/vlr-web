@@ -70,6 +70,7 @@ const PRODUCT: CatalogProduct = {
   price: 10.5,
   currency: "BRL",
   isActive: true,
+  usesSchedule: true,
   createdAt: "2026-10-14T00:00:00.000Z",
   files: [],
       visibility: "Public",
@@ -91,10 +92,10 @@ describe("CatalogProductsPage validity gate", () => {
     getTaxonomyOptionsMock.mockResolvedValue({ categories: [], tags: [] })
   })
 
-  function renderPage(initialEntry = "/") {
+  function renderPage(initialEntry = "/", activeModules?: string[]) {
     return render(
       <MemoryRouter initialEntries={[initialEntry]}>
-        <TestPermissionProvider permissions={["catalog.products.manage"]}>
+        <TestPermissionProvider permissions={["catalog.products.manage"]} activeModules={activeModules}>
           <CatalogProductsPage />
           <LocationProbe />
         </TestPermissionProvider>
@@ -320,6 +321,19 @@ describe("CatalogProductsPage validity gate", () => {
     expect(proceed.getAttribute("href")).toContain("/catalogo/produtos/inc/cadastro")
     await user.click(screen.getByRole("menuitem", { name: i18n.t("catalog.products.activate") }))
     await waitFor(() => expect(activateCatalogProduct).toHaveBeenCalledWith("inc"))
+  })
+
+  it("does not call a product without schedule incomplete for lacking resources, but does for a schedulable one", async () => {
+    const withSchedule = { ...PRODUCT, id: "s1", name: "Com agenda" }
+    const without = { ...PRODUCT, id: "s2", name: "Sem agenda", usesSchedule: false }
+    listProductsMock.mockResolvedValue([withSchedule, without])
+    renderPage("/", ["rentals"])
+    const table = await screen.findByRole("table")
+    const withRow = (await within(table).findByText("Com agenda")).closest("tr")!
+    const withoutRow = within(table).getByText("Sem agenda").closest("tr")!
+    await waitFor(() => expect(within(withRow).getByText(i18n.t("catalog.products.statusIncomplete", { count: 2 }))).toBeInTheDocument())
+    expect(within(withoutRow).queryByText(i18n.t("catalog.products.statusIncomplete", { count: 2 }))).not.toBeInTheDocument()
+    expect(within(withoutRow).queryByText(/^(Falta|Faltam)/)).not.toBeInTheDocument()
   })
 
   it("links Novo produto to the full page", async () => {

@@ -50,6 +50,7 @@ import { CatalogProductAccessSection, CatalogProductAccessHistoryView, type Cata
 import { CatalogProductImageGallery } from "@/features/catalog/components/CatalogProductImageGallery"
 import { catalogFileRejection } from "@/features/catalog/lib/catalogFileRules"
 import { selectCatalogProductImages } from "@/features/catalog/lib/selectCatalogProductImages"
+import { ProductUsesScheduleField } from "@/features/catalog/components/ProductUsesScheduleField"
 import { toCatalogProductWriteBody } from "@/features/catalog/lib/createCatalogProductWithFiles"
 import {
   activateCatalogProduct,
@@ -74,6 +75,7 @@ function productToForm(product: CatalogProduct): CatalogProductFormValues {
     description: product.description ?? "",
     price: product.price == null ? "" : String(product.price),
     currency: product.currency,
+    usesSchedule: product.usesSchedule,
   }
 }
 
@@ -277,6 +279,7 @@ export function CatalogProductEditorPage() {
       }
       toast.success(t("catalog.products.toastUpdated"))
       await reload()
+      void wizard.reload()
     } catch (error) {
       toast.error(
         error instanceof Error ? error.message : t("apiErrors.saveCatalogProduct"),
@@ -399,7 +402,7 @@ export function CatalogProductEditorPage() {
   }
 
   const setup = wizard.model ? productSetupFromModel(wizard.model, wizard.rentalsActive) : null
-  const showAgenda = wizard.rentalsActive || (setup?.linkedAssetIds.length ?? 0) > 0
+  const showAgenda = product.usesSchedule && (wizard.rentalsActive || (setup?.linkedAssetIds.length ?? 0) > 0)
   const missingCount = setup?.missingCount ?? 0
   const formDirty = form.formState.isDirty
   const isFormValid = catalogProductFormSchema.safeParse(watchedValues).success
@@ -433,6 +436,17 @@ export function CatalogProductEditorPage() {
             </FormItem>
           )}
         />
+        {wizard.rentalsActive ? (
+          <FormField
+            control={form.control}
+            name="usesSchedule"
+            render={({ field }) => (
+              <FormItem>
+                <ProductUsesScheduleField value={field.value ?? true} onChange={(next) => field.onChange(next)} disabled={fieldsLocked} />
+              </FormItem>
+            )}
+          />
+        ) : null}
         <div className="grid gap-3 sm:grid-cols-2">
           <FormField
             control={form.control}

@@ -31,6 +31,7 @@ beforeEach(() => {
     price: null,
     currency: "BRL",
     isActive: true,
+    usesSchedule: true,
     createdAt: "2026-10-14T00:00:00.000Z",
     files: [],
     visibility: "Public",
@@ -39,9 +40,9 @@ beforeEach(() => {
   })
 })
 
-function renderCreate() {
+function renderCreate(activeModules?: string[]) {
   return render(<MemoryRouter initialEntries={["/catalogo/produtos/cadastro"]}>
-    <TestPermissionProvider permissions={["catalog.products.manage"]}>
+    <TestPermissionProvider permissions={["catalog.products.manage"]} activeModules={activeModules}>
       <Routes>
         <Route path="/catalogo/produtos/cadastro" element={<ProductCadastroCreatePage />} />
         <Route path="/catalogo/produtos/:id/cadastro" element={<h1>Cadastro salvo</h1>} />
@@ -77,6 +78,28 @@ it("sends the product as Inactive with no price and the default currency", async
   const body = createProductMock.mock.calls[0][0]
   expect(body).toMatchObject({ name: "Raquete", description: "Para quadra", price: null, currency: "BRL", status: "Inactive" })
   expect(body.code).toBeTruthy()
+})
+
+it("asks whether the product uses the schedule on rentals tenants (default Sim) and sends the choice", async () => {
+  const user = userEvent.setup()
+  renderCreate(["rentals"])
+  expect(screen.getByRole("radio", { name: i18n.t("cadastro.product.usesScheduleYes") })).toHaveAttribute("aria-checked", "true")
+  await user.type(nameField(), "Raquete")
+  await user.click(screen.getByRole("radio", { name: i18n.t("cadastro.product.usesScheduleNo") }))
+  await user.click(screen.getByRole("button", { name: "Salvar e continuar" }))
+  await screen.findByRole("heading", { name: "Cadastro salvo" })
+  expect(createProductMock.mock.calls[0][0]).toMatchObject({ usesSchedule: false })
+  expect(screen.getByTestId("location")).toHaveTextContent("passo=categorias")
+})
+
+it("sends usesSchedule true by default and hides the question without the rentals module", async () => {
+  const user = userEvent.setup()
+  renderCreate()
+  expect(screen.queryByRole("radio", { name: i18n.t("cadastro.product.usesScheduleNo") })).not.toBeInTheDocument()
+  await user.type(nameField(), "Raquete")
+  await user.click(screen.getByRole("button", { name: "Salvar e continuar" }))
+  await screen.findByRole("heading", { name: "Cadastro salvo" })
+  expect(createProductMock.mock.calls[0][0]).toMatchObject({ usesSchedule: true })
 })
 
 it("Salvar e sair creates the draft and goes to the product list", async () => {

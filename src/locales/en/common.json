@@ -6216,6 +6216,7 @@
     "stage": "Step {{count}} of {{total}}",
     "optional": "Optional",
     "doneLabel": "done",
+    "notApplicable": "Not applicable",
     "timeTitle": "At your own pace",
     "timeBody": "The product only becomes available to customers after it is published.",
     "productDescription": "Set up your product and get everything ready to receive bookings.",
@@ -6225,6 +6226,10 @@
     "crumbCatalog": "Catalog",
     "product": {
       "nameLabel": "Product name *",
+      "usesScheduleLabel": "Does this product use the schedule?",
+      "usesScheduleYes": "Yes, it books a schedule resource",
+      "usesScheduleNo": "No, it is sold without a time slot",
+      "usesScheduleHelp": "Choose \"No\" for products sold without a time slot: Schedule and Queue are no longer needed.",
       "nameHelp": "This name is shown in the catalog and in bookings.",
       "codeLabel": "Internal code",
       "codeHelp": "Use a unique code to find the product in your operation.",

@@ -1,3 +1,4 @@
+import type { CadastroStep } from "@/features/assistant/useCadastroStep"
 import { itemStatus, productSetupSteps, type ItemStatus, type SetupStepId } from "@/features/assistant/itemStatus"
 import { audienceBlocksSale, catalogMenuIsActive } from "@/features/catalog/components/productWizard/sellableChecklist"
 import type { ProductWizardModel } from "@/features/catalog/components/productWizard/useProductWizard"
@@ -8,6 +9,16 @@ export type ProductSetup = {
   firstMissing: SetupStepId | undefined
   missingCount: number
   linkedAssetIds: string[]
+}
+
+/** Agenda applies only with the rentals module and a product that uses the schedule; then it needs a linked resource. */
+export function productAgendaReady(rentalsActive: boolean, usesSchedule: boolean, linkedAssetCount: number): boolean {
+  return !rentalsActive || !usesSchedule || linkedAssetCount > 0
+}
+
+/** Cadastro steps that do not apply: Agenda and Fila for a product that does not use the schedule (rentals tenants only). */
+export function productNotApplicableSteps(usesSchedule: boolean, rentalsActive: boolean): CadastroStep[] {
+  return rentalsActive && !usesSchedule ? ["agenda", "fila"] : []
 }
 
 /** Read-only setup summary shared by the cadastro wizard and the product editor. */
@@ -21,7 +32,7 @@ export function productSetupFromModel(model: ProductWizardModel, rentalsActive: 
     isActive: product.isActive,
     price: product.price,
     audienceReady,
-    agendaReady: !rentalsActive || linkedAssetIds.length > 0,
+    agendaReady: productAgendaReady(rentalsActive, product.usesSchedule, linkedAssetIds.length),
     menuPublished: model.menuItems === null ? null : catalogMenuIsActive(model.menuItems),
   })
   const status = itemStatus(product.isActive && model.menuItems !== null && catalogMenuIsActive(model.menuItems), steps)

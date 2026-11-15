@@ -20,6 +20,7 @@ export type CatalogProductWriteBody = {
   price: number | null
   currency: string
   taxonomy?: { categoryIds: string[]; tagIds: string[] }
+  usesSchedule?: boolean
 }
 
 export type SaveCatalogProductCreateLock = {
@@ -62,6 +63,7 @@ export function toCatalogProductWriteBody(
     price,
     currency: values.currency,
     ...(values.taxonomy ? { taxonomy: values.taxonomy } : {}),
+    ...(values.usesSchedule === undefined ? {} : { usesSchedule: values.usesSchedule }),
   }
 }
 

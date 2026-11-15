@@ -44,6 +44,7 @@ import { catalogMenuIsActive } from "@/features/catalog/components/productWizard
 import { productWizardPath } from "@/features/catalog/components/productWizard/wizardSteps"
 import { productEditorPath } from "@/features/catalog/lib/productEditorPath"
 import { productItemStatus } from "@/features/assistant/itemStatus"
+import { productAgendaReady } from "@/features/catalog/lib/productSetupStatus"
 import { CatalogEmptyState, CatalogHeading } from "@/features/catalog/components/StaffCatalogChrome"
 import {
   activateCatalogProduct,
@@ -504,7 +505,7 @@ function productState(
     isActive: product.isActive,
     price: product.price,
     audienceReady: product.visibility !== "Restricted",
-    agendaReady: !setup.rentals || setup.linked[product.id] === true,
+    agendaReady: productAgendaReady(setup.rentals, product.usesSchedule, setup.linked[product.id] === true ? 1 : 0),
     menuPublished: setup.menuPublished,
   })
   if (status.kind === "missing") return { kind: "incomplete", missing: status.count }

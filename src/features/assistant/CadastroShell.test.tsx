@@ -26,9 +26,9 @@ function SubmittingStep({ submit }: { submit: StepSubmit }) {
   </div>
 }
 
-function Page({ submit, done, canPublish = true, dirty = false }: { submit?: StepSubmit; done?: CadastroStep[]; canPublish?: boolean; dirty?: boolean }) {
+function Page({ submit, done, canPublish = true, dirty = false, notApplicable }: { submit?: StepSubmit; done?: CadastroStep[]; canPublish?: boolean; dirty?: boolean; notApplicable?: CadastroStep[] }) {
   const { step, go } = useCadastroStep()
-  return <CadastroShell kind="product" title="Diária" status={{ kind: "draft" }} step={step} go={go} dirty={dirty} busy={false} done={done} optional={["categorias"]} canPublish={canPublish} onPublish={onPublish} onBack={onBack}>
+  return <CadastroShell kind="product" title="Diária" status={{ kind: "draft" }} step={step} go={go} dirty={dirty} busy={false} done={done} notApplicable={notApplicable} optional={["categorias"]} canPublish={canPublish} onPublish={onPublish} onBack={onBack}>
     {submit ? <SubmittingStep key={step} submit={submit} /> : <p>sem passo</p>}
   </CadastroShell>
 }
@@ -183,4 +183,29 @@ it("asks before Voltar discards a dirty step, but saving then continuing never a
   await user.click(screen.getByRole("button", { name: "Salvar e continuar" }))
   await waitFor(() => expect(screen.getByTestId("location")).toHaveTextContent("/c?passo=agenda"))
   expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument()
+})
+
+it("shows not-applicable steps muted and not clickable, counted as done, with a smaller total", () => {
+  setup({ notApplicable: ["agenda", "fila"] }, "/c?passo=regras")
+  const nav = screen.getByRole("navigation", { name: "Etapas do cadastro" })
+  const agenda = within(nav).getByRole("group", { name: "Agenda, Não se aplica" })
+  expect(agenda).toHaveAttribute("aria-disabled", "true")
+  expect(within(nav).queryByRole("button", { name: /^Agenda/ })).not.toBeInTheDocument()
+  expect(within(nav).queryByRole("button", { name: /^Fila/ })).not.toBeInTheDocument()
+  expect(within(nav).getAllByText("Não se aplica")).toHaveLength(2)
+  expect(screen.getByText("Etapa 3 de 5")).toBeInTheDocument()
+})
+
+it("Salvar e continuar and Voltar skip the steps that do not apply", async () => {
+  const user = userEvent.setup()
+  setup({ notApplicable: ["agenda", "fila"] }, "/c?passo=categorias")
+  await user.click(screen.getByRole("button", { name: "Salvar e continuar" }))
+  await waitFor(() => expect(screen.getByTestId("location")).toHaveTextContent("/c?passo=regras"))
+  await user.click(screen.getByRole("button", { name: "Voltar" }))
+  await waitFor(() => expect(screen.getByTestId("location")).toHaveTextContent("/c?passo=categorias"))
+})
+
+it("centres the content in a 1120px container", () => {
+  setup({}, "/c")
+  expect(screen.getByTestId("cadastro-page")).toHaveClass("cadastro-page", "mx-auto", "w-full", "max-w-[1120px]")
 })

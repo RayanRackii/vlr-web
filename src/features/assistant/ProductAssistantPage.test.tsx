@@ -34,8 +34,9 @@ beforeEach(() => {
     wizardPath: `/catalogo/produtos/${productId}/assistente`,
     reload: vi.fn(),
     publishMenu: vi.fn(),
+    modelRef: { current: null },
     model: {
-      product: { id: productId, name: "Diária", isActive: true, price: null, visibility: "Public" },
+      product: { id: productId, name: "Diária", isActive: true, usesSchedule: true, price: null, visibility: "Public" },
       access: { visibility: "Public", customerIds: [], groupIds: [] },
       groups: [],
       menuItems: [],
@@ -112,8 +113,9 @@ function mockReadyProduct(overrides: { isActive: boolean; menuItems: unknown[]; 
     wizardPath: `/catalogo/produtos/${productId}/assistente`,
     reload,
     publishMenu,
+    modelRef: { current: null },
     model: {
-      product: { id: productId, name: "Diária", isActive: overrides.isActive, price: 10, visibility: "Public", taxonomy: overrides.taxonomy },
+      product: { id: productId, name: "Diária", isActive: overrides.isActive, usesSchedule: true, price: 10, visibility: "Public", taxonomy: overrides.taxonomy },
       access: { visibility: "Public", customerIds: [], groupIds: [] },
       groups: [],
       menuItems: overrides.menuItems,
@@ -204,4 +206,25 @@ it("keeps unsaved offer changes in Dados and does not block the footer", async (
   expect(screen.getByRole("textbox", { name: "Nome" })).toHaveValue("Diária nova")
   expect(screen.getByRole("button", { name: "Salvar e continuar" })).toBeEnabled()
   expect(screen.getByRole("button", { name: "Categorias e tags" })).toBeEnabled()
+})
+
+it("shows Agenda and Fila as not applicable for a product without schedule and skips them", async () => {
+  vi.mocked(useProductWizard).mockReturnValue({
+    loading: false, error: null, busy: false, readOnly: false, rentalsActive: true, canManage: true, canSearchCustomers: false,
+    wizardPath: "", reload: vi.fn(), publishMenu: vi.fn(), modelRef: { current: null },
+    model: {
+      product: { id: productId, name: "Diária", isActive: false, usesSchedule: false, price: 10, visibility: "Public" },
+      access: { visibility: "Public", customerIds: [], groupIds: [] }, groups: [], menuItems: [],
+      requirements: [], resourceCapability: "ready",
+    },
+  } as never)
+  const user = userEvent.setup()
+  renderCadastro("?passo=categorias")
+  const nav = screen.getByRole("navigation", { name: "Etapas do cadastro" })
+  expect(within(nav).getByRole("group", { name: "Agenda, Não se aplica" })).toBeInTheDocument()
+  expect(within(nav).getByRole("group", { name: "Fila, Não se aplica" })).toBeInTheDocument()
+  expect(within(nav).queryByRole("button", { name: /^Agenda/ })).not.toBeInTheDocument()
+  expect(screen.getByText("Etapa 2 de 5")).toBeInTheDocument()
+  await user.click(screen.getByRole("button", { name: "Salvar e continuar" }))
+  await waitFor(() => expect(screen.getByRole("button", { name: /^Regras/ })).toHaveAttribute("aria-current", "step"))
 })

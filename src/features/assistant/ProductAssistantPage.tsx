@@ -3,7 +3,7 @@ import { useBreadcrumbTitle } from "@/components/layout/useBreadcrumbTitle"
 import { toast } from "sonner"
 import { activateCatalogProduct } from "@/features/catalog/services/catalogService"
 import type { CadastroStep } from "./useCadastroStep"
-import { useCadastroStep } from "./useCadastroStep"
+import { cadastroSteps, useCadastroStep } from "./useCadastroStep"
 import { CadastroTaxonomyStep } from "./CadastroTaxonomyStep"
 import { useEffect, useState } from "react"
 import { useOptionalPermissions } from "@/features/users/permissions/PermissionContext"
@@ -20,7 +20,7 @@ import { ProductWizardAccessStep } from "@/features/catalog/components/productWi
 import { ProductWizardOfferStep } from "@/features/catalog/components/productWizard/ProductWizardOfferStep"
 import { useProductWizard } from "@/features/catalog/components/productWizard/useProductWizard"
 import { catalogMenuIsActive } from "@/features/catalog/components/productWizard/sellableChecklist"
-import { productSetupFromModel } from "@/features/catalog/lib/productSetupStatus"
+import { productNotApplicableSteps, productSetupFromModel } from "@/features/catalog/lib/productSetupStatus"
 import { listAdminRentalAssets, type AdminRentalAsset } from "@/features/rentals/services/scheduleService"
 
 /** Editing an existing product lives in the product editor; this page is only the cadastro wizard. */
@@ -64,6 +64,17 @@ function ProductCadastroPage() {
   const { steps, status, firstMissing, linkedAssetIds: linkedIds } = productSetupFromModel(model, wizard.rentalsActive)
   const linkedAssets = assets.filter((asset) => linkedIds.includes(asset.id))
   const missingStep: SetupStepId | undefined = firstMissing
+  const notApplicable = productNotApplicableSteps(product.usesSchedule, wizard.rentalsActive)
+
+  /** Moves to a step, skipping the ones that do not apply under the freshly saved product (not the render's stale one). */
+  function goSkipping(target: CadastroStep) {
+    const latest = wizard.modelRef.current?.product.usesSchedule ?? product.usesSchedule
+    const skipped = productNotApplicableSteps(latest, wizard.rentalsActive)
+    const direction = cadastroSteps.indexOf(target) >= cadastroSteps.indexOf(cadastroStep) ? 1 : -1
+    let index = cadastroSteps.indexOf(target)
+    while (skipped.includes(cadastroSteps[index]) && index + direction >= 0 && index + direction < cadastroSteps.length) index += direction
+    go(cadastroSteps[index])
+  }
 
   const taxonomy = product.taxonomy
   const done: CadastroStep[] = [
@@ -93,7 +104,7 @@ function ProductCadastroPage() {
   const body = (
       <div className="space-y-4">
         {cadastroStep === "dados" || cadastroStep === "precos" ? (
-          <ProductWizardOfferStep product={product} mode={cadastroStep === "precos" ? "precos" : "dados"} readOnly={!wizard.canManage} onDirtyChange={setStepDirty} onSavingChange={setStepSaving} onSaved={() => wizard.reload()} />
+          <ProductWizardOfferStep product={product} mode={cadastroStep === "precos" ? "precos" : "dados"} showUsesSchedule={wizard.rentalsActive} readOnly={!wizard.canManage} onDirtyChange={setStepDirty} onSavingChange={setStepSaving} onSaved={() => wizard.reload()} />
         ) : null}
         {cadastroStep === "agenda" ? (
           <>
@@ -126,7 +137,7 @@ function ProductCadastroPage() {
       </div>
   )
 
-  return <CadastroShell kind="product" title={product.name} status={status} step={cadastroStep} go={go} dirty={stepDirty} busy={wizard.busy || stepSaving} done={done} optional={["categorias"]} canPublish={missingStep == null && wizard.canManage} onPublish={publish} onBack={() => navigate("/catalogo/produtos")}>
+  return <CadastroShell kind="product" title={product.name} status={status} step={cadastroStep} go={goSkipping} notApplicable={notApplicable} dirty={stepDirty} busy={wizard.busy || stepSaving} done={done} optional={["categorias"]} canPublish={missingStep == null && wizard.canManage} onPublish={publish} onBack={() => navigate("/catalogo/produtos")}>
     {cadastroStep === "categorias" ? <CadastroTaxonomyStep onDirtyChange={setStepDirty} onSavingChange={setStepSaving} product={product} canAssign={wizard.canManage} onSaved={() => wizard.reload()} /> : body}
   </CadastroShell>
 }
