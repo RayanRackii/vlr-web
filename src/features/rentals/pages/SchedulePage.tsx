@@ -149,6 +149,7 @@ function AdminSchedulePage() {
   const [date, setDate] = useState(() => todayIsoDate(timeZoneId))
   const [kinds, setKinds] = useState<OccupancyKind[]>([])
   const [templates, setTemplates] = useState<ScheduleTemplate[]>([])
+  const [allTemplates, setAllTemplates] = useState<ScheduleTemplate[] | null>(null)
   const [scheduleTemplatesState, setScheduleTemplatesState] = useState<{
     key: string
     list: ScheduleTemplate[]
@@ -424,7 +425,16 @@ function AdminSchedulePage() {
     templatesCacheRef.current.set(key, list)
   }, [selectedRentalAssetIds, weekday])
 
+  const allAssetIdsKey = assets.map((asset) => asset.id).join(",")
+
+  const refreshAllTemplates = useCallback(async () => {
+    if (!allAssetIdsKey) return
+    const list = await listScheduleTemplates(undefined, allAssetIdsKey.split(","), undefined)
+    setAllTemplates(list.filter((template) => template.isActive))
+  }, [allAssetIdsKey])
+
   const refreshScheduleTemplates = useCallback(async () => {
+    await refreshAllTemplates()
     if (selectedRentalAssetIds.length === 0) return
     const list = await listScheduleTemplates(
       undefined,
@@ -435,7 +445,22 @@ function AdminSchedulePage() {
       key: selectedRentalAssetIds.join(","),
       list: list.filter((template) => template.isActive),
     })
-  }, [selectedRentalAssetIds])
+  }, [selectedRentalAssetIds, refreshAllTemplates])
+
+  useEffect(() => {
+    if (!allAssetIdsKey) return
+    let cancelled = false
+    void listScheduleTemplates(undefined, allAssetIdsKey.split(","), undefined)
+      .then((list) => {
+        if (!cancelled) setAllTemplates(list.filter((template) => template.isActive))
+      })
+      .catch(() => {
+        // The hours editor still works on the selected resources without the grouping.
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [allAssetIdsKey])
 
   useEffect(() => {
     if (selectedRentalAssetIds.length === 0 || !date) {
@@ -1017,6 +1042,7 @@ function AdminSchedulePage() {
             weekday={weekday}
             templates={templates}
             scheduleTemplates={scheduleTemplates}
+            allScheduleTemplates={allTemplates}
             loadingScheduleTemplates={loadingScheduleTemplates}
             kinds={kinds}
             openKindId={openKindId}

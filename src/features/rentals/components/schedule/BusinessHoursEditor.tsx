@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import { useTranslation } from "react-i18next"
 
 import { SaveBar } from "@/components/layout/SaveBar"
@@ -22,6 +22,8 @@ import {
   buildBusinessHoursPlan,
   deriveBusinessHours,
   draftProblem,
+  groupAssetsByWeek,
+  summarizeWeek,
   isDraftDirty,
   isRowComplete,
   summarizeRemovals,
@@ -45,6 +47,8 @@ type BusinessHoursEditorProps = {
   selectedRentalAssetIds: readonly string[]
   /** Active templates of the selected resources, every weekday. */
   scheduleTemplates: readonly ScheduleTemplate[]
+  /** Active templates of every resource, to group resources with identical hours. Null while loading. */
+  allScheduleTemplates: readonly ScheduleTemplate[] | null
   /** Occupancy kind the new hours are created with. */
   openKindId: string
   loadingTemplates: boolean
@@ -66,11 +70,48 @@ function templatesSignature(templates: readonly ScheduleTemplate[]): string {
 export function BusinessHoursEditor(props: BusinessHoursEditorProps) {
   const { t } = useTranslation()
   const { assets, selectedRentalAssetIds, loadingTemplates, busy, readOnly } = props
-  const [scope, setScope] = useState<"all" | "some">(() =>
-    assets.length > 0 && selectedRentalAssetIds.length === assets.length ? "all" : "some",
-  )
+  const { allScheduleTemplates, onSelectedRentalAssetIdsChange } = props
+  const [choosing, setChoosing] = useState(false)
   const [errors, setErrors] = useState<string[]>([])
   const showScope = assets.length > 1
+  const groups = useMemo(
+    () => (allScheduleTemplates ? groupAssetsByWeek(assets, allScheduleTemplates) : null),
+    [assets, allScheduleTemplates],
+  )
+  const activeGroup = groups?.find(
+    (group) =>
+      group.ids.length === selectedRentalAssetIds.length &&
+      group.ids.every((id) => selectedRentalAssetIds.includes(id)),
+  )
+  const showPicker = choosing || !activeGroup
+  const autoPicked = useRef(false)
+  const totalAssets = assets.length
+
+  // Start on the largest group of resources with identical hours, so the rows show real hours.
+  useEffect(() => {
+    if (!groups || autoPicked.current) return
+    autoPicked.current = true
+    if (groups.length > 1 && selectedRentalAssetIds.length === totalAssets) {
+      onSelectedRentalAssetIdsChange(groups[0].ids)
+    }
+  }, [groups, selectedRentalAssetIds.length, totalAssets, onSelectedRentalAssetIdsChange])
+
+  function dayShort(day: string) {
+    return t(`rentals.schedule.days.${day}`).slice(0, 3)
+  }
+
+  function groupLabel(group: { ids: string[]; signature: string[] }) {
+    const runs = summarizeWeek(group.signature)
+    const hours = runs.length === 0
+      ? t("rentals.schedule.hours.noHours")
+      : runs
+          .map((run) => `${dayShort(run.first)}${run.last === run.first ? "" : `–${dayShort(run.last)}`} ${run.hours}`)
+          .join(", ")
+    const who = group.ids.length === totalAssets
+      ? t("rentals.schedule.hours.allResources")
+      : t("rentals.schedule.hours.groupResources", { count: group.ids.length })
+    return `${who} · ${hours}`
+  }
 
   return (
     <section className="min-w-0 space-y-5" aria-labelledby="business-hours-title">
@@ -85,33 +126,39 @@ export function BusinessHoursEditor(props: BusinessHoursEditorProps) {
         <fieldset className="space-y-3" disabled={busy || readOnly}>
           <legend className="mb-2 text-sm font-medium">{t("rentals.schedule.hours.scope")}</legend>
           <div className="flex flex-wrap gap-2" role="radiogroup" aria-label={t("rentals.schedule.hours.scope")}>
+            {(groups ?? []).map((group) => {
+              const checked = activeGroup === group && !choosing
+              return (
+                <button
+                  key={group.ids.join(",")}
+                  type="button"
+                  role="radio"
+                  aria-checked={checked}
+                  className={scheduleChipClassName(checked)}
+                  onClick={() => {
+                    setChoosing(false)
+                    onSelectedRentalAssetIdsChange(group.ids)
+                  }}
+                >
+                  {groupLabel(group)}
+                </button>
+              )
+            })}
             <button
               type="button"
               role="radio"
-              aria-checked={scope === "all"}
-              className={scheduleChipClassName(scope === "all")}
-              onClick={() => {
-                setScope("all")
-                props.onSelectedRentalAssetIdsChange(assets.map((asset) => asset.id))
-              }}
-            >
-              {t("rentals.schedule.hours.allResources")}
-            </button>
-            <button
-              type="button"
-              role="radio"
-              aria-checked={scope === "some"}
-              className={scheduleChipClassName(scope === "some")}
-              onClick={() => setScope("some")}
+              aria-checked={showPicker}
+              className={scheduleChipClassName(showPicker)}
+              onClick={() => setChoosing(true)}
             >
               {t("rentals.schedule.hours.someResources")}
             </button>
           </div>
-          {scope === "some" ? (
+          {showPicker ? (
             <RentableMultiSelect
               assets={assets}
               selectedIds={selectedRentalAssetIds}
-              onChange={props.onSelectedRentalAssetIdsChange}
+              onChange={onSelectedRentalAssetIdsChange}
               disabled={busy || readOnly}
             />
           ) : null}
@@ -305,21 +352,28 @@ function HoursForm({
           return (
             <li key={day} className="flex flex-wrap items-center gap-x-4 gap-y-2 px-3 py-2.5">
               <span className="w-24 shrink-0 text-sm font-medium">{dayLabel(day)}</span>
-              <div className="flex min-h-11 items-center gap-2 text-sm">
-                <Switch
-                  size="sm"
-                  checked={row.open}
-                  disabled={locked}
-                  aria-label={`${t("rentals.schedule.hours.open")} — ${dayLabel(day)}`}
-                  onCheckedChange={(checked) => toggleDay(day, checked)}
-                />
-                <span className="w-14 text-muted-foreground">
-                  {row.open ? t("rentals.schedule.hours.open") : t("rentals.schedule.hours.closed")}
-                </span>
-              </div>
               {showMixed ? (
-                <span className="text-xs text-muted-foreground">{t("rentals.schedule.hours.differs")}</span>
-              ) : row.open ? (
+                <div className="flex min-h-11 items-center gap-3 text-sm">
+                  <span className="text-muted-foreground">{t("rentals.schedule.hours.differs")}</span>
+                  <Button type="button" variant="outline" size="sm" disabled={locked} onClick={() => toggleDay(day, true)}>
+                    {t("rentals.schedule.hours.define")}
+                  </Button>
+                </div>
+              ) : (
+                <div className="flex min-h-11 items-center gap-2 text-sm">
+                  <Switch
+                    size="sm"
+                    checked={row.open}
+                    disabled={locked}
+                    aria-label={`${t("rentals.schedule.hours.open")} — ${dayLabel(day)}`}
+                    onCheckedChange={(checked) => toggleDay(day, checked)}
+                  />
+                  <span className="w-14 text-muted-foreground">
+                    {row.open ? t("rentals.schedule.hours.open") : t("rentals.schedule.hours.closed")}
+                  </span>
+                </div>
+              )}
+              {showMixed ? null : row.open ? (
                 <div className="flex items-center gap-2">
                   <Time24Input
                     className="w-24"

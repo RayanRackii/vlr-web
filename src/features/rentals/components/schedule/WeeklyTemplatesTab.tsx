@@ -43,6 +43,7 @@ type WeeklyTemplatesTabProps = {
   weekday: DayOfWeekName
   templates: readonly ScheduleTemplate[]
   scheduleTemplates: readonly ScheduleTemplate[]
+  allScheduleTemplates: readonly ScheduleTemplate[] | null
   loadingScheduleTemplates: boolean
   kinds: readonly OccupancyKind[]
   openKindId: string
@@ -71,6 +72,7 @@ export function WeeklyTemplatesTab({
   weekday,
   templates,
   scheduleTemplates,
+  allScheduleTemplates,
   loadingScheduleTemplates,
   kinds,
   openKindId,
@@ -141,6 +143,7 @@ export function WeeklyTemplatesTab({
         assets={assets}
         selectedRentalAssetIds={selectedRentalAssetIds}
         scheduleTemplates={scheduleTemplates}
+        allScheduleTemplates={allScheduleTemplates}
         openKindId={openKindId}
         loadingTemplates={loadingScheduleTemplates}
         busy={busy}

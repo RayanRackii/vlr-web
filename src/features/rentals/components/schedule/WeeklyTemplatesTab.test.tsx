@@ -26,7 +26,7 @@ function Harness() {
   const [target, setTarget] = useState<WeeklyGridCellPayload | null>(null)
   return <WeeklyTemplatesTab
     assets={[asset]} selectedRentalAssetIds={[asset.id]} weekday={weekday}
-    templates={weekday === "Monday" ? [monday] : []} scheduleTemplates={[monday]} loadingScheduleTemplates={false}
+    templates={weekday === "Monday" ? [monday] : []} scheduleTemplates={[monday]} allScheduleTemplates={[monday]} loadingScheduleTemplates={false}
     kinds={kinds} openKindId="lesson" loading={false} showSkeleton={false}
     busy={false} busyAction={null} busyTargetId={null} readOnly={false}
     onSelectedRentalAssetIdsChange={vi.fn()} onWeekdayChange={setWeekday}

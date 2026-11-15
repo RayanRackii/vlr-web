@@ -1,3 +1,4 @@
+import { useState } from "react"
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { beforeEach, describe, expect, it, vi } from "vitest"
@@ -38,6 +39,7 @@ function renderEditor(overrides: Partial<React.ComponentProps<typeof BusinessHou
     assets: [asset("a")],
     selectedRentalAssetIds: ["a"],
     openKindId: "open",
+    allScheduleTemplates: null,
     scheduleTemplates: [...hourly("a", "Monday", 8, 18), ...hourly("a", "Tuesday", 8, 18)],
     loadingTemplates: false,
     busy: false,
@@ -162,6 +164,9 @@ describe("BusinessHoursEditor", () => {
       scheduleTemplates: [...hourly("a", "Monday", 8, 18), ...hourly("b", "Monday", 9, 18).slice(1), half],
     })
     expect(screen.getAllByText(i18n.t("rentals.schedule.hours.differs"))).toHaveLength(1)
+    // A weekday that varies between resources is never shown as closed.
+    expect(screen.getByText(day("Monday")).closest("li")).not.toHaveTextContent(i18n.t("rentals.schedule.hours.closed"))
+    expect(screen.getAllByText(i18n.t("rentals.schedule.hours.closed"))).toHaveLength(6)
     expect(screen.queryByLabelText(`${day("Monday")}: ${i18n.t("rentals.schedule.hours.opens")}`)).not.toBeInTheDocument()
     expect(screen.getByText(i18n.t("rentals.schedule.hours.slotDiffers"))).toBeInTheDocument()
     await user.click(switchOf("Sunday"))
@@ -177,8 +182,8 @@ describe("BusinessHoursEditor", () => {
   it("scopes to chosen resources and keeps every control locked while read-only", async () => {
     const user = userEvent.setup()
     const onSelectedRentalAssetIdsChange = vi.fn()
-    const { props } = renderEditor({ assets: [asset("a"), asset("b")], selectedRentalAssetIds: ["a", "b"], onSelectedRentalAssetIdsChange })
-    expect(screen.getByRole("radio", { name: i18n.t("rentals.schedule.hours.allResources") })).toHaveAttribute("aria-checked", "true")
+    const { props } = renderEditor({ assets: [asset("a"), asset("b")], selectedRentalAssetIds: ["a", "b"], allScheduleTemplates: [], onSelectedRentalAssetIdsChange })
+    expect(screen.getByRole("radio", { name: new RegExp(i18n.t("rentals.schedule.hours.allResources")) })).toHaveAttribute("aria-checked", "true")
     await user.click(screen.getByRole("radio", { name: i18n.t("rentals.schedule.hours.someResources") }))
     await user.click(screen.getByRole("checkbox", { name: "Sala b" }))
     expect(onSelectedRentalAssetIdsChange).toHaveBeenCalledWith(["a"])
@@ -190,5 +195,42 @@ describe("BusinessHoursEditor", () => {
     expect(switchOf("Monday")).toHaveAttribute("aria-disabled", "true")
     expect(timeOf("Monday", "opens")).toBeDisabled()
     expect(screen.getByRole("button", { name: i18n.t("rentals.schedule.hours.copyToAll") })).toBeDisabled()
+  })
+
+  it("starts on the largest group of resources with identical hours and shows its real hours", async () => {
+    const user = userEvent.setup()
+    const assets = [asset("a"), asset("b"), asset("c")]
+    const all = [...hourly("a", "Monday", 8, 22), ...hourly("b", "Monday", 8, 22), ...hourly("c", "Monday", 9, 12)]
+    function Harness() {
+      const [ids, setIds] = useState<string[]>(["a", "b", "c"])
+      return (
+        <BusinessHoursEditor
+          assets={assets} selectedRentalAssetIds={ids} allScheduleTemplates={all}
+          scheduleTemplates={all.filter((item) => ids.includes(item.rentalAssetId))} openKindId="open"
+          loadingTemplates={false} busy={false} busyAction={null} readOnly={false}
+          onSelectedRentalAssetIdsChange={setIds} onSave={onSave}
+        />
+      )
+    }
+    const onSave = vi.fn().mockResolvedValue({ ok: true, errors: [] })
+    render(<Harness />)
+    const largest = await screen.findByRole("radio", { name: `${i18n.t("rentals.schedule.hours.groupResources", { count: 2 })} · Seg 08:00–22:00` })
+    await waitFor(() => expect(largest).toHaveAttribute("aria-checked", "true"))
+    expect(screen.getByRole("radio", { name: new RegExp(i18n.t("rentals.schedule.hours.groupResources", { count: 1 })) })).toHaveAttribute("aria-checked", "false")
+    expect(switchOf("Monday")).toBeChecked()
+    expect(timeOf("Monday", "closes")).toHaveValue("22:00")
+    expect(screen.queryByText(i18n.t("rentals.schedule.hours.differs"))).not.toBeInTheDocument()
+    expect(saveButton()).toBeDisabled()
+    await user.click(screen.getByRole("radio", { name: new RegExp(i18n.t("rentals.schedule.hours.groupResources", { count: 1 })) }))
+    expect(timeOf("Monday", "opens")).toHaveValue("09:00")
+    // Picking resources by hand that disagree shows the neutral state, never "Fechado", and saving skips it.
+    await user.click(screen.getByRole("radio", { name: i18n.t("rentals.schedule.hours.someResources") }))
+    await user.click(screen.getByRole("checkbox", { name: "Sala a" }))
+    expect(screen.getByText(i18n.t("rentals.schedule.hours.differs"))).toBeInTheDocument()
+    expect(screen.getByText(day("Monday")).closest("li")).not.toHaveTextContent(i18n.t("rentals.schedule.hours.closed"))
+    await user.click(switchOf("Sunday"))
+    await user.click(saveButton())
+    const plan = onSave.mock.calls[0][0] as BusinessHoursPlan
+    expect(plan.groups.flatMap((group) => group.days)).toEqual(["Sunday"])
   })
 })

@@ -255,3 +255,52 @@ export function summarizeRemovals(
   rows.sort((a, b) => WEEK_ORDER.indexOf(a.day) - WEEK_ORDER.indexOf(b.day))
   return rows.map((row) => ({ day: row.day, reason: row.reason, count: row.count, resources: row.ids.size }))
 }
+
+/** One entry per weekday (Monday first): "HH:MM-HH:MM" or "closed". */
+export function assetWeekSignature(
+  asset: AdminRentalAsset,
+  templates: readonly ScheduleTemplate[],
+): string[] {
+  return WEEK_ORDER.map((day) => assetDaySignature(asset, templates, day))
+}
+
+export type ScopeGroup = {
+  ids: string[]
+  /** Per weekday, Monday first. */
+  signature: string[]
+}
+
+/** Resources with identical weekly hours, largest group first. */
+export function groupAssetsByWeek(
+  assets: readonly AdminRentalAsset[],
+  templates: readonly ScheduleTemplate[],
+): ScopeGroup[] {
+  const groups = new Map<string, ScopeGroup>()
+  for (const asset of assets) {
+    const signature = assetWeekSignature(asset, templates)
+    const key = signature.join("|")
+    const group = groups.get(key) ?? { ids: [], signature }
+    group.ids.push(asset.id)
+    groups.set(key, group)
+  }
+  return [...groups.values()].sort((a, b) => b.ids.length - a.ids.length)
+}
+
+/** Runs of consecutive weekdays that share the same hours (closed days are left out). */
+export function summarizeWeek(
+  signature: readonly string[],
+): { first: DayOfWeekName; last: DayOfWeekName; hours: string }[] {
+  const runs: { first: DayOfWeekName; last: DayOfWeekName; hours: string }[] = []
+  signature.forEach((value, index) => {
+    if (value === "closed") return
+    const day = WEEK_ORDER[index]
+    const hours = value.replace("-", "–")
+    const previous = runs[runs.length - 1]
+    if (previous && previous.hours === hours && WEEK_ORDER.indexOf(previous.last) === index - 1) {
+      previous.last = day
+    } else {
+      runs.push({ first: day, last: day, hours })
+    }
+  })
+  return runs
+}
