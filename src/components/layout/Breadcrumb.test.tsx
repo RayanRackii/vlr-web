@@ -55,8 +55,20 @@ describe("staff breadcrumb", () => {
   it.each([undefined, "Plano de climatização"])("renders a detail with title %s", (title) => {
     renderBreadcrumb("/pmoc/plan-1", title)
     const nav = screen.getByRole("navigation", { name: "Caminho de navegação" })
-    expect(within(nav).getByRole("link", { name: "Meus planos" })).toHaveAttribute("href", "/pmoc")
+    expect(within(nav).getByRole("link", { name: "Manutenção" })).toHaveAttribute("href", "/manutencao")
+    expect(within(nav).getByRole("link", { name: "Planos" })).toHaveAttribute("href", "/manutencao?aba=planos")
     expect(within(nav).getByText(title ?? "Detalhes")).toHaveAttribute("aria-current", "page")
+    expect(within(nav).queryByText("Meus planos")).not.toBeInTheDocument()
+  })
+
+  it.each(["page", "header"] as const)("matches the Manutenção nav on the plan detail and the new plan page (%s variant)", (variant) => {
+    const view = renderBreadcrumb("/pmoc/plan-1", "P3 E", variant)
+    let items = within(screen.getByRole("navigation", { name: "Caminho de navegação" })).getAllByRole("listitem")
+    expect(items.map((item) => item.textContent?.replace("/", "").trim())).toEqual(["Manutenção", "Planos", "P3 E"])
+    view.unmount()
+    renderBreadcrumb("/pmoc/novo", undefined, variant)
+    items = within(screen.getByRole("navigation", { name: "Caminho de navegação" })).getAllByRole("listitem")
+    expect(items.map((item) => item.textContent?.replace("/", "").trim())).toEqual(["Manutenção", "Novo plano"])
   })
 
   it.each([
@@ -91,9 +103,9 @@ describe("staff breadcrumb", () => {
     renderBreadcrumb("/pmoc/plan-1", "Plano A")
     const nav = screen.getByRole("navigation", { name: "Caminho de navegação" })
     expect(within(nav).getAllByRole("listitem")).toHaveLength(2)
-    expect(within(nav).getByRole("link", { name: "Voltar para Meus planos" })).toHaveAttribute("href", "/pmoc")
+    expect(within(nav).getByRole("link", { name: "Voltar para Planos" })).toHaveAttribute("href", "/manutencao?aba=planos")
     expect(within(nav).getByText("Plano A")).toHaveAttribute("aria-current", "page")
-    expect(within(nav).queryByText("Planos de manutenção")).not.toBeInTheDocument()
+    expect(within(nav).queryByText("Manutenção")).not.toBeInTheDocument()
   })
 
   it("clears the entity title when leaving the detail page", async () => {
@@ -149,7 +161,7 @@ describe("staff breadcrumb", () => {
     ["/catalogo/produtos/novo", "Produtos", "/catalogo/produtos", "Novo produto", ["catalog.products.read"], ["catalog"]],
     ["/configuracoes/recursos/novo", "Recursos", "/configuracoes/recursos", "Novo recurso", ["rentals.assets.read", "core.units.read"], []],
     ["/os/nova", "Ordens de serviço", "/os", "Nova Ordem de Serviço", [], []],
-    ["/pmoc/novo", "Planos de manutenção", "", "Novo plano", [], []],
+    ["/pmoc/novo", "Manutenção", "/manutencao", "Novo plano", [], []],
     ["/pessoas-e-acesso/funcoes/nova", "Pessoas e acesso", "/pessoas-e-acesso", "Nova função", [], []],
     ["/ativos/novo", "Equipamentos", "/ativos", "Novo equipamento", [], []],
     ["/ativos/tipos/novo", "Tipos de recurso", "/ativos/tipos", "Novo tipo", [], []],
@@ -181,7 +193,7 @@ describe("staff breadcrumb", () => {
 
 it("gives breadcrumb links 44px tap targets without increasing the line height", () => {
   renderBreadcrumb("/pmoc/plan-1", "Plano A")
-  expect(screen.getByRole("link", { name: "Meus planos" })).toHaveClass("min-h-[44px]", "-my-3")
+  expect(screen.getByRole("link", { name: "Planos" })).toHaveClass("min-h-[44px]", "-my-3")
 })
 
 

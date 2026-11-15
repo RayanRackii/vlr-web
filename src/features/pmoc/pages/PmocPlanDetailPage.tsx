@@ -1,14 +1,17 @@
 import { useVisibleFormIssues } from "@/lib/useVisibleFormIssues"
-import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react"
+import { useCallback, useEffect, useMemo, useState } from "react"
 import { useNavigate, useParams } from "react-router-dom"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { Plus } from "lucide-react"
+import { MoreHorizontal } from "lucide-react"
 import { useBreadcrumbTitle } from "@/components/layout/useBreadcrumbTitle"
 import { useFieldArray, useForm, useWatch } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 
 import { PageContentSkeleton } from "@/components/loading/PageContentSkeleton"
+import { Page } from "@/components/layout/Page"
+import { SaveBar } from "@/components/layout/SaveBar"
+import { UnsavedChangesGuard } from "@/components/layout/UnsavedChangesGuard"
 import {
   AlertDialog,
   AlertDialogCancel,
@@ -21,20 +24,27 @@ import {
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import {
   Form,
   FormControl,
   FormField,
   FormItem,
   FormLabel,
 } from "@/components/ui/form"
-import { FormPrimaryButton } from "@/components/ui/form-primary-button"
+import { FormSection } from "@/components/ui/form-layout"
 import { Input } from "@/components/ui/input"
-import { Switch } from "@/components/ui/switch"
-import { Textarea } from "@/components/ui/textarea"
+import { StatusBadge } from "@/components/ui/status"
 import {
   FormValidationSummary,
   LiveFieldMessage,
 } from "@/features/pmoc/components/FormValidationSummary"
+import { PlanDescriptionField } from "@/features/pmoc/components/PlanDescriptionField"
 import { PlanTaskEditor } from "@/features/pmoc/components/PlanTaskEditor"
 import { TaskConfigurationReadout } from "@/features/pmoc/components/TaskConfigurationReadout"
 import type { Unit } from "@/features/assets/schemas/unitSchemas"
@@ -120,8 +130,9 @@ export function PmocPlanDetailPage() {
   useBreadcrumbTitle(!isLoading && !loadError ? plan?.name : undefined)
   const [planInUse, setPlanInUse] = useState(false)
   const [isHeaderBusy, setIsHeaderBusy] = useState(false)
-  const [isChecklistBusy, setIsChecklistBusy] = useState(false)
+  const [isSaving, setIsSaving] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
+  const [isDeleted, setIsDeleted] = useState(false)
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false)
   const [isGenerateOpen, setIsGenerateOpen] = useState(false)
   const [relatedRefreshKey, setRelatedRefreshKey] = useState(0)
@@ -188,7 +199,7 @@ export function PmocPlanDetailPage() {
       head === "firstDueDate"
     )
   })
-  const isChecklistValid = taskMessages.length === 0
+  const isFormValid = taskMessages.length === 0 && headerMessages.length === 0
   const headerDirty =
     plan !== null &&
     ((watchedValues.name ?? "").trim() !== plan.name ||
@@ -196,6 +207,13 @@ export function PmocPlanDetailPage() {
         (plan.description ?? "").trim() ||
       watchedValues.intervalDays !== plan.intervalDays ||
       (watchedValues.firstDueDate ?? "") !== plan.firstDueDate)
+  const savedTasksKey = useMemo(
+    () => (plan === null ? "" : JSON.stringify(planToFormValues(plan).tasks)),
+    [plan],
+  )
+  const tasksDirty =
+    plan !== null && JSON.stringify(watchedTasks ?? []) !== savedTasksKey
+  const isDirty = headerDirty || tasksDirty
 
   const loadPage = useCallback(async () => {
     if (!planId) {
@@ -244,6 +262,11 @@ export function PmocPlanDetailPage() {
     void loadPage()
   }, [loadPage])
 
+  useEffect(() => {
+    // Navigate from an effect so the unsaved-changes guard is already released.
+    if (isDeleted) void navigate("/manutencao?aba=planos")
+  }, [isDeleted, navigate])
+
   const unitName = useMemo(() => {
     if (!plan) {
       return t("pmoc.plans.emptyValue")
@@ -291,64 +314,64 @@ export function PmocPlanDetailPage() {
     }
   }
 
-  async function onSaveHeader(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault()
-    if (!plan || headerMessages.length > 0) {
+  /** One save for the plan data and the checklist: header first, then the tasks. */
+  async function onSave() {
+    if (!plan || isSaving || !isFormValid || !isDirty) {
       return
     }
 
     const values = form.getValues()
     const description = values.description?.trim() ?? ""
+    let current = plan
 
-    setIsHeaderBusy(true)
+    setIsSaving(true)
     try {
-      const next = await updatePlan(
-        plan.id,
-        buildHeaderUpdateFromPlan({
-          ...plan,
-          name: values.name.trim(),
-          description: description.length > 0 ? description : null,
-          intervalDays: values.intervalDays,
-          firstDueDate: values.firstDueDate,
-        }),
-      )
-      setPlan(next)
-      reset(planToFormValues(next))
-      toast.success(t("pmoc.plans.toast.updated"))
-    } catch (error: unknown) {
-      const message =
-        error instanceof Error
-          ? error.message
-          : t("pmoc.plans.errors.updateFailed")
-      toast.error(message)
-    } finally {
-      setIsHeaderBusy(false)
-    }
-  }
+      if (headerDirty) {
+        try {
+          current = await updatePlan(
+            plan.id,
+            buildHeaderUpdateFromPlan({
+              ...plan,
+              name: values.name.trim(),
+              description: description.length > 0 ? description : null,
+              intervalDays: values.intervalDays,
+              firstDueDate: values.firstDueDate,
+            }),
+          )
+          setPlan(current)
+        } catch (error: unknown) {
+          toast.error(
+            error instanceof Error
+              ? error.message
+              : t("pmoc.plans.errors.updateFailed"),
+          )
+          return
+        }
+      }
 
-  async function onSaveChecklist(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault()
-    if (!plan || taskMessages.length > 0) {
-      return
-    }
+      if (tasksDirty) {
+        try {
+          current = await replaceTasks(
+            plan.id,
+            buildReplaceTasksRequest(values.tasks),
+          )
+          setPlan(current)
+        } catch (error: unknown) {
+          const detail =
+            error instanceof Error
+              ? error.message
+              : t("pmoc.plans.errors.replaceTasksFailed")
+          // The header is already saved; the checklist edits stay in the form.
+          toast.error(headerDirty ? t("pmoc.planDetail.errors.partialSave") : detail)
+          return
+        }
+      }
 
-    setIsChecklistBusy(true)
-    try {
-      const next = await replaceTasks(
-        plan.id,
-        buildReplaceTasksRequest(form.getValues("tasks")),
-      )
-      setPlan(next)
-      reset(planToFormValues(next))
-      toast.success(t("pmoc.plans.toast.checklistSaved"))
-    } catch (error: unknown) {
-      const message =
-        error instanceof Error
-          ? error.message
-          : t("pmoc.plans.errors.replaceTasksFailed")
-      toast.error(message)
+      reset(planToFormValues(current))
+      setRelatedRefreshKey((key) => key + 1)
+      toast.success(t("pmoc.planDetail.toast.saved"))
     } finally {
-      setIsChecklistBusy(false)
+      setIsSaving(false)
     }
   }
 
@@ -361,7 +384,7 @@ export function PmocPlanDetailPage() {
     try {
       await deletePlan(plan.id)
       toast.success(t("pmoc.plans.toast.deleted"))
-      void navigate("/manutencao?aba=planos")
+      setIsDeleted(true)
     } catch (error: unknown) {
       if (isPlanInUseError(error)) {
         setIsDeleteConfirmOpen(false)
@@ -405,55 +428,115 @@ export function PmocPlanDetailPage() {
     )
   }
 
-  return (
-    <div className="space-y-6">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div className="min-w-0 space-y-1">
-          <h1 className="text-xl font-semibold tracking-tight">{plan.name}</h1>
-          {!canWrite && plan.description ? (
-            <p className="text-sm text-muted-foreground">{plan.description}</p>
-          ) : null}
-        </div>
+  const originLabel = `${t(`pmoc.planDetail.badges.origin.${plan.originKind}`)}${
+    plan.originKind === "RolvixTemplate" && plan.sourceTemplateVersion != null
+      ? ` v${plan.sourceTemplateVersion}`
+      : ""
+  }`
 
-        <div className="flex flex-wrap items-center gap-2">
-          <Badge variant={plan.isActive ? "success" : "secondary"}>
+  const header = {
+    title: plan.name,
+    description: (
+      <span className="flex flex-col gap-2">
+        <span className="flex flex-wrap items-center gap-2">
+          <StatusBadge tone={plan.isActive ? "success" : "neutral"}>
             {plan.isActive
               ? t("pmoc.plans.status.active")
               : t("pmoc.plans.status.inactive")}
-          </Badge>
-          {osModuleActive && plan.isActive ? (
-            <Can permission="os.work_orders.create">
-              <Button
-                type="button"
-                onClick={() => {
-                  setIsGenerateOpen(true)
-                }}
-              >
-                {t("pmoc.plans.actions.generateWorkOrder")}
-              </Button>
-            </Can>
+          </StatusBadge>
+          {plan.autoGenerateEnabled ? (
+            <Badge variant="info">{t("pmoc.planDetail.badges.automatic")}</Badge>
           ) : null}
-          {osModuleActive && !plan.isActive ? (
-            <Can permission="os.work_orders.create">
-              <p className="text-sm text-muted-foreground">
-                {t("pmoc.plans.generate.inactivePlan")}
-              </p>
-            </Can>
-          ) : null}
-          <Can permission="pmoc.plans.write">
+          <Badge variant="outline">{originLabel}</Badge>
+          <span>
+            {unitName} · {categoryName}
+          </span>
+        </span>
+        {!canWrite && plan.description ? <span>{plan.description}</span> : null}
+      </span>
+    ),
+    actions: (
+      <>
+        {osModuleActive && plan.isActive ? (
+          <Can permission="os.work_orders.create">
             <Button
               type="button"
-              variant="outline"
-              disabled={isDeleting}
+              className="min-h-11"
               onClick={() => {
-                setIsDeleteConfirmOpen(true)
+                setIsGenerateOpen(true)
               }}
             >
-              {t("pmoc.plans.actions.delete")}
+              {t("pmoc.plans.actions.generateWorkOrder")}
             </Button>
           </Can>
-        </div>
-      </div>
+        ) : null}
+        {osModuleActive && !plan.isActive ? (
+          <Can permission="os.work_orders.create">
+            <p className="text-sm text-muted-foreground">
+              {t("pmoc.plans.generate.inactivePlan")}
+            </p>
+          </Can>
+        ) : null}
+        <Can permission="pmoc.plans.write">
+          <DropdownMenu>
+            <DropdownMenuTrigger
+              render={
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  className="min-h-11 min-w-11"
+                  aria-label={t("pmoc.planDetail.actions.more")}
+                />
+              }
+            >
+              <MoreHorizontal aria-hidden="true" />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="min-w-56">
+              <DropdownMenuItem
+                className="min-h-11 md:min-h-9"
+                disabled={isHeaderBusy}
+                onClick={() => {
+                  void patchHeader({ isActive: !plan.isActive })
+                }}
+              >
+                {plan.isActive
+                  ? t("pmoc.plans.actions.deactivate")
+                  : t("pmoc.planDetail.actions.activate")}
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                className="min-h-11 md:min-h-9"
+                disabled={isHeaderBusy}
+                onClick={() => {
+                  void patchHeader({ autoGenerateEnabled: !plan.autoGenerateEnabled })
+                }}
+              >
+                {plan.autoGenerateEnabled
+                  ? t("pmoc.planDetail.actions.disableAuto")
+                  : t("pmoc.planDetail.actions.enableAuto")}
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                className="min-h-11 text-destructive md:min-h-9"
+                disabled={isDeleting}
+                onClick={() => {
+                  setIsDeleteConfirmOpen(true)
+                }}
+              >
+                {t("pmoc.plans.actions.delete")}
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </Can>
+      </>
+    ),
+  }
+
+  return (
+    <Page header={header}>
+      <UnsavedChangesGuard
+        when={canWrite && isDirty && !isSaving && !isDeleted}
+      />
 
       {planInUse ? (
         <div
@@ -476,238 +559,122 @@ export function PmocPlanDetailPage() {
         </div>
       ) : null}
 
-      <section className="space-y-4 rounded-xl border border-border p-4 sm:p-6">
-        <h2 className="text-sm font-medium">{t("pmoc.plans.sections.overview")}</h2>
-        <dl className="grid gap-x-4 gap-y-3 sm:grid-cols-2">
-          <div className="space-y-0.5">
-            <dt className="text-xs text-muted-foreground">
-              {t("pmoc.create.form.unit")}
-            </dt>
-            <dd className="text-sm">{unitName}</dd>
-          </div>
-          <div className="space-y-0.5">
-            <dt className="text-xs text-muted-foreground">
-              {plan?.assetId ? t("pmoc.create.form.asset") : t("pmoc.create.form.category")}
-            </dt>
-            <dd className="text-sm">{categoryName}</dd>
-          </div>
-        </dl>
-        {canWrite ? (
-          <Form {...form}>
-            <form
-              className="space-y-4"
-              noValidate
-              onSubmit={(event) => {
-                void onSaveHeader(event)
-              }}
-            >
-              <FormField
-                control={control}
-                name="name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{t("pmoc.create.form.name")}</FormLabel>
-                    <FormControl>
-                      <Input autoComplete="off" {...field} />
-                    </FormControl>
-                    <LiveFieldMessage
-                      message={issueMessageAt(formError, ["name"])}
-                    />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={control}
-                name="description"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{t("pmoc.create.form.description")}</FormLabel>
-                    <FormControl>
-                      <Textarea {...field} />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
-              <PlanSchedulingFields
-                control={control}
-                showEditHint
-                intervalMessage={issueMessageAt(formError, ["intervalDays"])}
-                firstDueMessage={issueMessageAt(formError, ["firstDueDate"])}
-              />
-              <Button
-                type="submit"
-                disabled={
-                  isHeaderBusy || !headerDirty || headerMessages.length > 0
-                }
-              >
-                {isHeaderBusy
-                  ? t("pmoc.plans.actions.saving")
-                  : t("pmoc.plans.actions.saveDetails")}
-              </Button>
-            </form>
-          </Form>
-        ) : (
-          <dl className="grid gap-x-4 gap-y-3 sm:grid-cols-2">
-            <div className="space-y-0.5">
-              <dt className="text-xs text-muted-foreground">
-                {t("pmoc.scheduling.interval")}
-              </dt>
-              <dd className="text-sm">
-                {t("pmoc.scheduling.intervalValue", { days: plan.intervalDays })}
-              </dd>
-            </div>
-            <div className="space-y-0.5">
-              <dt className="text-xs text-muted-foreground">
-                {t("pmoc.scheduling.firstDue")}
-              </dt>
-              <dd className="text-sm" data-testid="plan-first-due-readonly">
-                {formatCivilDateOnly(plan.firstDueDate, i18n.language)}
-              </dd>
-            </div>
-          </dl>
-        )}
-      </section>
+      {canWrite ? (
+        <Form {...form}>
+          <form
+            className="space-y-5"
+            noValidate
+            onSubmit={(event) => {
+              event.preventDefault()
+              void onSave()
+            }}
+          >
+            <FormSection title={t("pmoc.create.sections.main")}>
+              <div className="grid gap-4">
+                <FormField
+                  control={control}
+                  name="name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{t("pmoc.create.form.name")}</FormLabel>
+                      <FormControl>
+                        <Input autoComplete="off" {...field} />
+                      </FormControl>
+                      <LiveFieldMessage
+                        message={issueMessageAt(formError, ["name"])}
+                      />
+                    </FormItem>
+                  )}
+                />
+                <PlanDescriptionField
+                  control={control}
+                  hasValue={(plan.description ?? "").length > 0}
+                />
+                <PlanSchedulingFields
+                  control={control}
+                  intervalMessage={issueMessageAt(formError, ["intervalDays"])}
+                  firstDueMessage={issueMessageAt(formError, ["firstDueDate"])}
+                />
+              </div>
+            </FormSection>
 
-      <section className="space-y-2 rounded-xl border border-border p-4 sm:p-6">
-        <h2 className="text-sm font-medium">{t("pmoc.plans.sections.origin")}</h2>
-        <div className="flex flex-wrap items-center gap-2">
-          <p className="text-sm">{t(`pmoc.plans.origin.${plan.originKind}`)}</p>
-          {plan.originKind === "RolvixTemplate" &&
-          plan.sourceTemplateVersion != null ? (
-            <Badge variant="secondary">v{plan.sourceTemplateVersion}</Badge>
-          ) : null}
-        </div>
-      </section>
-
-      <section className="space-y-4 rounded-xl border border-border p-4 sm:p-6">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-          <h2 className="text-lg font-medium">
-            {t("pmoc.plans.sections.checklist")}
-          </h2>
-          <Can permission="pmoc.plans.write">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => {
-                append(emptyTask())
-              }}
-            >
-              <Plus data-icon="inline-start" />
-              {t("pmoc.create.actions.addTask")}
-            </Button>
-          </Can>
-        </div>
-
-        {canWrite ? (
-          <Form {...form}>
-            <form
-              className="space-y-4"
-              onSubmit={(event) => {
-                void onSaveChecklist(event)
-              }}
-              noValidate
-            >
+            <FormSection title={t("pmoc.plans.sections.checklist")}>
               <PlanTaskEditor
                 control={control}
                 fields={fields}
                 watchedTasks={watchedTasks}
                 setValue={form.setValue}
                 onRemove={remove}
+                onAdd={() => {
+                  append(emptyTask())
+                }}
                 issueMessage={(path) => issueMessageAt(formError, path)}
               />
-
-              <FormValidationSummary messages={uniqueIssueMessages(formError, (path) => path.length === 1 && path[0] === "tasks")} />
-
-              <div className="flex justify-end">
-                <FormPrimaryButton
-                  type="submit"
-                  isValid={isChecklistValid}
-                  loading={isChecklistBusy}
-                  loadingLabel={t("pmoc.plans.actions.saving")}
-                >
-                  {t("pmoc.plans.actions.saveChecklist")}
-                </FormPrimaryButton>
+              <FormValidationSummary
+                messages={uniqueIssueMessages(
+                  formError,
+                  (path) => path.length === 1 && path[0] === "tasks",
+                )}
+              />
+            </FormSection>
+          </form>
+        </Form>
+      ) : (
+        <>
+          <FormSection title={t("pmoc.create.sections.main")}>
+            <dl className="grid gap-x-4 gap-y-3 sm:grid-cols-2">
+              <div className="space-y-0.5">
+                <dt className="text-xs text-muted-foreground">
+                  {t("pmoc.scheduling.interval")}
+                </dt>
+                <dd className="text-sm">
+                  {t("pmoc.scheduling.intervalValue", { days: plan.intervalDays })}
+                </dd>
               </div>
-            </form>
-          </Form>
-        ) : (
-          <ol className="divide-y rounded-lg border border-border">
-            {[...plan.tasks]
-              .sort((left, right) => left.order - right.order)
-              .map((task, index) => (
-                <li
-                  key={task.id}
-                  className="flex items-start gap-3 px-4 py-3 text-sm"
-                >
-                  <span
-                    aria-hidden="true"
-                    className="flex size-6 shrink-0 items-center justify-center rounded-md bg-muted text-xs font-medium tabular-nums text-muted-foreground"
+              <div className="space-y-0.5">
+                <dt className="text-xs text-muted-foreground">
+                  {t("pmoc.scheduling.firstDue")}
+                </dt>
+                <dd className="text-sm" data-testid="plan-first-due-readonly">
+                  {formatCivilDateOnly(plan.firstDueDate, i18n.language)}
+                </dd>
+              </div>
+            </dl>
+          </FormSection>
+          <FormSection title={t("pmoc.plans.sections.checklist")}>
+            <ol className="divide-y rounded-lg border border-border">
+              {[...plan.tasks]
+                .sort((left, right) => left.order - right.order)
+                .map((task, index) => (
+                  <li
+                    key={task.id}
+                    className="flex items-start gap-3 px-4 py-3 text-sm"
                   >
-                    {index + 1}
-                  </span>
-                  <div className="min-w-0 space-y-0.5">
-                    <p className="font-medium">{task.title}</p>
-                    <p className="text-muted-foreground">
-                      {t(`pmoc.inputType.${task.inputType}`)}
-                      {task.isMandatory
-                        ? ` · ${t("pmoc.create.tasks.isMandatory")}`
-                        : ""}
-                    </p>
-                    <TaskConfigurationReadout
-                      inputType={task.inputType}
-                      configuration={task.configuration}
-                    />
-                  </div>
-                </li>
-              ))}
-          </ol>
-        )}
-      </section>
-
-      <section className="divide-y rounded-xl border border-border">
-        <div className="flex items-center justify-between gap-3 p-4">
-          <div className="space-y-0.5">
-            <h2 className="text-sm font-medium">{t("pmoc.plans.columns.status")}</h2>
-            <p className="text-sm text-muted-foreground">
-              {plan.isActive
-                ? t("pmoc.plans.status.active")
-                : t("pmoc.plans.status.inactive")}
-            </p>
-          </div>
-          <Can permission="pmoc.plans.write">
-            <Switch
-              checked={plan.isActive}
-              disabled={isHeaderBusy}
-              aria-label={t("pmoc.plans.columns.status")}
-              onCheckedChange={(checked) => {
-                void patchHeader({ isActive: checked })
-              }}
-            />
-          </Can>
-        </div>
-        <div className="flex items-center justify-between gap-3 p-4">
-          <div className="space-y-0.5">
-            <h2 className="text-sm font-medium">
-              {t("pmoc.plans.autoGenerateEnabled")}
-            </h2>
-            <p className="text-sm text-muted-foreground">
-              {plan.autoGenerateEnabled
-                ? t("pmoc.plans.autoGenerateOn")
-                : t("pmoc.plans.autoGenerateOff")}
-            </p>
-          </div>
-          <Can permission="pmoc.plans.write">
-            <Switch
-              checked={plan.autoGenerateEnabled}
-              disabled={isHeaderBusy}
-              aria-label={t("pmoc.plans.autoGenerateEnabled")}
-              onCheckedChange={(checked) => {
-                void patchHeader({ autoGenerateEnabled: checked })
-              }}
-            />
-          </Can>
-        </div>
-      </section>
+                    <span
+                      aria-hidden="true"
+                      className="flex size-6 shrink-0 items-center justify-center rounded-md bg-muted text-xs font-medium tabular-nums text-muted-foreground"
+                    >
+                      {index + 1}
+                    </span>
+                    <div className="min-w-0 space-y-0.5">
+                      <p className="font-medium">{task.title}</p>
+                      <p className="text-muted-foreground">
+                        {t(`pmoc.taskInputTypes.${task.inputType}`)}
+                        {task.isMandatory
+                          ? ` · ${t("pmoc.create.tasks.isMandatory")}`
+                          : ""}
+                      </p>
+                      <TaskConfigurationReadout
+                        inputType={task.inputType}
+                        configuration={task.configuration}
+                      />
+                    </div>
+                  </li>
+                ))}
+            </ol>
+          </FormSection>
+        </>
+      )}
 
       <PlanCoverageSection planId={plan.id} refreshKey={relatedRefreshKey} />
 
@@ -786,6 +753,23 @@ export function PmocPlanDetailPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
+
+      {canWrite ? (
+        <SaveBar
+          dirty={isDirty}
+          saving={isSaving}
+          saveDisabled={!isFormValid}
+          saveLabel={t("pmoc.planDetail.actions.save")}
+          savingLabel={t("pmoc.plans.actions.saving")}
+          discardLabel={t("common.cancel")}
+          onDiscard={() => {
+            reset(planToFormValues(plan))
+          }}
+          onSave={() => {
+            void onSave()
+          }}
+        />
+      ) : null}
+    </Page>
   )
 }

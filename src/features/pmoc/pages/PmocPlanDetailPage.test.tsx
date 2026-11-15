@@ -134,6 +134,25 @@ function renderDetail(
   )
 }
 
+type User = ReturnType<typeof userEvent.setup>
+
+async function openMenu(user: User) {
+  await user.click(await screen.findByRole("button", { name: i18n.t("pmoc.planDetail.actions.more") }))
+}
+
+async function chooseMenuItem(user: User, name: string) {
+  await openMenu(user)
+  await user.click(await screen.findByRole("menuitem", { name }))
+}
+
+function saveButton() {
+  return screen.getByRole("button", { name: i18n.t("pmoc.planDetail.actions.save") })
+}
+
+function coverageTableRows() {
+  return screen.getAllByTestId("coverage-asset-row").filter((row) => row.tagName === "TR")
+}
+
 describe("PmocPlanDetailPage", () => {
   beforeEach(() => {
     getPlanMock.mockReset()
@@ -201,16 +220,18 @@ describe("PmocPlanDetailPage", () => {
     expect(screen.queryByText(message)).not.toBeInTheDocument()
   })
 
-  it("shows origin, auto toggle, and checklist, and hides related OS / Gerar OS", async () => {
+  it("shows the status and origin as badges, the checklist, and hides related OS / Gerar OS", async () => {
     const { container } = renderDetail()
 
     expect(
-      await screen.findByText(i18n.t("pmoc.plans.origin.RolvixTemplate")),
+      await screen.findByText(`${i18n.t("pmoc.planDetail.badges.origin.RolvixTemplate")} v1`),
     ).toBeInTheDocument()
-    expect(screen.getByText(/v1/)).toBeInTheDocument()
-    expect(
-      screen.getByText(i18n.t("pmoc.plans.autoGenerateEnabled")),
-    ).toBeInTheDocument()
+    expect(screen.getByText(i18n.t("pmoc.plans.status.active"))).toBeInTheDocument()
+    // Automatic generation is off in this fixture: no badge, and no separate toggle cards.
+    expect(screen.queryByText(i18n.t("pmoc.planDetail.badges.automatic"))).not.toBeInTheDocument()
+    expect(screen.queryByText(i18n.t("pmoc.plans.sections.origin"))).not.toBeInTheDocument()
+    expect(screen.queryByText(i18n.t("pmoc.plans.autoGenerateEnabled"))).not.toBeInTheDocument()
+    expect(screen.queryByRole("switch", { name: i18n.t("pmoc.plans.columns.status") })).not.toBeInTheDocument()
     expect(screen.getByDisplayValue("Verificar filtros")).toBeInTheDocument()
     expect(container.textContent).not.toMatch(/Gerar OS/i)
     expect(container.textContent).not.toMatch(/OS relacionadas/i)
@@ -224,15 +245,12 @@ describe("PmocPlanDetailPage", () => {
     const titleInput = await screen.findByDisplayValue("Verificar filtros")
     await user.clear(titleInput)
     await user.type(titleInput, "Filtros revisados")
-    await user.click(
-      screen.getByRole("button", {
-        name: i18n.t("pmoc.plans.actions.saveChecklist"),
-      }),
-    )
+    await user.click(saveButton())
 
     await waitFor(() => {
       expect(replaceTasksMock).toHaveBeenCalled()
     })
+    expect(updatePlanMock).not.toHaveBeenCalled()
     const payload = replaceTasksMock.mock.calls[0]?.[1] as {
       tasks: Array<{ id?: string; title: string }>
     }
@@ -248,11 +266,7 @@ describe("PmocPlanDetailPage", () => {
     renderDetail()
     const user = userEvent.setup()
 
-    await user.click(
-      await screen.findByRole("button", {
-        name: i18n.t("pmoc.plans.actions.delete"),
-      }),
-    )
+    await chooseMenuItem(user, i18n.t("pmoc.plans.actions.delete"))
 
     const dialog = await screen.findByRole("alertdialog")
     expect(deletePlanMock).not.toHaveBeenCalled()
@@ -305,9 +319,7 @@ describe("PmocPlanDetailPage", () => {
         })
       ).length,
     ).toBeGreaterThan(0)
-    expect(
-      screen.getByText(i18n.t("pmoc.plans.autoGenerateOff")),
-    ).toBeInTheDocument()
+    expect(screen.queryByText(i18n.t("pmoc.planDetail.badges.automatic"))).not.toBeInTheDocument()
   })
 
   it("B: read-only OS user does not see Gerar OS but can see related OS", async () => {
@@ -392,7 +404,7 @@ describe("PmocPlanDetailPage", () => {
         })
       ).length,
     ).toBeGreaterThan(0)
-    expect(screen.getByText(i18n.t("pmoc.plans.coverage.question"))).toBeInTheDocument()
+    expect(await screen.findByTestId("coverage-summary")).toHaveTextContent("1 equipamento atrasado · 1 vence hoje")
     expect(
       screen.getByText(i18n.t("pmoc.plans.sections.relatedWorkOrders")),
     ).toBeInTheDocument()
@@ -404,10 +416,9 @@ describe("PmocPlanDetailPage", () => {
     renderDetail(WRITE_PERMS, ["pmoc"])
 
     expect(await screen.findByTestId("plan-coverage")).toBeInTheDocument()
-    expect(await screen.findAllByTestId("coverage-asset-row")).toHaveLength(3)
-    expect(
-      screen.getByText(i18n.t("pmoc.plans.autoGenerateOff")),
-    ).toBeInTheDocument()
+    await screen.findByTestId("coverage-summary")
+    expect(coverageTableRows()).toHaveLength(3)
+    expect(screen.queryByText(i18n.t("pmoc.planDetail.badges.automatic"))).not.toBeInTheDocument()
   })
 
   it("refetches coverage after toggling AutoGenerateEnabled", async () => {
@@ -426,15 +437,15 @@ describe("PmocPlanDetailPage", () => {
     await screen.findByTestId("plan-coverage")
     expect(getPlanCoverageMock).toHaveBeenCalledTimes(1)
 
-    await user.click(
-      screen.getByRole("switch", {
-        name: i18n.t("pmoc.plans.autoGenerateEnabled"),
-      }),
-    )
+    await chooseMenuItem(user, i18n.t("pmoc.planDetail.actions.enableAuto"))
 
     await waitFor(() => {
-      expect(updatePlanMock).toHaveBeenCalled()
+      expect(updatePlanMock).toHaveBeenCalledWith(
+        PLAN_ID,
+        expect.objectContaining({ autoGenerateEnabled: true }),
+      )
     })
+    expect(await screen.findByText(i18n.t("pmoc.planDetail.badges.automatic"))).toBeInTheDocument()
     await waitFor(() => {
       expect(getPlanCoverageMock.mock.calls.length).toBeGreaterThanOrEqual(2)
     })
@@ -449,21 +460,23 @@ describe("PmocPlanDetailPage", () => {
     renderDetail()
     const user = userEvent.setup()
 
-    const interval = await screen.findByRole("spinbutton", {
-      name: i18n.t("pmoc.scheduling.interval"),
+    const monthly = await screen.findByRole("button", {
+      name: i18n.t("pmoc.newPlan.form.presets.monthly"),
     })
     const firstDue = screen.getByLabelText(i18n.t("pmoc.scheduling.firstDue"))
-    expect(interval).toHaveValue(30)
+    expect(monthly).toHaveAttribute("aria-pressed", "true")
     expect(firstDue).toHaveValue("01/10/2026")
-    expect(screen.queryByText(/Frequência/)).not.toBeInTheDocument()
 
+    await user.click(screen.getByRole("button", { name: i18n.t("pmoc.newPlan.form.presets.custom") }))
+    const interval = screen.getByRole("spinbutton", {
+      name: i18n.t("pmoc.newPlan.form.customDays"),
+    })
+    expect(interval).toHaveValue(30)
     await user.clear(interval)
     await user.type(interval, "45")
     await user.clear(firstDue)
     await user.type(firstDue, "15/01/2026")
-    await user.click(
-      screen.getByRole("button", { name: i18n.t("pmoc.plans.actions.saveDetails") }),
-    )
+    await user.click(saveButton())
 
     await waitFor(() => {
       expect(updatePlanMock).toHaveBeenCalledWith(
@@ -491,11 +504,7 @@ describe("PmocPlanDetailPage", () => {
     const description = screen.getByLabelText(i18n.t("pmoc.create.form.description"))
     await user.clear(description)
     await user.type(description, "Escopo atualizado")
-    await user.click(
-      screen.getByRole("button", {
-        name: i18n.t("pmoc.plans.actions.saveDetails"),
-      }),
-    )
+    await user.click(saveButton())
 
     await waitFor(() => {
       expect(updatePlanMock).toHaveBeenCalledWith(
@@ -553,26 +562,19 @@ describe("PmocPlanDetailPage", () => {
     const title = await screen.findByDisplayValue("Verificar filtros")
     await user.clear(title)
     await user.tab()
-    expect(
-      screen.getByRole("button", {
-        name: i18n.t("pmoc.plans.actions.saveChecklist"),
-      }),
-    ).toBeDisabled()
+    expect(saveButton()).toBeDisabled()
     expect(
       screen.getAllByText(i18n.t("pmoc.create.validation.taskTitleRequired")).length,
     ).toBeGreaterThan(0)
 
+    await user.click(screen.getByRole("button", { name: i18n.t("pmoc.newPlan.form.presets.custom") }))
     const interval = screen.getByRole("spinbutton", {
-      name: i18n.t("pmoc.scheduling.interval"),
+      name: i18n.t("pmoc.newPlan.form.customDays"),
     })
     await user.clear(interval)
     await user.type(interval, "0")
     await user.tab()
-    expect(
-      screen.getByRole("button", {
-        name: i18n.t("pmoc.plans.actions.saveDetails"),
-      }),
-    ).toBeDisabled()
+    expect(saveButton()).toBeDisabled()
     expect(
       screen.getAllByText(i18n.t("pmoc.scheduling.intervalInvalid")).length,
     ).toBeGreaterThan(0)
@@ -584,7 +586,7 @@ describe("PmocPlanDetailPage", () => {
       }),
     )
     await user.click(
-      await screen.findByRole("option", { name: i18n.t("pmoc.inputType.Number") }),
+      await screen.findByRole("option", { name: i18n.t("pmoc.taskInputTypes.Number") }),
     )
     await user.type(screen.getByLabelText(i18n.t("pmoc.create.tasks.min")), "8")
     await user.type(screen.getByLabelText(i18n.t("pmoc.create.tasks.max")), "2")
@@ -592,11 +594,7 @@ describe("PmocPlanDetailPage", () => {
     expect(
       screen.getAllByText(i18n.t("pmoc.create.validation.numberRangeInvalid")).length,
     ).toBeGreaterThan(0)
-    expect(
-      screen.getByRole("button", {
-        name: i18n.t("pmoc.plans.actions.saveChecklist"),
-      }),
-    ).toBeDisabled()
+    expect(saveButton()).toBeDisabled()
   })
 
   it("asks before removing a task and labels the trash button", async () => {
@@ -625,7 +623,7 @@ describe("PmocPlanDetailPage", () => {
     expect(dialog).toHaveTextContent(
       i18n.t("pmoc.create.tasks.removeConfirmDescription"),
     )
-    expect(screen.getAllByText(/Tarefa/)).toHaveLength(2)
+    expect(screen.getAllByLabelText(i18n.t("pmoc.create.tasks.title"))).toHaveLength(2)
 
     await user.click(
       within(dialog).getByRole("button", {
@@ -636,7 +634,7 @@ describe("PmocPlanDetailPage", () => {
     await waitFor(() => {
       expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument()
     })
-    expect(screen.getAllByText(/Tarefa/)).toHaveLength(1)
+    expect(screen.getAllByLabelText(i18n.t("pmoc.create.tasks.title"))).toHaveLength(1)
   })
 
   it("hides Gerar OS on an inactive plan and explains why", async () => {
@@ -666,11 +664,7 @@ describe("PmocPlanDetailPage", () => {
     renderDetail()
     const user = userEvent.setup()
 
-    await user.click(
-      await screen.findByRole("button", {
-        name: i18n.t("pmoc.plans.actions.delete"),
-      }),
-    )
+    await chooseMenuItem(user, i18n.t("pmoc.plans.actions.delete"))
     const dialog = await screen.findByRole("alertdialog")
     await user.click(
       within(dialog).getByRole("button", {
@@ -685,5 +679,97 @@ describe("PmocPlanDetailPage", () => {
       )
     })
     expect(deletePlanMock).not.toHaveBeenCalled()
+  })
+
+  it("keeps the single SaveBar disabled until something changes and removes the old save buttons", async () => {
+    renderDetail()
+    const user = userEvent.setup()
+
+    await screen.findByDisplayValue("Verificar filtros")
+    expect(saveButton()).toBeDisabled()
+    expect(screen.queryByRole("button", { name: "Salvar dados do plano" })).not.toBeInTheDocument()
+    expect(screen.queryByRole("button", { name: "Salvar checklist" })).not.toBeInTheDocument()
+    expect(screen.getAllByRole("button", { name: i18n.t("pmoc.planDetail.actions.save") })).toHaveLength(1)
+
+    await user.type(screen.getByLabelText(i18n.t("pmoc.create.form.name")), " 2")
+    expect(saveButton()).toBeEnabled()
+    await user.click(screen.getByRole("button", { name: i18n.t("common.cancel") }))
+    expect(screen.getByLabelText(i18n.t("pmoc.create.form.name"))).toHaveValue(basePlanJson.name)
+    expect(saveButton()).toBeDisabled()
+  })
+
+  it("saves the plan data and the checklist together with one click", async () => {
+    updatePlanMock.mockResolvedValue({ ...basePlanJson, name: "Plano novo" })
+    replaceTasksMock.mockResolvedValue({ ...basePlanJson, name: "Plano novo" })
+    renderDetail()
+    const user = userEvent.setup()
+
+    const name = await screen.findByLabelText(i18n.t("pmoc.create.form.name"))
+    await user.clear(name)
+    await user.type(name, "Plano novo")
+    const title = screen.getByDisplayValue("Verificar filtros")
+    await user.clear(title)
+    await user.type(title, "Trocar filtros")
+    await user.click(saveButton())
+
+    await waitFor(() => {
+      expect(updatePlanMock).toHaveBeenCalledWith(PLAN_ID, expect.objectContaining({ name: "Plano novo" }))
+      expect(replaceTasksMock).toHaveBeenCalledTimes(1)
+    })
+    expect(toastSuccess).toHaveBeenCalledWith(i18n.t("pmoc.planDetail.toast.saved"))
+    await waitFor(() => expect(saveButton()).toBeDisabled())
+  })
+
+  it("reports a checklist failure after the plan data was saved and keeps the edits", async () => {
+    updatePlanMock.mockResolvedValue({ ...basePlanJson, name: "Plano novo" })
+    replaceTasksMock.mockRejectedValue(new Error("boom"))
+    renderDetail()
+    const user = userEvent.setup()
+
+    const name = await screen.findByLabelText(i18n.t("pmoc.create.form.name"))
+    await user.clear(name)
+    await user.type(name, "Plano novo")
+    const title = screen.getByDisplayValue("Verificar filtros")
+    await user.clear(title)
+    await user.type(title, "Trocar filtros")
+    await user.click(saveButton())
+
+    await waitFor(() => {
+      expect(toast.error).toHaveBeenCalledWith(i18n.t("pmoc.planDetail.errors.partialSave"))
+    })
+    expect(toastSuccess).not.toHaveBeenCalled()
+    expect(screen.getByDisplayValue("Trocar filtros")).toBeInTheDocument()
+    // Only the checklist is still pending: a retry must not resend the plan data.
+    updatePlanMock.mockClear()
+    replaceTasksMock.mockResolvedValue({ ...basePlanJson, name: "Plano novo" })
+    await user.click(saveButton())
+    await waitFor(() => expect(replaceTasksMock).toHaveBeenCalledTimes(2))
+    expect(updatePlanMock).not.toHaveBeenCalled()
+  })
+
+  it("shows Automático in the header and moves the toggles into the menu", async () => {
+    getPlanMock.mockResolvedValue({ ...basePlanJson, autoGenerateEnabled: true })
+    updatePlanMock.mockResolvedValue({ ...basePlanJson, autoGenerateEnabled: true, isActive: false })
+    renderDetail()
+    const user = userEvent.setup()
+
+    expect(await screen.findByText(i18n.t("pmoc.planDetail.badges.automatic"))).toBeInTheDocument()
+    expect(screen.getAllByText(i18n.t("pmoc.planDetail.badges.origin.Custom")).some((node) => node.getAttribute("data-slot") === "badge")).toBe(true)
+    await openMenu(user)
+    expect(await screen.findByRole("menuitem", { name: i18n.t("pmoc.planDetail.actions.disableAuto") })).toBeInTheDocument()
+    expect(screen.getByRole("menuitem", { name: i18n.t("pmoc.plans.actions.delete") })).toBeInTheDocument()
+    await user.click(screen.getByRole("menuitem", { name: i18n.t("pmoc.plans.actions.deactivate") }))
+    await waitFor(() => expect(updatePlanMock).toHaveBeenCalledWith(PLAN_ID, expect.objectContaining({ isActive: false })))
+    expect(await screen.findByText(i18n.t("pmoc.plans.status.inactive"))).toBeInTheDocument()
+  })
+
+  it("is read-only without write permission: no save bar and no menu", async () => {
+    renderDetail(["pmoc.plans.read"], ["pmoc"])
+
+    expect(await screen.findByText("Verificar filtros")).toBeInTheDocument()
+    expect(screen.getByTestId("plan-first-due-readonly")).toBeInTheDocument()
+    expect(screen.queryByRole("button", { name: i18n.t("pmoc.planDetail.actions.save") })).not.toBeInTheDocument()
+    expect(screen.queryByRole("button", { name: i18n.t("pmoc.planDetail.actions.more") })).not.toBeInTheDocument()
+    expect(screen.getByText("Sim/Não", { exact: false })).toBeInTheDocument()
   })
 })

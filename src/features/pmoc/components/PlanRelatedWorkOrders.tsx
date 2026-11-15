@@ -5,23 +5,11 @@ import { useTranslation } from "react-i18next"
 
 import { Badge } from "@/components/ui/badge"
 import { Button, buttonVariants } from "@/components/ui/button"
+import { formatCivilDateHuman } from "@/features/pmoc/lib/formatCivilDate"
 import { Can } from "@/features/users/permissions/Can"
 import type { WorkOrder } from "@/features/workOrders/schemas/workOrderSchemas"
 import { getWorkOrders } from "@/features/workOrders/services/workOrdersService"
 import { isAxiosError } from "@/lib/api"
-
-function formatScheduledDate(value: string, locale: string): string {
-  const date = new Date(`${value}T00:00:00`)
-  if (Number.isNaN(date.getTime())) {
-    return value
-  }
-
-  return new Intl.DateTimeFormat(locale, {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-  }).format(date)
-}
 
 function statusBadgeVariant(status: WorkOrder["status"]) {
   if (status === "Completed") {
@@ -83,7 +71,7 @@ export function PlanRelatedWorkOrders({
   return (
     <section
       data-testid="related-work-orders"
-      className="space-y-4 rounded-xl border border-border p-4 sm:p-6"
+      className="space-y-3"
     >
       <h2 className="text-lg font-medium">
         {t("pmoc.plans.sections.relatedWorkOrders")}
@@ -138,7 +126,7 @@ export function PlanRelatedWorkOrders({
                 </div>
                 <p className="text-sm text-muted-foreground">
                   <span>
-                    {formatScheduledDate(workOrder.scheduledDate, i18n.language)}
+                    {formatCivilDateHuman(workOrder.scheduledDate, i18n.language)}
                   </span>
                   {workOrder.assignedUser ? (
                     <>

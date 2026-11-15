@@ -13,6 +13,8 @@ export type NavigationTab = {
     | "nav.peopleAccess"
     | "nav.registrationFields"
   to: string
+  /** Query string appended when the tab is clicked (e.g. "?modo=branco"); the active tab still matches `to`. */
+  search?: string
   permission: string
   icon?: LucideIcon
   modules?: readonly string[]

@@ -5,6 +5,7 @@ import { createMemoryRouter, MemoryRouter, Route, RouterProvider, Routes } from 
 import { beforeEach, describe, expect, it, vi } from "vitest"
 
 import { CreatePlanPage } from "@/features/pmoc/pages/CreatePlanPage"
+import { TestPermissionProvider } from "@/features/users/permissions/PermissionContext"
 import i18n from "@/lib/i18n"
 
 vi.mock("@/contexts/AuthContext", () => {
@@ -119,6 +120,8 @@ describe("CreatePlanPage category picker", () => {
 
 const CATEGORY_ID = "dddddddd-dddd-4ddd-8ddd-dddddddddddd"
 
+const OTHER_UNIT_ID = "ffffffff-ffff-4fff-8fff-ffffffffffff"
+
 describe("CreatePlanPage validity gate", () => {
   beforeEach(() => {
     getUnitsMock.mockReset()
@@ -132,6 +135,13 @@ describe("CreatePlanPage validity gate", () => {
         tenantId: "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee",
         name: "Sede",
         code: "SEDE",
+        isActive: true,
+      },
+      {
+        id: OTHER_UNIT_ID,
+        tenantId: "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee",
+        name: "Anexo",
+        code: "ANX",
         isActive: true,
       },
     ])
@@ -149,17 +159,23 @@ describe("CreatePlanPage validity gate", () => {
     )
   }
 
+  async function pickUnit(user: ReturnType<typeof userEvent.setup>) {
+    await user.click(screen.getByRole("combobox", { name: i18n.t("pmoc.create.form.unit") }))
+    await user.click(await screen.findByRole("option", { name: "Sede" }))
+  }
+
+  async function pickCategory(user: ReturnType<typeof userEvent.setup>) {
+    await user.click(screen.getByRole("combobox", { name: i18n.t("pmoc.newPlan.form.appliesTo") }))
+    await user.click(await screen.findByRole("option", { name: "Split" }))
+  }
+
   async function fillValidPlan(user: ReturnType<typeof userEvent.setup>) {
     await user.type(
       await screen.findByLabelText(i18n.t("pmoc.create.form.name")),
       "PMOC Split",
     )
-    await user.click(screen.getByRole("button", { name: "Sede" }))
-    await user.click(screen.getByRole("button", { name: "Split" }))
-    await user.type(
-      screen.getByRole("spinbutton", { name: i18n.t("pmoc.scheduling.interval") }),
-      "30",
-    )
+    await pickUnit(user)
+    await pickCategory(user)
     await user.type(
       screen.getByLabelText(i18n.t("pmoc.scheduling.firstDue")),
       "14/10/2026",
@@ -174,6 +190,8 @@ describe("CreatePlanPage validity gate", () => {
     const user = userEvent.setup()
     renderPage()
     const name = await screen.findByLabelText(i18n.t("pmoc.create.form.name"))
+    expect(screen.queryByLabelText(i18n.t("pmoc.create.form.description"))).not.toBeInTheDocument()
+    await user.click(screen.getByRole("button", { name: i18n.t("pmoc.newPlan.form.addDescription") }))
     const description = screen.getByLabelText(i18n.t("pmoc.create.form.description"))
     await user.click(description)
     // Enter inside a multiline field must keep editing, without submitting.
@@ -194,11 +212,10 @@ describe("CreatePlanPage validity gate", () => {
     renderPage()
     const name = await screen.findByLabelText(i18n.t("pmoc.create.form.name"))
     await user.type(name, "Plano de manutenção{Enter}")
-    const unit = screen.getByRole("radiogroup", { name: i18n.t("pmoc.create.form.unit") })
+    const unit = screen.getByRole("combobox", { name: i18n.t("pmoc.create.form.unit") })
     await waitFor(() => expect(unit).toHaveFocus())
     expect(unit).toHaveAttribute("aria-invalid", "true")
     expect(unit).toHaveAccessibleDescription(i18n.t("pmoc.create.validation.unitRequired"))
-    expect(unit).toHaveClass("aria-invalid:border-destructive")
     expect(createPlanMock).not.toHaveBeenCalled()
   })
 
@@ -219,11 +236,11 @@ describe("CreatePlanPage validity gate", () => {
 
     fireEvent.submit(name.closest("form")!)
     expect(await screen.findAllByText(i18n.t("pmoc.scheduling.firstDueRequired"))).toHaveLength(1)
-    for (const [key, label] of [["nameRequired", "name"], ["unitRequired", "unit"], ["categoryRequired", "category"]]) {
+    for (const [key, label] of [["nameRequired", "pmoc.create.form.name"], ["unitRequired", "pmoc.create.form.unit"], ["categoryRequired", "pmoc.newPlan.form.appliesTo"]]) {
       const message = i18n.t(`pmoc.create.validation.${key}`)
       const messages = screen.getAllByText(message)
       expect(messages).toHaveLength(1)
-      const field = screen.getByLabelText(i18n.t(`pmoc.create.form.${label}`))
+      const field = screen.getByLabelText(i18n.t(label))
       expect(messages[0].id).toBeTruthy()
       expect(field.getAttribute("aria-describedby")?.split(" ")).toContain(messages[0].id)
       expect(document.getElementById(messages[0].id)).toHaveTextContent(message)
@@ -290,11 +307,13 @@ describe("CreatePlanPage validity gate", () => {
     await fillValidPlan(user)
     await waitFor(() => expect(save).toBeEnabled(), { timeout: 5000 })
 
+    await user.click(screen.getByRole("button", { name: i18n.t("pmoc.newPlan.form.presets.custom") }))
     const interval = screen.getByRole("spinbutton", {
-      name: i18n.t("pmoc.scheduling.interval"),
+      name: i18n.t("pmoc.newPlan.form.customDays"),
     })
     await user.clear(interval)
     await user.type(interval, "0")
+    await user.tab()
     await waitFor(() => expect(save).toBeDisabled(), { timeout: 5000 })
     expect(
       screen.getAllByText(i18n.t("pmoc.scheduling.intervalInvalid")).length,
@@ -355,10 +374,8 @@ describe("CreatePlanPage validity gate", () => {
       screen.getByLabelText(i18n.t("pmoc.create.tasks.title")),
     ).toHaveValue("Limpar filtro")
     expect(
-      screen.getByRole("spinbutton", {
-        name: i18n.t("pmoc.scheduling.interval"),
-      }),
-    ).toHaveValue(30)
+      screen.getByRole("button", { name: i18n.t("pmoc.newPlan.form.presets.monthly") }),
+    ).toHaveAttribute("aria-pressed", "true")
     expect(
       screen.getByLabelText(i18n.t("pmoc.scheduling.firstDue")),
     ).toHaveValue("14/10/2026")
@@ -400,7 +417,7 @@ describe("CreatePlanPage validity gate", () => {
     )
     await user.click(
       await screen.findByRole("option", {
-        name: i18n.t("pmoc.inputType.SingleChoice"),
+        name: i18n.t("pmoc.taskInputTypes.SingleChoice"),
       }),
     )
 
@@ -461,10 +478,10 @@ describe("CreatePlanPage validity gate", () => {
     const user = userEvent.setup()
     renderPage()
     await user.type(await screen.findByLabelText(i18n.t("pmoc.create.form.name")), "PMOC Split")
-    await user.click(screen.getByRole("button", { name: "Sede" }))
-    await user.click(screen.getByRole("button", { name: i18n.t("pmoc.create.form.targetAsset") }))
-    await user.click(screen.getByRole("button", { name: "AC-1 — Split 1" }))
-    await user.type(screen.getByRole("spinbutton", { name: i18n.t("pmoc.scheduling.interval") }), "30")
+    await pickUnit(user)
+    await user.click(screen.getByRole("button", { name: i18n.t("pmoc.newPlan.form.specificAsset") }))
+    await user.click(screen.getByRole("combobox", { name: i18n.t("pmoc.create.form.asset") }))
+    await user.click(await screen.findByRole("option", { name: "AC-1 — Split 1" }))
     await user.type(screen.getByLabelText(i18n.t("pmoc.scheduling.firstDue")), "14/10/2026")
     await user.type(screen.getByLabelText(i18n.t("pmoc.create.tasks.title")), "Limpar filtro")
     await user.click(screen.getByRole("button", { name: i18n.t("pmoc.create.actions.save") }))
@@ -499,5 +516,136 @@ describe("CreatePlanPage validity gate", () => {
     await user.click(screen.getByRole("button", { name: i18n.t("common.cancel") }))
     expect(await screen.findByRole("alertdialog")).toBeInTheDocument()
     expect(screen.queryByText("plan-list")).not.toBeInTheDocument()
+  })
+})
+
+describe("CreatePlanPage simplified form", () => {
+  beforeEach(() => {
+    getUnitsMock.mockReset()
+    listCategoriesMock.mockReset()
+    createPlanMock.mockReset()
+    getUnitsMock.mockResolvedValue([
+      {
+        id: UNIT_ID,
+        tenantId: "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee",
+        name: "Sede",
+        code: "SEDE",
+        isActive: true,
+      },
+    ])
+    listCategoriesMock.mockResolvedValue([
+      { id: CATEGORY_ID, name: "Split" },
+      { id: "99999999-9999-4999-8999-999999999999", name: "Chiller" },
+    ])
+    createPlanMock.mockResolvedValue({ id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa" } as Awaited<ReturnType<typeof createPlan>>)
+  })
+
+  function renderWithPermissions(permissions: string[], entry = "/pmoc/novo") {
+    return render(
+      <MemoryRouter initialEntries={[entry]}>
+        <TestPermissionProvider activeModules={["pmoc"]} permissions={permissions}>
+          <Routes>
+            <Route path="/pmoc/novo" element={<CreatePlanPage />} />
+            <Route path="/pmoc/biblioteca" element={<div>library-page</div>} />
+            <Route path="/pmoc/:id" element={<div>plan-detail</div>} />
+          </Routes>
+        </TestPermissionProvider>
+      </MemoryRouter>,
+    )
+  }
+
+  it("offers the library first and reveals the blank form on request", async () => {
+    const user = userEvent.setup()
+    renderWithPermissions(["pmoc.plans.write", "pmoc.templates.read"])
+
+    const library = await screen.findByRole("link", { name: /Biblioteca/ })
+    expect(library).toHaveAttribute("href", "/pmoc/biblioteca")
+    expect(screen.queryByLabelText(i18n.t("pmoc.create.form.name"))).not.toBeInTheDocument()
+
+    await user.click(screen.getByRole("button", { name: new RegExp(i18n.t("pmoc.newPlan.choose.blank.title")) }))
+    expect(await screen.findByLabelText(i18n.t("pmoc.create.form.name"))).toBeInTheDocument()
+    expect(screen.queryByRole("link", { name: /Biblioteca/ })).not.toBeInTheDocument()
+  })
+
+  it("skips the choice when the user cannot read library templates", async () => {
+    renderWithPermissions(["pmoc.plans.write"])
+    expect(await screen.findByLabelText(i18n.t("pmoc.create.form.name"))).toBeInTheDocument()
+    expect(screen.queryByText(i18n.t("pmoc.newPlan.choose.title"))).not.toBeInTheDocument()
+  })
+
+  it("starts directly on the form with ?modo=branco", async () => {
+    renderWithPermissions(["pmoc.plans.write", "pmoc.templates.read"], "/pmoc/novo?modo=branco")
+    expect(await screen.findByLabelText(i18n.t("pmoc.create.form.name"))).toBeInTheDocument()
+  })
+
+  it("preselects the only unit, drops the status choice and creates an active plan with a frequency preset", async () => {
+    const user = userEvent.setup()
+    render(
+      <MemoryRouter initialEntries={["/pmoc/novo"]}>
+        <Routes>
+          <Route path="/pmoc/novo" element={<CreatePlanPage />} />
+          <Route path="/pmoc/:id" element={<div>plan-detail</div>} />
+        </Routes>
+      </MemoryRouter>,
+    )
+    await user.type(await screen.findByLabelText(i18n.t("pmoc.create.form.name")), "PMOC Split")
+    expect(screen.getByRole("combobox", { name: i18n.t("pmoc.create.form.unit") })).toHaveTextContent("Sede")
+    expect(screen.queryByText(i18n.t("pmoc.create.form.status"))).not.toBeInTheDocument()
+    expect(screen.queryByText(i18n.t("pmoc.create.form.targetHelp"))).not.toBeInTheDocument()
+
+    await user.click(screen.getByRole("button", { name: i18n.t("pmoc.newPlan.form.presets.quarterly") }))
+    expect(screen.queryByRole("spinbutton", { name: i18n.t("pmoc.newPlan.form.customDays") })).not.toBeInTheDocument()
+
+    await user.click(screen.getByRole("combobox", { name: i18n.t("pmoc.newPlan.form.appliesTo") }))
+    await user.type(screen.getByRole("textbox", { name: i18n.t("pmoc.newPlan.form.categorySearch") }), "chil")
+    expect(screen.queryByRole("option", { name: "Split" })).not.toBeInTheDocument()
+    await user.click(screen.getByRole("option", { name: "Chiller" }))
+
+    await user.type(screen.getByLabelText(i18n.t("pmoc.scheduling.firstDue")), "14/10/2026")
+    await user.type(screen.getByLabelText(i18n.t("pmoc.create.tasks.title")), "Limpar filtro")
+    await user.click(screen.getByRole("button", { name: i18n.t("pmoc.create.actions.save") }))
+
+    await waitFor(() =>
+      expect(createPlanMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          unitId: UNIT_ID,
+          intervalDays: 90,
+          isActive: true,
+          assetCategoryId: "99999999-9999-4999-8999-999999999999",
+        }),
+      ),
+    )
+  })
+
+  it("maps Personalizado to the typed number of days and labels task types in Portuguese", async () => {
+    const user = userEvent.setup()
+    render(
+      <MemoryRouter initialEntries={["/pmoc/novo"]}>
+        <Routes>
+          <Route path="/pmoc/novo" element={<CreatePlanPage />} />
+          <Route path="/pmoc/:id" element={<div>plan-detail</div>} />
+        </Routes>
+      </MemoryRouter>,
+    )
+    await user.type(await screen.findByLabelText(i18n.t("pmoc.create.form.name")), "PMOC Split")
+    await user.click(screen.getByRole("button", { name: i18n.t("pmoc.newPlan.form.presets.custom") }))
+    const days = screen.getByRole("spinbutton", { name: i18n.t("pmoc.newPlan.form.customDays") })
+    await user.clear(days)
+    await user.type(days, "45")
+
+    await user.click(screen.getByRole("combobox", { name: i18n.t("pmoc.newPlan.form.appliesTo") }))
+    await user.click(await screen.findByRole("option", { name: "Split" }))
+    await user.type(screen.getByLabelText(i18n.t("pmoc.scheduling.firstDue")), "14/10/2026")
+    await user.type(screen.getByLabelText(i18n.t("pmoc.create.tasks.title")), "Medir corrente")
+
+    await user.click(screen.getByRole("combobox", { name: i18n.t("pmoc.create.tasks.inputType") }))
+    expect(await screen.findByRole("option", { name: "Sim/Não" })).toBeInTheDocument()
+    expect(screen.getByRole("option", { name: "Foto" })).toBeInTheDocument()
+    expect(screen.queryByRole("option", { name: "Checkbox" })).not.toBeInTheDocument()
+    await user.click(screen.getByRole("option", { name: "Número" }))
+    expect(screen.getByLabelText(i18n.t("pmoc.create.tasks.min"))).toBeInTheDocument()
+
+    await user.click(screen.getByRole("button", { name: i18n.t("pmoc.create.actions.save") }))
+    await waitFor(() => expect(createPlanMock).toHaveBeenCalledWith(expect.objectContaining({ intervalDays: 45 })))
   })
 })

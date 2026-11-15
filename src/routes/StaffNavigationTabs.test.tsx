@@ -120,6 +120,14 @@ describe("legacy sidebar URLs rendered inside their new screens", () => {
     expect(screen.queryByRole("tab", { name: i18n.t("nav.pmocLibrary") })).not.toBeInTheDocument()
   })
 
+  it("opens the blank plan form from the library's custom tab, skipping the start choice", async () => {
+    const user = userEvent.setup()
+    renderRoute("/pmoc/biblioteca", ["pmoc.plans.write", "pmoc.templates.read"])
+    await user.click(await screen.findByRole("tab", { name: i18n.t("nav.pmocCustom") }))
+    expect(await screen.findByTestId("location")).toHaveTextContent("/manutencao/planos/novo?modo=branco")
+    expect(await screen.findByText("custom plan content")).toBeInTheDocument()
+  })
+
   it("navigates between reservations and booking rules and restores the selected tab on Back", async () => {
     const user = userEvent.setup()
     renderRoute("/configuracoes/reservas", ["rentals.reservations.read", "rentals.booking_policy.read"])
