@@ -6269,6 +6269,25 @@
         "subtitle": "Review and visibility",
         "description": "Review what is missing and publish to customers."
       }
-    }
+    },
+    "categoriesHelp": "Group similar products to make browsing easier.",
+    "categorySearchPlaceholder": "Search or select categories",
+    "categorySearchLabel": "Search categories",
+    "createNewCategory": "Create new category",
+    "noCategoryMatch": "No category found",
+    "tagsHelp": "Add keywords for more specific searches.",
+    "tagInputPlaceholder": "Type a tag and press Enter",
+    "tagSearchPlaceholder": "Type to search for a tag",
+    "noTagMatch": "No tag found",
+    "tagInvalid": "Use letters or numbers in the tag.",
+    "removeItem": "Remove {{name}}",
+    "differenceTitle": "What is the difference?",
+    "differenceBody": "Categories are the sections of your catalog. Tags describe traits that can appear on products in different categories.",
+    "saveError": "Could not save. Review and try again.",
+    "offerNameHelp": "This name is shown in the catalog and on bookings.",
+    "offerCodeHelp": "Use a unique code to find the product in your operation.",
+    "offerDescriptionHelp": "Optional. You can add more details later.",
+    "offerDescriptionPlaceholder": "Describe what is included, what sets it apart and the key information for the customer.",
+    "offerPricingInfo": "Prices and billing terms are set in the Pricing step."
   }
 }

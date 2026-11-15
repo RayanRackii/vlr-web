@@ -93,7 +93,7 @@ function ProductCadastroPage() {
   const body = (
       <div className="space-y-4">
         {cadastroStep === "dados" || cadastroStep === "precos" ? (
-          <ProductWizardOfferStep product={product} readOnly={!wizard.canManage} onDirtyChange={setStepDirty} onSavingChange={setStepSaving} onSaved={() => wizard.reload()} />
+          <ProductWizardOfferStep product={product} mode={cadastroStep === "precos" ? "precos" : "dados"} readOnly={!wizard.canManage} onDirtyChange={setStepDirty} onSavingChange={setStepSaving} onSaved={() => wizard.reload()} />
         ) : null}
         {cadastroStep === "agenda" ? (
           <>

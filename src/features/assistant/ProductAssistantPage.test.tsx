@@ -190,12 +190,12 @@ it("keeps Publicar disabled while a setup step is missing", () => {
 it("keeps taxonomy chips on the page until their assignment has been saved", async () => {
   const user = userEvent.setup()
   renderCadastro("?passo=categorias")
-  await user.click(await screen.findByRole("button", { name: "Hospedagem" }))
-  expect(screen.getByRole("button", { name: "Hospedagem" })).toHaveAttribute("aria-pressed", "true")
-  expect(screen.getByRole("button", { name: "Hospedagem" })).toHaveClass("w-fit")
+  await user.click(await screen.findByRole("combobox", { name: "Buscar ou selecionar categorias" }))
+  await user.click(await screen.findByRole("option", { name: "Hospedagem" }))
+  expect(screen.getByRole("button", { name: "Remover Hospedagem" })).toBeInTheDocument()
   expect(screen.getByRole("button", { name: "Salvar e continuar" })).toBeEnabled()
-  await user.click(screen.getByRole("button", { name: "Hospedagem" }))
-  expect(screen.getByRole("button", { name: "Hospedagem" })).toHaveAttribute("aria-pressed", "false")
+  await user.click(screen.getByRole("button", { name: "Remover Hospedagem" }))
+  expect(screen.queryByRole("button", { name: "Remover Hospedagem" })).not.toBeInTheDocument()
 })
 it("keeps unsaved offer changes in Dados and does not block the footer", async () => {
   const user = userEvent.setup()

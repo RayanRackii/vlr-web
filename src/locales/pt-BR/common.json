@@ -6269,6 +6269,25 @@
         "subtitle": "Revisão e visibilidade",
         "description": "Revise o que falta e publique para os clientes."
       }
-    }
+    },
+    "categoriesHelp": "Agrupe produtos semelhantes para facilitar a navegação.",
+    "categorySearchPlaceholder": "Buscar ou selecionar categorias",
+    "categorySearchLabel": "Buscar categorias",
+    "createNewCategory": "Criar nova categoria",
+    "noCategoryMatch": "Nenhuma categoria encontrada",
+    "tagsHelp": "Adicione palavras-chave para buscas mais específicas.",
+    "tagInputPlaceholder": "Digite uma tag e pressione Enter",
+    "tagSearchPlaceholder": "Digite para buscar uma tag",
+    "noTagMatch": "Nenhuma tag encontrada",
+    "tagInvalid": "Use letras ou números na tag.",
+    "removeItem": "Remover {{name}}",
+    "differenceTitle": "Qual é a diferença?",
+    "differenceBody": "Categorias são as seções do seu catálogo. Tags descrevem características que podem aparecer em produtos de categorias diferentes.",
+    "saveError": "Não foi possível salvar. Revise e tente novamente.",
+    "offerNameHelp": "Este nome será exibido no catálogo e nas reservas.",
+    "offerCodeHelp": "Use um código único para localizar o produto na sua operação.",
+    "offerDescriptionHelp": "Opcional. Você pode complementar essas informações depois.",
+    "offerDescriptionPlaceholder": "Descreva o que está incluído, os diferenciais e as principais informações para o cliente.",
+    "offerPricingInfo": "Valores e condições de cobrança serão definidos na etapa Preços."
   }
 }

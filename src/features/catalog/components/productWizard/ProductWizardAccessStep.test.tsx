@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react"
+import { act, render, screen } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import { MemoryRouter } from "react-router-dom"
@@ -7,6 +7,7 @@ import { ProductWizardAccessStep } from "@/features/catalog/components/productWi
 import { addCustomerGroupMembers, putCatalogProductAccess } from "@/features/catalog/services/catalogService"
 import { listTenantCustomers } from "@/features/users/services/usersService"
 import i18n from "@/lib/i18n"
+import { createStepShell } from "@/features/assistant/testStepShell"
 
 vi.mock("@/features/catalog/services/catalogService", () => ({
   addCustomerGroupMembers: vi.fn(),
@@ -81,5 +82,68 @@ describe("ProductWizardAccessStep member pick", () => {
     await user.click(screen.getByRole("button", { name: /Bia/ }))
     expect(addCustomerGroupMembers).toHaveBeenCalledTimes(1)
     expect(addCustomerGroupMembers).toHaveBeenCalledWith(GROUP, [BIA])
+  })
+})
+
+describe("ProductWizardAccessStep inside the cadastro shell", () => {
+  function renderStep(shellWrap: boolean) {
+    const { StepShell, shell } = createStepShell()
+    const step = (
+      <MemoryRouter>
+        <ProductWizardAccessStep
+          productId="product-1"
+          visibility="Public"
+          customerIds={[]}
+          groupIds={[]}
+          groups={[]}
+          wizardPath="/x"
+          readOnly={false}
+          canSearchCustomers={false}
+          onSaved={vi.fn()}
+        />
+      </MemoryRouter>
+    )
+    render(shellWrap ? <StepShell>{step}</StepShell> : step)
+    return shell
+  }
+
+  beforeEach(() => {
+    vi.clearAllMocks()
+    vi.mocked(putCatalogProductAccess).mockResolvedValue({} as never)
+  })
+
+  it("keeps its Save button outside a shell", () => {
+    renderStep(false)
+    expect(screen.getByRole("button", { name: i18n.t("common.save") })).toBeInTheDocument()
+  })
+
+  it("hides Save and resolves true without a request when nothing changed", async () => {
+    const shell = renderStep(true)
+    expect(screen.queryByRole("button", { name: i18n.t("common.save") })).not.toBeInTheDocument()
+    let result: boolean | null = null
+    await act(async () => { result = await shell.submit() })
+    expect(result).toBe(true)
+    expect(putCatalogProductAccess).not.toHaveBeenCalled()
+  })
+
+  it("saves a changed visibility and resolves true", async () => {
+    const user = userEvent.setup()
+    const shell = renderStep(true)
+    await user.click(screen.getByRole("button", { name: i18n.t("catalog.products.visibilityFilter.restricted") }))
+    let result: boolean | null = null
+    await act(async () => { result = await shell.submit() })
+    expect(result).toBe(true)
+    expect(putCatalogProductAccess).toHaveBeenCalledWith("product-1", expect.objectContaining({ visibility: "Restricted" }))
+  })
+
+  it("resolves false and shows an inline alert when the request fails", async () => {
+    const user = userEvent.setup()
+    vi.mocked(putCatalogProductAccess).mockRejectedValue(new Error("Falha de acesso"))
+    const shell = renderStep(true)
+    await user.click(screen.getByRole("button", { name: i18n.t("catalog.products.visibilityFilter.restricted") }))
+    let result: boolean | null = null
+    await act(async () => { result = await shell.submit() })
+    expect(result).toBe(false)
+    expect(await screen.findByRole("alert")).toHaveTextContent("Falha de acesso")
   })
 })
