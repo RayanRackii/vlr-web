@@ -539,6 +539,45 @@ describe("ReservationsPage filters and states", () => {
     expect(screen.getByRole("radiogroup", { name: "Período" })).toBeInTheDocument()
     expect(screen.getAllByTestId("tenant-tz-label")).toHaveLength(1)
   })
+
+  it("orders the screen as h1, tabs, date toolbar, status chips, then the list", async () => {
+    render(
+      <MemoryRouter initialEntries={["/configuracoes/reservas"]}>
+        <TestPermissionProvider permissions={["rentals.reservations.read"]} activeModules={["rentals"]}>
+          <ReservationsScreen />
+        </TestPermissionProvider>
+      </MemoryRouter>,
+    )
+    await screen.findByText("Nenhuma reserva neste filtro.")
+    const follows = (a: Element, b: Element) => Boolean(a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING)
+    const h1 = screen.getByRole("heading", { level: 1 })
+    const tablist = screen.getByRole("tablist", { name: "Reservas" })
+    const today = screen.getByRole("button", { name: "Hoje" })
+    const view = screen.getByRole("radiogroup", { name: "Período" })
+    const chips = screen.getByRole("group", { name: i18n.t("rentals.reservations.status") })
+    const empty = screen.getByText("Nenhuma reserva neste filtro.")
+    expect(follows(h1, tablist)).toBe(true)
+    expect(follows(tablist, today)).toBe(true)
+    expect(follows(today, view)).toBe(true)
+    expect(follows(view, chips)).toBe(true)
+    expect(follows(chips, empty)).toBe(true)
+    // toolbar layout sits outside any card (no FilterBar section wraps the navigator)
+    expect(today.closest("section")).toBeNull()
+  })
+
+  it("keeps the Reservas header above the tabs on the booking policy tab, whose content header is an h2", async () => {
+    render(
+      <MemoryRouter initialEntries={["/configuracoes/politica-reservas"]}>
+        <TestPermissionProvider permissions={["rentals.reservations.read", "rentals.booking_policy.read"]} activeModules={["rentals"]}>
+          <ReservationsScreen />
+        </TestPermissionProvider>
+      </MemoryRouter>,
+    )
+    expect(await screen.findByRole("heading", { level: 2, name: "Regras de reserva" })).toBeInTheDocument()
+    const h1s = screen.getAllByRole("heading", { level: 1 })
+    expect(h1s).toHaveLength(1)
+    expect(h1s[0]).toHaveTextContent("Reservas")
+  })
 })
 
 describe("ReservationsPage opened from the agenda", () => {

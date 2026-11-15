@@ -2,12 +2,13 @@ import { ChevronLeft, type LucideIcon } from "lucide-react"
 import type { ReactNode } from "react"
 import { Link } from "react-router-dom"
 
+import { useInRouteTabs } from "@/components/layout/RouteTabsContext"
 import { useShellContext } from "@/components/layout/ShellContext"
 import { ICON_SIZE, ICON_STROKE_WIDTH } from "@/lib/icon"
 import { cn } from "@/lib/utils"
 
 export type PageHeaderProps = {
-  /** Primary page title. Rendered as the page's single <h1>. */
+  /** Primary page title. Rendered as the page's single <h1> (an <h2> section header inside `FeatureRouteTabs`). */
   title: ReactNode
   /** Optional small line above the title. */
   eyebrow?: ReactNode
@@ -37,6 +38,32 @@ export function PageHeader({
   className,
 }: PageHeaderProps) {
   const { breadcrumbInHeader } = useShellContext()
+  const inRouteTabs = useInRouteTabs()
+  if (inRouteTabs) {
+    // Section header under the feature's route tabs: h2, smaller, no entrance animation.
+    return (
+      <div className={cn("mb-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between", className)}>
+        <div className="min-w-0 space-y-1">
+          {back ? (
+            <Link
+              to={back.to}
+              className="inline-flex min-h-11 items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
+            >
+              <ChevronLeft className={ICON_SIZE.sm} strokeWidth={ICON_STROKE_WIDTH} aria-hidden />
+              {back.label}
+            </Link>
+          ) : null}
+          <h2 className="text-lg font-semibold tracking-tight text-foreground">{title}</h2>
+          {description ? (
+            <p className="max-w-2xl text-sm text-muted-foreground">{description}</p>
+          ) : null}
+        </div>
+        {actions ? (
+          <div className="flex shrink-0 flex-wrap items-center gap-2">{actions}</div>
+        ) : null}
+      </div>
+    )
+  }
   return (
     <div
       className={cn(
