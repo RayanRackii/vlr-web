@@ -1,28 +1,26 @@
-import { useCallback, useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { ShieldCheck } from "lucide-react"
 import { useForm, useWatch } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 
-import { FormSkeleton } from "@/components/loading/PageContentSkeleton"
-import { PageHeader } from "@/components/layout/PageHeader"
-import { Alert, AlertDescription } from "@/components/ui/alert"
+import { Page } from "@/components/layout/Page"
+import { SaveBar } from "@/components/layout/SaveBar"
+import { UnsavedChangesGuard } from "@/components/layout/UnsavedChangesGuard"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
-import { FormPrimaryButton } from "@/components/ui/form-primary-button"
+import { Checkbox } from "@/components/ui/checkbox"
+import { FormSection } from "@/components/ui/form-layout"
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
   FormMessage,
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
-import { SegmentedControl } from "@/components/ui/segmented-control"
-import { Switch } from "@/components/ui/switch"
+import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import {
   BOOKING_HORIZON_DAY_MAX,
@@ -30,6 +28,9 @@ import {
   BOOKING_POLICY_DAILY_LIMIT_MAX,
   BOOKING_POLICY_DAILY_LIMIT_MIN,
   BOOKING_POLICY_TEXT_MAX_LENGTH,
+  CANCEL_CUTOFF_HOURS_MAX,
+  parseCancelCutoffHoursInput,
+  parseHorizonDaysInput,
   bookingPolicyToFormValues,
   createBookingPolicyFormSchema,
   toBookingPolicyReplaceBody,
@@ -40,24 +41,70 @@ import {
   replaceBookingPolicy,
 } from "@/features/rentals/services/bookingPolicyService"
 import { CategoryBookingPolicySection } from "@/features/rentals/components/CategoryBookingPolicySection"
+import { useCategoryBookingPolicies } from "@/features/rentals/lib/useCategoryBookingPolicies"
 import { useTrialStatus } from "@/features/users/hooks/useTrialStatus"
 import { usePermissions } from "@/features/users/permissions/PermissionContext"
-import { useTenantTimeZone } from "@/contexts/TenantTimeZoneContext"
-import { formatTenantTimeZoneLabel } from "@/features/tenantPortal/lib/tenantTimeZoneLabel"
+
+/** One rule as a sentence: "before [input] after ☐ unlimited". The checkbox owns the off state. */
+function SentenceRow({
+  testId,
+  before,
+  after,
+  inputLabel,
+  unlimitedLabel,
+  unlimited,
+  onUnlimitedChange,
+  disabled,
+  input,
+  message,
+}: {
+  testId: string
+  before: string
+  after: string
+  inputLabel: string
+  unlimitedLabel: string
+  unlimited: boolean
+  onUnlimitedChange: (unlimited: boolean) => void
+  disabled: boolean
+  input: (props: { label: string; disabled: boolean }) => ReactNode
+  message: ReactNode
+}) {
+  return (
+    <div className="space-y-1" data-testid={testId}>
+      <div className="flex flex-wrap items-center gap-x-2 gap-y-2 text-sm">
+        <span>{before}</span>
+        {input({ label: inputLabel, disabled: disabled || unlimited })}
+        <span>{after}</span>
+        <Label className="ml-1 inline-flex font-normal min-h-11 cursor-pointer items-center gap-2 text-muted-foreground">
+          <Checkbox
+            checked={unlimited}
+            disabled={disabled}
+            onChange={(event) => onUnlimitedChange(event.target.checked)}
+          />
+          {unlimitedLabel}
+        </Label>
+      </div>
+      {message}
+    </div>
+  )
+}
 
 export function BookingPolicyPage() {
-  const { t, i18n } = useTranslation()
-  const timeZoneId = useTenantTimeZone()
+  const { t } = useTranslation()
   const { can } = usePermissions()
   const { isTrialReadOnly } = useTrialStatus()
   const canEdit = can("rentals.booking_policy.write") && !isTrialReadOnly
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
+  const [textOpen, setTextOpen] = useState(false)
+  const [textFocused, setTextFocused] = useState(false)
   const [loadedCancelCutoff, setLoadedCancelCutoff] = useState<number | null | undefined>(undefined)
   const [loadedHorizon, setLoadedHorizon] = useState<
     number | null | undefined
   >(undefined)
+  const [loadedValues, setLoadedValues] = useState<BookingPolicyFormValues | null>(null)
+  const categoryPolicies = useCategoryBookingPolicies()
 
   const schema = useMemo(
     () =>
@@ -83,7 +130,13 @@ export function BookingPolicyPage() {
       cancelCutoffHours: "",
     },
   })
-  const { control, handleSubmit, reset } = form
+  const {
+    control,
+    handleSubmit,
+    reset,
+    setValue,
+    formState: { isDirty: formDirty },
+  } = form
   const watchedText =
     useWatch({ control, name: "cancellationPolicyText" }) ?? ""
   const watchedLimitEnabled =
@@ -103,17 +156,25 @@ export function BookingPolicyPage() {
     cancelCutoffMode: watchedCancelCutoffMode,
     cancelCutoffHours: watchedCancelCutoffHours,
   }).success
-  const cancelCutoffItems = [
-    { value: "none", label: t("rentals.bookingPolicy.cancelCutoffNone") },
-    { value: "hours", label: t("rentals.bookingPolicy.cancelCutoffHoursMode") },
-  ]
-  const horizonItems = [
-    {
-      value: "unlimited",
-      label: t("rentals.bookingPolicy.horizonUnlimited"),
-    },
-    { value: "days", label: t("rentals.bookingPolicy.horizonDaysMode") },
-  ]
+  const dirty = formDirty || categoryPolicies.dirtyCount > 0
+  const unsavedCount = (formDirty ? 1 : 0) + categoryPolicies.dirtyCount
+
+  const setMode = (
+    field: "horizonMode" | "cancelCutoffMode" | "dailyLimitEnabled",
+    value: string | boolean,
+  ) => setValue(field, value as never, { shouldDirty: true, shouldValidate: true })
+
+  // What a blank category cell inherits: the general rule as currently typed.
+  const unlimitedText = t("rentals.bookingPolicy.categories.noLimit")
+  const inheritedDays =
+    watchedHorizonMode === "days" && parseHorizonDaysInput(watchedHorizonDays) !== null
+      ? watchedHorizonDays.trim()
+      : unlimitedText
+  const inheritedHours =
+    watchedCancelCutoffMode === "hours" &&
+    parseCancelCutoffHoursInput(watchedCancelCutoffHours) !== null
+      ? watchedCancelCutoffHours.trim()
+      : unlimitedText
 
   const load = useCallback(
     async (isCancelled: () => boolean = () => false) => {
@@ -124,9 +185,12 @@ export function BookingPolicyPage() {
         if (isCancelled()) {
           return
         }
+        const values = bookingPolicyToFormValues(policy)
         setLoadedHorizon(policy.maxAdvanceBookingDays)
         setLoadedCancelCutoff(policy.cancelCutoffHours)
-        reset(bookingPolicyToFormValues(policy))
+        setLoadedValues(values)
+        setTextOpen(values.cancellationPolicyText.length > 0)
+        reset(values)
       } catch (error) {
         if (isCancelled()) {
           return
@@ -155,279 +219,313 @@ export function BookingPolicyPage() {
   }, [load])
 
   async function onSubmit(values: BookingPolicyFormValues) {
-    if (!schema.safeParse(values).success || saving) {
+    if (!schema.safeParse(values).success || categoryPolicies.invalid || saving) {
       return
     }
 
     setSaving(true)
+    let generalError: string | null = null
     try {
-      const updated = await replaceBookingPolicy(
-        toBookingPolicyReplaceBody(values, loadedHorizon, loadedCancelCutoff),
-      )
-      setLoadedHorizon(updated.maxAdvanceBookingDays)
-      setLoadedCancelCutoff(updated.cancelCutoffHours)
-      reset(bookingPolicyToFormValues(updated))
-      toast.success(t("rentals.bookingPolicy.saved"))
-    } catch (error) {
-      toast.error(
-        error instanceof Error
-          ? error.message
-          : t("rentals.bookingPolicy.saveError"),
-      )
+      if (formDirty) {
+        try {
+          const updated = await replaceBookingPolicy(
+            toBookingPolicyReplaceBody(values, loadedHorizon, loadedCancelCutoff),
+          )
+          const updatedValues = bookingPolicyToFormValues(updated)
+          setLoadedHorizon(updated.maxAdvanceBookingDays)
+          setLoadedCancelCutoff(updated.cancelCutoffHours)
+          setLoadedValues(updatedValues)
+          reset(updatedValues)
+        } catch (error) {
+          generalError =
+            error instanceof Error
+              ? error.message
+              : t("rentals.bookingPolicy.saveError")
+        }
+      }
+      const categories = await categoryPolicies.saveChanged()
+
+      if (generalError) {
+        toast.error(generalError)
+      }
+      if (categories.failed.length > 0) {
+        toast.error(
+          t("rentals.bookingPolicy.categories.saveFailed", {
+            names: categories.failed.join(", "),
+          }),
+        )
+      }
+      if (!generalError && categories.failed.length === 0) {
+        toast.success(t("rentals.bookingPolicy.saved"))
+      }
     } finally {
       setSaving(false)
     }
   }
 
+  function discard() {
+    if (loadedValues) {
+      reset(loadedValues)
+      setTextOpen(loadedValues.cancellationPolicyText.length > 0)
+    }
+    categoryPolicies.discard()
+  }
+
+  const fieldsDisabled = !canEdit || saving
+  const pageState = loading
+    ? ({ state: "loading" } as const)
+    : loadError
+      ? ({
+          state: "error",
+          error: loadError,
+          onRetry: () => {
+            void load()
+          },
+        } as const)
+      : ({ state: "ready" } as const)
+
   return (
-    <div
-      className="mx-auto w-full min-w-0 max-w-3xl space-y-6"
-      data-testid="booking-policy-page"
-    >
-      <PageHeader
-        icon={ShieldCheck}
-        title={t("nav.bookingPolicy")}
-        description={t("rentals.bookingPolicy.description")}
-        className="mb-0 sm:mb-0"
-      />
-      <p className="text-xs text-muted-foreground" data-testid="tenant-tz-label">
-        {formatTenantTimeZoneLabel(timeZoneId, i18n.language)}
-      </p>
+    <div data-testid="booking-policy-page">
+      <Page
+        header={{
+          icon: ShieldCheck,
+          title: t("nav.bookingPolicy"),
+          description: t("rentals.bookingPolicy.description"),
+        }}
+        width="form"
+        {...pageState}
+      >
+        <UnsavedChangesGuard when={canEdit && dirty && !saving} />
 
-      {loading ? <FormSkeleton fields={4} /> : null}
-
-      {!loading && loadError ? (
-        <Alert variant="destructive">
-          <AlertDescription className="flex flex-col gap-3">
-            <span>{loadError}</span>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              className="w-fit"
-              onClick={() => {
-                void load()
-              }}
-            >
-              {t("rentals.bookingPolicy.retry")}
-            </Button>
-          </AlertDescription>
-        </Alert>
-      ) : null}
-
-      {!loading && !loadError ? (
         <Form {...form}>
-          <form onSubmit={handleSubmit(onSubmit)}>
-          <Card className="min-w-0 motion-reduce:transition-none">
-          <CardContent className="space-y-6">
-            {!canEdit ? (
-              <p className="text-sm text-muted-foreground">
-                {t("rentals.bookingPolicy.readOnly")}
-              </p>
-            ) : null}
+          <form
+            id="booking-policy-form"
+            className="space-y-5"
+            onSubmit={(event) => {
+              event.preventDefault()
+              void handleSubmit(onSubmit)(event)
+            }}
+          >
+            <FormSection title={t("rentals.bookingPolicy.generalTitle")}>
+              {!canEdit ? (
+                <p className="text-sm text-muted-foreground">
+                  {t("rentals.bookingPolicy.readOnly")}
+                </p>
+              ) : null}
 
-            <FormField
-              control={control}
-              name="cancellationPolicyText"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>
-                    {t("rentals.bookingPolicy.cancellationLabel")}
-                  </FormLabel>
-                  <FormControl>
-                    <Textarea
-                      className="touch-target"
-                      {...field}
-                      rows={6}
-                      maxLength={BOOKING_POLICY_TEXT_MAX_LENGTH}
-                      disabled={!canEdit || saving}
-                      placeholder={t(
-                        "rentals.bookingPolicy.cancellationPlaceholder",
+              <SentenceRow
+                testId="rule-horizon"
+                before={t("rentals.bookingPolicy.horizonBefore")}
+                after={t("rentals.bookingPolicy.horizonAfter")}
+                inputLabel={t("rentals.bookingPolicy.horizonDays")}
+                unlimitedLabel={t("rentals.bookingPolicy.horizonUnlimited")}
+                unlimited={watchedHorizonMode === "unlimited"}
+                onUnlimitedChange={(unlimited) =>
+                  setMode("horizonMode", unlimited ? "unlimited" : "days")
+                }
+                disabled={fieldsDisabled}
+                input={({ label, disabled }) => (
+                  <FormField
+                    control={control}
+                    name="horizonDays"
+                    render={({ field }) => (
+                      <FormItem className="space-y-0">
+                        <FormControl>
+                          <Input
+                            className="min-h-11 w-24 tabular-nums"
+                            {...field}
+                            aria-label={label}
+                            inputMode="numeric"
+                            disabled={disabled}
+                            min={BOOKING_HORIZON_DAY_MIN}
+                            max={BOOKING_HORIZON_DAY_MAX}
+                          />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                )}
+                message={
+                  watchedHorizonMode === "days" ? (
+                    <FormField
+                      control={control}
+                      name="horizonDays"
+                      render={() => (
+                        <FormItem>
+                          <FormMessage />
+                        </FormItem>
                       )}
                     />
-                  </FormControl>
-                  <FormDescription>
-                    {t("rentals.bookingPolicy.cancellationHint")}
-                  </FormDescription>
-                  <p className="tabular-nums text-xs text-muted-foreground">
-                    {t("rentals.bookingPolicy.characterCount", {
-                      count: watchedText.length,
-                      max: BOOKING_POLICY_TEXT_MAX_LENGTH,
-                    })}
-                  </p>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+                  ) : null
+                }
+              />
 
-            <FormField
-              control={control}
-              name="dailyLimitEnabled"
-              render={({ field }) => (
-                <FormItem className="flex flex-row items-center justify-between gap-3 rounded-lg border border-border px-3 py-2">
-                  <div className="space-y-1">
-                    <FormLabel className="m-0">
-                      {t("rentals.bookingPolicy.dailyLimitToggle")}
-                    </FormLabel>
-                    <FormDescription>
-                      {t("rentals.bookingPolicy.dailyLimitHint")}
-                    </FormDescription>
-                  </div>
-                  <FormControl>
-                    <Switch
-                      checked={field.value}
-                      disabled={!canEdit || saving}
-                      aria-label={t("rentals.bookingPolicy.dailyLimitToggle")}
-                      onCheckedChange={(checked) => {
-                        if (typeof checked !== "boolean") {
-                          return
-                        }
-                        field.onChange(checked)
-                      }}
+              <SentenceRow
+                testId="rule-cancel-cutoff"
+                before={t("rentals.bookingPolicy.cancelCutoffBefore")}
+                after={t("rentals.bookingPolicy.cancelCutoffAfter")}
+                inputLabel={t("rentals.bookingPolicy.cancelCutoffHours")}
+                unlimitedLabel={t("rentals.bookingPolicy.cancelCutoffNone")}
+                unlimited={watchedCancelCutoffMode === "none"}
+                onUnlimitedChange={(unlimited) =>
+                  setMode("cancelCutoffMode", unlimited ? "none" : "hours")
+                }
+                disabled={fieldsDisabled}
+                input={({ label, disabled }) => (
+                  <FormField
+                    control={control}
+                    name="cancelCutoffHours"
+                    render={({ field }) => (
+                      <FormItem className="space-y-0">
+                        <FormControl>
+                          <Input
+                            className="min-h-11 w-24 tabular-nums"
+                            {...field}
+                            value={field.value ?? ""}
+                            aria-label={label}
+                            inputMode="numeric"
+                            disabled={disabled}
+                            min={0}
+                            max={CANCEL_CUTOFF_HOURS_MAX}
+                          />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                )}
+                message={
+                  watchedCancelCutoffMode === "hours" ? (
+                    <FormField
+                      control={control}
+                      name="cancelCutoffHours"
+                      render={() => (
+                        <FormItem>
+                          <FormMessage />
+                        </FormItem>
+                      )}
                     />
-                  </FormControl>
-                </FormItem>
-              )}
-            />
-
-            {watchedLimitEnabled ? (
-              <FormField
-                control={control}
-                name="dailyLimit"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>
-                      {t("rentals.bookingPolicy.dailyLimitValue")}
-                    </FormLabel>
-                    <FormControl>
-                      <Input
-                        className="tabular-nums"
-                        {...field}
-                        inputMode="numeric"
-                        disabled={!canEdit || saving}
-                        min={BOOKING_POLICY_DAILY_LIMIT_MIN}
-                        max={BOOKING_POLICY_DAILY_LIMIT_MAX}
-                      />
-                    </FormControl>
-                    <FormDescription>
-                      {t("rentals.bookingPolicy.validation.limitRange")}
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
+                  ) : null
+                }
               />
-            ) : null}
 
-            <FormField
-              control={control}
-              name="horizonMode"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t("rentals.bookingPolicy.horizonLabel")}</FormLabel>
-                  <SegmentedControl
-                    label={t("rentals.bookingPolicy.horizonLabel")}
-                    value={field.value}
-                    disabled={!canEdit || saving}
-                    onChange={field.onChange}
-                    options={horizonItems}
+              <SentenceRow
+                testId="rule-daily-limit"
+                before={t("rentals.bookingPolicy.dailyLimitBefore")}
+                after={t("rentals.bookingPolicy.dailyLimitAfter")}
+                inputLabel={t("rentals.bookingPolicy.dailyLimitValue")}
+                unlimitedLabel={t("rentals.bookingPolicy.dailyLimitNone")}
+                unlimited={!watchedLimitEnabled}
+                onUnlimitedChange={(unlimited) => setMode("dailyLimitEnabled", !unlimited)}
+                disabled={fieldsDisabled}
+                input={({ label, disabled }) => (
+                  <FormField
+                    control={control}
+                    name="dailyLimit"
+                    render={({ field }) => (
+                      <FormItem className="space-y-0">
+                        <FormControl>
+                          <Input
+                            className="min-h-11 w-24 tabular-nums"
+                            {...field}
+                            aria-label={label}
+                            inputMode="numeric"
+                            disabled={disabled}
+                            min={BOOKING_POLICY_DAILY_LIMIT_MIN}
+                            max={BOOKING_POLICY_DAILY_LIMIT_MAX}
+                          />
+                        </FormControl>
+                      </FormItem>
+                    )}
                   />
-                  <FormDescription>
-                    {watchedHorizonMode === "days"
-                      ? t("rentals.bookingPolicy.horizonHintDays")
-                      : t("rentals.bookingPolicy.horizonHintUnlimited")}
-                  </FormDescription>
-                </FormItem>
-              )}
-            />
-
-            {watchedHorizonMode === "days" ? (
-              <FormField
-                control={control}
-                name="horizonDays"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>
-                      {t("rentals.bookingPolicy.horizonDays")}
-                    </FormLabel>
-                    <FormControl>
-                      <Input
-                        className="tabular-nums"
-                        {...field}
-                        inputMode="numeric"
-                        disabled={!canEdit || saving}
-                        min={BOOKING_HORIZON_DAY_MIN}
-                        max={BOOKING_HORIZON_DAY_MAX}
-                      />
-                    </FormControl>
-                    <FormDescription>
-                      {t("rentals.bookingPolicy.validation.horizonRange")}
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
                 )}
+                message={
+                  watchedLimitEnabled ? (
+                    <FormField
+                      control={control}
+                      name="dailyLimit"
+                      render={() => (
+                        <FormItem>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  ) : null
+                }
               />
-            ) : null}
 
-            <FormField
-              control={control}
-              name="cancelCutoffMode"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t("rentals.bookingPolicy.cancelCutoffLabel")}</FormLabel>
-                  <SegmentedControl
-                    label={t("rentals.bookingPolicy.cancelCutoffLabel")}
-                    value={field.value}
-                    disabled={!canEdit || saving}
-                    onChange={field.onChange}
-                    options={cancelCutoffItems}
-                  />
-                  <FormDescription>
-                    {t("rentals.bookingPolicy.cancelCutoffHint")}
-                  </FormDescription>
-                </FormItem>
+              {textOpen ? (
+                <FormField
+                  control={control}
+                  name="cancellationPolicyText"
+                  render={({ field }) => (
+                    <FormItem className="space-y-1.5">
+                      <FormLabel>{t("rentals.bookingPolicy.cancellationLabel")}</FormLabel>
+                      <FormControl>
+                        <Textarea
+                          className="touch-target"
+                          {...field}
+                          rows={5}
+                          maxLength={BOOKING_POLICY_TEXT_MAX_LENGTH}
+                          disabled={fieldsDisabled}
+                          placeholder={t(
+                            "rentals.bookingPolicy.cancellationPlaceholder",
+                          )}
+                          onFocus={() => setTextFocused(true)}
+                          onBlur={() => {
+                            setTextFocused(false)
+                            field.onBlur()
+                          }}
+                        />
+                      </FormControl>
+                      {textFocused ? (
+                        <p className="tabular-nums text-xs text-muted-foreground">
+                          {t("rentals.bookingPolicy.characterCount", {
+                            count: watchedText.length,
+                            max: BOOKING_POLICY_TEXT_MAX_LENGTH,
+                          })}
+                        </p>
+                      ) : null}
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              ) : (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  className="min-h-11 w-fit px-2"
+                  disabled={fieldsDisabled}
+                  onClick={() => setTextOpen(true)}
+                >
+                  {t("rentals.bookingPolicy.addCancellationText")}
+                </Button>
               )}
-            />
-
-            {watchedCancelCutoffMode === "hours" ? (
-              <FormField
-                control={control}
-                name="cancelCutoffHours"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>
-                      {t("rentals.bookingPolicy.cancelCutoffHours")}
-                    </FormLabel>
-                    <FormControl>
-                      <Input
-                        className="tabular-nums"
-                        {...field}
-                        inputMode="numeric"
-                        disabled={!canEdit || saving}
-                        min={0}
-                        max={8760}
-                      />
-                    </FormControl>
-                    <FormDescription>
-                      {t("rentals.bookingPolicy.validation.cancelCutoffRange")}
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            ) : null}
-
-            {canEdit ? (
-              <FormPrimaryButton className="w-full sm:w-auto" type="submit" isValid={isValid} loading={saving}>
-                {t("rentals.bookingPolicy.save")}
-              </FormPrimaryButton>
-            ) : null}
-          </CardContent>
-          </Card>
+            </FormSection>
           </form>
         </Form>
-      ) : null}
 
-      {!loading && !loadError ? <CategoryBookingPolicySection canEdit={canEdit} /> : null}
+        <CategoryBookingPolicySection
+          canEdit={canEdit}
+          saving={saving}
+          policies={categoryPolicies}
+          inheritedDays={inheritedDays}
+          inheritedHours={inheritedHours}
+        />
+
+        {canEdit ? (
+          <SaveBar
+            dirty={dirty}
+            saving={saving}
+            saveDisabled={!isValid || categoryPolicies.invalid}
+            saveLabel={t("rentals.bookingPolicy.save")}
+            unsavedCount={unsavedCount}
+            onDiscard={discard}
+            onSave={() => {
+              void handleSubmit(onSubmit)()
+            }}
+          />
+        ) : null}
+      </Page>
     </div>
   )
 }
