@@ -1,7 +1,7 @@
 import { TestPermissionProvider } from "@/features/users/permissions/PermissionContext"
-import { render, screen, within } from "@testing-library/react"
+import { render, screen } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
-import { MemoryRouter, Route, Routes } from "react-router-dom"
+import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom"
 import { beforeEach, expect, it, vi } from "vitest"
 import { ProductAssistantPage } from "./ProductAssistantPage"
 import { useProductWizard } from "@/features/catalog/components/productWizard/useProductWizard"
@@ -43,35 +43,31 @@ beforeEach(() => {
   } as never)
 })
 
-function setup() {
+function setup(entry = `/catalogo/produtos/${productId}/passos`) {
   return render(
-    <MemoryRouter initialEntries={[`/catalogo/produtos/${productId}/passos`]}>
-      <Routes><Route path="/catalogo/produtos/:id/passos" element={<ProductAssistantPage />} /></Routes>
+    <MemoryRouter initialEntries={[entry]}>
+      <Routes>
+        <Route path="/catalogo/produtos/:id/passos" element={<ProductAssistantPage />} />
+        <Route path="/catalogo/produtos/:id" element={<LocationProbe />} />
+      </Routes>
     </MemoryRouter>,
   )
 }
 
-it("shows the same unfinished steps in the badge and the rows", () => {
+function LocationProbe() {
+  const location = useLocation()
+  return <p data-testid="editor-location">{location.pathname}{location.search}</p>
+}
+
+it("sends the non-cadastro assistant to the single product editor", () => {
   setup()
-  expect(screen.getByText("Falta 1 passo")).toBeInTheDocument()
-  expect(screen.getAllByText("Pendente")).toHaveLength(1)
-  expect(within(screen.getByRole("region", { name: "Preços" })).getByText("Pendente")).toBeInTheDocument()
-  expect(screen.getAllByText("Completo")).toHaveLength(4)
+  expect(screen.getByTestId("editor-location")).toHaveTextContent(`/catalogo/produtos/${productId}`)
+  expect(screen.queryByRole("region", { name: "Preços" })).not.toBeInTheDocument()
 })
 
-it("links the used resource and does not invent a deposit or a lead time", async () => {
-  const user = userEvent.setup()
-  setup()
-  expect(screen.getByRole("heading", { name: "Diária" })).toBeInTheDocument()
-  for (const name of ["Dados", "Agenda", "Fila", "Regras", "Preços", "Publicação"]) {
-    expect(screen.getByRole("heading", { name: new RegExp(name) })).toBeInTheDocument()
-  }
-  expect(screen.queryByText(/antecedência|sinal|30%/i)).not.toBeInTheDocument()
-  await user.click(within(screen.getByRole("region", { name: "Publicação" })).getByRole("button", { name: "Editar" }))
-  const link = await screen.findByRole("link", { name: "Abrir recurso" })
-  expect(link).toHaveAttribute("href", `/configuracoes/recursos/${assetId}/cadastro`)
-  expect(screen.queryByRole("dialog")).not.toBeInTheDocument()
-  expect(screen.getByRole("button", { name: "Continuar em Preços" })).toHaveClass("w-full")
+it("opens the Agenda tab when the old link targeted the agenda step", () => {
+  setup(`/catalogo/produtos/${productId}/passos?passo=agenda`)
+  expect(screen.getByTestId("editor-location")).toHaveTextContent(`/catalogo/produtos/${productId}?aba=agenda`)
 })
 
 function renderCadastro(query = "") {

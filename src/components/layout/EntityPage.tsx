@@ -13,6 +13,8 @@ export type EntityTab = {
   /** Optional count/badge shown next to the label. */
   badge?: ReactNode
   content: ReactNode
+  /** Keep the panel mounted while inactive, so local unsaved state survives tab switches. */
+  keepMounted?: boolean
 }
 
 type EntityPageProps = {
@@ -20,6 +22,8 @@ type EntityPageProps = {
   title: ReactNode
   /** Status badges / chips shown next to the title. */
   badges?: ReactNode
+  /** Inline banner shown between the header and the tabs. */
+  notice?: ReactNode
   tabs?: readonly EntityTab[]
   /** Opt in to multiple rows instead of the default horizontal scroll. */
   wrapTabs?: boolean
@@ -51,6 +55,7 @@ export function EntityPage({
   breadcrumb,
   title,
   badges,
+  notice,
   tabs,
   wrapTabs = false,
   value,
@@ -84,6 +89,7 @@ export function EntityPage({
         {badges ? <div className="flex flex-wrap items-center gap-2">{badges}</div> : null}
         {saveButton ? <div className="ml-auto">{saveButton}</div> : null}
       </header>
+      {notice}
 
       {tabs && tabs.length > 0 ? (
         <Tabs value={value} defaultValue={defaultValue ?? tabs[0]?.value} onValueChange={onValueChange}>
@@ -100,7 +106,7 @@ export function EntityPage({
             </TabsList>
           </div>
           {tabs.map((tab) => (
-            <TabsContent key={tab.value} value={tab.value}>
+            <TabsContent key={tab.value} value={tab.value} keepMounted={tab.keepMounted}>
               {tab.content}
             </TabsContent>
           ))}

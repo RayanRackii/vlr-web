@@ -1,7 +1,7 @@
 import "../components/catalogProductEditor.css"
 
 import { useCallback, useEffect, useRef, useState } from "react"
-import { Link, useNavigate, useParams } from "react-router-dom"
+import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom"
 import { useForm, useWatch } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useTranslation } from "react-i18next"
@@ -10,7 +10,13 @@ import { toast } from "sonner"
 import { EntityPage, type EntityTab } from "@/components/layout/EntityPage"
 import { AccessDeniedPage } from "@/components/layout/AccessDeniedPage"
 import { PageContentSkeleton } from "@/components/loading/PageContentSkeleton"
+import { CadastroTaxonomyStep } from "@/features/assistant/CadastroTaxonomyStep"
+import { UnsavedChangesGuard } from "@/components/layout/UnsavedChangesGuard"
+import { ProductScheduleSection } from "@/features/catalog/components/ProductScheduleSection"
+import { useProductWizard } from "@/features/catalog/components/productWizard/useProductWizard"
 import { productWizardPath } from "@/features/catalog/components/productWizard/wizardSteps"
+import { isProductEditorTab } from "@/features/catalog/lib/productEditorPath"
+import { productSetupFromModel } from "@/features/catalog/lib/productSetupStatus"
 import { SegmentedControl } from "@/components/ui/segmented-control"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
@@ -54,9 +60,6 @@ import {
   updateCatalogProduct,
   uploadCatalogProductFile,
 } from "@/features/catalog/services/catalogService"
-import { TaxonomyAssignmentFields } from "@/features/taxonomy/components/TaxonomyAssignmentFields"
-import type { TaxonomyOptions } from "@/features/taxonomy/schemas/taxonomySchemas"
-import { getCatalogTaxonomyOptions } from "@/features/taxonomy/services/taxonomyService"
 
 const PRODUCTS_PATH = "/catalogo/produtos"
 const MAX_PREVIEW_REFRESH_ATTEMPTS = 2
@@ -71,14 +74,6 @@ function productToForm(product: CatalogProduct): CatalogProductFormValues {
     description: product.description ?? "",
     price: product.price == null ? "" : String(product.price),
     currency: product.currency,
-    ...(product.taxonomy
-      ? {
-          taxonomy: {
-            categoryIds: product.taxonomy.categories.map((item) => item.id),
-            tagIds: product.taxonomy.tags.map((item) => item.id),
-          },
-        }
-      : {}),
   }
 }
 
@@ -92,11 +87,18 @@ export function CatalogProductEditorPage() {
   const [product, setProduct] = useState<CatalogProduct | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [loadError, setLoadError] = useState<string | null>(null)
-  const [taxonomyOptions, setTaxonomyOptions] = useState<TaxonomyOptions>({ categories: [], tags: [] })
   const [saving, setSaving] = useState(false)
   const [statusBusy, setStatusBusy] = useState(false)
   const [deactivateOpen, setDeactivateOpen] = useState(false)
-  const [tab, setTab] = useState("dados")
+  const [searchParams] = useSearchParams()
+  const [tab, setTab] = useState<string>(() => {
+    const requested = searchParams.get("aba")
+    return isProductEditorTab(requested) ? requested : "dados"
+  })
+  const [taxonomyDirty, setTaxonomyDirty] = useState(false)
+  const [agendaDirty, setAgendaDirty] = useState(false)
+  const [stepSaving, setStepSaving] = useState(false)
+  const wizard = useProductWizard(id ?? "")
   const [uploadVisibility, setUploadVisibility] = useState<CatalogFileVisibility>("CustomerVisible")
   const [fileBusy, setFileBusy] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -210,12 +212,6 @@ export function CatalogProductEditorPage() {
   }, [id, navigate, t, applyProduct])
 
   useEffect(() => {
-    void getCatalogTaxonomyOptions()
-      .then(setTaxonomyOptions)
-      .catch(() => setTaxonomyOptions({ categories: [], tags: [] }))
-  }, [])
-
-  useEffect(() => {
     if (!product) return
     const candidates = selectCatalogProductImages(
       product.files
@@ -233,6 +229,7 @@ export function CatalogProductEditorPage() {
       const next = await getCatalogProduct(id)
       setProduct((current) => current ? {
         ...current, files: next.files, hasFiles: next.hasFiles,
+        taxonomy: next.taxonomy,
         ...(filesOnly ? {} : { isActive: next.isActive, visibility: next.visibility }),
       } : next)
       const keys = new Set(next.files.map((file) => `${next.id}:${file.id}`))
@@ -261,6 +258,13 @@ export function CatalogProductEditorPage() {
     }
 
     const body = toCatalogProductWriteBody(values, price)
+    // Categories and tags are saved by their own section; keep the stored ones on this save.
+    if (product.taxonomy) {
+      body.taxonomy = {
+        categoryIds: product.taxonomy.categories.map((item) => item.id),
+        tagIds: product.taxonomy.tags.map((item) => item.id),
+      }
+    }
     setSaving(true)
     try {
       const updated = await updateCatalogProduct(product.id, body)
@@ -394,6 +398,9 @@ export function CatalogProductEditorPage() {
     )
   }
 
+  const setup = wizard.model ? productSetupFromModel(wizard.model, wizard.rentalsActive) : null
+  const showAgenda = wizard.rentalsActive || (setup?.linkedAssetIds.length ?? 0) > 0
+  const missingCount = setup?.missingCount ?? 0
   const formDirty = form.formState.isDirty
   const isFormValid = catalogProductFormSchema.safeParse(watchedValues).success
   // Keep the save/discard bar visible whenever there are changes, even if a
@@ -473,21 +480,35 @@ export function CatalogProductEditorPage() {
             </FormItem>
           )}
         />
-        <section className="space-y-2 rounded-lg border border-border p-3">
-          <p className="text-sm font-medium">{t("taxonomy.assignment")}</p>
-          <TaxonomyAssignmentFields
-            control={form.control}
-            options={taxonomyOptions}
-            disabled={fieldsLocked}
+        <section className="rounded-lg border border-border p-3">
+          <CadastroTaxonomyStep
+            key={product.id}
+            product={product}
+            canAssign={canManage}
+            onDirtyChange={setTaxonomyDirty}
+            onSavingChange={setStepSaving}
+            onSaved={() => reload({ filesOnly: true })}
           />
         </section>
-        <p className="text-sm">
-          <Link className="text-primary underline-offset-4 hover:underline" to={productWizardPath(product.id, "resource")}>
-            {t("catalog.productWizard.openResource")}
-          </Link>
-        </p>
       </div>
     ),
+    keepMounted: true,
+  }
+
+  const agendaTab: EntityTab = {
+    value: "agenda",
+    label: t("catalog.products.tabs.agenda"),
+    content: (
+      <ProductScheduleSection
+        productId={product.id}
+        linkedAssetIds={setup?.linkedAssetIds ?? []}
+        readOnly={!wizard.canManage}
+        onDirtyChange={setAgendaDirty}
+        onSavingChange={setStepSaving}
+        onSaved={() => wizard.reload()}
+      />
+    ),
+    keepMounted: true,
   }
 
   const priceTab: EntityTab = {
@@ -690,35 +711,46 @@ export function CatalogProductEditorPage() {
 
   return (
     <Form {...form}>
+      <UnsavedChangesGuard when={taxonomyDirty || agendaDirty} />
       <EntityPage
         className={`catalog-product-editor min-w-0 ${tab === "access" ? "pb-0" : ""}`}
-        breadcrumb={
-          <nav className="flex flex-wrap items-center gap-1 text-sm text-muted-foreground" aria-label="breadcrumb">
-            <span>{t("catalog.products.editor.breadcrumbRoot")}</span>
-            <span aria-hidden>›</span>
-            <Link to={PRODUCTS_PATH} className="hover:text-foreground">
-              {t("catalog.products.title")}
-            </Link>
-            <span aria-hidden>›</span>
-            <span className="text-foreground">{product.name}</span>
-          </nav>
-        }
         title={product.name}
+        notice={missingCount > 0 ? (
+          <div
+            role="status"
+            className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-primary/30 bg-primary/10 px-4 py-3 text-sm text-foreground"
+          >
+            <span>{t("catalog.products.editor.incomplete", { count: missingCount })}</span>
+            <Button
+              variant="default"
+              className="min-h-11"
+              render={<Link to={productWizardPath(product.id)} />}
+            >
+              {t("catalog.products.editor.continueSetup")}
+            </Button>
+          </div>
+        ) : null}
         badges={
           <>
-            <Badge variant={product.isActive ? "secondary" : "outline"}>
-              {product.isActive
-                ? t("catalog.products.active")
-                : t("catalog.products.inactive")}
-            </Badge>
+            {missingCount > 0 ? (
+              <Badge className="border-transparent bg-accent text-accent-foreground">
+                {t("catalog.products.editor.incomplete", { count: missingCount })}
+              </Badge>
+            ) : (
+              <Badge variant={product.isActive ? "secondary" : "outline"}>
+                {product.isActive
+                  ? t("catalog.products.active")
+                  : t("catalog.products.inactive")}
+              </Badge>
+            )}
             {(product.visibility ?? "Public") === "Restricted" ? (
               <Badge variant="outline">{t("catalog.products.visibilityFilter.restricted")}</Badge>
             ) : null}
           </>
         }
         wrapTabs
-        tabs={[dadosTab, priceTab, filesTab, accessTab, historyTab]}
-        value={tab}
+        tabs={[dadosTab, priceTab, ...(showAgenda ? [agendaTab] : []), accessTab, filesTab, historyTab]}
+        value={!showAgenda && tab === "agenda" ? "dados" : tab}
         onValueChange={setTab}
         dirty={dirty}
         saveDisabled={!isFormValid}
@@ -728,7 +760,7 @@ export function CatalogProductEditorPage() {
           form.reset(productToForm(product))
           accessSectionRef.current?.reset()
         } : undefined}
-        saving={saving}
+        saving={saving || stepSaving}
         saveLabel={t("catalog.products.save")}
       />
       <div hidden={tab !== "access"} className="pb-24">

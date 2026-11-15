@@ -1121,6 +1121,7 @@
       "tabs": {
         "dados": "Details",
         "price": "Price",
+        "agenda": "Schedule",
         "access": "Visibility and access",
         "history": "History"
       },
@@ -1128,6 +1129,9 @@
         "createStatusFailed": "Product created, but it is still active because deactivation failed. Try again to finish.",
         "accessSaveFailed": "Could not save access. Try again.",
         "breadcrumbRoot": "Catalog",
+        "incomplete_one": "Setup incomplete · {{count}} step left",
+        "incomplete_other": "Setup incomplete · {{count}} steps left",
+        "continueSetup": "Continue setup",
         "notFound": "Product not found.",
         "back": "Back to products"
       },

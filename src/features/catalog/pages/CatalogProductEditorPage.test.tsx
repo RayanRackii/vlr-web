@@ -24,10 +24,21 @@ vi.mock("@/features/catalog/services/catalogService", () => ({
   deleteCatalogProductFile: vi.fn(),
   getCatalogProductFileUrl: vi.fn(),
   uploadCatalogProductFile: vi.fn(),
+  getCatalogProductResourceRequirements: vi.fn().mockResolvedValue({ requirements: [] }),
   getCatalogProductAccess: vi.fn().mockResolvedValue({ productId: "x", visibility: "Public", customerIds: [], groupIds: [], restrictedWithoutGrants: false }),
   getCatalogProductAccessHistory: vi.fn().mockResolvedValue([]),
   listCustomerGroups: vi.fn().mockResolvedValue([]),
   putCatalogProductAccess: vi.fn(),
+}))
+
+vi.mock("@/features/catalog/components/CatalogProductResourceRequirements", () => ({
+  CatalogProductResourceRequirements: ({ productId, onSaved }: { productId: string; onSaved?: () => void }) => (
+    <button type="button" onClick={() => onSaved?.()}>{`requirements-save-${productId}`}</button>
+  ),
+}))
+
+vi.mock("@/features/rentals/services/scheduleService", () => ({
+  listAdminRentalAssets: vi.fn().mockResolvedValue([]),
 }))
 
 vi.mock("@/features/users/services/usersService", () => ({
@@ -36,6 +47,14 @@ vi.mock("@/features/users/services/usersService", () => ({
 
 vi.mock("@/features/taxonomy/services/taxonomyService", () => ({
   getCatalogTaxonomyOptions: vi.fn(),
+  listTaxonomyCategories: vi.fn().mockResolvedValue([]),
+  listTaxonomyTags: vi.fn().mockResolvedValue([]),
+  createTaxonomyCategory: vi.fn(),
+  createTaxonomyTag: vi.fn(),
+}))
+
+vi.mock("@/features/users/hooks/useTrialStatus", () => ({
+  useTrialStatus: () => ({ isTrialReadOnly: false }),
 }))
 
 import {
@@ -51,6 +70,8 @@ import {
   updateCatalogProduct,
 } from "@/features/catalog/services/catalogService"
 import { getCatalogTaxonomyOptions } from "@/features/taxonomy/services/taxonomyService"
+import { listTaxonomyCategories } from "@/features/taxonomy/services/taxonomyService"
+import { getCatalogProductResourceRequirements } from "@/features/catalog/services/catalogService"
 
 const getProductMock = vi.mocked(getCatalogProduct)
 const updateProductMock = vi.mocked(updateCatalogProduct)
@@ -73,11 +94,11 @@ const PRODUCT: CatalogProduct = {
   grantedGroupCount: 0,
 }
 
-function renderPage(permissions: string[] = ["catalog.products.manage"], browser = false) {
+function renderPage(permissions: string[] = ["catalog.products.manage"], browser = false, options: { activeModules?: string[]; entry?: string } = {}) {
   const routes = [{
     path: "*",
     element: (
-      <TestPermissionProvider permissions={permissions}>
+      <TestPermissionProvider permissions={permissions} activeModules={options.activeModules}>
         <Routes>
           <Route path="/catalogo/produtos/:id" element={<CatalogProductEditorPage />} />
           <Route path="*" element={<div data-testid="destination" />} />
@@ -86,7 +107,7 @@ function renderPage(permissions: string[] = ["catalog.products.manage"], browser
     ),
   }]
   const router = browser ? createBrowserRouter(routes) : createMemoryRouter(routes, {
-    initialEntries: [`/catalogo/produtos/${PRODUCT.id}`],
+    initialEntries: [options.entry ?? `/catalogo/produtos/${PRODUCT.id}`],
   })
   return { ...render(<RouterProvider router={router} />), router }
 }
@@ -324,15 +345,15 @@ describe("CatalogProductEditorPage", () => {
     expect(toastError).not.toHaveBeenCalled()
   })
 
-  it("guards breadcrumb and unload even while changed fields are invalid", async () => {
+  it("guards navigation and unload even while changed fields are invalid", async () => {
     const confirm = vi.spyOn(window, "confirm")
     const user = userEvent.setup()
-    renderPage()
+    const { router } = renderPage()
     await user.clear(await screen.findByLabelText(i18n.t("catalog.products.form.name")))
     const unload = new Event("beforeunload", { cancelable: true })
     window.dispatchEvent(unload)
     expect(unload.defaultPrevented).toBe(true)
-    await user.click(screen.getByRole("link", { name: i18n.t("catalog.products.title") }))
+    await act(async () => { void router.navigate("/catalogo/produtos") })
     const dialog = await screen.findByRole("alertdialog")
     expect(dialog).toHaveTextContent(i18n.t("fullPage.leaveConfirm"))
     expect(confirm).not.toHaveBeenCalled()
@@ -743,5 +764,63 @@ describe("CatalogProductEditorPage", () => {
     expect(
       screen.queryByRole("button", { name: i18n.t("catalog.products.save") }),
     ).not.toBeInTheDocument()
+  })
+  it("has no in-content breadcrumb or assistant link", async () => {
+    renderPage()
+    await screen.findByLabelText(i18n.t("catalog.products.form.name"))
+    expect(screen.queryByRole("navigation", { name: "breadcrumb" })).not.toBeInTheDocument()
+    expect(screen.queryByText(i18n.t("catalog.productWizard.openResource"))).not.toBeInTheDocument()
+    expect(screen.queryByRole("tab", { name: i18n.t("catalog.products.tabs.agenda") })).not.toBeInTheDocument()
+  })
+
+  it("shows the Agenda tab for a schedulable product and saves through the existing component", async () => {
+    const user = userEvent.setup()
+    vi.mocked(getCatalogProductResourceRequirements).mockResolvedValue({ requirements: [] } as never)
+    renderPage(["catalog.products.manage"], false, { activeModules: ["rentals"] })
+    const tab = await screen.findByRole("tab", { name: i18n.t("catalog.products.tabs.agenda") })
+    await user.click(tab)
+    const saveRequirements = await screen.findByRole("button", { name: `requirements-save-${PRODUCT.id}` })
+    const before = vi.mocked(getCatalogProductResourceRequirements).mock.calls.length
+    await user.click(saveRequirements)
+    await waitFor(() => expect(vi.mocked(getCatalogProductResourceRequirements).mock.calls.length).toBeGreaterThan(before))
+  })
+
+  it("opens the Agenda tab from the aba query", async () => {
+    renderPage(["catalog.products.manage"], false, { activeModules: ["rentals"], entry: `/catalogo/produtos/${PRODUCT.id}?aba=agenda` })
+    const tab = await screen.findByRole("tab", { name: i18n.t("catalog.products.tabs.agenda") })
+    expect(tab).toHaveAttribute("aria-selected", "true")
+  })
+
+  it("shows the incomplete banner linking to the cadastro wizard", async () => {
+    renderPage(["catalog.products.manage"], false, { activeModules: ["rentals"] })
+    const cta = await screen.findByRole("link", { name: i18n.t("catalog.products.editor.continueSetup") })
+    expect(cta).toHaveAttribute("href", `/catalogo/produtos/${PRODUCT.id}/cadastro`)
+    expect(screen.getAllByText(i18n.t("catalog.products.editor.incomplete", { count: 2 })).length).toBeGreaterThan(0)
+  })
+
+  it("shows no banner and an Ativo badge when nothing is missing", async () => {
+    renderPage()
+    await screen.findByLabelText(i18n.t("catalog.products.form.name"))
+    await waitFor(() => expect(screen.queryByRole("link", { name: i18n.t("catalog.products.editor.continueSetup") })).not.toBeInTheDocument())
+    expect(screen.getAllByText(i18n.t("catalog.products.active")).length).toBeGreaterThan(0)
+  })
+  it("sends the freshly saved categories when the main form is saved afterwards", async () => {
+    const category = { id: "cccccccc-cccc-4ccc-8ccc-cccccccccccc", name: "Hospedagem", slug: "hospedagem", parentId: null, icon: null, sortOrder: 0 }
+    vi.mocked(listTaxonomyCategories).mockResolvedValue([category])
+    const withTaxonomy = { ...PRODUCT, taxonomy: { categories: [], tags: [] } } as CatalogProduct
+    const saved = { ...PRODUCT, taxonomy: { categories: [{ id: category.id, name: category.name }], tags: [] } } as unknown as CatalogProduct
+    getProductMock.mockResolvedValue(withTaxonomy)
+    updateProductMock.mockResolvedValue(saved)
+    const user = userEvent.setup()
+    renderPage(["catalog.products.manage", "core.taxonomy.read"])
+    await user.click(await screen.findByRole("button", { name: "Hospedagem" }))
+    getProductMock.mockResolvedValue(saved)
+    await user.click(screen.getByRole("button", { name: i18n.t("assistant.saveStep") }))
+    await waitFor(() => expect(updateProductMock).toHaveBeenCalledTimes(1))
+    await waitFor(() => expect(getProductMock.mock.calls.length).toBeGreaterThan(1))
+    await user.type(screen.getByLabelText(i18n.t("catalog.products.form.name")), " pro")
+    await user.click(save())
+    await waitFor(() => expect(updateProductMock).toHaveBeenCalledTimes(2))
+    expect(updateProductMock.mock.calls[1]![1]).toMatchObject({ name: "Raquete pro", taxonomy: { categoryIds: [category.id], tagIds: [] } })
   })
 })
