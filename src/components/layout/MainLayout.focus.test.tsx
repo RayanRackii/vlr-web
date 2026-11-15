@@ -68,6 +68,12 @@ describe("MainLayout on cadastro routes", () => {
     expect(container.querySelector('[data-shell-variant="focus"]')).toBeNull()
     const header = container.querySelector('[data-shell-part="header"]') as HTMLElement
     expect(within(header).getByRole("navigation")).toBeInTheDocument()
+    // Below lg the top-bar breadcrumb is hidden, so the wizard crumbs also render in the content.
+    const contentCrumbs = container.querySelector('[data-shell-part="content-breadcrumb"]') as HTMLElement
+    expect(contentCrumbs).toHaveClass("lg:hidden")
+    expect(within(contentCrumbs).getByRole("navigation")).toBeInTheDocument()
+    // Account menu and notifications still come from the normal staff shell.
+    expect(within(header).getByRole("button", { name: "Abrir menu da conta" })).toBeInTheDocument()
   })
 
   it("links the Produtos crumb back to the list on the creation route", async () => {

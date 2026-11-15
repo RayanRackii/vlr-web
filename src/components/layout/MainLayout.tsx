@@ -45,7 +45,7 @@ import { exitTenantEnvironment } from "@/features/admin/services/adminTenantsSer
 import { WorkOrderSyncHost } from "@/features/workOrders/components/WorkOrderSyncHost"
 import { clearCustomerSessionAsSignedOut, signOutStaffPortal } from "@/lib/sessionRestoreGuard"
 
-/** Focus layout breadcrumb: Catálogo › Produtos › Novo produto / name (or Configurações › Recursos › name). */
+/** Cadastro wizard breadcrumb: Catálogo › Produtos › Novo produto / name (or Configurações › Recursos › name). */
 function CadastroFocusCrumbs() {
   const { t } = useTranslation()
   const { pathname } = useLocation()
@@ -254,12 +254,10 @@ function MainLayoutShell({ children }: { children?: ReactNode }) {
       }}
     >
       <WorkOrderSyncHost />
-      {/* Below lg the breadcrumb stays in the content (with its narrow back-arrow mode). */}
-      {cadastro ? null : (
-        <div data-shell-part="content-breadcrumb" className="lg:hidden">
-          <Breadcrumb />
-        </div>
-      )}
+      {/* Below lg the breadcrumb stays in the content (the top-bar one is lg+ only). */}
+      <div data-shell-part="content-breadcrumb" className="lg:hidden">
+        {cadastro ? <CadastroFocusCrumbs /> : <Breadcrumb />}
+      </div>
       <AppErrorBoundary key={location.pathname}>
         <Suspense fallback={<PageContentSkeleton rows={3} />}>
           {children ?? <Outlet />}
