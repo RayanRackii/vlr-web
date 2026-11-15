@@ -4,7 +4,7 @@ import { MemoryRouter, useLocation, useSearchParams } from "react-router-dom"
 import { toast } from "sonner"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 
-import { productWizardPath } from "@/features/catalog/components/productWizard/wizardSteps"
+import { productEditorPath } from "@/features/catalog/lib/productEditorPath"
 import { CatalogProductsPage } from "@/features/catalog/pages/CatalogProductsPage"
 import type { CatalogProduct } from "@/features/catalog/schemas/catalogSchemas"
 import { TestPermissionProvider } from "@/features/users/permissions/PermissionContext"
@@ -299,7 +299,7 @@ describe("CatalogProductsPage validity gate", () => {
     renderPage()
     const table = await screen.findByRole("table")
     await user.click(await within(table).findByRole("button", { name: i18n.t("catalog.products.rowMenu", { name: PRODUCT.name }) }))
-    expect(await screen.findByRole("menuitem", { name: i18n.t("catalog.products.menuAccess") })).toHaveAttribute("href", productWizardPath(PRODUCT.id, "access"))
+    expect(await screen.findByRole("menuitem", { name: i18n.t("catalog.products.menuAccess") })).toHaveAttribute("href", productEditorPath(PRODUCT.id, "access"))
     expect(screen.queryByRole("menuitem", { name: i18n.t("catalog.products.menuContinue") })).not.toBeInTheDocument()
     await user.click(screen.getByRole("menuitem", { name: i18n.t("catalog.products.deactivate") }))
     expect(deactivateCatalogProduct).not.toHaveBeenCalled()
