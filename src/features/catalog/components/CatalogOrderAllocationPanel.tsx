@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react"
-import { Link } from "react-router-dom"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 
@@ -8,7 +7,6 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { LoadingButton } from "@/components/ui/loading-button"
 import { useTenantTimeZone } from "@/contexts/TenantTimeZoneContext"
-import { usePermissions } from "@/features/users/permissions/PermissionContext"
 import { isForbiddenError } from "@/features/users/permissions/rbacErrors"
 import {
   formatCatalogDate,
@@ -16,22 +14,15 @@ import {
   type CatalogOrderAllocationPreview,
 } from "@/features/catalog/schemas/catalogSchemas"
 import {
-  applyCatalogOrderAllocationUsage,
   approveCatalogOrderWithPlanning,
   CatalogForbiddenError,
   CatalogPlanningVersionConflictError,
   CatalogRetryableError,
   previewCatalogOrderAllocation,
 } from "@/features/catalog/services/catalogService"
-import { zonedDayAndMinutes } from "@/features/catalog/components/agenda/agendaLayout"
 import { composeWorkStart, type WorkStartParts } from "@/features/catalog/lib/workStartFields"
 import { getUnits } from "@/features/assets/services/unitsService"
 import type { Unit } from "@/features/assets/schemas/unitSchemas"
-
-function resourceAgendaPath(plannedWorkStart: string, timeZoneId: string): string {
-  const day = zonedDayAndMinutes(plannedWorkStart, timeZoneId)?.dayKey
-  return day ? `/agendas/recursos?date=${day}` : "/agendas/recursos"
-}
 
 type CatalogOrderAllocationPanelProps = {
   order: CatalogOrder
@@ -41,6 +32,7 @@ type CatalogOrderAllocationPanelProps = {
   preferredUnitId?: string | null
 }
 
+/** Approval-with-planning form, shown while a requested order still needs a resource slot. */
 export function CatalogOrderAllocationPanel({
   order,
   onOrderChange,
@@ -48,44 +40,23 @@ export function CatalogOrderAllocationPanel({
   resourceName = null,
   preferredUnitId = null,
 }: CatalogOrderAllocationPanelProps) {
-  const { t, i18n } = useTranslation()
-  const timeZoneId = useTenantTimeZone()
-  const { can } = usePermissions()
-
   const schedulableItem = order.items.find(
     (item) => item.productionSummary === "Unscheduled",
   )
-  const allocatedItem = order.items.find((item) => item.allocation != null)
 
-  if (schedulableItem == null && allocatedItem == null) {
+  if (schedulableItem == null || order.status !== "Requested") {
     return null
   }
 
   return (
-    <div className="space-y-4">
-      {schedulableItem && order.status === "Requested" ? (
-        <ApprovalPanel
-          order={order}
-          itemId={schedulableItem.id}
-          resourceName={resourceName}
-          preferredUnitId={preferredUnitId}
-          onOrderChange={onOrderChange}
-          onReloadNeeded={onReloadNeeded}
-        />
-      ) : null}
-      {allocatedItem?.allocation ? (
-        <ActiveUsageCard
-          order={order}
-          allocation={allocatedItem.allocation}
-          onOrderChange={onOrderChange}
-          canAllocate={can("catalog.orders.allocate") && can("catalog.orders.manage")}
-          canOpenAgenda={can("rentals.schedule.read")}
-          timeZoneId={timeZoneId}
-          locale={i18n.language}
-          t={t}
-        />
-      ) : null}
-    </div>
+    <ApprovalPanel
+      order={order}
+      itemId={schedulableItem.id}
+      resourceName={resourceName}
+      preferredUnitId={preferredUnitId}
+      onOrderChange={onOrderChange}
+      onReloadNeeded={onReloadNeeded}
+    />
   )
 }
 
@@ -324,98 +295,6 @@ function ApprovalPanel({
       <p className="text-xs text-muted-foreground">
         {t("catalog.resourcePlanning.approvalPanel.approvalRule")}
       </p>
-    </section>
-  )
-}
-
-function ActiveUsageCard({
-  order,
-  allocation,
-  onOrderChange,
-  canAllocate,
-  canOpenAgenda,
-  timeZoneId,
-  locale,
-  t,
-}: {
-  order: CatalogOrder
-  allocation: NonNullable<CatalogOrder["items"][number]["allocation"]>
-  onOrderChange: (order: CatalogOrder) => void
-  canAllocate: boolean
-  canOpenAgenda: boolean
-  timeZoneId: string
-  locale: string
-  t: (key: string, options?: Record<string, unknown>) => string
-}) {
-  const [busyAction, setBusyAction] = useState<"work-finished" | "release" | null>(null)
-
-  async function runUsage(action: "work-finished" | "release") {
-    setBusyAction(action)
-    try {
-      const next = await applyCatalogOrderAllocationUsage(
-        order.id,
-        allocation.id,
-        action,
-        allocation.planningRevision,
-      )
-      onOrderChange(next)
-      toast.success(t("catalog.resourcePlanning.activeUse.toastUpdated"))
-    } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : t("catalog.resourcePlanning.errors.usageActionFailed"),
-      )
-    } finally {
-      setBusyAction(null)
-    }
-  }
-
-  const canFinish = allocation.status === "Running"
-  const canRelease = allocation.status === "Cleaning"
-
-  return (
-    <section className="min-w-0 space-y-3 rounded-xl border border-border bg-card p-4 sm:p-6">
-      <h2 className="text-sm font-medium">{t("catalog.resourcePlanning.activeUse.title")}</h2>
-      {order.status === "Cancelled" ? (
-        <Alert variant="destructive">
-          <AlertDescription>{t("catalog.resourcePlanning.activeUse.cancelledHint")}</AlertDescription>
-        </Alert>
-      ) : null}
-      <p className="text-sm">
-        <span className="text-muted-foreground">{t("catalog.resourcePlanning.activeUse.status")}: </span>
-        {t(`catalog.resourcePlanning.allocationStatus.${allocation.status}`)}
-      </p>
-      <p className="text-sm tabular-nums">
-        <span className="text-muted-foreground">{t("catalog.resourcePlanning.activeUse.workWindow")}: </span>
-        {formatCatalogDate(allocation.plannedWorkStart, locale, timeZoneId)} –{" "}
-        {formatCatalogDate(allocation.plannedWorkEnd, locale, timeZoneId)}
-      </p>
-      {canOpenAgenda ? (
-        <Link
-          className="inline-flex min-h-11 items-center text-sm text-primary underline-offset-4 hover:underline"
-          to={resourceAgendaPath(allocation.plannedWorkStart, allocation.timeZoneId)}
-        >
-          {t("catalog.resourcePlanning.activeUse.openAgenda")}
-        </Link>
-      ) : null}
-      <div className="flex flex-wrap gap-2">
-        <LoadingButton
-          type="button"
-          loading={busyAction === "work-finished"}
-          disabled={!canAllocate || !canFinish}
-          onClick={() => void runUsage("work-finished")}
-        >
-          {t("catalog.resourcePlanning.activeUse.workFinished")}
-        </LoadingButton>
-        <LoadingButton
-          type="button"
-          variant="outline"
-          loading={busyAction === "release"}
-          disabled={!canAllocate || !canRelease}
-          onClick={() => void runUsage("release")}
-        >
-          {t("catalog.resourcePlanning.activeUse.release")}
-        </LoadingButton>
-      </div>
     </section>
   )
 }
