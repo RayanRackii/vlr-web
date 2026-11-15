@@ -1,7 +1,7 @@
 import { useEffect, useId, useState } from "react"
 import { useForm, useWatch } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { ChevronDown, Search, Tag as TagIcon, X } from "lucide-react"
+import { ChevronDown, Folder, Plus, Search, Tag as TagIcon, X } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
@@ -9,6 +9,8 @@ import { Input } from "@/components/ui/input"
 import { ErrorState } from "@/components/ErrorState"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { CategoryCreateDialog } from "@/features/assistant/CategoryCreateDialog"
+import { slugify } from "@/features/assistant/taxonomySlug"
 import { useStepSubmit } from "@/features/assistant/stepSubmit"
 import { usePermissions } from "@/features/users/permissions/PermissionContext"
 import { useTrialStatus } from "@/features/users/hooks/useTrialStatus"
@@ -18,7 +20,6 @@ import { taxonomyMutationSchema, taxonomyTagMutationSchema, type TaxonomyCategor
 import { listTaxonomyCategories, listTaxonomyTags, createTaxonomyCategory, createTaxonomyTag } from "@/features/taxonomy/services/taxonomyService"
 
 const TAXONOMY_ASSIGNMENT_LIMIT = 20
-const slugify = (value: string) => value.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "").slice(0, 80).replace(/-$/, "")
 const matches = (name: string, query: string) => name.toLowerCase().includes(query.trim().toLowerCase())
 
 export function CadastroTaxonomyStep({ product, canAssign = false, onSaved, onDirtyChange, onSavingChange }: { product?: CatalogProduct; canAssign?: boolean; onSaved?: () => void | Promise<void>; onDirtyChange?: (dirty: boolean) => void; onSavingChange?: (saving: boolean) => void }) {
@@ -37,6 +38,7 @@ export function CadastroTaxonomyStep({ product, canAssign = false, onSaved, onDi
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [saveError, setSaveError] = useState<string | null>(null)
+  const [categoryCreated, setCategoryCreated] = useState(false)
   const [loading, setLoading] = useState(canRead)
   const [attempt, setAttempt] = useState(0)
 
@@ -96,21 +98,29 @@ export function CadastroTaxonomyStep({ product, canAssign = false, onSaved, onDi
   const tagById = new Map<string, { id: string; name: string }>([...(product.taxonomy?.tags ?? []), ...tags].map((item) => [item.id, item]))
   const locked = !assign || busy || inlineSaving
   const toggle = (ids: string[], id: string) => ids.includes(id) ? ids.filter((value) => value !== id) : [...ids, id]
-  const changed = () => setSaveError(null)
+  const changed = () => { setSaveError(null); setCategoryCreated(false) }
   return <div className="space-y-6">
     {shellDrivesSave ? null : <p className="text-sm text-muted-foreground">{t("cadastro.taxonomyHelp")}</p>}
     <section className="space-y-3" aria-label={t("taxonomy.categories")}>
       <div>
-        <h2 className="text-sm font-semibold">{t("taxonomy.categories")}</h2>
+        <div className="flex items-center justify-between gap-2">
+          <h2 className="text-sm font-semibold">{t("taxonomy.categories")}</h2>
+          {canManage ? <Button type="button" variant="outline" className="min-h-11" disabled={busy || inlineSaving} onClick={() => setCreating("category")}><Plus className="size-4" aria-hidden="true" />{t("cadastro.createCategoryButton")}</Button> : null}
+        </div>
         <p className="text-sm text-muted-foreground">{t("cadastro.categoriesHelp")}</p>
       </div>
       <CategoryCombobox categories={categories} selected={categoryIds} disabled={locked} canCreate={canManage} onToggle={(id) => { changed(); setCategoryIds((current) => toggle(current, id)) }} onCreate={() => setCreating("category")} />
-      <ChipList ids={categoryIds} lookup={categoryById} disabled={locked} onRemove={(id) => { changed(); setCategoryIds((current) => current.filter((value) => value !== id)) }} />
-      {canManage ? <Button type="button" variant="link" className="min-h-11 px-0" disabled={busy || inlineSaving} aria-expanded={creating === "category"} onClick={() => setCreating(creating === "category" ? null : "category")}>{t("cadastro.createNewCategory")}</Button> : null}
-      {creating === "category" && canManage ? <InlineTaxonomyCreate key="category" kind="category" categories={categories} onSavingChange={setInlineSaving} onClose={() => setCreating(null)} onCreated={(item) => {
-        setCategories((current) => [...current, item as TaxonomyCategory])
-        if (assign) { changed(); setCategoryIds((current) => [...current, item.id]) }
+      {categoryIds.length === 0
+        ? <div className="flex items-center gap-3 rounded-lg bg-muted px-4 py-3">
+          <Folder className="size-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+          <div><p className="text-sm font-medium">{t("cadastro.noCategorySelected")}</p><p className="text-xs text-muted-foreground">{t("cadastro.noCategorySelectedHint")}</p></div>
+        </div>
+        : <ChipList ids={categoryIds} lookup={categoryById} disabled={locked} icon={<Folder className="size-3 shrink-0 text-muted-foreground" aria-hidden="true" />} onRemove={(id) => { changed(); setCategoryIds((current) => current.filter((value) => value !== id)) }} />}
+      <p aria-live="polite" className="text-sm text-primary">{categoryCreated ? `✓ ${t("cadastro.categoryCreatedSelected")}` : null}</p>
+      {canManage ? <CategoryCreateDialog open={creating === "category"} categories={categories} onOpenChange={(open) => setCreating(open ? "category" : null)} onSavingChange={setInlineSaving} onCreated={(item) => {
+        setCategories((current) => [...current, item])
         setCreating(null)
+        if (assign) { setSaveError(null); setCategoryIds((current) => current.includes(item.id) ? current : [...current, item.id]); setCategoryCreated(true) }
       }} /> : null}
     </section>
     <section className="space-y-3" aria-label={t("taxonomy.tags")}>
@@ -131,13 +141,14 @@ export function CadastroTaxonomyStep({ product, canAssign = false, onSaved, onDi
   </div>
 }
 
-function ChipList({ ids, lookup, disabled, onRemove }: { ids: string[]; lookup: Map<string, { id: string; name: string }>; disabled: boolean; onRemove: (id: string) => void }) {
+function ChipList({ ids, lookup, disabled, icon, onRemove }: { ids: string[]; lookup: Map<string, { id: string; name: string }>; disabled: boolean; icon?: React.ReactNode; onRemove: (id: string) => void }) {
   const { t } = useTranslation()
   if (ids.length === 0) return null
   return <ul className="flex flex-wrap gap-2">
     {ids.map((id) => {
       const name = lookup.get(id)?.name ?? id
       return <li key={id} className="inline-flex min-h-8 max-w-full items-center gap-1 rounded-md bg-muted px-3 text-xs font-medium">
+        {icon}
         <span className="min-w-0 break-words">{name}</span>
         {disabled ? null : <button type="button" aria-label={t("cadastro.removeItem", { name })} className="relative inline-flex size-5 shrink-0 items-center justify-center rounded-full text-muted-foreground hover:text-foreground after:absolute after:-inset-3 after:content-['']" onClick={() => onRemove(id)}><X className="size-3" aria-hidden="true" /></button>}
       </li>

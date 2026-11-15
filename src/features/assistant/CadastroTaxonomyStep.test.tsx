@@ -61,28 +61,120 @@ it("shows no-results with a create link only when the user can manage taxonomy",
   expect(screen.getAllByRole("button", { name: "Criar nova categoria" }).length).toBeGreaterThan(0)
 })
 
-it("hides the create-category link without manage permission but still assigns existing labels", async () => {
+it("hides the create-category buttons without manage permission but still assigns existing labels", async () => {
   const user = userEvent.setup()
   access.manage = false
   render(<CadastroTaxonomyStep product={product} canAssign onSaved={vi.fn()} />)
   await pickCategory(user, "Hospedagem")
   expect(screen.queryByRole("button", { name: "Criar nova categoria" })).not.toBeInTheDocument()
+  expect(screen.queryByRole("button", { name: "Criar categoria" })).not.toBeInTheDocument()
   expect(screen.getByRole("textbox", { name: "Tags" })).toHaveAttribute("placeholder", "Digite para buscar uma tag")
 })
 
-it("creates a category inline, with a parent picker, and selects it", async () => {
-  const user = userEvent.setup()
-  vi.mocked(taxonomy.createTaxonomyCategory).mockResolvedValue({ ...category, id: "cccccccc-cccc-4ccc-8ccc-cccccccccccc", name: "Pacotes", slug: "pacotes", parentId: category.id })
+it("shows the empty-state box and the create button only with manage permission", async () => {
   render(<CadastroTaxonomyStep product={product} canAssign onSaved={vi.fn()} />)
-  await user.click(await screen.findByRole("button", { name: "Criar nova categoria" }))
-  await user.type(screen.getByLabelText("Nome"), "Pacotes")
-  await user.click(screen.getByRole("combobox", { name: "Categoria pai" }))
-  await user.click(screen.getByRole("option", { name: "Hospedagem" }))
-  await user.click(screen.getByRole("button", { name: "Adicionar categoria" }))
+  expect(await screen.findByRole("button", { name: "Criar categoria" })).toBeInTheDocument()
+  expect(screen.getByText("Nenhuma categoria selecionada")).toBeInTheDocument()
+  expect(screen.getByText("Selecione uma categoria existente ou crie uma nova.")).toBeInTheDocument()
+})
+
+async function openDialog(user: ReturnType<typeof userEvent.setup>) {
+  await user.click(await screen.findByRole("button", { name: "Criar categoria" }))
+  return await screen.findByRole("dialog", { name: "Criar categoria" })
+}
+
+it("opens the create dialog with its fields, previews the slug from the name and lets the user edit it", async () => {
+  const user = userEvent.setup()
+  render(<CadastroTaxonomyStep product={product} canAssign onSaved={vi.fn()} />)
+  const dialog = await openDialog(user)
+  expect(within(dialog).getByText("Organize seu catálogo sem sair do cadastro.")).toBeInTheDocument()
+  const name = within(dialog).getByLabelText("Nome da categoria *")
+  expect(name).toHaveFocus()
+  expect(within(dialog).getByText("Use um nome curto e fácil de reconhecer.")).toBeInTheDocument()
+  expect(within(dialog).getByText("Disponível em todo o catálogo deste espaço.")).toBeInTheDocument()
+  expect(within(dialog).getByText("Ao criar, a categoria será selecionada neste produto.")).toBeInTheDocument()
+  expect(within(dialog).getByRole("button", { name: "Criar e selecionar" })).toBeDisabled()
+  await user.type(name, "Fotografia Pro")
+  expect(within(dialog).getByText("fotografia-pro")).toBeInTheDocument()
+  await user.click(within(dialog).getByRole("button", { name: "Editar" }))
+  const slug = within(dialog).getByLabelText("Endereço da categoria")
+  expect(slug).toHaveValue("fotografia-pro")
+  await user.clear(slug)
+  await user.type(slug, "foto")
+  await user.type(name, "x")
+  expect(slug).toHaveValue("foto")
+})
+
+it("creates a category with name, parent and slug, selects it, shows the success line and saves through the product update", async () => {
+  const user = userEvent.setup()
+  const created = { ...category, id: "cccccccc-cccc-4ccc-8ccc-cccccccccccc", name: "Pacotes", slug: "pacotes", parentId: category.id }
+  vi.mocked(taxonomy.createTaxonomyCategory).mockResolvedValue(created)
+  render(<CadastroTaxonomyStep product={product} canAssign onSaved={vi.fn()} />)
+  const dialog = await openDialog(user)
+  await user.type(within(dialog).getByLabelText("Nome da categoria *"), "Pacotes")
+  await user.click(within(dialog).getByRole("combobox", { name: "Categoria principal (opcional)" }))
+  await user.click(await screen.findByRole("option", { name: "Hospedagem" }))
+  expect(within(dialog).getByText("Pacotes será uma subcategoria de Hospedagem.")).toBeInTheDocument()
+  await user.click(within(dialog).getByRole("button", { name: "Criar e selecionar" }))
   expect(await screen.findByRole("button", { name: "Remover Pacotes" })).toBeInTheDocument()
-  expect(taxonomy.createTaxonomyCategory).toHaveBeenCalledWith(expect.objectContaining({ parentId: category.id, slug: "pacotes" }))
+  expect(taxonomy.createTaxonomyCategory).toHaveBeenCalledWith({ name: "Pacotes", slug: "pacotes", parentId: category.id, icon: null, sortOrder: 0 })
+  expect(screen.queryByRole("dialog")).not.toBeInTheDocument()
+  expect(screen.getByText("✓ Categoria criada e selecionada para este produto.")).toBeInTheDocument()
   await user.click(screen.getByRole("button", { name: "Salvar passo" }))
-  await waitFor(() => expect(updateCatalogProduct).toHaveBeenCalledWith("p1", expect.objectContaining({ taxonomy: { categoryIds: ["cccccccc-cccc-4ccc-8ccc-cccccccccccc"], tagIds: [] } })))
+  await waitFor(() => expect(updateCatalogProduct).toHaveBeenCalledWith("p1", expect.objectContaining({ taxonomy: { categoryIds: [created.id], tagIds: [] } })))
+})
+
+it("keeps the dialog open and shows the API error when creating a category fails", async () => {
+  const user = userEvent.setup()
+  vi.mocked(taxonomy.createTaxonomyCategory).mockRejectedValue(new Error("Categoria duplicada"))
+  render(<CadastroTaxonomyStep product={product} canAssign onSaved={vi.fn()} />)
+  const dialog = await openDialog(user)
+  await user.type(within(dialog).getByLabelText("Nome da categoria *"), "Hospedagem")
+  await user.click(within(dialog).getByRole("button", { name: "Criar e selecionar" }))
+  expect(await within(dialog).findByRole("alert")).toHaveTextContent("Categoria duplicada")
+  expect(screen.getByRole("dialog")).toBeInTheDocument()
+  expect(screen.queryByText(/Categoria criada e selecionada/)).not.toBeInTheDocument()
+  expect(within(dialog).getByRole("button", { name: "Criar e selecionar" })).toBeEnabled()
+})
+
+it("guards against double submit while the category is being created", async () => {
+  const user = userEvent.setup()
+  let resolve: (value: typeof category) => void = () => {}
+  vi.mocked(taxonomy.createTaxonomyCategory).mockReturnValue(new Promise((done) => { resolve = done }))
+  render(<CadastroTaxonomyStep product={product} canAssign onSaved={vi.fn()} />)
+  const dialog = await openDialog(user)
+  await user.type(within(dialog).getByLabelText("Nome da categoria *"), "Novo")
+  const submit = within(dialog).getByRole("button", { name: "Criar e selecionar" })
+  await user.click(submit)
+  await user.click(submit)
+  expect(taxonomy.createTaxonomyCategory).toHaveBeenCalledTimes(1)
+  await act(async () => { resolve({ ...category, id: "dddddddd-dddd-4ddd-8ddd-dddddddddddd", name: "Novo", slug: "novo" }) })
+  expect(await screen.findByRole("button", { name: "Remover Novo" })).toBeInTheDocument()
+})
+
+it("cancels the dialog without creating anything", async () => {
+  const user = userEvent.setup()
+  render(<CadastroTaxonomyStep product={product} canAssign onSaved={vi.fn()} />)
+  const dialog = await openDialog(user)
+  await user.click(within(dialog).getByRole("button", { name: "Cancelar" }))
+  await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument())
+  expect(taxonomy.createTaxonomyCategory).not.toHaveBeenCalled()
+})
+
+it("creates a category from the dialog inside the wizard shell, and the shell submit saves the selection", async () => {
+  const user = userEvent.setup()
+  const created = { ...category, id: "cccccccc-cccc-4ccc-8ccc-cccccccccccc", name: "Pacotes", slug: "pacotes" }
+  vi.mocked(taxonomy.createTaxonomyCategory).mockResolvedValue(created)
+  const { StepShell, shell } = createStepShell()
+  render(<StepShell><CadastroTaxonomyStep product={product} canAssign onSaved={vi.fn()} /></StepShell>)
+  const dialog = await openDialog(user)
+  await user.type(within(dialog).getByLabelText("Nome da categoria *"), "Pacotes")
+  await user.click(within(dialog).getByRole("button", { name: "Criar e selecionar" }))
+  expect(await screen.findByRole("button", { name: "Remover Pacotes" })).toBeInTheDocument()
+  let result: boolean | null = null
+  await act(async () => { result = await shell.submit() })
+  expect(result).toBe(true)
+  expect(updateCatalogProduct).toHaveBeenCalledWith("p1", expect.objectContaining({ taxonomy: { categoryIds: [created.id], tagIds: [] } }))
 })
 
 it("adds an existing tag on Enter, suggests while typing, and creates a new one when allowed", async () => {
