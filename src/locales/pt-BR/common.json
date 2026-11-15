@@ -1592,22 +1592,19 @@
     },
     "resourcePlanning": {
       "title": "Recursos necessários",
-      "description": "Defina quais recursos específicos este produto consome ao ser produzido, e por quanto tempo.",
       "loading": "Carregando recursos...",
-      "emptyState": "Não exige agendamento",
       "addRequirement": "Adicionar recurso",
       "save": "Salvar recursos",
       "saveErrorTitle": "Não foi possível salvar",
       "toastSaved": "Recursos salvos com sucesso.",
-      "requirementLabel": "Recurso {{index}}",
-      "calculationHint": "Cada unidade ocupa o recurso por {{duration}} min, além do preparo e da limpeza.",
       "fields": {
         "resource": "Recurso",
-        "resourcePlaceholder": "Selecione um recurso",
         "resourceQuantity": "Quantidade",
-        "durationMinutesPerUnit": "Duração por unidade (min)",
-        "prepMinutes": "Preparo (min)",
-        "cleanupMinutes": "Limpeza (min)"
+        "durationMinutesPerUnit": "Duração por unidade",
+        "prepMinutes": "Preparo",
+        "cleanupMinutes": "Limpeza",
+        "unitSuffix": "un.",
+        "minuteSuffix": "min"
       },
       "errors": {
         "loadRequirements": "Não foi possível carregar os recursos deste produto.",
@@ -1676,6 +1673,47 @@
           "Blocked": "Bloqueado",
           "Cancelled": "Cancelado"
         }
+      },
+      "subtitleEmpty": "Adicione os equipamentos ou espaços usados por este produto.",
+      "subtitleCount_one": "{{count}} recurso configurado para este produto.",
+      "subtitleCount_other": "{{count}} recursos configurados para este produto.",
+      "breakdown": "{{prep}} min de preparo + {{duration}} min de uso + {{cleanup}} min de limpeza",
+      "empty": {
+        "title": "Quais recursos este produto precisa?",
+        "description": "Escolha um recurso e configure a quantidade e os tempos de ocupação.",
+        "action": "Selecionar recurso"
+      },
+      "dialog": {
+        "addTitle": "Adicionar recurso",
+        "editTitle": "Editar recurso",
+        "description": "Selecione um recurso e configure como ele será ocupado.",
+        "searchLabel": "Buscar recurso",
+        "typeFilter": "Filtrar por tipo",
+        "allTypes": "Todos os tipos",
+        "count_one": "{{count}} recurso",
+        "count_other": "{{count}} recursos",
+        "noMatches": "Nenhum recurso encontrado.",
+        "alreadyAdded": "Já adicionado",
+        "pickPrompt": "Selecione um recurso para configurar a quantidade e os tempos.",
+        "selectedHint": "Defina a quantidade e os tempos para este produto.",
+        "summaryTotal": "{{total}} min de ocupação por unidade",
+        "note": "O recurso só será incluído ao confirmar abaixo.",
+        "selectedCount_one": "{{count}} recurso selecionado",
+        "selectedCount_other": "{{count}} recursos selecionados",
+        "noneSelected": "Nenhum recurso selecionado",
+        "confirmAdd": "Adicionar recurso",
+        "confirmEdit": "Salvar alterações"
+      },
+      "card": {
+        "units_one": "{{count}} unidade",
+        "units_other": "{{count}} unidades",
+        "minutes": "{{count}} min",
+        "occupancy": "Ocupação por unidade: {{total}} min",
+        "remove": "Remover {{name}}"
+      },
+      "info": {
+        "title": "O tempo vai além do atendimento",
+        "body": "Inclua preparo e limpeza para reservar o intervalo necessário antes e depois do uso do recurso."
       }
     },
     "agenda": {
@@ -1789,7 +1827,10 @@
     },
     "page": {
       "subtitle": "Defina por onde cada aviso é enviado e acompanhe as entregas.",
-      "tabs": { "channels": "Canais", "history": "Histórico" },
+      "tabs": {
+        "channels": "Canais",
+        "history": "Histórico"
+      },
       "channelsTitle": "Canais por evento",
       "channelsSubtitle": "Marque os canais que avisam clientes e equipe em cada evento.",
       "historyTitle": "Histórico de entregas",
@@ -1811,7 +1852,10 @@
       "showing": "Mostrando {{shown}} de {{total}}",
       "previous": "Página anterior",
       "next": "Próxima página",
-      "modules": { "catalog": "Pedidos", "rentals": "Reservas" }
+      "modules": {
+        "catalog": "Pedidos",
+        "rentals": "Reservas"
+      }
     },
     "inbox": {
       "items": {
@@ -3332,7 +3376,10 @@
         "cancel": "Cancelar",
         "edit": "Editar"
       },
-      "errors": { "load": "Não foi possível carregar os tipos de recurso.", "save": "Não foi possível salvar o tipo de recurso." }
+      "errors": {
+        "load": "Não foi possível carregar os tipos de recurso.",
+        "save": "Não foi possível salvar o tipo de recurso."
+      }
     },
     "categories": {
       "title": {
@@ -4740,7 +4787,12 @@
       "searchEmptyTitle": "Nenhum cliente encontrado",
       "searchEmptyDescription": "Ajuste a busca por nome ou subdomínio.",
       "filterAll": "Todos",
-      "columns": { "client": "Cliente", "modules": "Módulos", "status": "Status", "actions": "Ações" },
+      "columns": {
+        "client": "Cliente",
+        "modules": "Módulos",
+        "status": "Status",
+        "actions": "Ações"
+      },
       "metrics": {
         "totalTenants": "Total de tenants",
         "activeTenants": "Tenants ativos",
@@ -5302,16 +5354,16 @@
           "removeClosed_other": "{{day}} fechado: {{count}} horários em {{resources}} recurso(s)",
           "removeOutside_one": "{{day}}, fora do novo horário: {{count}} horário em {{resources}} recurso(s)",
           "removeOutside_other": "{{day}}, fora do novo horário: {{count}} horários em {{resources}} recurso(s)",
-        "removeReplace_one": "{{day}}: {{count}} horário será substituído em {{resources}} recurso(s)",
-        "removeReplace_other": "{{day}}: {{count}} horários serão substituídos em {{resources}} recurso(s)",
+          "removeReplace_one": "{{day}}: {{count}} horário será substituído em {{resources}} recurso(s)",
+          "removeReplace_other": "{{day}}: {{count}} horários serão substituídos em {{resources}} recurso(s)",
           "action": "Remover e salvar"
         },
         "saveSuccess": "Horários salvos: {{created}} criados, {{updated}} atualizados, {{removed}} removidos.",
         "saveFailed": "Nem tudo foi salvo ({{count}} problemas). Veja os detalhes na tela.",
         "conflict": "Há horários de outro tipo em {{days}}. Esses dias não serão alterados.",
-      "errorConflict": "{{days}}: há horários de outro tipo neste dia, nada foi alterado.",
-      "errorRemoveDay": "{{day}}: não foi possível remover {{count}} horário(s) antigo(s), o dia não foi alterado ({{message}})",
-      "errorsTitle": "Nem tudo foi salvo",
+        "errorConflict": "{{days}}: há horários de outro tipo neste dia, nada foi alterado.",
+        "errorRemoveDay": "{{day}}: não foi possível remover {{count}} horário(s) antigo(s), o dia não foi alterado ({{message}})",
+        "errorsTitle": "Nem tudo foi salvo",
         "errorRule": "{{days}}: {{message}}",
         "errorRemove": "Não foi possível remover {{count}} horário(s): {{message}}",
         "errorPolicy": "Horário geral dos recursos: {{message}}",
@@ -6074,7 +6126,7 @@
       "rowActions": "Ações de {{name}}",
       "allDay": "Dia inteiro",
       "scrollHint": "Role para ver mais horas",
-        "continues": "continua",
+      "continues": "continua",
       "outside_one": "{{count}} fora do horário",
       "outside_other": "{{count}} fora do horário",
       "resourceType": {
@@ -6119,7 +6171,12 @@
     "createdAt": "Criada em",
     "files": "Arquivos",
     "customer": "Cliente",
-    "columns": { "order": "Pedido", "customer": "Cliente", "total": "Total", "date": "Data" },
+    "columns": {
+      "order": "Pedido",
+      "customer": "Cliente",
+      "total": "Total",
+      "date": "Data"
+    },
     "tabs": {
       "todos": "Todos",
       "pedidos": "Pedidos",

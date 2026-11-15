@@ -1592,22 +1592,19 @@
     },
     "resourcePlanning": {
       "title": "Required resources",
-      "description": "Define which specific resources this product consumes when produced, and for how long.",
       "loading": "Loading resources...",
-      "emptyState": "Does not require scheduling",
       "addRequirement": "Add resource",
       "save": "Save resources",
       "saveErrorTitle": "Could not save",
       "toastSaved": "Resources saved successfully.",
-      "requirementLabel": "Resource {{index}}",
-      "calculationHint": "Each unit occupies the resource for {{duration}} min, plus prep and cleanup.",
       "fields": {
         "resource": "Resource",
-        "resourcePlaceholder": "Select a resource",
         "resourceQuantity": "Quantity",
-        "durationMinutesPerUnit": "Duration per unit (min)",
-        "prepMinutes": "Prep (min)",
-        "cleanupMinutes": "Cleanup (min)"
+        "durationMinutesPerUnit": "Duration per unit",
+        "prepMinutes": "Prep",
+        "cleanupMinutes": "Cleanup",
+        "unitSuffix": "un.",
+        "minuteSuffix": "min"
       },
       "errors": {
         "loadRequirements": "Could not load this product's resources.",
@@ -1676,6 +1673,47 @@
           "Blocked": "Blocked",
           "Cancelled": "Cancelled"
         }
+      },
+      "subtitleEmpty": "Add the equipment or spaces this product uses.",
+      "subtitleCount_one": "{{count}} resource configured for this product.",
+      "subtitleCount_other": "{{count}} resources configured for this product.",
+      "breakdown": "{{prep}} min prep + {{duration}} min use + {{cleanup}} min cleanup",
+      "empty": {
+        "title": "Which resources does this product need?",
+        "description": "Pick a resource and set the quantity and occupancy times.",
+        "action": "Select resource"
+      },
+      "dialog": {
+        "addTitle": "Add resource",
+        "editTitle": "Edit resource",
+        "description": "Select a resource and configure how it will be occupied.",
+        "searchLabel": "Search resource",
+        "typeFilter": "Filter by type",
+        "allTypes": "All types",
+        "count_one": "{{count}} resource",
+        "count_other": "{{count}} resources",
+        "noMatches": "No resources found.",
+        "alreadyAdded": "Already added",
+        "pickPrompt": "Select a resource to set its quantity and times.",
+        "selectedHint": "Set the quantity and times for this product.",
+        "summaryTotal": "{{total}} min occupied per unit",
+        "note": "The resource is only included when you confirm below.",
+        "selectedCount_one": "{{count}} resource selected",
+        "selectedCount_other": "{{count}} resources selected",
+        "noneSelected": "No resource selected",
+        "confirmAdd": "Add resource",
+        "confirmEdit": "Save changes"
+      },
+      "card": {
+        "units_one": "{{count}} unit",
+        "units_other": "{{count}} units",
+        "minutes": "{{count}} min",
+        "occupancy": "Occupancy per unit: {{total}} min",
+        "remove": "Remove {{name}}"
+      },
+      "info": {
+        "title": "Time goes beyond the service",
+        "body": "Include prep and cleanup to reserve the interval needed before and after the resource is used."
       }
     },
     "agenda": {
@@ -1789,7 +1827,10 @@
     },
     "page": {
       "subtitle": "Choose where each notice is sent and follow the deliveries.",
-      "tabs": { "channels": "Channels", "history": "History" },
+      "tabs": {
+        "channels": "Channels",
+        "history": "History"
+      },
       "channelsTitle": "Channels by event",
       "channelsSubtitle": "Choose the channels that notify customers and staff for each event.",
       "historyTitle": "Delivery history",
@@ -1811,7 +1852,10 @@
       "showing": "Showing {{shown}} of {{total}}",
       "previous": "Previous page",
       "next": "Next page",
-      "modules": { "catalog": "Orders", "rentals": "Bookings" }
+      "modules": {
+        "catalog": "Orders",
+        "rentals": "Bookings"
+      }
     },
     "inbox": {
       "items": {
@@ -3332,7 +3376,10 @@
         "cancel": "Cancel",
         "edit": "Edit"
       },
-      "errors": { "load": "Could not load resource types.", "save": "Could not save the resource type." }
+      "errors": {
+        "load": "Could not load resource types.",
+        "save": "Could not save the resource type."
+      }
     },
     "categories": {
       "title": {
@@ -4740,7 +4787,12 @@
       "searchEmptyTitle": "No clients found",
       "searchEmptyDescription": "Adjust the search by name or subdomain.",
       "filterAll": "All",
-      "columns": { "client": "Client", "modules": "Modules", "status": "Status", "actions": "Actions" },
+      "columns": {
+        "client": "Client",
+        "modules": "Modules",
+        "status": "Status",
+        "actions": "Actions"
+      },
       "metrics": {
         "totalTenants": "Total tenants",
         "activeTenants": "Active tenants",
@@ -5302,16 +5354,16 @@
           "removeClosed_other": "{{day}} closed: {{count}} slots across {{resources}} resource(s)",
           "removeOutside_one": "{{day}}, outside the new hours: {{count}} slot across {{resources}} resource(s)",
           "removeOutside_other": "{{day}}, outside the new hours: {{count}} slots across {{resources}} resource(s)",
-        "removeReplace_one": "{{day}}: {{count}} slot will be replaced across {{resources}} resource(s)",
-        "removeReplace_other": "{{day}}: {{count}} slots will be replaced across {{resources}} resource(s)",
+          "removeReplace_one": "{{day}}: {{count}} slot will be replaced across {{resources}} resource(s)",
+          "removeReplace_other": "{{day}}: {{count}} slots will be replaced across {{resources}} resource(s)",
           "action": "Remove and save"
         },
         "saveSuccess": "Hours saved: {{created}} created, {{updated}} updated, {{removed}} removed.",
         "saveFailed": "Not everything was saved ({{count}} problems). See the details on screen.",
         "conflict": "There are time slots of another type on {{days}}. Those days will not be changed.",
-      "errorConflict": "{{days}}: there are time slots of another type on this day, nothing was changed.",
-      "errorRemoveDay": "{{day}}: could not remove {{count}} old slot(s), the day was not changed ({{message}})",
-      "errorsTitle": "Not everything was saved",
+        "errorConflict": "{{days}}: there are time slots of another type on this day, nothing was changed.",
+        "errorRemoveDay": "{{day}}: could not remove {{count}} old slot(s), the day was not changed ({{message}})",
+        "errorsTitle": "Not everything was saved",
         "errorRule": "{{days}}: {{message}}",
         "errorRemove": "Could not remove {{count}} slot(s): {{message}}",
         "errorPolicy": "Overall resource hours: {{message}}",
@@ -6074,7 +6126,7 @@
       "rowActions": "Actions for {{name}}",
       "allDay": "All day",
       "scrollHint": "Scroll to see more hours",
-        "continues": "continues",
+      "continues": "continues",
       "outside_one": "{{count}} outside hours",
       "outside_other": "{{count}} outside hours",
       "resourceType": {
@@ -6119,7 +6171,12 @@
     "createdAt": "Created on",
     "files": "Files",
     "customer": "Customer",
-    "columns": { "order": "Order", "customer": "Customer", "total": "Total", "date": "Date" },
+    "columns": {
+      "order": "Order",
+      "customer": "Customer",
+      "total": "Total",
+      "date": "Date"
+    },
     "tabs": {
       "todos": "All",
       "pedidos": "Orders",

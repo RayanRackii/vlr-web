@@ -107,10 +107,7 @@ function ProductCadastroPage() {
           <ProductWizardOfferStep product={product} mode={cadastroStep === "precos" ? "precos" : "dados"} showUsesSchedule={wizard.rentalsActive} readOnly={!wizard.canManage} onDirtyChange={setStepDirty} onSavingChange={setStepSaving} onSaved={() => wizard.reload()} />
         ) : null}
         {cadastroStep === "agenda" ? (
-          <>
-            <CatalogProductResourceRequirements productId={product.id} readOnly={!wizard.canManage} onDirtyChange={setStepDirty} onSavingChange={setStepSaving} onSaved={() => wizard.reload()} />
-            <ResourceLinks assets={linkedAssets.length > 0 ? linkedAssets : linkedIds.map((assetId) => ({ id: assetId, name: assetId, queueEnabled: false, queueOpeningTime: null }))} />
-          </>
+          <CatalogProductResourceRequirements productId={product.id} readOnly={!wizard.canManage} onDirtyChange={setStepDirty} onSavingChange={setStepSaving} onSaved={() => wizard.reload()} />
         ) : null}
         {cadastroStep === "fila" ? <QueueSummary assets={linkedAssets} /> : null}
         {cadastroStep === "regras" && model.access && model.groups ? (
