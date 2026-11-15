@@ -1,8 +1,12 @@
-import { useOptionalPermissions } from "@/features/users/permissions/PermissionContext"
 import { CadastroShell } from "./CadastroShell"
+import { useBreadcrumbTitle } from "@/components/layout/useBreadcrumbTitle"
+import { toast } from "sonner"
+import { activateCatalogProduct } from "@/features/catalog/services/catalogService"
+import type { CadastroStep } from "./useCadastroStep"
 import { useCadastroStep } from "./useCadastroStep"
 import { CadastroTaxonomyStep } from "./CadastroTaxonomyStep"
 import { useEffect, useState } from "react"
+import { useOptionalPermissions } from "@/features/users/permissions/PermissionContext"
 import { Link, useNavigate, useParams } from "react-router-dom"
 import { useTranslation } from "react-i18next"
 
@@ -15,10 +19,9 @@ import { QueueSummary, ResourceLinks } from "@/features/catalog/components/Produ
 import { ProductWizardAccessStep } from "@/features/catalog/components/productWizard/ProductWizardAccessStep"
 import { ProductWizardOfferStep } from "@/features/catalog/components/productWizard/ProductWizardOfferStep"
 import { useProductWizard } from "@/features/catalog/components/productWizard/useProductWizard"
+import { catalogMenuIsActive } from "@/features/catalog/components/productWizard/sellableChecklist"
 import { productSetupFromModel } from "@/features/catalog/lib/productSetupStatus"
 import { listAdminRentalAssets, type AdminRentalAsset } from "@/features/rentals/services/scheduleService"
-
-const STEPS = ["dados", "agenda", "fila", "regras", "precos", "publicacao"] as const
 
 /** Editing an existing product lives in the product editor; this page is only the cadastro wizard. */
 export function ProductAssistantPage({ cadastro = false }: { cadastro?: boolean } = {}) {
@@ -29,13 +32,14 @@ export function ProductAssistantPage({ cadastro = false }: { cadastro?: boolean 
 function ProductCadastroPage() {
   const { step: cadastroStep, go } = useCadastroStep()
   const navigate = useNavigate()
+  const permissions = useOptionalPermissions()
   const [stepDirty, setStepDirty] = useState(false)
   const [stepSaving, setStepSaving] = useState(false)
-  const permissions = useOptionalPermissions()
   const { id = "" } = useParams()
   const { t } = useTranslation()
   const wizard = useProductWizard(id)
   const [assets, setAssets] = useState<AdminRentalAsset[]>([])
+  useBreadcrumbTitle(wizard.model?.product.name)
 
   useEffect(() => {
     let active = true
@@ -57,54 +61,72 @@ function ProductCadastroPage() {
 
   const model = wizard.model
   const { product } = model
-  const { status, firstMissing, linkedAssetIds: linkedIds } = productSetupFromModel(model, wizard.rentalsActive)
+  const { steps, status, firstMissing, linkedAssetIds: linkedIds } = productSetupFromModel(model, wizard.rentalsActive)
   const linkedAssets = assets.filter((asset) => linkedIds.includes(asset.id))
   const missingStep: SetupStepId | undefined = firstMissing
 
+  const taxonomy = product.taxonomy
+  const done: CadastroStep[] = [
+    ...(Object.entries(steps) as [SetupStepId, boolean][]).filter(([, ok]) => ok).map(([id]) => id),
+    ...((taxonomy?.categories.length ?? 0) + (taxonomy?.tags.length ?? 0) > 0 ? ["categorias" as const] : []),
+    ...(status.kind === "published" ? ["publicacao" as const] : []),
+  ]
+
+  /** Publicar: activates the product (the list's Ativar call) and, when it is not on the portal menu yet, publishes the menu. */
+  async function publish() {
+    if (!product.isActive) {
+      try {
+        await activateCatalogProduct(product.id)
+        toast.success(t("catalog.products.toastActivated"))
+      } catch (error) {
+        toast.error(error instanceof Error ? error.message : t("apiErrors.updateCatalogProductStatus"))
+        return
+      }
+    }
+    if (model.menuItems !== null && !catalogMenuIsActive(model.menuItems) && permissions?.can("core.module_menu.write") && !wizard.readOnly) {
+      await wizard.publishMenu()
+    } else {
+      await wizard.reload()
+    }
+  }
+
   const body = (
-      <div className="space-y-3">
-        {STEPS.filter((step) => step === cadastroStep).map((step) => (
-          <section key={step} aria-label={t(`assistant.steps.${step}`)} className="rounded-xl border bg-card p-4 text-card-foreground">
-            <h2 className="text-base font-semibold">{t(`assistant.steps.${step}`)}</h2>
-            <div className="mt-4 space-y-4">
-                {step === "dados" || step === "precos" ? (
-                  <ProductWizardOfferStep product={product} readOnly={!wizard.canManage} onDirtyChange={setStepDirty} onSavingChange={setStepSaving} onSaved={() => wizard.reload()} />
-                ) : null}
-                {step === "agenda" ? (
-                  <>
-                    <CatalogProductResourceRequirements productId={product.id} readOnly={!wizard.canManage} onDirtyChange={setStepDirty} onSavingChange={setStepSaving} onSaved={() => wizard.reload()} />
-                    <ResourceLinks assets={linkedAssets.length > 0 ? linkedAssets : linkedIds.map((assetId) => ({ id: assetId, name: assetId, queueEnabled: false, queueOpeningTime: null }))} />
-                  </>
-                ) : null}
-                {step === "fila" ? <QueueSummary assets={linkedAssets} /> : null}
-                {step === "regras" && model.access && model.groups ? (
-                  <ProductWizardAccessStep
-                    productId={product.id}
-                    visibility={model.access.visibility}
-                    customerIds={model.access.customerIds}
-                    groupIds={model.access.groupIds}
-                    groups={model.groups}
-                    wizardPath={wizard.wizardPath}
-                    readOnly={!wizard.canManage}
-                    canSearchCustomers={wizard.canSearchCustomers}
-                    onDirtyChange={setStepDirty}
-                    onSavingChange={setStepSaving}
-                    onSaved={() => wizard.reload()}
-                  />
-                ) : null}
-                {step === "publicacao" ? (
-                  <div className="space-y-3">
-                    <p className="text-sm text-muted-foreground">{t(`assistant.publication.${status.kind}`, { count: status.kind === "missing" ? status.count : 0 })}</p>
-                    <ResourceLinks assets={linkedAssets} />
-                  </div>
-                ) : null}
-            </div>
-          </section>
-        ))}
+      <div className="space-y-4">
+        {cadastroStep === "dados" || cadastroStep === "precos" ? (
+          <ProductWizardOfferStep product={product} readOnly={!wizard.canManage} onDirtyChange={setStepDirty} onSavingChange={setStepSaving} onSaved={() => wizard.reload()} />
+        ) : null}
+        {cadastroStep === "agenda" ? (
+          <>
+            <CatalogProductResourceRequirements productId={product.id} readOnly={!wizard.canManage} onDirtyChange={setStepDirty} onSavingChange={setStepSaving} onSaved={() => wizard.reload()} />
+            <ResourceLinks assets={linkedAssets.length > 0 ? linkedAssets : linkedIds.map((assetId) => ({ id: assetId, name: assetId, queueEnabled: false, queueOpeningTime: null }))} />
+          </>
+        ) : null}
+        {cadastroStep === "fila" ? <QueueSummary assets={linkedAssets} /> : null}
+        {cadastroStep === "regras" && model.access && model.groups ? (
+          <ProductWizardAccessStep
+            productId={product.id}
+            visibility={model.access.visibility}
+            customerIds={model.access.customerIds}
+            groupIds={model.access.groupIds}
+            groups={model.groups}
+            wizardPath={wizard.wizardPath}
+            readOnly={!wizard.canManage}
+            canSearchCustomers={wizard.canSearchCustomers}
+            onDirtyChange={setStepDirty}
+            onSavingChange={setStepSaving}
+            onSaved={() => wizard.reload()}
+          />
+        ) : null}
+        {cadastroStep === "publicacao" ? (
+          <div className="space-y-3">
+            <p className="text-sm text-muted-foreground">{t(`assistant.publication.${status.kind}`, { count: status.kind === "missing" ? status.count : 0 })}</p>
+            <ResourceLinks assets={linkedAssets} />
+          </div>
+        ) : null}
       </div>
   )
 
-  return <CadastroShell title={product.name} step={cadastroStep} go={go} dirty={stepDirty} busy={wizard.busy || stepSaving} canPublish={missingStep == null && Boolean(permissions?.can("core.module_menu.write")) && !wizard.readOnly && model.menuItems !== null} onPublish={() => void wizard.publishMenu()} onBack={() => navigate("/catalogo/produtos")}>
+  return <CadastroShell kind="product" title={product.name} status={status} step={cadastroStep} go={go} dirty={stepDirty} busy={wizard.busy || stepSaving} done={done} optional={["categorias"]} canPublish={missingStep == null && wizard.canManage} onPublish={publish} onBack={() => navigate("/catalogo/produtos")}>
     {cadastroStep === "categorias" ? <CadastroTaxonomyStep onDirtyChange={setStepDirty} onSavingChange={setStepSaving} product={product} canAssign={wizard.canManage} onSaved={() => wizard.reload()} /> : body}
   </CadastroShell>
 }

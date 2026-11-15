@@ -1,5 +1,6 @@
-import { Suspense, useEffect, useState, type ReactNode } from "react"
-import { Outlet, useLocation, useNavigate } from "react-router-dom"
+import { Suspense, useContext, useEffect, useState, type ReactNode } from "react"
+import { ChevronRight } from "lucide-react"
+import { Link, Outlet, useLocation, useNavigate } from "react-router-dom"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 
@@ -22,6 +23,7 @@ import {
   RENTAL_RESOURCES_PERMISSIONS,
   useAppNavigationSections,
 } from "@/components/layout/navigation"
+import { cadastroArea, isCadastroFocusPath } from "@/features/assistant/useCadastroStep"
 import { useAuth } from "@/contexts/AuthContext"
 import { TenantTimeZoneProvider } from "@/contexts/TenantTimeZoneProvider"
 import {
@@ -29,6 +31,7 @@ import {
   getHostTenantSubdomain,
 } from "@/features/tenantPortal/services/tenantPortalService"
 import type { TenantBranding } from "@/features/tenantPortal/schemas/tenantPortalSchemas"
+import { BreadcrumbTitleContext } from "@/components/layout/useBreadcrumbTitle"
 import { useTenantDocumentMeta } from "@/hooks/useTenantDocumentMeta"
 import { resolvePermissionRouteAccess } from "@/features/users/permissions/permissionGroups"
 import { PermissionProvider, usePermissions } from "@/features/users/permissions/PermissionContext"
@@ -41,6 +44,32 @@ import {
 import { exitTenantEnvironment } from "@/features/admin/services/adminTenantsService"
 import { WorkOrderSyncHost } from "@/features/workOrders/components/WorkOrderSyncHost"
 import { clearCustomerSessionAsSignedOut, signOutStaffPortal } from "@/lib/sessionRestoreGuard"
+
+/** Focus layout breadcrumb: Catálogo › Produtos › Novo produto / name (or Configurações › Recursos › name). */
+function CadastroFocusCrumbs() {
+  const { t } = useTranslation()
+  const { pathname } = useLocation()
+  const { title } = useContext(BreadcrumbTitleContext)
+  const products = cadastroArea(pathname) === "produtos"
+  const creating = /^\/(?:catalogo\/produtos|configuracoes\/recursos)\/cadastro\/?$/.test(pathname)
+  const current = title?.pathname === pathname ? title.value : t(creating ? "cadastro.productCreate" : "nav.details")
+  const crumbs: { label: string; to?: string }[] = products
+    ? [{ label: t("cadastro.crumbCatalog") }, { label: t("nav.catalogProducts"), to: "/catalogo/produtos" }]
+    : [{ label: t("nav.sections.settings") }, { label: t("nav.rentalsResources"), to: "/configuracoes/recursos" }]
+  return (
+    <nav aria-label={t("nav.breadcrumbLabel")} className="min-w-0">
+      <ol className="flex min-w-0 items-center gap-2 text-sm text-muted-foreground">
+        {crumbs.map((crumb) => (
+          <li key={crumb.label} className="flex shrink-0 items-center gap-2">
+            {crumb.to ? <Link to={crumb.to} className="touch-target inline-flex items-center hover:text-foreground hover:underline">{crumb.label}</Link> : <span>{crumb.label}</span>}
+            <ChevronRight className="size-3.5" aria-hidden="true" />
+          </li>
+        ))}
+        <li className="min-w-0 truncate font-medium text-foreground" aria-current="page">{current}</li>
+      </ol>
+    </nav>
+  )
+}
 
 function MainLayoutShell({ children }: { children?: ReactNode }) {
   const { t } = useTranslation()
@@ -112,6 +141,7 @@ function MainLayoutShell({ children }: { children?: ReactNode }) {
     t("account.userFallback"),
   )
   const pageTitle = t(getPageTitleKey(location.pathname))
+  const focus = isCadastroFocusPath(location.pathname)
   const initials = getUserInitials(currentUser?.fullName, user?.email)
   const onPlatformPanel = isPlatformAdmin && location.pathname.startsWith("/admin")
   // The first tenant role name labels the user card; the platform panel has no tenant role.
@@ -173,8 +203,10 @@ function MainLayoutShell({ children }: { children?: ReactNode }) {
       enlargeHeaderTargets
       userEmail={currentUser?.email ?? user?.email ?? undefined}
       userRoleLabel={roleLabel}
+      focus={focus}
+      workspaceName={workspaceName}
       headerStart={
-        <Breadcrumb
+        focus ? <CadastroFocusCrumbs /> : <Breadcrumb
           variant="header"
           fallback={
             <p className="hidden min-w-0 truncate text-sm font-medium text-foreground lg:block">
@@ -225,9 +257,11 @@ function MainLayoutShell({ children }: { children?: ReactNode }) {
     >
       <WorkOrderSyncHost />
       {/* Below lg the breadcrumb stays in the content (with its narrow back-arrow mode). */}
-      <div data-shell-part="content-breadcrumb" className="lg:hidden">
-        <Breadcrumb />
-      </div>
+      {focus ? null : (
+        <div data-shell-part="content-breadcrumb" className="lg:hidden">
+          <Breadcrumb />
+        </div>
+      )}
       <AppErrorBoundary key={location.pathname}>
         <Suspense fallback={<PageContentSkeleton rows={3} />}>
           {children ?? <Outlet />}

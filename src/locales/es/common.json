@@ -6210,6 +6210,65 @@
     "taxonomyHelp": "Selecciona las categorías y tags de este producto y guarda el paso.",
     "taxonomyLimit": "El límite es 20 categorías y 20 tags.",
     "resourceTaxonomyHelp": "Puedes crear categorías y tags compartidos aquí, pero no se vinculan a este recurso. El tipo operativo del recurso se configura por separado.",
-    "taxonomyNoRead": "Necesitas permiso para consultar categorías y tags."
+    "taxonomyNoRead": "Necesitas permiso para consultar categorías y tags.",
+    "progressCaptionProduct": "Configuración del producto",
+    "progressCaptionResource": "Configuración del recurso",
+    "stage": "Etapa {{count}} de {{total}}",
+    "optional": "Opcional",
+    "doneLabel": "completada",
+    "timeTitle": "A tu ritmo",
+    "timeBody": "El producto solo estará disponible para los clientes después de publicarlo.",
+    "productDescription": "Configura tu producto y deja todo listo para recibir reservas.",
+    "saveAndContinue": "Guardar y continuar",
+    "saveAndExit": "Guardar y salir",
+    "requiredNote": "* Campo obligatorio",
+    "crumbCatalog": "Catálogo",
+    "product": {
+      "nameLabel": "Nombre del producto *",
+      "nameHelp": "Este nombre se muestra en el catálogo y en las reservas.",
+      "codeLabel": "Código interno",
+      "codeHelp": "Usa un código único para localizar el producto en tu operación.",
+      "descriptionLabel": "Descripción",
+      "descriptionPlaceholder": "Describe qué incluye, los diferenciales y la información principal para el cliente.",
+      "descriptionHelp": "Opcional. Puedes completar esta información después.",
+      "pricingInfo": "Los valores y condiciones de cobro se definen en el paso Precios."
+    },
+    "productSteps": {
+      "dados": {
+        "title": "Datos del producto",
+        "subtitle": "Nombre e identificación",
+        "description": "Empieza por la información que identifica tu producto."
+      },
+      "categorias": {
+        "title": "Categorías y tags",
+        "subtitle": "Organización del catálogo",
+        "description": "Facilita la búsqueda y mantén tu catálogo organizado."
+      },
+      "agenda": {
+        "title": "Agenda",
+        "subtitle": "Disponibilidad y horarios",
+        "description": "Define qué recursos atienden este producto y por cuánto tiempo."
+      },
+      "fila": {
+        "title": "Fila",
+        "subtitle": "Orden de atención",
+        "description": "Mira cómo funciona la fila de los recursos vinculados."
+      },
+      "regras": {
+        "title": "Reglas",
+        "subtitle": "Condiciones de uso",
+        "description": "Elige quién puede ver y comprar este producto."
+      },
+      "precos": {
+        "title": "Precios",
+        "subtitle": "Valores y cobro",
+        "description": "Define el valor y las condiciones de cobro."
+      },
+      "publicacao": {
+        "title": "Publicación",
+        "subtitle": "Revisión y visibilidad",
+        "description": "Revisa lo que falta y publica para los clientes."
+      }
+    }
   }
 }
