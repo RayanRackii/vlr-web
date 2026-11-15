@@ -886,3 +886,37 @@ describe("DayResourceGrid compact day adjust", () => {
     expect(hours()[0]).toBe("00:00")
   })
 })
+
+describe("DayResourceGrid compact clipping", () => {
+  const block = {
+    id: "full-day",
+    rentalAssetId: ASSET_ID,
+    startTime: "00:00:00",
+    endTime: "23:59:00",
+    status: "unavailable" as const,
+    occupancyKindKey: "closed",
+    occupancyKindLabel: "Fechado",
+  }
+  const asset = { ...agendaAsset(), openTime: "08:00:00", closeTime: "12:00:00", allowedDurationMinutes: "60" }
+  const hours = () => screen.getAllByRole("rowheader").map((node) => node.textContent).filter(Boolean)
+
+  it("keeps the axis at business hours and draws a full-day block clipped with continues markers", () => {
+    const { container } = render(<DayResourceGrid compact assets={[asset]} occupancies={[block]} busyTargetKey={null} readOnly={false} onCellClick={() => undefined} />)
+
+    expect(hours()).toEqual(["08:00", "09:00", "10:00", "11:00"])
+    const card = screen.getByRole("button", { name: /Sala 1, 00:00–/ })
+    // 4 rows of 48px minus the 8px inset: clipped to the axis, not 24h tall.
+    expect(card).toHaveStyle({ height: "184px" })
+    expect(container.querySelector('[data-continues="before"]')).toBeInTheDocument()
+    expect(container.querySelector('[data-continues="after"]')).toBeInTheDocument()
+  })
+
+  it("shows the whole day, without markers, when 24 hours is requested", () => {
+    const { container } = render(<DayResourceGrid compact showFullDay assets={[asset]} occupancies={[block]} busyTargetKey={null} readOnly={false} onCellClick={() => undefined} />)
+
+    const all = hours()
+    expect(all[0]).toBe("00:00")
+    expect(all[all.length - 1]).toBe("23:00")
+    expect(container.querySelector("[data-continues]")).not.toBeInTheDocument()
+  })
+})

@@ -5106,6 +5106,7 @@
         "legendLabel": "Legend",
         "minimumLeadTime": "Outside the minimum advance notice",
         "addSlot": "Add a time slot to {{name}}",
+        "continues": "continues",
         "addSlotShort": "Add time slot"
       },
       "dayOnlyNote": "Changes apply to {{date}} only.",
