@@ -25,7 +25,7 @@ const ORDER_TONE: Record<string, StatusTone> = { Pending: "info", Scheduled: "in
 
 function Equipment({ name, tag, to }: { name: string; tag: string; to?: string }) {
   const body = <><span className="font-medium">{name}</span> <span className="text-xs text-muted-foreground">{tag}</span></>
-  return to ? <Link to={to} className="inline-flex min-h-11 items-center rounded-sm hover:underline">{body}</Link> : <span>{body}</span>
+  return to ? <Link to={to} className="inline-flex min-h-11 items-center gap-1.5 rounded-sm hover:underline">{body}</Link> : <span className="inline-flex items-center gap-1.5">{body}</span>
 }
 
 export function MaintenancePage() {
