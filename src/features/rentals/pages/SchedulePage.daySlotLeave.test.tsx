@@ -85,6 +85,7 @@ describe("SchedulePage day slot leave", () => {
   it("discards the draft when Sair reopens the same slot", async () => {
     const user = userEvent.setup()
     renderAgenda()
+    await user.click(screen.getByRole("tab", { name: i18n.t("rentals.schedule.tabs.daily") }))
     const open = await screen.findByRole("button", { name: "Abrir horário" })
     await user.click(open)
     const label = await screen.findByLabelText(i18n.t("rentals.schedule.templates.label"))

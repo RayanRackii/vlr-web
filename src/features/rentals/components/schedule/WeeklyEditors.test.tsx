@@ -1,9 +1,8 @@
-import { fireEvent, render, screen, waitFor, within } from "@testing-library/react"
+import { render, screen, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 
 import { TemplateSheet } from "./TemplateSheet"
-import { WeeklyRuleSheet } from "./WeeklyRuleSheet"
 import i18n from "@/lib/i18n"
 import type { OccupancyKind } from "@/features/rentals/services/scheduleService"
 
@@ -13,37 +12,12 @@ const kinds: OccupancyKind[] = [
 ]
 const shared = { open: true, onOpenChange: vi.fn(), kinds, defaultKindId: "lesson", busy: false, busyAction: null, readOnly: false }
 
-describe("weekly inline editors", () => {
+describe("weekly inline template editor", () => {
   beforeEach(async () => {
     vi.clearAllMocks()
     await i18n.changeLanguage("pt-BR")
   })
 
-  it("renders the rule inline and submits selected day and occupancy chips", async () => {
-    const onApply = vi.fn().mockResolvedValue(false)
-    const { container } = render(<WeeklyRuleSheet {...shared} selectedRentalAssetIds={["room"]} weekday="Monday" onApply={onApply} />)
-    expect(screen.queryByRole("dialog")).not.toBeInTheDocument()
-    const editor = screen.getByRole("region", { name: i18n.t("rentals.schedule.weeklyRule.title") })
-    expect(container).toContainElement(editor)
-    const user = userEvent.setup()
-    expect(within(editor).getByRole("button", { name: i18n.t("rentals.schedule.days.Monday") })).toHaveAttribute("aria-pressed", "false")
-    expect(within(editor).getByRole("radio", { name: i18n.t("rentals.schedule.presets.commercial") })).toHaveAttribute("aria-checked", "false")
-    expect(within(editor).getByRole("button", { name: i18n.t("rentals.schedule.weeklyRule.apply") })).toBeDisabled()
-    await user.click(within(editor).getByRole("radio", { name: i18n.t("rentals.schedule.presets.custom") }))
-    await user.click(within(editor).getByRole("button", { name: i18n.t("rentals.schedule.days.Tuesday") }))
-    await user.type(within(editor).getByLabelText(i18n.t("rentals.schedule.policy.openTime")), "10:00")
-    await user.type(within(editor).getByLabelText(i18n.t("rentals.schedule.policy.closeTime")), "19:00")
-    await user.click(within(editor).getByRole("button", { name: "Manutenção" }))
-    await user.click(within(editor).getByRole("button", { name: i18n.t("rentals.schedule.weeklyRule.apply") }))
-    expect(onApply).toHaveBeenCalledWith(expect.objectContaining({
-      daysOfWeek: ["Tuesday"],
-      openTime: "10:00",
-      closeTime: "19:00",
-      occupancyKindId: "maintenance",
-    }))
-    expect(editor.querySelector('[role="combobox"], .lucide-chevron-down, .lucide-chevron-up')).toBeNull()
-    expect(shared.onOpenChange).not.toHaveBeenCalled()
-  })
   it("renders the template inline and changes weekday and kind through chips", async () => {
     const onSubmit = vi.fn().mockResolvedValue(false)
     const { container } = render(<TemplateSheet {...shared} editing={null} onSubmit={onSubmit} />)
@@ -59,51 +33,12 @@ describe("weekly inline editors", () => {
     expect(shared.onOpenChange).not.toHaveBeenCalled()
   })
 
-  it.each(["busy", "readOnly"] as const)("preserves %s locks in both inline editors", (lock) => {
-    render(<><WeeklyRuleSheet {...shared} {...{ [lock]: true }} selectedRentalAssetIds={["room"]} weekday="Monday" onApply={vi.fn()} /><TemplateSheet {...shared} {...{ [lock]: true }} editing={null} onSubmit={vi.fn()} /></>)
-    for (const editor of screen.getAllByRole("region")) {
-      expect(within(editor).getByRole("button", { name: i18n.t("rentals.schedule.days.Monday") })).toBeDisabled()
-      expect(within(editor).getByRole("button", { name: "Manutenção" })).toBeDisabled()
-      expect(within(editor.querySelector("footer")!).getAllByRole("button").at(-1)).toBeDisabled()
-    }
-  })
-
-  it("counts a duration edit as dirty, asks before collapsing, and lets Cancel discard", async () => {
-    const onDirtyChange = vi.fn()
-    const onOpenChange = vi.fn()
-    const onRequestClose = vi.fn()
-    render(<WeeklyRuleSheet {...shared} onOpenChange={onOpenChange} onDirtyChange={onDirtyChange} onRequestClose={onRequestClose} selectedRentalAssetIds={["room"]} weekday="Monday" onApply={vi.fn()} />)
-    const duration = screen.getByLabelText(i18n.t("rentals.schedule.policy.slotMinutes"))
-    expect(duration).toHaveValue(60)
-    fireEvent.change(duration, { target: { value: "90" } })
-    await waitFor(() => expect(onDirtyChange).toHaveBeenCalledWith(true))
-    const user = userEvent.setup()
-    await user.click(screen.getByRole("button", { name: i18n.t("rentals.schedule.weeklyRule.title") }))
-    expect(onRequestClose).toHaveBeenCalledOnce()
-    expect(onOpenChange).not.toHaveBeenCalled()
-    await user.click(screen.getByRole("button", { name: i18n.t("common.cancel") }))
-    expect(onOpenChange).toHaveBeenCalledWith(false)
-    expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument()
-  })
-
-  it("keeps rule validation, cancel, and collapse available", async () => {
-    const onApply = vi.fn()
-    render(<WeeklyRuleSheet {...shared} selectedRentalAssetIds={["room"]} weekday="Monday" onApply={onApply} />)
-    const user = userEvent.setup()
-    expect(screen.getByRole("button", { name: i18n.t("rentals.schedule.days.Monday") })).toHaveAttribute("aria-pressed", "false")
-    const apply = screen.getByRole("button", { name: i18n.t("rentals.schedule.weeklyRule.apply") })
-    expect(apply).toBeDisabled()
-    await user.click(screen.getByRole("button", { name: i18n.t("rentals.schedule.days.Monday") }))
-    expect(apply).toBeDisabled()
-    await user.click(screen.getByRole("radio", { name: i18n.t("rentals.schedule.presets.commercial") }))
-    expect(apply).toBeEnabled()
-    for (const day of ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]) {
-      await user.click(screen.getByRole("button", { name: i18n.t(`rentals.schedule.days.${day}`) }))
-    }
-    expect(apply).toBeDisabled()
-    await user.click(screen.getByRole("button", { name: i18n.t("common.cancel") }))
-    expect(shared.onOpenChange).toHaveBeenCalledWith(false)
-    expect(onApply).not.toHaveBeenCalled()
+  it.each(["busy", "readOnly"] as const)("preserves %s locks in the inline template editor", (lock) => {
+    render(<TemplateSheet {...shared} {...{ [lock]: true }} editing={null} onSubmit={vi.fn()} />)
+    const editor = screen.getByRole("region")
+    expect(within(editor).getByRole("button", { name: i18n.t("rentals.schedule.days.Monday") })).toBeDisabled()
+    expect(within(editor).getByRole("button", { name: "Manutenção" })).toBeDisabled()
+    expect(within(editor.querySelector("footer")!).getAllByRole("button").at(-1)).toBeDisabled()
   })
 
   it("preserves editing fields, inactive kind, delete, and successful close", async () => {
@@ -121,5 +56,4 @@ describe("weekly inline editors", () => {
     expect(onSubmit).toHaveBeenCalledWith({ dayOfWeek: "Friday", startTime: "10:00", endTime: "11:00", occupancyKindId: "lesson", label: "Horário padrão", isActive: false })
     expect(shared.onOpenChange).toHaveBeenCalledWith(false)
   })
-
 })

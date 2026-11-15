@@ -778,7 +778,7 @@ describe("TeacherLessonsPage", () => {
       "Nenhum horário configurado para este dia da semana.",
     )
     expect(screen.getByTestId("available-time-state")).toHaveTextContent(
-      "Configuração semanal",
+      "Horário de funcionamento",
     )
     expect(fetchAdminScheduleDay).toHaveBeenCalledWith("2026-10-24", [court.id])
     expect(fetchAdminScheduleDay).not.toHaveBeenCalledWith("2026-10-23", expect.anything())
