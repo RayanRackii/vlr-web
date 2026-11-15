@@ -202,8 +202,8 @@ it("keeps taxonomy chips on the page until their assignment has been saved", asy
 it("keeps unsaved offer changes in Dados and does not block the footer", async () => {
   const user = userEvent.setup()
   renderCadastro()
-  await user.type(screen.getByRole("textbox", { name: "Nome" }), " nova")
-  expect(screen.getByRole("textbox", { name: "Nome" })).toHaveValue("Diária nova")
+  await user.type(screen.getByRole("textbox", { name: "Nome do produto *" }), " nova")
+  expect(screen.getByRole("textbox", { name: "Nome do produto *" })).toHaveValue("Diária nova")
   expect(screen.getByRole("button", { name: "Salvar e continuar" })).toBeEnabled()
   expect(screen.getByRole("button", { name: "Categorias e tags" })).toBeEnabled()
 })
