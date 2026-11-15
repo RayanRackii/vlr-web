@@ -36,7 +36,7 @@ vi.mock("@/features/rentals/components/schedule/WeeklyTemplatesTab", () => ({
     <output aria-label="Weekly templates">{templates.map((template) => template.label).join(",")}</output>
     <button disabled={busy} onClick={() => { void onSaveBusinessHours({
       rentalAssetIds: [...selectedRentalAssetIds], groups: [{ days: [weekday], openTime: "08:00", closeTime: "09:00" }],
-      slotMinutes: 60, removals: [], policyHours: null,
+      slotMinutes: 60, removals: [], conflicts: [], policyHours: null,
     }) }}>Apply rule</button>
     {templateEditor}
   </>,

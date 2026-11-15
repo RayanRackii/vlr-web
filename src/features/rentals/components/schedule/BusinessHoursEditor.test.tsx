@@ -37,6 +37,7 @@ function renderEditor(overrides: Partial<React.ComponentProps<typeof BusinessHou
   const props = {
     assets: [asset("a")],
     selectedRentalAssetIds: ["a"],
+    openKindId: "open",
     scheduleTemplates: [...hourly("a", "Monday", 8, 18), ...hourly("a", "Tuesday", 8, 18)],
     loadingTemplates: false,
     busy: false,
@@ -76,11 +77,14 @@ describe("BusinessHoursEditor", () => {
     fireEvent.change(timeOf("Saturday", "closes"), { target: { value: "14:00" } })
     await user.click(screen.getByRole("radio", { name: i18n.t("rentals.schedule.hours.slotUnit", { count: 30 }) }))
     await user.click(saveButton())
-    expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument()
+    // The 30-minute grid replaces the old hourly slots of Monday and Tuesday, so the user confirms first.
+    const dialog = await screen.findByRole("alertdialog")
+    expect(dialog).toHaveTextContent(i18n.t("rentals.schedule.hours.confirm.removeReplace", { day: day("Monday"), count: 10, resources: 1 }))
+    await user.click(within(dialog).getByRole("button", { name: i18n.t("rentals.schedule.hours.confirm.action") }))
     expect(onSave).toHaveBeenCalledTimes(1)
     const plan = onSave.mock.calls[0][0] as BusinessHoursPlan
     expect(plan.slotMinutes).toBe(30)
-    expect(plan.removals).toEqual([])
+    expect(plan.removals).toHaveLength(20)
     expect(plan.groups).toEqual([
       { days: ["Monday", "Tuesday"], openTime: "08:00", closeTime: "18:00" },
       { days: ["Saturday"], openTime: "08:00", closeTime: "14:00" },
@@ -126,6 +130,14 @@ describe("BusinessHoursEditor", () => {
     const alert = await screen.findByRole("alert")
     expect(alert).toHaveTextContent("Sábado: horário inválido")
     expect(alert).toHaveTextContent("Não foi possível remover 2 horário(s): erro")
+  })
+
+  it("warns that a day with templates of another kind will not be changed", () => {
+    const lesson = { ...hourly("a", "Wednesday", 9, 10)[0], occupancyKindId: "lesson" }
+    renderEditor({ scheduleTemplates: [...hourly("a", "Monday", 8, 18), lesson] })
+    expect(screen.queryByRole("status")).not.toBeInTheDocument()
+    fireEvent.change(timeOf("Wednesday", "opens"), { target: { value: "08:00" } })
+    expect(screen.getByRole("status")).toHaveTextContent(i18n.t("rentals.schedule.hours.conflict", { days: day("Wednesday") }))
   })
 
   it("blocks Save with a message while the hours are invalid", async () => {

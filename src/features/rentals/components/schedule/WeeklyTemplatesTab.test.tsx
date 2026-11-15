@@ -27,7 +27,7 @@ function Harness() {
   return <WeeklyTemplatesTab
     assets={[asset]} selectedRentalAssetIds={[asset.id]} weekday={weekday}
     templates={weekday === "Monday" ? [monday] : []} scheduleTemplates={[monday]} loadingScheduleTemplates={false}
-    kinds={kinds} loading={false} showSkeleton={false}
+    kinds={kinds} openKindId="lesson" loading={false} showSkeleton={false}
     busy={false} busyAction={null} busyTargetId={null} readOnly={false}
     onSelectedRentalAssetIdsChange={vi.fn()} onWeekdayChange={setWeekday}
     onCellClick={setTarget} onSaveBusinessHours={vi.fn().mockResolvedValue({ ok: true, errors: [] })}

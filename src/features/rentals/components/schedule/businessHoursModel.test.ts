@@ -83,7 +83,7 @@ describe("buildBusinessHoursPlan", () => {
     let draft = deriveBusinessHours(assets, [])
     for (const day of ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"] as const) draft = open(draft, day, "08:00", "22:00")
     draft = open(draft, "Saturday", "08:00", "14:00")
-    const plan = buildBusinessHoursPlan(draft, ["a", "b"], [])
+    const plan = buildBusinessHoursPlan(draft, ["a", "b"], [], "open")
     expect(plan.groups).toEqual([
       { days: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"], openTime: "08:00", closeTime: "22:00" },
       { days: ["Saturday"], openTime: "08:00", closeTime: "14:00" },
@@ -96,7 +96,7 @@ describe("buildBusinessHoursPlan", () => {
     const templates = [...hourly("a", "Sunday", 8, 10), ...hourly("b", "Sunday", 8, 10), ...hourly("c", "Sunday", 8, 10)]
     const base = deriveBusinessHours(assets, templates)
     const draft: BusinessHoursDraft = { ...base, days: { ...base.days, Sunday: { ...base.days.Sunday, open: false, touched: true } } }
-    const plan = buildBusinessHoursPlan(draft, ["a", "b"], templates)
+    const plan = buildBusinessHoursPlan(draft, ["a", "b"], templates, "open")
     expect(plan.groups).toEqual([])
     expect(plan.removals).toHaveLength(4)
     expect(plan.removals.every((item) => item.reason === "closed" && item.template.rentalAssetId !== "c")).toBe(true)
@@ -106,7 +106,7 @@ describe("buildBusinessHoursPlan", () => {
   it("removes slots that fall outside narrower hours", () => {
     const templates = hourly("a", "Monday", 8, 22)
     const draft = open(deriveBusinessHours([asset("a")], templates), "Monday", "09:00", "20:00")
-    const plan = buildBusinessHoursPlan(draft, ["a"], templates)
+    const plan = buildBusinessHoursPlan(draft, ["a"], templates, "open")
     expect(plan.removals.map((item) => `${item.template.startTime}`)).toEqual(["08:00:00", "20:00:00", "21:00:00"])
     expect(plan.removals.every((item) => item.reason === "outside")).toBe(true)
   })
@@ -114,19 +114,54 @@ describe("buildBusinessHoursPlan", () => {
   it("skips weekdays that differ between resources until the user edits them", () => {
     const templates = [...hourly("a", "Monday", 8, 18), ...hourly("b", "Monday", 9, 18)]
     const base = deriveBusinessHours(assets, templates)
-    const untouched = buildBusinessHoursPlan(base, ["a", "b"], templates)
+    const untouched = buildBusinessHoursPlan(base, ["a", "b"], templates, "open")
     expect(untouched.groups).toEqual([])
     expect(untouched.removals).toEqual([])
-    const edited = buildBusinessHoursPlan(open(base, "Monday", "08:00", "18:00"), ["a", "b"], templates)
+    const edited = buildBusinessHoursPlan(open(base, "Monday", "08:00", "18:00"), ["a", "b"], templates, "open")
     expect(edited.groups).toEqual([{ days: ["Monday"], openTime: "08:00", closeTime: "18:00" }])
   })
 
   it("re-applies open weekdays when only the slot length changed", () => {
     const templates = hourly("a", "Monday", 8, 12)
     const base = deriveBusinessHours([asset("a")], templates)
-    const plan = buildBusinessHoursPlan({ ...base, slotMinutes: 30, slotTouched: true }, ["a"], templates)
+    const plan = buildBusinessHoursPlan({ ...base, slotMinutes: 30, slotTouched: true }, ["a"], templates, "open")
     expect(plan.groups).toEqual([{ days: ["Monday"], openTime: "08:00", closeTime: "12:00" }])
     expect(plan.slotMinutes).toBe(30)
+  })
+
+  it("replaces the old grid when the slot length changes: deletes first, one apply", () => {
+    const templates = hourly("a", "Monday", 8, 12)
+    const base = deriveBusinessHours([asset("a")], templates)
+    const plan = buildBusinessHoursPlan({ ...base, slotMinutes: 30, slotTouched: true }, ["a"], templates, "open")
+    expect(plan.groups).toHaveLength(1)
+    expect(plan.removals).toHaveLength(4)
+    expect(plan.removals.every((item) => item.reason === "replace")).toBe(true)
+    expect(summarizeRemovals(plan.removals)).toEqual([{ day: "Monday", reason: "replace", count: 4, resources: 1 }])
+  })
+
+  it("replaces slots that no longer sit on the grid when the open time moves", () => {
+    const templates = hourly("a", "Monday", 8, 12)
+    const draft = open(deriveBusinessHours([asset("a")], templates), "Monday", "08:30", "12:00")
+    const plan = buildBusinessHoursPlan(draft, ["a"], templates, "open")
+    expect(plan.removals.map((item) => item.template.startTime)).toEqual(["08:00:00", "09:00:00", "10:00:00", "11:00:00"])
+    expect(plan.removals.every((item) => item.reason === "replace")).toBe(true)
+  })
+
+  it("deletes nothing when the new grid matches the existing slots exactly", () => {
+    const templates = hourly("a", "Monday", 8, 12)
+    const base = deriveBusinessHours([asset("a")], templates)
+    const plan = buildBusinessHoursPlan({ ...base, slotTouched: true }, ["a"], templates, "open")
+    expect(plan.groups).toHaveLength(1)
+    expect(plan.removals).toEqual([])
+  })
+
+  it("skips a day where templates of another kind overlap and reports it", () => {
+    const templates = [...hourly("a", "Monday", 8, 10), { ...hourly("a", "Monday", 10, 11)[0], occupancyKindId: "lesson" }]
+    const draft = open(deriveBusinessHours([asset("a")], templates), "Monday", "08:00", "12:00")
+    const plan = buildBusinessHoursPlan(draft, ["a"], templates, "open")
+    expect(plan.conflicts).toEqual(["Monday"])
+    expect(plan.groups).toEqual([])
+    expect(plan.removals).toEqual([])
   })
 })
 

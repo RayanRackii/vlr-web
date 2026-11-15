@@ -119,6 +119,33 @@ describe("SchedulePage business hours save", () => {
     expect(toast.error).toHaveBeenCalledWith(i18n.t("rentals.schedule.hours.saveFailed", { count: 2 }))
   })
 
+  it("does not apply a day whose old slots could not be removed", async () => {
+    vi.mocked(deleteScheduleTemplate).mockRejectedValue(new Error("Há reservas"))
+    const user = userEvent.setup()
+    await renderHours()
+    await user.click(screen.getByRole("radio", { name: i18n.t("rentals.schedule.hours.slotUnit", { count: 30 }) }))
+    await user.click(screen.getByRole("button", { name: i18n.t("rentals.schedule.hours.save") }))
+    await user.click(within(await screen.findByRole("alertdialog")).getByRole("button", { name: i18n.t("rentals.schedule.hours.confirm.action") }))
+    const alert = await screen.findByRole("alert")
+    expect(alert).toHaveTextContent("Há reservas")
+    expect(alert).toHaveTextContent(day("Monday"))
+    expect(applyWeeklyRule).not.toHaveBeenCalled()
+    expect(toast.success).not.toHaveBeenCalled()
+  })
+
+  it("deletes the old grid first and then applies the new one once", async () => {
+    const calls: string[] = []
+    vi.mocked(deleteScheduleTemplate).mockImplementation(async () => { calls.push("delete") })
+    vi.mocked(applyWeeklyRule).mockImplementation(async () => { calls.push("apply"); return { created: 8, updated: 0, skipped: 0 } })
+    const user = userEvent.setup()
+    await renderHours()
+    await user.click(screen.getByRole("radio", { name: i18n.t("rentals.schedule.hours.slotUnit", { count: 30 }) }))
+    await user.click(screen.getByRole("button", { name: i18n.t("rentals.schedule.hours.save") }))
+    await user.click(within(await screen.findByRole("alertdialog")).getByRole("button", { name: i18n.t("rentals.schedule.hours.confirm.action") }))
+    await waitFor(() => expect(applyWeeklyRule).toHaveBeenCalledTimes(1))
+    expect(calls).toEqual(["delete", "delete", "delete", "delete", "apply"])
+  })
+
   it("keeps the overall open and close time of open-hours resources in sync", async () => {
     vi.mocked(listAdminRentalAssets).mockResolvedValue([asset({ schedulePolicy: "OpenHours", openTime: "08:00:00", closeTime: "12:00:00", allowedDurationMinutes: "60,90" })])
     vi.mocked(listScheduleTemplates).mockResolvedValue([])

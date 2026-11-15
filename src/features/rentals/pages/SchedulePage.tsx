@@ -697,19 +697,56 @@ function AdminSchedulePage() {
     plan: BusinessHoursPlan,
   ): Promise<BusinessHoursSaveResult> {
     const errors: string[] = []
-    const failedDays = new Set<string>()
     let created = 0
     let updated = 0
+    let removed = 0
+    let applied = 0
     const messageOf = (error: unknown, fallback: string) =>
       error instanceof Error ? error.message : fallback
 
     beginBusy("weeklyRule")
     try {
+      const dayName = (day: string) => t(`rentals.schedule.days.${day}`)
+      if (plan.conflicts.length > 0) {
+        errors.push(
+          t("rentals.schedule.hours.errorConflict", {
+            days: plan.conflicts.map(dayName).join(", "),
+          }),
+        )
+      }
+
+      // Replace semantics: old slots of a day go first, and a day whose old slots could not
+      // all be removed is not applied, so a weekday is never left half changed.
       for (const group of plan.groups) {
+        const applyDays: string[] = []
+        for (const day of group.days) {
+          const stale = plan.removals.filter(
+            (removal) => removal.reason !== "closed" && removal.template.dayOfWeek === day,
+          )
+          const results = await Promise.allSettled(
+            stale.map((removal) => deleteScheduleTemplate(removal.template.id)),
+          )
+          const failedStale = results.filter(
+            (item): item is PromiseRejectedResult => item.status === "rejected",
+          )
+          removed += results.length - failedStale.length
+          if (failedStale.length > 0) {
+            errors.push(
+              t("rentals.schedule.hours.errorRemoveDay", {
+                day: dayName(day),
+                count: failedStale.length,
+                message: messageOf(failedStale[0].reason, t("apiErrors.deleteTemplate")),
+              }),
+            )
+            continue
+          }
+          applyDays.push(day)
+        }
+        if (applyDays.length === 0) continue
         try {
           const result = await applyWeeklyRule({
             rentalAssetIds: plan.rentalAssetIds,
-            daysOfWeek: group.days,
+            daysOfWeek: applyDays,
             openTime: group.openTime,
             closeTime: group.closeTime,
             slotMinutes: plan.slotMinutes,
@@ -717,29 +754,25 @@ function AdminSchedulePage() {
           })
           created += result.created
           updated += result.updated
+          applied += 1
         } catch (error) {
-          group.days.forEach((day) => failedDays.add(day))
           errors.push(
             t("rentals.schedule.hours.errorRule", {
-              days: group.days.map((day) => t(`rentals.schedule.days.${day}`)).join(", "),
+              days: applyDays.map(dayName).join(", "),
               message: messageOf(error, t("apiErrors.applyWeeklyRule")),
             }),
           )
         }
       }
 
-      // A day whose new hours failed keeps its old slots; closed days are always cleared.
-      const removals = plan.removals.filter(
-        (removal) =>
-          removal.reason === "closed" || !failedDays.has(removal.template.dayOfWeek),
-      )
+      const closedRemovals = plan.removals.filter((removal) => removal.reason === "closed")
       const deletions = await Promise.allSettled(
-        removals.map((removal) => deleteScheduleTemplate(removal.template.id)),
+        closedRemovals.map((removal) => deleteScheduleTemplate(removal.template.id)),
       )
       const failedDeletions = deletions.filter(
         (item): item is PromiseRejectedResult => item.status === "rejected",
       )
-      const removed = deletions.length - failedDeletions.length
+      removed += deletions.length - failedDeletions.length
       if (failedDeletions.length > 0) {
         errors.push(
           t("rentals.schedule.hours.errorRemove", {
@@ -755,7 +788,7 @@ function AdminSchedulePage() {
           plan.rentalAssetIds.includes(asset.id) &&
           (asset.schedulePolicy ?? "SlotGrid") === "OpenHours",
       )
-      if (plan.policyHours && openHoursAssets.length > 0 && plan.groups.length > 0) {
+      if (plan.policyHours && openHoursAssets.length > 0 && applied > 0) {
         const byDurations = new Map<string, string[]>()
         for (const asset of openHoursAssets) {
           const key = asset.allowedDurationMinutes ?? ""
@@ -986,6 +1019,7 @@ function AdminSchedulePage() {
             scheduleTemplates={scheduleTemplates}
             loadingScheduleTemplates={loadingScheduleTemplates}
             kinds={kinds}
+            openKindId={openKindId}
             loading={loadingAssets || loadingTemplates}
             showSkeleton={
               loadingAssets ||

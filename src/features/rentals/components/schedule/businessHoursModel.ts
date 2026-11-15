@@ -49,8 +49,11 @@ export type HoursGroup = {
 
 export type HoursRemoval = {
   template: ScheduleTemplate
-  /** "closed": the weekday was switched off. "outside": the slot falls outside the new hours. */
-  reason: "closed" | "outside"
+  /**
+   * "closed": the weekday was switched off. "outside": the slot lies outside the new hours.
+   * "replace": the slot overlaps the new hours but is not part of the new grid (replace semantics).
+   */
+  reason: "closed" | "outside" | "replace"
 }
 
 export type BusinessHoursPlan = {
@@ -58,6 +61,8 @@ export type BusinessHoursPlan = {
   groups: HoursGroup[]
   slotMinutes: number
   removals: HoursRemoval[]
+  /** Weekdays skipped because templates of another occupancy kind overlap the new hours. */
+  conflicts: DayOfWeekName[]
   /** Overall open/close for resources that keep hours on the asset itself. Null when nothing is open. */
   policyHours: { openTime: string; closeTime: string } | null
 }
@@ -167,10 +172,13 @@ export function buildBusinessHoursPlan(
   draft: BusinessHoursDraft,
   rentalAssetIds: readonly string[],
   templates: readonly ScheduleTemplate[],
+  openKindId: string,
 ): BusinessHoursPlan {
   const selected = new Set(rentalAssetIds)
   const groups = new Map<string, HoursGroup>()
   const removals: HoursRemoval[] = []
+  const conflicts: DayOfWeekName[] = []
+  const slot = draft.slotMinutes ?? DEFAULT_SLOT_MINUTES
 
   for (const day of WEEK_ORDER) {
     const row = draft.days[day]
@@ -183,23 +191,35 @@ export function buildBusinessHoursPlan(
       for (const template of dayTemplates) removals.push({ template, reason: "closed" })
       continue
     }
+    const openAt = toMinutes(row.openTime)
+    const closeAt = toMinutes(row.closeTime, true)
+    const overlaps = (template: ScheduleTemplate) =>
+      toMinutes(template.startTime) < closeAt && toMinutes(template.endTime, true) > openAt
+    // The API refuses a new slot that overlaps another kind, so that day is left alone.
+    if (dayTemplates.some((template) => template.occupancyKindId !== openKindId && overlaps(template))) {
+      conflicts.push(day)
+      continue
+    }
     const key = `${row.openTime}-${row.closeTime}`
     const group = groups.get(key) ?? { days: [], openTime: row.openTime, closeTime: row.closeTime }
     group.days.push(day)
     groups.set(key, group)
     for (const template of dayTemplates) {
-      if (
-        toMinutes(template.startTime) < toMinutes(row.openTime) ||
-        toMinutes(template.endTime, true) > toMinutes(row.closeTime, true)
-      ) {
+      if (template.occupancyKindId !== openKindId) continue
+      if (!overlaps(template)) {
         removals.push({ template, reason: "outside" })
+        continue
       }
+      const start = toMinutes(template.startTime)
+      const end = toMinutes(template.endTime, true)
+      const inGrid = end - start === slot && (start - openAt) % slot === 0 && start >= openAt && end <= closeAt
+      if (!inGrid) removals.push({ template, reason: "replace" })
     }
   }
 
-  const openRows = WEEK_ORDER.map((day) => draft.days[day]).filter(
-    (row) => row.open && isRowComplete(row) && !(row.mixed && !row.touched),
-  )
+  const openRows = WEEK_ORDER.filter((day) => !conflicts.includes(day))
+    .map((day) => draft.days[day])
+    .filter((row) => row.open && isRowComplete(row) && !(row.mixed && !row.touched))
   const policyHours = openRows.length === 0
     ? null
     : {
@@ -210,8 +230,9 @@ export function buildBusinessHoursPlan(
   return {
     rentalAssetIds: [...rentalAssetIds],
     groups: [...groups.values()],
-    slotMinutes: draft.slotMinutes ?? DEFAULT_SLOT_MINUTES,
+    slotMinutes: slot,
     removals,
+    conflicts,
     policyHours,
   }
 }

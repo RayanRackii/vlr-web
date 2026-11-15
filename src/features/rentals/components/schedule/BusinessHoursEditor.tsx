@@ -45,6 +45,8 @@ type BusinessHoursEditorProps = {
   selectedRentalAssetIds: readonly string[]
   /** Active templates of the selected resources, every weekday. */
   scheduleTemplates: readonly ScheduleTemplate[]
+  /** Occupancy kind the new hours are created with. */
+  openKindId: string
   loadingTemplates: boolean
   busy: boolean
   busyAction: ScheduleBusyAction
@@ -146,6 +148,7 @@ function HoursForm({
   assets,
   selectedRentalAssetIds,
   scheduleTemplates,
+  openKindId,
   busy,
   busyAction,
   readOnly,
@@ -193,6 +196,12 @@ function HoursForm({
 
   const locked = busy || readOnly || saving
   const problem = draftProblem(draft)
+  const livePlan = useMemo(
+    () => (problem ? null : buildBusinessHoursPlan(draft, selectedRentalAssetIds, scheduleTemplates, openKindId)),
+    [problem, draft, selectedRentalAssetIds, scheduleTemplates, openKindId],
+  )
+  const conflictDays = livePlan?.conflicts ?? []
+  const nothingToApply = Boolean(livePlan) && livePlan!.groups.length === 0 && livePlan!.removals.length === 0
 
   function dayLabel(day: DayOfWeekName) {
     return t(`rentals.schedule.days.${day}`)
@@ -270,7 +279,7 @@ function HoursForm({
   }
 
   function requestSave() {
-    const plan = buildBusinessHoursPlan(draft, selectedRentalAssetIds, scheduleTemplates)
+    const plan = buildBusinessHoursPlan(draft, selectedRentalAssetIds, scheduleTemplates, openKindId)
     if (plan.removals.length > 0) {
       setConfirmPlan(plan)
       return
@@ -384,6 +393,12 @@ function HoursForm({
         ) : null}
       </fieldset>
 
+      {dirty && conflictDays.length > 0 ? (
+        <p role="status" className="text-sm text-muted-foreground">
+          {t("rentals.schedule.hours.conflict", { days: conflictDays.map(dayLabel).join(", ") })}
+        </p>
+      ) : null}
+
       {dirty && problem ? (
         <p role="alert" className="text-sm text-destructive">
           {t(`rentals.schedule.hours.problem.${problem}`)}
@@ -394,7 +409,7 @@ function HoursForm({
         dirty={dirty}
         saving={saving || (busy && busyAction === "weeklyRule")}
         saveLabel={t("rentals.schedule.hours.save")}
-        saveDisabled={Boolean(problem) || readOnly || (busy && !saving)}
+        saveDisabled={Boolean(problem) || nothingToApply || readOnly || (busy && !saving)}
         onSave={requestSave}
         onDiscard={() => {
           setDraft(baseline)
@@ -412,9 +427,7 @@ function HoursForm({
             {removalLines.map((line) => (
               <li key={`${line.day}-${line.reason}`}>
                 {t(
-                  line.reason === "closed"
-                    ? "rentals.schedule.hours.confirm.removeClosed"
-                    : "rentals.schedule.hours.confirm.removeOutside",
+                  `rentals.schedule.hours.confirm.remove${line.reason === "closed" ? "Closed" : line.reason === "outside" ? "Outside" : "Replace"}`,
                   { day: dayLabel(line.day), count: line.count, resources: line.resources },
                 )}
               </li>
