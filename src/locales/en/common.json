@@ -1542,6 +1542,11 @@
       }
     },
     "policy": {
+      "generalTitle": "Cancellation rules",
+      "ordersBefore": "Customers can cancel orders up to status",
+      "requestsBefore": "Customers can cancel requests while they are",
+      "notAllowed": "do not allow",
+      "addText": "Add cancellation text",
       "title": "Sales",
       "description": "Choose when customers can cancel orders and requests in this catalog.",
       "ordersEnabled": "Customers can cancel orders",
