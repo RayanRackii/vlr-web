@@ -792,7 +792,7 @@ describe("CatalogProductEditorPage", () => {
     renderPage(["catalog.products.manage"], false, { activeModules: ["rentals"] })
     await screen.findByLabelText(i18n.t("catalog.products.form.name"))
     expect(screen.queryByRole("tab", { name: i18n.t("catalog.products.tabs.agenda") })).not.toBeInTheDocument()
-    expect(screen.getByRole("radio", { name: i18n.t("cadastro.product.usesScheduleNo") })).toHaveAttribute("aria-checked", "true")
+    expect(screen.getByRole("radio", { name: i18n.t("cadastro.product.salesMode.titleWithout") })).toHaveAttribute("aria-checked", "true")
   })
 
   it("saves the Sim/Nao choice with the main form and then hides Agenda", async () => {
@@ -800,7 +800,7 @@ describe("CatalogProductEditorPage", () => {
     const user = userEvent.setup()
     renderPage(["catalog.products.manage"], false, { activeModules: ["rentals"] })
     await screen.findByRole("tab", { name: i18n.t("catalog.products.tabs.agenda") })
-    await user.click(screen.getByRole("radio", { name: i18n.t("cadastro.product.usesScheduleNo") }))
+    await user.click(screen.getByRole("radio", { name: i18n.t("cadastro.product.salesMode.titleWithout") }))
     await user.click(save())
     await waitFor(() => expect(updateProductMock).toHaveBeenCalledWith(PRODUCT.id, expect.objectContaining({ usesSchedule: false })))
     await waitFor(() => expect(screen.queryByRole("tab", { name: i18n.t("catalog.products.tabs.agenda") })).not.toBeInTheDocument())
@@ -809,7 +809,7 @@ describe("CatalogProductEditorPage", () => {
   it("does not show the Sim/Nao control without the rentals module", async () => {
     renderPage()
     await screen.findByLabelText(i18n.t("catalog.products.form.name"))
-    expect(screen.queryByRole("radio", { name: i18n.t("cadastro.product.usesScheduleNo") })).not.toBeInTheDocument()
+    expect(screen.queryByRole("radio", { name: i18n.t("cadastro.product.salesMode.titleWithout") })).not.toBeInTheDocument()
   })
 
   it("opens the Agenda tab from the aba query", async () => {

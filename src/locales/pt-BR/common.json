@@ -6226,10 +6226,16 @@
     "crumbCatalog": "Catálogo",
     "product": {
       "nameLabel": "Nome do produto *",
-      "usesScheduleLabel": "Este produto usa a agenda?",
-      "usesScheduleYes": "Sim, reserva um recurso da agenda",
-      "usesScheduleNo": "Não, é vendido sem horário",
-      "usesScheduleHelp": "Escolha \"Não\" para produtos vendidos sem horário: Agenda e Fila deixam de ser necessárias.",
+      "salesMode": {
+        "label": "Como este produto é vendido?",
+        "description": "Isso define se será necessário configurar disponibilidade.",
+        "titleWith": "Com agendamento",
+        "descWith": "O cliente reserva um recurso para uma data ou horário.",
+        "titleWithout": "Sem agendamento",
+        "descWithout": "O produto é vendido sem reservar uma data ou horário.",
+        "helperWith": "As etapas Agenda e Fila serão incluídas no cadastro.",
+        "helperWithout": "As etapas Agenda e Fila não se aplicam a este produto."
+      },
       "nameHelp": "Este nome será exibido no catálogo e nas reservas.",
       "codeLabel": "Código interno",
       "codeHelp": "Use um código único para localizar o produto na sua operação.",
