@@ -1097,6 +1097,24 @@
       "createTitle": "Novo produto",
       "editTitle": "Editar produto",
       "quickEdit": "Edição rápida",
+
+      "rowMenu": "Ações de {{name}}",
+
+      "menuAccess": "Acesso",
+
+      "menuContinue": "Continuar configuração",
+
+      "statusIncomplete": "Configuração incompleta · falta {{count}}",
+
+      "filterActive": "Ativos",
+
+      "filterInactive": "Inativos",
+
+      "filterIncomplete": "Incompletos",
+
+      "statusFilter": "Filtrar por status",
+
+      "moreFilters": "Mais filtros",
       "quickEditTitle": "Edição rápida",
       "quickEditDescription": "Altere nome, preço e status. Para tudo mais, abra a edição completa.",
       "createContinue": "Criar e continuar →",
