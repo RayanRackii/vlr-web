@@ -56,4 +56,12 @@ describe("RowActionsMenu", () => {
     await user.click(danger)
     expect(onSelect).toHaveBeenCalledTimes(1)
   })
+
+  it("ignores separatorBefore on the first item", async () => {
+    const user = userEvent.setup()
+    renderMenu([{ key: "d", label: "Excluir", icon: Trash2, tone: "danger", separatorBefore: true }])
+    await user.click(screen.getByRole("button", { name: "Ações de Raquete" }))
+    await screen.findByRole("menuitem", { name: "Excluir" })
+    expect(screen.queryByRole("separator")).not.toBeInTheDocument()
+  })
 })
