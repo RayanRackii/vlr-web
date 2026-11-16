@@ -163,9 +163,10 @@ export function useProductWizard(productId: string) {
     ? sellableSummary(model.product.isActive, checklist)
     : "unknown"
 
-  async function publishMenu() {
+  /** Resolves true when the portal menu item is on, false when it was not (the error is toasted). */
+  async function publishMenu(): Promise<boolean> {
     if (!model || busyAction) {
-      return
+      return false
     }
     setBusyAction("menu")
     try {
@@ -189,8 +190,10 @@ export function useProductWizard(productId: string) {
       }
       toast.success(t("catalog.productWizard.menuPublished"))
       await load(true)
+      return true
     } catch (publishError) {
       toast.error(publishError instanceof Error ? publishError.message : t("apiErrors.createMenuItem"))
+      return false
     } finally {
       setBusyAction(null)
     }

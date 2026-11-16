@@ -100,7 +100,7 @@ it("defaults an unknown cadastro step to Dados", () => {
   expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1)
 })
 function mockReadyProduct(overrides: { isActive: boolean; menuItems: unknown[]; taxonomy?: unknown }) {
-  const publishMenu = vi.fn()
+  const publishMenu = vi.fn().mockResolvedValue(true)
   const reload = vi.fn()
   vi.mocked(useProductWizard).mockReturnValue({
     loading: false,
@@ -302,4 +302,16 @@ it("announces Produto ativo and stays on the step when the publish is refused", 
   await user.click(screen.getByRole("button", { name: "Publicar" }))
   await screen.findByText("Produto publicado")
   expect(success).toHaveBeenCalledWith("Produto ativo.")
+})
+
+it("stays on the step with a muted note when the product is active but the menu step failed", async () => {
+  vi.mocked(activateCatalogProduct).mockResolvedValue({} as never)
+  const { publishMenu } = mockReadyProduct({ isActive: false, menuItems: [] })
+  publishMenu.mockResolvedValue(false)
+  const user = userEvent.setup()
+  renderCadastro("?passo=publicacao")
+  await user.click(screen.getByRole("button", { name: "Publicar" }))
+  expect(await screen.findByText("O produto está ativo, mas não entrou no menu do portal.")).toBeInTheDocument()
+  expect(screen.queryByText("Produto publicado")).not.toBeInTheDocument()
+  expect(screen.getByRole("button", { name: "Publicar" })).toBeEnabled()
 })

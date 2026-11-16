@@ -6453,7 +6453,8 @@
       "visibilityRestricted": "Visible solo para clientes y grupos autorizados (Restringido).",
       "viewList": "Ver en la lista de productos",
       "createAnother": "Crear otro producto",
-      "keepEditing": "Seguir editando"
+      "keepEditing": "Seguir editando",
+      "menuFailed": "El producto está activo, pero no entró en el menú del portal."
     },
     "review": {
       "title": "Resumen antes de publicar",

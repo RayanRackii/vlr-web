@@ -37,6 +37,7 @@ function ProductCadastroPage() {
   const [stepDirty, setStepDirty] = useState(false)
   const [stepSaving, setStepSaving] = useState(false)
   const [justPublished, setJustPublished] = useState(false)
+  const [menuFailed, setMenuFailed] = useState(false)
   const { id = "" } = useParams()
   const { t } = useTranslation()
   const wizard = useProductWizard(id)
@@ -97,10 +98,13 @@ function ProductCadastroPage() {
       }
     }
     if (model.menuItems !== null && !catalogMenuIsActive(model.menuItems) && permissions?.can("core.module_menu.write") && !wizard.readOnly) {
-      await wizard.publishMenu()
+      const menuOk = await wizard.publishMenu()
+      setMenuFailed(!menuOk)
+      if (!menuOk) return
     } else {
       await wizard.reload()
     }
+    setMenuFailed(false)
     setJustPublished(true)
   }
 
@@ -133,6 +137,7 @@ function ProductCadastroPage() {
         {cadastroStep === "publicacao" ? (
           <div className="space-y-4">
             <p className="text-sm text-muted-foreground">{t(`assistant.publication.${status.kind}`, { count: status.kind === "missing" ? status.count : 0 })}</p>
+            {menuFailed ? <p className="text-sm text-muted-foreground" role="status">{t("cadastro.published.menuFailed")}</p> : null}
             <ProductPublishSummary
               product={product}
               categoryNames={taxonomy?.categories.map((category) => category.name) ?? []}

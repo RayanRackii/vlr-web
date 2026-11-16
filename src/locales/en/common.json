@@ -6453,7 +6453,8 @@
       "visibilityRestricted": "Visible only to released customers and groups (Restricted).",
       "viewList": "View in the product list",
       "createAnother": "Create another product",
-      "keepEditing": "Keep editing"
+      "keepEditing": "Keep editing",
+      "menuFailed": "The product is active, but it did not get into the portal menu."
     },
     "review": {
       "title": "Summary before publishing",
