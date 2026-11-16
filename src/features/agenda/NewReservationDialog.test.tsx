@@ -8,7 +8,8 @@ import { listAdminRentalAssets } from "@/features/rentals/services/scheduleServi
 import { listTenantCustomers } from "@/features/users/services/usersService"
 import { renderWithQuery } from "@/test/renderWithQuery"
 import { asset } from "./agendaFixtures"
-import { NewReservationDialog, defaultEnd } from "./NewReservationDialog"
+import { NewReservationDialog } from "./NewReservationDialog"
+import { defaultEnd } from "./newReservation"
 
 vi.mock("@/features/users/permissions/PermissionContext", () => ({ usePermissions: vi.fn() }))
 vi.mock("sonner", () => ({ toast: { success: vi.fn(), info: vi.fn(), error: vi.fn() } }))

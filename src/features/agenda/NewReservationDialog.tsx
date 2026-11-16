@@ -14,6 +14,7 @@ import { usePermissions } from "@/features/users/permissions/PermissionContext"
 import { tenantKey } from "@/lib/queryKeys"
 import { agendaQueries } from "./agendaQueries"
 import { endMinutes, minutes } from "./blockPeriod"
+import { defaultEnd } from "./newReservation"
 
 export type NewReservationPrefill = {
   resourceId?: string | null
@@ -31,15 +32,6 @@ type Props = {
   tenantId: string | null
   /** Called after the reservation was created. */
   onCreated?: () => void
-}
-
-const clock = (total: number) => `${String(Math.floor(total / 60)).padStart(2, "0")}:${String(total % 60).padStart(2, "0")}`
-
-/** End of a new reservation: the resource's first allowed duration when it declares one, else one hour. */
-export function defaultEnd(start: string, allowedDurationMinutes?: string | null) {
-  const declared = Number.parseInt(allowedDurationMinutes?.split(",")[0]?.trim() ?? "", 10)
-  const length = Number.isFinite(declared) && declared > 0 ? declared : 60
-  return clock(Math.min(minutes(start) + length, 24 * 60 - 1))
 }
 
 export function NewReservationDialog({ open, onOpenChange, prefill, tenantId, onCreated }: Props) {

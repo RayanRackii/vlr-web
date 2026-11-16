@@ -217,14 +217,16 @@ export type CreateStaffReservationInput = {
 
 /** Failure of POST /api/reservations/staff, with the API code when it sent one. */
 export class StaffReservationError extends Error {
-  constructor(
-    message: string,
-    readonly code: string | null,
-    readonly status: number | null,
-    readonly customerId: string | null,
-  ) {
+  readonly code: string | null
+  readonly status: number | null
+  readonly customerId: string | null
+
+  constructor(message: string, code: string | null, status: number | null, customerId: string | null) {
     super(message)
     this.name = "StaffReservationError"
+    this.code = code
+    this.status = status
+    this.customerId = customerId
   }
 }
 

@@ -303,7 +303,7 @@ describe("agenda card", () => {
     await userEvent.click(await screen.findByRole("button", { name: "Reservar Câmera" }))
     expect(await screen.findByRole("dialog")).toBeInTheDocument()
     expect(screen.getByLabelText("Data")).toHaveValue("2026-11-10")
-    expect(screen.getByLabelText("Início")).toHaveValue(expect.stringMatching(/^\d{2}:00$/))
+    expect(screen.getByLabelText("Início")).toHaveValue("06:00")
     expect(await screen.findByRole("combobox", { name: "Recurso" })).toHaveTextContent("Câmera")
     expect(params().has("rentalAssetId")).toBe(false)
   })
