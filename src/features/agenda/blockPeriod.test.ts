@@ -58,6 +58,12 @@ describe("blockPeriod", () => {
     expect(upsertSlot).not.toHaveBeenCalled()
   })
 
+  it("sends 23:59:59 to upsertSlot for a range ending at midnight with no slots", async () => {
+    vi.mocked(fetchAdminScheduleDay).mockResolvedValue({ date: input.date, slots: [] })
+    await blockPeriod({ ...input, start: "22:00", end: "00:00" })
+    expect(upsertSlot).toHaveBeenCalledWith(expect.objectContaining({ startTime: "22:00", endTime: "23:59:59" }))
+  })
+
   it("keeps going when one slot fails and reports it", async () => {
     vi.mocked(fetchAdminScheduleDay).mockResolvedValue({ date: input.date, slots: [at("b", "14:00:00", "15:00:00"), at("d", "17:00:00", "18:00:00")] })
     vi.mocked(applyDailyOccurrence).mockRejectedValueOnce(new Error("boom"))

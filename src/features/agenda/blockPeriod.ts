@@ -54,7 +54,8 @@ export async function blockPeriod(input: BlockPeriodInput): Promise<BlockPeriodR
   const result: BlockPeriodResult = { blocked: 0, skipped: [], failed: [] }
 
   if (overlapping.length === 0) {
-    await upsertSlot({ rentalAssetId: input.rentalAssetId, date: input.date, startTime: input.start, endTime: to === 24 * 60 ? "00:00" : input.end, occupancyKindId: input.kindId, label: note })
+    await upsertSlot({ rentalAssetId: input.rentalAssetId, date: input.date, startTime: input.start, // The API rejects end <= start, so a block that ends at midnight is stored as 23:59:59.
+      endTime: to === 24 * 60 ? "23:59:59" : input.end, occupancyKindId: input.kindId, label: note })
     result.blocked = 1
     return result
   }
