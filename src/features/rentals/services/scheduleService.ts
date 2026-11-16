@@ -536,6 +536,40 @@ export async function applyDailyOccurrence(body: {
   }
 }
 
+/**
+ * Creates (or overwrites, by exact asset + date + start) one slot. The API does no overlap check
+ * and rejects a Booked slot at the same start.
+ */
+export async function upsertSlot(body: {
+  rentalAssetId: string
+  date: string
+  startTime: string
+  endTime: string
+  occupancyKindId: string
+  label?: string | null
+}): Promise<AdminDaySlot> {
+  try {
+    const response = await api.post("/api/schedule/slots", {
+      rentalAssetId: body.rentalAssetId,
+      date: body.date,
+      startTime: normalizeScheduleTime(body.startTime),
+      endTime: normalizeScheduleTime(body.endTime),
+      occupancyKindId: body.occupancyKindId,
+      label: body.label ?? null,
+    })
+    const parsed = scheduleSlotSchema.safeParse(response.data)
+    if (!parsed.success) {
+      throw new Error(i18n.t("apiErrors.invalidResponse"))
+    }
+    return parsed.data
+  } catch (error) {
+    throw new Error(
+      parseApiError(getAxiosErrorPayload(error), i18n.t("apiErrors.applyDailyOccurrence")),
+      { cause: error },
+    )
+  }
+}
+
 export async function applyWeeklyRule(body: {
   rentalAssetIds: readonly string[]
   daysOfWeek: readonly string[]
