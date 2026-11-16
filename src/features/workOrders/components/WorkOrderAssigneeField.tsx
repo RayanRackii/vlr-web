@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react"
-import { useTranslation } from "react-i18next"
+import { Trans, useTranslation } from "react-i18next"
+import { Link } from "react-router-dom"
 import { toast } from "sonner"
 
 import { User } from "lucide-react"
@@ -118,6 +119,8 @@ export function WorkOrderAssigneeField({
 
   const showSelector =
     canAssign && !isClosed && techniciansError === null && technicians !== null
+  const noTechnicians = showSelector && technicians.length === 0
+  const canManagePeople = can("core.users.read")
 
   return (
     <div className="min-w-0">
@@ -170,6 +173,25 @@ export function WorkOrderAssigneeField({
             : currentName}
         </p>
       )}
+      {noTechnicians ? (
+        <p className="mt-1 text-sm text-muted-foreground" data-testid="assignee-no-technicians">
+          {canManagePeople ? (
+            <Trans
+              i18nKey="workOrders.execution.assigneeNoTechniciansLinked"
+              components={{
+                link: (
+                  <Link
+                    to="/pessoas-e-acesso"
+                    className="font-medium text-foreground underline underline-offset-4"
+                  />
+                ),
+              }}
+            />
+          ) : (
+            t("workOrders.execution.assigneeNoTechniciansPlain")
+          )}
+        </p>
+      ) : null}
       {techniciansError !== null && canAssign && !isClosed ? (
         <p className="mt-1 text-sm text-muted-foreground" role="status">
           {techniciansError}

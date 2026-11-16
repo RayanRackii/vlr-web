@@ -4323,6 +4323,9 @@
       "startedSuccess": "OS iniciada com sucesso.",
       "completedSuccess": "OS finalizada com sucesso.",
       "mandatoryIncomplete": "Preencha as tarefas obrigatórias: {{tasks}}",
+      "assigneeNoTechniciansLinked": "Ninguém pode ser técnico ainda. Dê a permissão de executar OS a alguém em <link>Pessoas e acesso</link>.",
+      "assigneeNoTechniciansPlain": "Ninguém pode ser técnico ainda. Dê a permissão de executar OS a alguém em Pessoas e acesso.",
+      "moreActions": "Mais ações da OS",
       "mandatoryIncompleteTitle": "Preencha as tarefas obrigatórias antes de finalizar:",
       "save": {
         "saving": "salvando",

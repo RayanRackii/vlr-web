@@ -4323,6 +4323,9 @@
       "startedSuccess": "Work order started successfully.",
       "completedSuccess": "Work order completed successfully.",
       "mandatoryIncomplete": "Fill mandatory tasks: {{tasks}}",
+      "assigneeNoTechniciansLinked": "No one can be a technician yet. Give someone the permission to execute work orders in <link>People and access</link>.",
+      "assigneeNoTechniciansPlain": "No one can be a technician yet. Give someone the permission to execute work orders in People and access.",
+      "moreActions": "Work order actions",
       "mandatoryIncompleteTitle": "Fill the required tasks before completing:",
       "save": {
         "saving": "saving",
