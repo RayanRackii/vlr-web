@@ -36,7 +36,7 @@ type InlineCreateSelectProps<TOption extends InlineCreateOption> = {
   renderCreateForm: (props: InlineCreateFormProps<TOption>) => ReactNode
 } & Pick<
   ComponentProps<typeof SelectTrigger>,
-  "id" | "aria-describedby" | "aria-invalid"
+  "id" | "aria-describedby" | "aria-invalid" | "icon"
 >
 
 const CREATE_VALUE = "__inline-create__"

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react"
 import { Link } from "react-router-dom"
 import { useTranslation } from "react-i18next"
-import { CalendarClock } from "lucide-react"
+import { CalendarClock, Shapes } from "lucide-react"
 
 import { occupancyKindDisplayLabel } from "@/features/rentals/lib/occupancyKindLabel"
 import { Button, buttonVariants } from "@/components/ui/button"
@@ -242,7 +242,7 @@ function DaySlotSheetForm({
                     label: occupancyKindDisplayLabel(t, kind),
                   }))}
                 >
-                  <SelectTrigger className="w-full">
+                  <SelectTrigger icon={Shapes} className="w-full">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>

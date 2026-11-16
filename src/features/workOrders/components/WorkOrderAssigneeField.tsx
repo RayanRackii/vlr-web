@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 
+import { User } from "lucide-react"
 import {
   Select,
   SelectContent,
@@ -142,7 +143,7 @@ export function WorkOrderAssigneeField({
           ]}
           disabled={isSaving}
         >
-          <SelectTrigger
+          <SelectTrigger icon={User}
             className="mt-1 w-full motion-reduce:transition-none"
             aria-label={t("workOrders.columns.assignee")}
           >

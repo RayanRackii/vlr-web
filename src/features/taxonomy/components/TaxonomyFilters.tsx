@@ -3,6 +3,7 @@ import { Folder, Tag } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Label } from "@/components/ui/label"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import type { TaxonomyCategory, TaxonomyOptions } from "@/features/taxonomy/schemas/taxonomySchemas"
 
 export type TaxonomyFiltersProps = {
@@ -26,19 +27,29 @@ function categoryDepth(category: TaxonomyCategory, all: TaxonomyCategory[]): num
   return depth
 }
 
+const CATEGORY_ALL = "__all__"
+
 export function TaxonomyFilters({ options, categoryId = null, tagIds, loading = false, disabled = false, onChange }: TaxonomyFiltersProps) {
   const tagSet = new Set(tagIds)
   const categories = [...options.categories].sort((left, right) => left.sortOrder - right.sortOrder || left.name.localeCompare(right.name))
   const changeTags = (id: string) => onChange({ categoryId, tagIds: tagSet.has(id) ? tagIds.filter((item) => item !== id) : [...tagIds, id] })
   const isDisabled = loading || disabled
+  const categoryItems = [
+    { value: CATEGORY_ALL, label: "Todas as categorias" },
+    ...categories.map((category) => ({ value: category.id, label: `${"— ".repeat(categoryDepth(category, categories))}${category.name}` })),
+  ]
   return (
     <fieldset className="space-y-3" disabled={isDisabled} aria-busy={loading}>
       <div className="space-y-1">
-        <Label htmlFor="taxonomy-category-filter"><Folder data-icon="inline-start" /> Categoria</Label>
-        <select id="taxonomy-category-filter" className="h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm" value={categoryId ?? ""} onChange={(event) => onChange({ categoryId: event.target.value || null, tagIds: [...tagIds] })}>
-          <option value="">Todas as categorias</option>
-          {categories.map((category) => <option key={category.id} value={category.id}>{"— ".repeat(categoryDepth(category, categories))}{category.name}</option>)}
-        </select>
+        <Label id="taxonomy-category-filter-label"><Folder data-icon="inline-start" /> Categoria</Label>
+        <Select modal={false} value={categoryId ?? CATEGORY_ALL} items={categoryItems} onValueChange={(value) => onChange({ categoryId: value === null || value === CATEGORY_ALL ? null : value, tagIds: [...tagIds] })}>
+          <SelectTrigger id="taxonomy-category-filter" aria-labelledby="taxonomy-category-filter-label" icon={Folder}>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {categoryItems.map((item) => <SelectItem key={item.value} value={item.value}>{item.label}</SelectItem>)}
+          </SelectContent>
+        </Select>
       </div>
       <div className="space-y-2">
         <p className="text-sm font-medium"><Tag data-icon="inline-start" /> Tags</p>

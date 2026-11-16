@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { formatWorkOrderShortId } from "@/features/workOrders/lib/workOrderLabel"
 import { useBreadcrumbTitle } from "@/components/layout/useBreadcrumbTitle"
 import { useNavigate, useParams } from "react-router-dom"
-import { Ban, ChevronDown, CircleCheck, Play } from "lucide-react"
+import { Ban, ChevronDown, CircleCheck, ListFilter, Play } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 
@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { LoadingButton } from "@/components/ui/loading-button"
 import { PageContentSkeleton } from "@/components/loading/PageContentSkeleton"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
 import { Textarea } from "@/components/ui/textarea"
 import { useAuth } from "@/contexts/AuthContext"
@@ -249,6 +250,8 @@ function SyncConflictList({
     </Alert>
   )
 }
+
+const CHOICE_NONE = "__none__"
 
 function TaskField({
   workOrderId,
@@ -502,27 +505,27 @@ function TaskField({
 
       return (
         <div className="space-y-2">
-          <select
-            className="touch-target h-8 w-full min-w-0 rounded-lg border border-input bg-transparent px-2.5 text-sm outline-none disabled:cursor-not-allowed disabled:opacity-50"
-            aria-label={task.title}
+          <Select
+            modal={false}
+            value={task.value ?? CHOICE_NONE}
+            items={[{ value: CHOICE_NONE, label: t("workOrders.execution.choicePlaceholder") }, ...choiceOptions.map((option) => ({ value: option, label: option }))]}
             disabled={disabled}
-            value={task.value ?? ""}
-            onChange={(event) => {
-              const nextValue =
-                event.target.value === "" ? null : event.target.value
+            onValueChange={(value) => {
+              const nextValue = value === null || value === CHOICE_NONE ? null : value
               handleValueChange(nextValue)
               void persistValue(nextValue)
             }}
           >
-            <option value="">
-              {t("workOrders.execution.choicePlaceholder")}
-            </option>
-            {choiceOptions.map((option) => (
-              <option key={option} value={option}>
-                {option}
-              </option>
-            ))}
-          </select>
+            <SelectTrigger icon={ListFilter} aria-label={task.title}>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={CHOICE_NONE}>{t("workOrders.execution.choicePlaceholder")}</SelectItem>
+              {choiceOptions.map((option) => (
+                <SelectItem key={option} value={option}>{option}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           {saveIndicator}
         </div>
       )

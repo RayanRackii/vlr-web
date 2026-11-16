@@ -1,7 +1,7 @@
 import { CivilDateInput } from "@/components/CivilDateInput"
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { ArrowDown, ArrowUp, ClipboardPen, Plus, Trash2 } from "lucide-react"
+import { ArrowDown, ArrowUp, Box, ClipboardList, ClipboardPen, Plus, Trash2, User } from "lucide-react"
 import { useForm, useWatch } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 import { useNavigate } from "react-router-dom"
@@ -409,7 +409,7 @@ export function CreateWorkOrderPage({ maintenance = false, sourcePlan }: { maint
                         items={planItems}
                         disabled={isSubmitted}
                       >
-                        <SelectTrigger id="work-order-plan" className="w-full">
+                        <SelectTrigger icon={ClipboardList} id="work-order-plan" className="w-full">
                           <SelectValue placeholder={t("workOrders.create.plan.placeholder")} />
                         </SelectTrigger>
                         <SelectContent>
@@ -545,7 +545,7 @@ export function CreateWorkOrderPage({ maintenance = false, sourcePlan }: { maint
                         disabled={locked}
                       >
                         <FormControl>
-                          <SelectTrigger className="w-full">
+                          <SelectTrigger icon={Box} className="w-full">
                             <SelectValue
                               placeholder={t(
                                 "workOrders.create.form.assetPlaceholder",
@@ -586,7 +586,7 @@ export function CreateWorkOrderPage({ maintenance = false, sourcePlan }: { maint
                         disabled={locked}
                       >
                         <FormControl>
-                          <SelectTrigger className="w-full">
+                          <SelectTrigger icon={User} className="w-full">
                             <SelectValue />
                           </SelectTrigger>
                         </FormControl>

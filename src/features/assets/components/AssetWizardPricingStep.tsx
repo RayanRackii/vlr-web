@@ -5,6 +5,7 @@ import { pricingUnitSchema } from "@/api/generated/rentalPricing"
 import { FieldLabel } from "@/components/ui/field-label"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Wallet } from "lucide-react"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { cn } from "@/lib/utils"
 import { PriceInput } from "@/features/assets/components/PriceInput"
@@ -48,7 +49,7 @@ export function AssetWizardPricingStep({
           const parsed = pricingUnitSchema.safeParse(value)
           if (parsed.success) onChange({ pricingUnit: parsed.data, perDayUnits: null })
         }}>
-          <SelectTrigger id="pricing-unit"><SelectValue>{pricing.perDayUnits ? t("assets.wizard.pricing.units.mixed") : t(`assets.wizard.pricing.units.${pricing.pricingUnit}`)}</SelectValue></SelectTrigger>
+          <SelectTrigger icon={Wallet} id="pricing-unit"><SelectValue>{pricing.perDayUnits ? t("assets.wizard.pricing.units.mixed") : t(`assets.wizard.pricing.units.${pricing.pricingUnit}`)}</SelectValue></SelectTrigger>
           <SelectContent>
             {pricingUnitSchema.options.map((unit) => <SelectItem key={unit} value={unit}>{t(`assets.wizard.pricing.units.${unit}`)}</SelectItem>)}
           </SelectContent>

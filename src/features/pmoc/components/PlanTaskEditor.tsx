@@ -1,6 +1,6 @@
 import { useState } from "react"
 import type { Control, FieldArrayWithId, UseFormSetValue } from "react-hook-form"
-import { Plus, Trash2 } from "lucide-react"
+import { Plus, Shapes, Trash2 } from "lucide-react"
 import { useTranslation } from "react-i18next"
 
 import {
@@ -149,7 +149,7 @@ export function PlanTaskEditor({
                         items={inputTypeItems}
                       >
                         <FormControl>
-                          <SelectTrigger className="min-h-11 w-full">
+                          <SelectTrigger icon={Shapes} className="min-h-11 w-full">
                             <SelectValue />
                           </SelectTrigger>
                         </FormControl>

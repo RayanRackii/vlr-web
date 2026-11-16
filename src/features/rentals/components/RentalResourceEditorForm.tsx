@@ -7,7 +7,7 @@ import { Link } from "react-router-dom"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm, useWatch } from "react-hook-form"
 import { useTranslation } from "react-i18next"
-import { CircleX, LayoutTemplate, Maximize2, Plus, Tag } from "lucide-react"
+import { CircleX, Folder, LayoutTemplate, MapPin, Maximize2, Plus, Shapes } from "lucide-react"
 
 import { Button, buttonVariants } from "@/components/ui/button"
 import { InlineCreateSelect } from "@/components/inline-create/InlineCreateSelect"
@@ -440,6 +440,7 @@ export function RentalResourceEditorForm({
                     {canCreateUnit ? (
                       <FormControl>
                         <InlineCreateSelect
+                          icon={MapPin}
                           showScrollButtons={false}
                           triggerIcon={<Plus aria-hidden="true" />}
                           value={field.value}
@@ -472,9 +473,8 @@ export function RentalResourceEditorForm({
                         disabled={readOnly || busy}
                       >
                         <FormControl>
-                          <SelectTrigger className="w-full">
+                          <SelectTrigger icon={MapPin} className="w-full">
                             <SelectValue placeholder={t("rentals.resources.form.unitPlaceholder")} />
-                          <Tag aria-hidden="true" />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent showScrollButtons={false}>
@@ -497,6 +497,7 @@ export function RentalResourceEditorForm({
                   <FormLabel>{t("rentals.resources.form.category")}</FormLabel>
                   <FormControl>
                     <InlineCreateSelect
+                          icon={Folder}
                           showScrollButtons={false}
                           triggerIcon={<Plus aria-hidden="true" />}
                       value={field.value}
@@ -543,18 +544,17 @@ export function RentalResourceEditorForm({
                     disabled={readOnly || busy || families.length === 1}
                   >
                     <FormControl>
-                      <SelectTrigger className="w-full">
+                      <SelectTrigger icon={Shapes} className="w-full">
                         <SelectValue
                           placeholder={t(
                             "rentals.resources.form.familyPlaceholder",
                           )}
                         />
-                      <Tag aria-hidden="true" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent showScrollButtons={false}>
                       {families.map((family) => (
-                        <SelectItem key={family.id} value={family.id} indicator={<Tag aria-hidden="true" />}>
+                        <SelectItem key={family.id} value={family.id}>
                           {family.label}
                         </SelectItem>
                       ))}
@@ -887,6 +887,7 @@ export function RentalResourceEditorForm({
                       <FormLabel className="sr-only">{t("resourceVisual.pickerTitle")}</FormLabel>
                       <FormControl>
                         <InlineCreateSelect
+                          icon={Shapes}
                           showScrollButtons={false}
                           triggerIcon={<Plus aria-hidden="true" />}
                           value={field.value || "__no-template__"}

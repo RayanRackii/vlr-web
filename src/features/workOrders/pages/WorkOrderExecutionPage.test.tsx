@@ -234,7 +234,7 @@ describe("WorkOrderExecutionPage tasks", () => {
     })
   })
 
-  it("opens single-choice options in a native select", async () => {
+  it("opens single-choice options in the shared select", async () => {
     const base = makeWorkOrder()
     const task = base.tasks[0]
     if (!task) {
@@ -256,8 +256,9 @@ describe("WorkOrderExecutionPage tasks", () => {
     renderExecution(["os.work_orders.read"], ["os"])
 
     const select = await screen.findByRole("combobox", { name: "Estado" })
-    expect(select).toBeInstanceOf(HTMLSelectElement)
-    expect(screen.getByRole("option", { name: "Ok" })).toBeInTheDocument()
+    expect(select).toHaveAttribute("data-slot", "select-trigger")
+    await userEvent.click(select)
+    expect(await screen.findByRole("option", { name: "Ok" })).toBeInTheDocument()
     expect(screen.getByRole("option", { name: "Trocar" })).toBeInTheDocument()
   })
 

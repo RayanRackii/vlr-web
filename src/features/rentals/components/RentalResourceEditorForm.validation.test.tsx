@@ -76,10 +76,10 @@ describe("RentalResourceEditorForm visual validation", () => {
     expect(error).toBeVisible()
     expect(error).toHaveTextContent(message)
     expect(screen.getByRole("button", { name: i18n.t("rentals.resources.saveCreate") })).toBeDisabled()
-    expect(document.querySelector('[class*="chevron"]')).toBeNull()
-    if (field === "family") expect(input.querySelector(".lucide-tag")).not.toBeNull()
+    // One select style: a leading field icon plus the chevron.
+    expect(input.querySelector(field === "unit" ? ".lucide-map-pin" : field === "category" ? ".lucide-folder" : ".lucide-shapes")).not.toBeNull()
+    expect(input.querySelector(".lucide-chevron-down")).not.toBeNull()
     await user.click(input)
-    expect(document.querySelector('[class*="chevron"]')).toBeNull()
     await user.click(await screen.findByRole("option", { name: field === "unit" ? "Matriz" : field === "category" ? "Espaço" : "Espaços" }))
     expect(input).toHaveAttribute("aria-invalid", "false")
     expect(input).not.toHaveAttribute("aria-describedby")
