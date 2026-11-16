@@ -31,7 +31,6 @@ type InlineCreateSelectProps<TOption extends InlineCreateOption> = {
   disabled?: boolean
   canCreate?: boolean
   showScrollButtons?: boolean
-  triggerIcon?: ReactNode
   onDirtyChange?: (dirty: boolean) => void
   renderCreateForm: (props: InlineCreateFormProps<TOption>) => ReactNode
 } & Pick<
@@ -58,7 +57,6 @@ export function InlineCreateSelect<TOption extends InlineCreateOption>({
   disabled = false,
   canCreate = true,
   showScrollButtons = true,
-  triggerIcon,
   onDirtyChange,
   renderCreateForm,
   ...triggerProps
@@ -123,7 +121,6 @@ export function InlineCreateSelect<TOption extends InlineCreateOption>({
       >
         <SelectTrigger className="w-full" {...triggerProps}>
           <SelectValue placeholder={placeholder} />
-          {triggerIcon}
         </SelectTrigger>
         <SelectContent showScrollButtons={showScrollButtons}>
           {options.map((option) => (

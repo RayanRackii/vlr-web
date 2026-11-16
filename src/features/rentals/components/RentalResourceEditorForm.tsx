@@ -7,7 +7,7 @@ import { Link } from "react-router-dom"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm, useWatch } from "react-hook-form"
 import { useTranslation } from "react-i18next"
-import { CircleX, Folder, LayoutTemplate, MapPin, Maximize2, Plus, Shapes } from "lucide-react"
+import { CircleX, Folder, LayoutTemplate, MapPin, Maximize2, Shapes } from "lucide-react"
 
 import { Button, buttonVariants } from "@/components/ui/button"
 import { InlineCreateSelect } from "@/components/inline-create/InlineCreateSelect"
@@ -442,7 +442,6 @@ export function RentalResourceEditorForm({
                         <InlineCreateSelect
                           icon={MapPin}
                           showScrollButtons={false}
-                          triggerIcon={<Plus aria-hidden="true" />}
                           value={field.value}
                           onValueChange={(value) => {
                             field.onChange(value)
@@ -499,7 +498,6 @@ export function RentalResourceEditorForm({
                     <InlineCreateSelect
                           icon={Folder}
                           showScrollButtons={false}
-                          triggerIcon={<Plus aria-hidden="true" />}
                       value={field.value}
                       onValueChange={(value) => {
                         field.onChange(value)
@@ -889,7 +887,6 @@ export function RentalResourceEditorForm({
                         <InlineCreateSelect
                           icon={Shapes}
                           showScrollButtons={false}
-                          triggerIcon={<Plus aria-hidden="true" />}
                           value={field.value || "__no-template__"}
                           onValueChange={selectTemplate}
                           options={templateOptions}

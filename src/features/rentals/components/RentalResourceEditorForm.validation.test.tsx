@@ -79,6 +79,7 @@ describe("RentalResourceEditorForm visual validation", () => {
     // One select style: a leading field icon plus the chevron.
     expect(input.querySelector(field === "unit" ? ".lucide-map-pin" : field === "category" ? ".lucide-folder" : ".lucide-shapes")).not.toBeNull()
     expect(input.querySelector(".lucide-chevron-down")).not.toBeNull()
+    expect(input.querySelector(".lucide-plus")).toBeNull()
     await user.click(input)
     await user.click(await screen.findByRole("option", { name: field === "unit" ? "Matriz" : field === "category" ? "Espaço" : "Espaços" }))
     expect(input).toHaveAttribute("aria-invalid", "false")
