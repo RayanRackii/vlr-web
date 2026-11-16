@@ -1,11 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from "react"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
+import { Box, User } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
+import { InputWithIcon } from "@/components/ui/input-icon"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { createStaffReservation, StaffReservationError } from "@/features/rentals/services/reservationsService"
@@ -156,7 +158,7 @@ function NewReservationForm({ onOpenChange, prefill, tenantId, onCreated }: Form
         <div className="space-y-1.5">
           <Label htmlFor="new-res-resource">{t("agendas.newReservationDialog.resource")}</Label>
           <Select modal={false} value={resourceId} onValueChange={(value) => { if (typeof value === "string") pickResource(value) }} items={resourceItems}>
-            <SelectTrigger id="new-res-resource" className="min-h-11 w-full"><SelectValue placeholder={t("agendas.newReservationDialog.resourcePlaceholder")} /></SelectTrigger>
+            <SelectTrigger id="new-res-resource" icon={Box} className="min-h-11 w-full"><SelectValue placeholder={t("agendas.newReservationDialog.resourcePlaceholder")} /></SelectTrigger>
             <SelectContent>{resourceItems.map((item) => <SelectItem key={item.value} value={item.value}>{item.label}</SelectItem>)}</SelectContent>
           </Select>
         </div>
@@ -186,7 +188,7 @@ function NewReservationForm({ onOpenChange, prefill, tenantId, onCreated }: Form
               </div>
             ) : (
               <div className="space-y-1.5">
-                <Input aria-label={t("agendas.newReservationDialog.customerSearch")} placeholder={t("agendas.newReservationDialog.customerSearch")} value={search} onChange={(event) => setSearch(event.target.value)} />
+                <InputWithIcon icon={<User className="size-4" />} aria-label={t("agendas.newReservationDialog.customerSearch")} placeholder={t("agendas.newReservationDialog.customerSearch")} value={search} onChange={(event) => setSearch(event.target.value)} />
                 {term.length < 2 ? <p className="text-xs text-muted-foreground">{t("agendas.newReservationDialog.customerSearchHint")}</p>
                   : found.data && found.data.items.length === 0 ? <p className="text-xs text-muted-foreground">{t("agendas.newReservationDialog.customerNone")}</p>
                   : (
