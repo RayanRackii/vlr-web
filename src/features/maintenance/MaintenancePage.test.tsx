@@ -231,3 +231,8 @@ it("shows the menu to an execute-only user on their own order", async () => {
   mount(execute, "/manutencao?aba=ordens")
   expect(await screen.findAllByRole("button", { name: i18n.t("workOrders.cancel.menu", { name: "Split sala 1" }) })).not.toHaveLength(0)
 })
+it("opens the OS when a plain cell of an Ordens row is clicked", async () => {
+  const user = userEvent.setup(); mount(all, "/manutencao?aba=ordens")
+  await user.click(within(await screen.findByRole("table")).getByText(i18n.t("maintenance.noTechnician")))
+  expect(screen.getByTestId("location")).toHaveTextContent("/os/99999999-9999-4999-8999-999999999999")
+})

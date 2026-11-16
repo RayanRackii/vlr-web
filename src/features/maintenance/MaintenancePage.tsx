@@ -1,16 +1,16 @@
 import { useMemo, useState, type ReactNode } from "react"
-import { Link, useSearchParams } from "react-router-dom"
+import { Link, useNavigate, useSearchParams } from "react-router-dom"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
-import { MoreHorizontal } from "lucide-react"
+import { ExternalLink, XCircle } from "lucide-react"
 import { Page } from "@/components/layout/Page"
 import { DataList, type DataListColumn } from "@/components/data-table/DataList"
+import { RowActionsMenu } from "@/components/data-table/RowActionsMenu"
 import { FilterBar } from "@/components/data-table/FilterBar"
 import { StatusChips } from "@/components/data-table/StatusChips"
 import { StatusBadge } from "@/components/ui/status"
 import type { StatusTone } from "@/components/ui/status-tones"
 import { Button } from "@/components/ui/button"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog"
 import { useTenantTimeZone } from "@/contexts/TenantTimeZoneContext"
@@ -46,6 +46,7 @@ export function MaintenancePage() {
   const [confirmBulk, setConfirmBulk] = useState(false)
   const [cancelId, setCancelId] = useState<string | null>(null)
   const canCancel = useCanCancelWorkOrder()
+  const navigate = useNavigate()
   const [progress, setProgress] = useState<{ done: number; total: number } | null>(null)
   const date = (value: string) => formatHumanDate(value, i18n.language)
   const query = search.trim().toLocaleLowerCase(i18n.language)
@@ -89,15 +90,10 @@ export function MaintenancePage() {
   const ordersById = useMemo(() => new Map(data.orders.map(order => [order.id, order])), [data.orders])
   const rowMenu = (order: WorkOrder | undefined) => {
     if (!order || !canCancel(order)) return null
-    return <DropdownMenu>
-      <DropdownMenuTrigger render={<Button type="button" variant="ghost" size="icon" className="size-11 shrink-0" aria-label={t("workOrders.cancel.menu", { name: order.asset.name })} />}>
-        <MoreHorizontal aria-hidden="true" />
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        <DropdownMenuItem className="min-h-11 py-2.5" render={<Link to={`/os/${order.id}`} />}>{t("workOrders.cancel.open")}</DropdownMenuItem>
-        <DropdownMenuItem className="min-h-11 py-2.5" onClick={() => setCancelId(order.id)}>{t("workOrders.cancel.action")}</DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
+    return <RowActionsMenu label={t("workOrders.cancel.menu", { name: order.asset.name })} items={[
+      { key: "open", label: t("workOrders.cancel.open"), icon: ExternalLink, href: `/os/${order.id}` },
+      { key: "cancel", label: t("workOrders.cancel.action"), icon: XCircle, tone: "danger", separatorBefore: true, onSelect: () => setCancelId(order.id) },
+    ]} />
   }
   const generateLink = (row: AgendaRow) => row.kind === "need" && data.access.createOrder ? <Button variant="outline" render={<Link to={`/manutencao/ordens/nova?plano=${row.planId}`} />}>{t("maintenance.generate")}</Button> : null
   const agendaAction = (row: AgendaRow) => row.kind === "need" ? generateLink(row) : rowMenu(row.orderId ? ordersById.get(row.orderId) : undefined)
@@ -161,9 +157,9 @@ export function MaintenancePage() {
     body = loading || visible.length === 0
       ? <DataList<AgendaRow> label={t("maintenance.tabs.agenda")} columns={agendaColumns} rows={[]} getRowId={row => row.id} renderCard={agendaCard} empty={{ ...emptyBase, action: emptyAction }} {...common} />
       : <div className="space-y-5">{visible.map(section => <DataList<AgendaRow> key={section} label={t(`maintenance.sections.${section}`)} heading={<h2 className="text-sm font-semibold text-foreground">{t(`maintenance.sections.${section}`)}</h2>}
-          columns={agendaColumns} rows={agendaFiltered.filter(row => row.section === section)} getRowId={row => row.id} renderCard={agendaCard} empty={emptyBase} />)}</div>
+          columns={agendaColumns} rows={agendaFiltered.filter(row => row.section === section)} getRowId={row => row.id} renderCard={agendaCard} empty={emptyBase} onRowClick={row => void navigate(row.to)} />)}</div>
   } else if (tab === "ordens") {
-    body = <DataList<WorkOrder> label={t("maintenance.tabs.ordens")} columns={orderColumns} rows={orderRows} getRowId={order => order.id}
+    body = <DataList<WorkOrder> label={t("maintenance.tabs.ordens")} columns={orderColumns} rows={orderRows} getRowId={order => order.id} onRowClick={order => void navigate(`/os/${order.id}`)}
       renderCard={order => <div className="space-y-2 text-sm"><Equipment name={order.asset.name} tag={order.asset.tag} to={`/os/${order.id}`} /><p className="text-muted-foreground">{order.assignedUser?.fullName ?? t("maintenance.noTechnician")}</p><div className="flex flex-wrap items-center gap-2">{date(order.scheduledDate)}{orderBadge(order)}</div>{rowMenu(order)}</div>}
       empty={{ ...emptyBase, action: emptyAction }} {...common} />
   } else {
