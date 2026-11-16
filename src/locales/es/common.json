@@ -4169,6 +4169,15 @@
     }
   },
   "workOrders": {
+    "cancel": {
+      "action": "Cancelar OT",
+      "title": "¿Cancelar esta OT?",
+      "description": "Queda en el historial como cancelada y el equipo vuelve a aparecer como \"Necesita OT\" en el plan.",
+      "back": "Volver",
+      "success": "OT cancelada",
+      "open": "Abrir OT",
+      "menu": "Acciones de la OT de {{name}}"
+    },
     "viewOpen": "Ver OT abiertas",
     "title": "Órdenes de Trabajo",
     "description": "Ejecute checklists en campo y siga el estado de cada OT.",
@@ -4323,6 +4332,8 @@
       "loadOneFailed": "No se pudo cargar la orden de trabajo.",
       "invalidResponse": "Respuesta inválida de la API.",
       "updateTaskFailed": "No se pudo guardar la respuesta de la tarea.",
+      "cancelFailed": "No se pudo cancelar la OT.",
+      "cancelNotAllowed": "Esta OT ya no se puede cancelar.",
       "updateStatusFailed": "No se pudo actualizar el estado de la OT.",
       "mandatoryTasksIncomplete": "Hay tareas obligatorias incompletas.",
       "mandatoryTasksIncompleteList": "Hay tareas obligatorias incompletas: {{tasks}}",

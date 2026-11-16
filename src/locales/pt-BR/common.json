@@ -4169,6 +4169,15 @@
     }
   },
   "workOrders": {
+    "cancel": {
+      "action": "Cancelar OS",
+      "title": "Cancelar esta OS?",
+      "description": "Ela fica no histórico como cancelada, e o equipamento volta a aparecer como \"Precisa de OS\" no plano.",
+      "back": "Voltar",
+      "success": "OS cancelada",
+      "open": "Abrir OS",
+      "menu": "Ações da OS de {{name}}"
+    },
     "viewOpen": "Ver OS abertas",
     "title": "Ordens de Serviço",
     "description": "Execute checklists em campo e acompanhe o status de cada OS.",
@@ -4323,6 +4332,8 @@
       "loadOneFailed": "Não foi possível carregar a ordem de serviço.",
       "invalidResponse": "Resposta inválida da API.",
       "updateTaskFailed": "Não foi possível salvar a resposta da tarefa.",
+      "cancelFailed": "Não foi possível cancelar a OS.",
+      "cancelNotAllowed": "Esta OS não pode mais ser cancelada.",
       "updateStatusFailed": "Não foi possível atualizar o status da OS.",
       "mandatoryTasksIncomplete": "Há tarefas obrigatórias incompletas.",
       "mandatoryTasksIncompleteList": "Há tarefas obrigatórias incompletas: {{tasks}}",

@@ -48,6 +48,7 @@ vi.mock("@/lib/api", async (importOriginal) => {
 })
 
 import {
+  cancelWorkOrder,
   generateWorkOrderFromPlan,
   getWorkOrderById,
   getWorkOrderTaskFileUrl,
@@ -336,6 +337,37 @@ describe("updateWorkOrderStatus mandatory tasks", () => {
     await expect(
       updateWorkOrderStatus(makeWorkOrder().id, "Completed"),
     ).rejects.toBeInstanceOf(MandatoryTasksIncompleteError)
+  })
+})
+
+describe("cancelWorkOrder", () => {
+  beforeEach(() => {
+    apiPost.mockReset()
+    vi.spyOn(navigator, "onLine", "get").mockReturnValue(true)
+  })
+
+  afterEach(() => {
+    vi.restoreAllMocks()
+  })
+
+  it("POSTs to the cancel endpoint and returns the work order", async () => {
+    const canceled = makeWorkOrder({ status: "Canceled" })
+    apiPost.mockResolvedValue({ data: canceled })
+
+    const result = await cancelWorkOrder(WORK_ORDER_ID)
+
+    expect(apiPost).toHaveBeenCalledWith(`/api/work-orders/${WORK_ORDER_ID}/cancel`)
+    expect(result.status).toBe("Canceled")
+  })
+
+  it("maps 409 to the localized message", async () => {
+    apiPost.mockRejectedValue(
+      axiosError(409, { error: "Work order is closed.", code: "WORK_ORDER_CLOSED" }),
+    )
+
+    await expect(cancelWorkOrder(WORK_ORDER_ID)).rejects.toThrow(
+      i18n.t("workOrders.errors.cancelNotAllowed"),
+    )
   })
 })
 

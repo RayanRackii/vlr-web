@@ -46,6 +46,7 @@ vi.mock("@/features/workOrders/services/workOrdersService", () => ({
   getWorkOrderById: vi.fn(),
   updateTaskValue: vi.fn(),
   updateWorkOrderStatus: vi.fn(),
+  cancelWorkOrder: vi.fn(),
   uploadWorkOrderTaskFile: vi.fn(),
   getWorkOrderTaskFileUrl: vi.fn(async () => ({
     url: "https://files.example/photo?exp=9999999999",
@@ -78,6 +79,7 @@ import {
 } from "@/lib/offlineSync"
 import { getTechnicians } from "@/features/users/services/usersService"
 import {
+  cancelWorkOrder,
   getWorkOrderById,
   updateTaskValue,
   updateWorkOrderAssignee,
@@ -121,6 +123,7 @@ function renderExecution(
           <Route path="/os/:id" element={<WorkOrderExecutionPage />} />
           <Route path="/pmoc/:id" element={<div>pmoc-detail</div>} />
           <Route path="/os" element={<div>os-list</div>} />
+          <Route path="/manutencao" element={<div>maintenance-orders</div>} />
         </Routes>
       </TestPermissionProvider>
     </MemoryRouter>,
@@ -1281,4 +1284,40 @@ describe("WorkOrderExecutionPage mobile-first layout", () => {
       ).toBeNull()
     },
   )
+})
+
+describe("WorkOrderExecutionPage cancel", () => {
+  beforeEach(() => {
+    getWorkOrderByIdMock.mockReset()
+    vi.mocked(cancelWorkOrder).mockReset()
+  })
+
+  it("cancels an open order and navigates back to the Maintenance orders tab", async () => {
+    getWorkOrderByIdMock.mockResolvedValue(makeWorkOrder())
+    vi.mocked(cancelWorkOrder).mockResolvedValue(makeWorkOrder({ status: "Canceled" }))
+    const user = userEvent.setup()
+
+    renderExecution(["os.work_orders.read", "os.work_orders.create"], ["os"])
+
+    await user.click(await screen.findByRole("button", { name: i18n.t("workOrders.cancel.action") }))
+    const dialog = await screen.findByRole("alertdialog")
+    await user.click(within(dialog).getByRole("button", { name: i18n.t("workOrders.cancel.action") }))
+
+    await waitFor(() => expect(cancelWorkOrder).toHaveBeenCalledWith(WORK_ORDER_ID))
+    expect(await screen.findByText("maintenance-orders")).toBeInTheDocument()
+  })
+
+  it("hides the action for closed orders and without cancel permission", async () => {
+    getWorkOrderByIdMock.mockResolvedValue(makeWorkOrder({ status: "Completed" }))
+    renderExecution(["os.work_orders.read", "os.work_orders.create"], ["os"])
+    await screen.findByText("PMOC · PMOC Split Mensal")
+    expect(screen.queryByRole("button", { name: i18n.t("workOrders.cancel.action") })).not.toBeInTheDocument()
+  })
+
+  it("hides the action when the user can only read", async () => {
+    getWorkOrderByIdMock.mockResolvedValue(makeWorkOrder())
+    renderExecution(["os.work_orders.read"], ["os"])
+    await screen.findByText("PMOC · PMOC Split Mensal")
+    expect(screen.queryByRole("button", { name: i18n.t("workOrders.cancel.action") })).not.toBeInTheDocument()
+  })
 })

@@ -2,6 +2,7 @@ import { useMemo, useState, type ReactNode } from "react"
 import { Link, useSearchParams } from "react-router-dom"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
+import { MoreHorizontal } from "lucide-react"
 import { Page } from "@/components/layout/Page"
 import { DataList, type DataListColumn } from "@/components/data-table/DataList"
 import { FilterBar } from "@/components/data-table/FilterBar"
@@ -9,11 +10,14 @@ import { StatusChips } from "@/components/data-table/StatusChips"
 import { StatusBadge } from "@/components/ui/status"
 import type { StatusTone } from "@/components/ui/status-tones"
 import { Button } from "@/components/ui/button"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog"
 import { useTenantTimeZone } from "@/contexts/TenantTimeZoneContext"
 import { tenantTodayIsoDate } from "@/lib/tenantTimeZone"
 import { generateWorkOrderFromPlan, isDuplicateWorkOrderError } from "@/features/workOrders/services/workOrdersService"
+import { CancelWorkOrderDialog } from "@/features/workOrders/components/CancelWorkOrderDialog"
+import { useCanCancelWorkOrder } from "@/features/workOrders/lib/workOrderCancel"
 import type { MaintenancePlan } from "@/features/pmoc/schemas/maintenancePlanSchemas"
 import type { WorkOrder } from "@/features/workOrders/schemas/workOrderSchemas"
 import { buildAgendaRows, formatHumanDate, nextDueByPlan, type AgendaFilter, type AgendaRow, type AgendaSection } from "./agendaModel"
@@ -40,6 +44,8 @@ export function MaintenancePage() {
   const [search, setSearch] = useState("")
   const [chip, setChip] = useState<string | null>(null)
   const [confirmBulk, setConfirmBulk] = useState(false)
+  const [cancelId, setCancelId] = useState<string | null>(null)
+  const canCancel = useCanCancelWorkOrder()
   const [progress, setProgress] = useState<{ done: number; total: number } | null>(null)
   const date = (value: string) => formatHumanDate(value, i18n.language)
   const query = search.trim().toLocaleLowerCase(i18n.language)
@@ -80,14 +86,28 @@ export function MaintenancePage() {
   const emptyAction = (search || chip) ? <Button variant="outline" onClick={() => { setSearch(""); setChip(null) }}>{t("maintenance.clear")}</Button> : action ? <Button variant="outline" render={<Link to={action.to} />}>{action.label}</Button> : undefined
 
   const overdueBadge = (row: AgendaRow) => row.section === "overdue" ? <StatusBadge tone="danger">{t("maintenance.overdueDays", { count: row.daysLate })}</StatusBadge> : null
+  const ordersById = useMemo(() => new Map(data.orders.map(order => [order.id, order])), [data.orders])
+  const rowMenu = (order: WorkOrder | undefined) => {
+    if (!order || !canCancel(order)) return null
+    return <DropdownMenu>
+      <DropdownMenuTrigger render={<Button type="button" variant="ghost" size="icon" className="size-11 shrink-0" aria-label={t("workOrders.cancel.menu", { name: order.asset.name })} />}>
+        <MoreHorizontal aria-hidden="true" />
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        <DropdownMenuItem className="min-h-11 py-2.5" render={<Link to={`/os/${order.id}`} />}>{t("workOrders.cancel.open")}</DropdownMenuItem>
+        <DropdownMenuItem className="min-h-11 py-2.5" onClick={() => setCancelId(order.id)}>{t("workOrders.cancel.action")}</DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  }
   const generateLink = (row: AgendaRow) => row.kind === "need" && data.access.createOrder ? <Button variant="outline" render={<Link to={`/manutencao/ordens/nova?plano=${row.planId}`} />}>{t("maintenance.generate")}</Button> : null
+  const agendaAction = (row: AgendaRow) => row.kind === "need" ? generateLink(row) : rowMenu(row.orderId ? ordersById.get(row.orderId) : undefined)
   const agendaColumns: DataListColumn<AgendaRow>[] = [
     { id: "equipment", header: t("maintenance.columns.equipment"), cell: row => <Equipment name={row.assetName} tag={row.assetTag} to={row.to} /> },
     { id: "plan", header: t("maintenance.columns.plan"), cell: row => row.planName ?? "—", hideBelow: "lg" },
     { id: "technician", header: t("maintenance.columns.technician"), cell: row => row.kind === "need" ? "—" : row.technician ?? <span className="text-muted-foreground">{t("maintenance.noTechnician")}</span>, hideBelow: "lg" },
     { id: "date", header: t("maintenance.columns.date"), cell: row => <span className="flex flex-wrap items-center gap-2">{date(row.date)}{overdueBadge(row)}</span> },
     { id: "status", header: t("maintenance.columns.status"), cell: row => row.kind === "need" ? <StatusBadge tone="warning">{t("maintenance.needsOrder")}</StatusBadge> : <StatusBadge tone={ORDER_TONE[row.status] ?? "neutral"}>{t(`workOrders.status.${row.status}`)}</StatusBadge> },
-    { id: "action", header: <span className="sr-only">{t("maintenance.columns.action")}</span>, align: "end", cell: generateLink },
+    { id: "action", header: <span className="sr-only">{t("maintenance.columns.action")}</span>, align: "end", cell: agendaAction },
   ]
   const agendaCard = (row: AgendaRow) => <div className="space-y-2 text-sm">
     <Equipment name={row.assetName} tag={row.assetTag} to={row.to} />
@@ -95,7 +115,7 @@ export function MaintenancePage() {
     <p className="text-muted-foreground">{row.kind === "need" ? t("maintenance.needsOrder") : row.technician ?? t("maintenance.noTechnician")}</p>
     <div className="flex flex-wrap items-center gap-2">{date(row.date)}{overdueBadge(row)}
       {row.kind === "order" && <StatusBadge tone={ORDER_TONE[row.status] ?? "neutral"}>{t(`workOrders.status.${row.status}`)}</StatusBadge>}</div>
-    {generateLink(row)}
+    {agendaAction(row)}
   </div>
 
   const orderRows = data.orders.filter(order => (!chip || order.status === chip) && matches(order.asset.name, order.asset.tag, order.sourcePlanName, order.assignedUser?.fullName)).sort((a, b) => a.scheduledDate.localeCompare(b.scheduledDate))
@@ -106,6 +126,7 @@ export function MaintenancePage() {
     { id: "technician", header: t("maintenance.columns.technician"), cell: order => order.assignedUser?.fullName ?? <span className="text-muted-foreground">{t("maintenance.noTechnician")}</span> },
     { id: "date", header: t("maintenance.columns.date"), cell: order => date(order.scheduledDate) },
     { id: "status", header: t("maintenance.columns.status"), cell: orderBadge },
+    { id: "action", header: <span className="sr-only">{t("maintenance.columns.action")}</span>, align: "end", cell: rowMenu },
   ]
   const orderStatuses = [...new Set(data.orders.map(order => order.status))]
 
@@ -143,7 +164,7 @@ export function MaintenancePage() {
           columns={agendaColumns} rows={agendaFiltered.filter(row => row.section === section)} getRowId={row => row.id} renderCard={agendaCard} empty={emptyBase} />)}</div>
   } else if (tab === "ordens") {
     body = <DataList<WorkOrder> label={t("maintenance.tabs.ordens")} columns={orderColumns} rows={orderRows} getRowId={order => order.id}
-      renderCard={order => <div className="space-y-2 text-sm"><Equipment name={order.asset.name} tag={order.asset.tag} to={`/os/${order.id}`} /><p className="text-muted-foreground">{order.assignedUser?.fullName ?? t("maintenance.noTechnician")}</p><div className="flex flex-wrap items-center gap-2">{date(order.scheduledDate)}{orderBadge(order)}</div></div>}
+      renderCard={order => <div className="space-y-2 text-sm"><Equipment name={order.asset.name} tag={order.asset.tag} to={`/os/${order.id}`} /><p className="text-muted-foreground">{order.assignedUser?.fullName ?? t("maintenance.noTechnician")}</p><div className="flex flex-wrap items-center gap-2">{date(order.scheduledDate)}{orderBadge(order)}</div>{rowMenu(order)}</div>}
       empty={{ ...emptyBase, action: emptyAction }} {...common} />
   } else {
     body = <DataList<MaintenancePlan> label={t("maintenance.tabs.planos")} columns={planColumns} rows={planRows} getRowId={plan => plan.id}
@@ -173,6 +194,7 @@ export function MaintenancePage() {
       {tab === "agenda" && data.coverageFailed > 0 && <p role="status" className="text-sm text-muted-foreground">{t("maintenance.coverageFailed", { count: data.coverageFailed })}</p>}
       {body}
     </div>
+    <CancelWorkOrderDialog workOrderId={cancelId} onOpenChange={open => { if (!open) setCancelId(null) }} onCanceled={data.retry} />
     <AlertDialog open={confirmBulk} onOpenChange={setConfirmBulk}>
       <AlertDialogContent>
         <AlertDialogHeader><AlertDialogTitle>{t("maintenance.bulkTitle", { count: overdueNeeds.length })}</AlertDialogTitle><AlertDialogDescription>{t("maintenance.bulkDescription")}</AlertDialogDescription></AlertDialogHeader>

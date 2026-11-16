@@ -8,6 +8,8 @@ export type AgendaFilter = "overdue" | "unassigned" | "mine"
 export type AgendaRow = {
   id: string
   kind: "order" | "need"
+  /** Work order id for "order" rows, null for "need" rows. */
+  orderId: string | null
   section: AgendaSection
   assetId: string
   assetName: string
@@ -61,7 +63,7 @@ export function buildAgendaRows(
   today: string,
 ): AgendaRow[] {
   const rows: AgendaRow[] = orders.filter(order => !CLOSED.includes(order.status)).map(order => ({
-    id: `order-${order.id}`, kind: "order", section: sectionFor(order.scheduledDate, today),
+    id: `order-${order.id}`, kind: "order", orderId: order.id, section: sectionFor(order.scheduledDate, today),
     assetId: order.assetId, assetName: order.asset.name, assetTag: order.asset.tag,
     planId: order.maintenancePlanId ?? null, planName: order.sourcePlanName ?? null,
     technician: order.assignedUser?.fullName ?? null, assignedUserId: order.assignedUserId ?? order.assignedUser?.id ?? null,
@@ -74,7 +76,7 @@ export function buildAgendaRows(
     for (const asset of data.assets) {
       if (!asset.needsAttention || asset.openWorkOrder) continue
       rows.push({
-        id: `need-${plan.id}-${asset.assetId}`, kind: "need", section: sectionFor(asset.effectiveNextDueDate, today),
+        id: `need-${plan.id}-${asset.assetId}`, kind: "need", orderId: null, section: sectionFor(asset.effectiveNextDueDate, today),
         assetId: asset.assetId, assetName: asset.name, assetTag: asset.tag, planId: plan.id, planName: plan.name,
         technician: null, assignedUserId: null, date: asset.effectiveNextDueDate,
         daysLate: Math.max(0, civilDaysBetween(asset.effectiveNextDueDate, today)), status: "NeedsOrder", to: `/pmoc/${plan.id}`,

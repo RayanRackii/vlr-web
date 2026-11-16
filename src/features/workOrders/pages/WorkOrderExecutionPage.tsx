@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { formatWorkOrderShortId } from "@/features/workOrders/lib/workOrderLabel"
 import { useBreadcrumbTitle } from "@/components/layout/useBreadcrumbTitle"
-import { useParams } from "react-router-dom"
-import { ChevronDown, CircleCheck, Play } from "lucide-react"
+import { useNavigate, useParams } from "react-router-dom"
+import { Ban, ChevronDown, CircleCheck, Play } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 
@@ -16,6 +16,8 @@ import { PageContentSkeleton } from "@/components/loading/PageContentSkeleton"
 import { Switch } from "@/components/ui/switch"
 import { Textarea } from "@/components/ui/textarea"
 import { useAuth } from "@/contexts/AuthContext"
+import { CancelWorkOrderDialog } from "@/features/workOrders/components/CancelWorkOrderDialog"
+import { useCanCancelWorkOrder } from "@/features/workOrders/lib/workOrderCancel"
 import { TaskSaveIndicator } from "@/features/workOrders/components/TaskSaveIndicator"
 import type { TaskSaveState } from "@/features/workOrders/components/TaskSaveIndicator"
 import { WorkOrderAssigneeField } from "@/features/workOrders/components/WorkOrderAssigneeField"
@@ -546,6 +548,9 @@ export function WorkOrderExecutionPage() {
   const { t, i18n } = useTranslation()
   const { session } = useAuth()
   const { id } = useParams<{ id: string }>()
+  const navigate = useNavigate()
+  const canCancel = useCanCancelWorkOrder()
+  const [cancelOpen, setCancelOpen] = useState(false)
 
   const [workOrder, setWorkOrder] = useState<WorkOrder | null>(null)
   const [confirmedWorkOrder, setConfirmedWorkOrder] = useState<WorkOrder | null>(null)
@@ -1052,6 +1057,26 @@ export function WorkOrderExecutionPage() {
     </div>
   ) : null
 
+  const cancelButton = canCancel(workOrder) ? (
+    <Button
+      type="button"
+      variant="destructive"
+      className="min-h-11"
+      onClick={() => setCancelOpen(true)}
+    >
+      <Ban data-icon="inline-start" />
+      {t("workOrders.cancel.action")}
+    </Button>
+  ) : null
+
+  const headerActions =
+    cancelButton || (isDesktop && actionButtons) ? (
+      <div className="flex shrink-0 flex-col gap-3 sm:flex-row sm:justify-end">
+        {cancelButton}
+        {isDesktop ? actionButtons : null}
+      </div>
+    ) : undefined
+
   const missingList =
     showActionBar && missingTitles.length > 0 ? (
       <div
@@ -1092,6 +1117,14 @@ export function WorkOrderExecutionPage() {
           : undefined
       }
     >
+      <CancelWorkOrderDialog
+        workOrderId={cancelOpen ? workOrder.id : null}
+        onOpenChange={setCancelOpen}
+        onCanceled={() => {
+          void navigate("/manutencao?aba=ordens")
+        }}
+      />
+
       <WorkOrderOfflineBanner />
 
       <SyncConflictList
@@ -1127,7 +1160,7 @@ export function WorkOrderExecutionPage() {
           tag: workOrder.asset.tag,
           code: formatWorkOrderShortId(workOrder.id),
         })}
-        actions={isDesktop ? actionButtons : undefined}
+        actions={headerActions}
         className="mb-0 sm:mb-0"
       />
 
