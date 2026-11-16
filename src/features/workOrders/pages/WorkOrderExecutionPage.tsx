@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
-import { formatWorkOrderShortId } from "@/features/workOrders/lib/workOrderLabel"
+import { formatWorkOrderNumber, formatWorkOrderTitle } from "@/features/workOrders/lib/workOrderLabel"
 import { useBreadcrumbTitle } from "@/components/layout/useBreadcrumbTitle"
 import { useNavigate, useParams } from "react-router-dom"
 import { Ban, ChevronDown, CircleCheck, ListFilter, Play } from "lucide-react"
@@ -564,8 +564,7 @@ export function WorkOrderExecutionPage() {
   useBreadcrumbTitle(
     !isLoading && workOrder
       ? t("workOrders.execution.breadcrumb", {
-          id: formatWorkOrderShortId(workOrder.id),
-          asset: workOrder.asset.name,
+          title: formatWorkOrderTitle(workOrder, t("workOrders.execution.numberPrefix")),
         })
       : undefined,
   )
@@ -1163,7 +1162,7 @@ export function WorkOrderExecutionPage() {
         }
         description={t("workOrders.execution.subtitle", {
           tag: workOrder.asset.tag,
-          code: formatWorkOrderShortId(workOrder.id),
+          code: formatWorkOrderNumber(workOrder, t("workOrders.execution.numberPrefix")),
         })}
         actions={headerActions}
         className="mb-0 sm:mb-0"

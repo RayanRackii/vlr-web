@@ -77,4 +77,14 @@ describe("WorkOrderExecutionPage breadcrumb", () => {
     )
     expect(screen.getByTestId("crumb").textContent).not.toBe(workOrder.asset.name)
   })
+
+  it("shows the sequential OS number when the API sends it", async () => {
+    const workOrder = makeWorkOrder({ number: 12 })
+    vi.mocked(getWorkOrderById).mockResolvedValue(workOrder)
+    renderPage()
+    await waitFor(() =>
+      expect(screen.getByTestId("crumb")).toHaveTextContent(`OS #12 · ${workOrder.asset.name}`),
+    )
+    expect(await screen.findByText(/AC-01 · OS #12/)).toBeInTheDocument()
+  })
 })

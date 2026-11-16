@@ -14,6 +14,7 @@ import { usePlatformTenantSession } from "@/features/admin/hooks/usePlatformTena
 import { ClientDashboard } from "@/features/dashboard/components/ClientDashboard"
 import { SuperAdminDashboard } from "@/features/dashboard/components/SuperAdminDashboard"
 import { TechnicianDashboard } from "@/features/dashboard/components/TechnicianDashboard"
+import { openDueWorkOrders } from "@/features/dashboard/lib/openDueWorkOrders"
 import { DashboardHero, KpiCard, KpiSkeleton, SectionHeading } from "@/features/dashboard/components/DashboardOverview"
 import { DashboardCharts } from "@/features/dashboard/components/DashboardCharts"
 import { FirstStepsLink } from "@/features/dashboard/components/FirstStepsLink"
@@ -266,7 +267,7 @@ export function TenantAdminDashboard() {
           <div className="staff-dashboard-kpis">
             <KpiCard title={t("dashboard.kpi.workOrdersMonth.title")} value={visibleMetrics.workOrders.totalThisMonth} subtitle={t("dashboard.kpi.workOrdersMonth.subtitle")} />
             <KpiCard title={t("dashboard.kpi.completionRate.title")} value={`${completionRate(visibleMetrics.workOrders.totalThisMonth, visibleMetrics.workOrders.completed)}%`} subtitle={t("dashboard.kpi.completionRate.subtitle")} />
-            <KpiCard title={t("dashboard.kpi.pendingWorkOrders.title")} value={visibleMetrics.workOrders.pending} subtitle={t("dashboard.kpi.pendingWorkOrders.subtitle")} highlight={visibleMetrics.workOrders.pending > 0} />
+            <KpiCard title={t("dashboard.kpi.openDueWorkOrders.title")} value={openDueWorkOrders(visibleMetrics.workOrders)} subtitle={t("dashboard.kpi.openDueWorkOrders.subtitle")} highlight={openDueWorkOrders(visibleMetrics.workOrders) > 0} to="/manutencao" />
             <KpiCard title={t("dashboard.kpi.inProgressWorkOrders.title")} value={visibleMetrics.workOrders.inProgress} subtitle={t("dashboard.kpi.inProgressWorkOrders.subtitle")} />
           </div>
         </section>

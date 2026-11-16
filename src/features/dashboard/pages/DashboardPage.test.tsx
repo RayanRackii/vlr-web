@@ -109,6 +109,31 @@ describe("staff dashboard states", () => {
     expect(screen.getByRole("region", { name: "Manutenção" })).toHaveTextContent("OS abertas7")
   })
 
+  it("shows open orders due today from openDue and links to Manutenção, falling back to pending", async () => {
+    vi.mocked(getDashboardMetrics).mockResolvedValue({
+      ...emptyMetrics,
+      workOrders: { totalThisMonth: 36, pending: 5, inProgress: 8, completed: 23, canceled: 0, openDue: 9 },
+    })
+    renderDashboard(["os.work_orders.read"], ["os"])
+    const hero = screen.getByRole("banner")
+    const link = await within(hero).findByRole("link", { name: "OS em aberto até hoje" })
+    expect(link).toHaveAttribute("href", "/manutencao")
+    expect(within(hero).getByText("9", { selector: "strong" })).toBeInTheDocument()
+    expect(within(hero).getByText("Pendentes e em andamento com data até hoje")).toBeInTheDocument()
+    expect(screen.queryByText("OS pendentes")).not.toBeInTheDocument()
+  })
+
+  it("falls back to pending when the API does not send openDue", async () => {
+    vi.mocked(getDashboardMetrics).mockResolvedValue({
+      ...emptyMetrics,
+      workOrders: { totalThisMonth: 36, pending: 5, inProgress: 8, completed: 23, canceled: 0 },
+    })
+    renderDashboard(["os.work_orders.read"], ["os"])
+    const hero = screen.getByRole("banner")
+    await within(hero).findByRole("link", { name: "OS em aberto até hoje" })
+    expect(within(hero).getByText("5", { selector: "strong" })).toBeInTheDocument()
+  })
+
   it("omits slot occupancy for OpenHours data and retains zero-valued supported indicators", async () => {
     vi.mocked(getDashboardMetrics).mockResolvedValue({
       ...emptyMetrics,

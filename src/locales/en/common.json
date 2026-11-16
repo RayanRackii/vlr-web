@@ -3155,6 +3155,10 @@
         "title": "Completion rate",
         "subtitle": "Completed over this month's total"
       },
+      "openDueWorkOrders": {
+        "title": "Open work orders due today",
+        "subtitle": "Pending and in progress scheduled up to today"
+      },
       "pendingWorkOrders": {
         "title": "Pending work orders",
         "subtitle": "Waiting to start execution"
@@ -4295,9 +4299,10 @@
       "redirecting": "Work order created"
     },
     "execution": {
-      "breadcrumb": "WO {{id}} · {{asset}}",
+      "breadcrumb": "{{title}}",
+      "numberPrefix": "WO",
       "title": "Work Order Execution",
-      "subtitle": "{{tag}} · WO {{code}}",
+      "subtitle": "{{tag}} · {{code}}",
       "details": "Work order details",
       "loading": "Loading work order...",
       "back": "Back to list",
