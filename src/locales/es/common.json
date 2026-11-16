@@ -87,7 +87,7 @@
     },
     "firstSteps": {
       "title": "Primeros pasos",
-      "description": "Lo que falta para la primera reserva. Cada sello se calcula ahora, sin progreso guardado.",
+      "description": "Lo que falta para la primera reserva.",
       "preview": "Ver como cliente",
       "company": "Datos de la empresa",
       "pricedOffer": "Oferta con precio que alcanza un recurso",
@@ -95,10 +95,12 @@
       "resource": "Recurso publicado",
       "admin": "Admin invitado",
       "previewItem": "Ver como cliente",
+      "remaining_one": "Falta {{count}} paso",
+      "remaining_other": "Faltan {{count}} pasos",
       "state": {
-        "published": "Publicado",
+        "published": "Hecho",
         "draft": "Borrador",
-        "missing": "Falta completar"
+        "missing": "Falta"
       },
       "detail": {
         "company": "Nombre y documento que aparecen en la página pública.",
@@ -1801,6 +1803,7 @@
       "subtitle": "{{date}} · recursos y productos",
       "viewAll": "Ver agenda",
       "rowLink": "Ver agenda",
+      "rowLinkOrder": "Ver pedido",
       "seeAll": "Ver todos",
       "empty": "Nada agendado para hoy.",
       "reserved": "Reservado",
@@ -1815,11 +1818,20 @@
         "inUse": "Ahora: {{ref}} · hasta {{time}}",
         "prep": "Preparación: {{ref}} · inicio {{time}}",
         "cleaning": "Limpieza: {{ref}} · hasta {{time}}",
-        "overdue": "Atraso {{minutes}} min",
+        "overdue": "Atrasado hace {{duration}}",
+        "overdueOrder": "Inicio del pedido {{ref}} · atrasado hace {{duration}}",
         "freeNext": "Próximo: {{ref}} · {{time}}",
         "freeNone": "Sin uso hoy"
       }
     }
+  },
+  "lateDuration": {
+    "days_one": "{{count}} día",
+    "days_other": "{{count}} días",
+    "hours_one": "{{count}} h",
+    "hours_other": "{{count}} h",
+    "minutes_one": "{{count}} min",
+    "minutes_other": "{{count}} min"
   },
   "notifications": {
     "settings": {
@@ -3022,8 +3034,8 @@
   },
   "pages": {
     "dashboard": {
-      "title": "Centro de Comando",
-      "description": "Indicadores según los módulos y familias activos en este entorno."
+      "title": "Inicio",
+      "description": "Lo que está pasando hoy."
     },
     "assets": {
       "title": "Módulo de Activos",
@@ -3060,8 +3072,8 @@
     "viewOrders": "Ver órdenes de servicio",
     "clientEmptyHint": "Las nuevas actividades vinculadas a tu perfil aparecerán aquí.",
     "ordersEmptyHint": "Puedes consultar la lista de órdenes de servicio para seguir otras actividades.",
-    "title": "Centro de Comando",
-    "description": "Indicadores según los módulos y familias activos en este entorno.",
+    "title": "Inicio",
+    "description": "Lo que está pasando hoy.",
     "emptyModules": "Ningún módulo operativo activo además del portal de clientes.",
     "rentalsReadiness": {
       "title": "Configure Alquileres",
@@ -3127,7 +3139,7 @@
       },
       "totalCustomers": {
         "title": "Clientes registrados",
-        "subtitle": "Total en el portal de este tenant"
+        "subtitle": "Total en el portal de esta empresa"
       },
       "totalAssets": {
         "title": "Total de recursos",
@@ -3227,7 +3239,7 @@
       },
       "families": {
         "title": "Por familia",
-        "description": "Conteo en las familias activas del tenant.",
+        "description": "Conteo en las familias activas de la empresa.",
         "empty": "Ninguna familia activa."
       }
     },

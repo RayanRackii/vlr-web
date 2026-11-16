@@ -29,15 +29,15 @@ function renderDashboard(permissions: string[] = [], activeModules: string[] = [
 describe("staff dashboard states", () => {
   beforeEach(() => { vi.mocked(getDashboardMetrics).mockReset() })
 
-  it("presents one command center heading and quick links using existing navigation access", async () => {
+  it("presents one plain heading and no redundant quick-access card", async () => {
     vi.mocked(getDashboardMetrics).mockResolvedValue(emptyMetrics)
     renderDashboard(["os.work_orders.read", "inventory.assets.read"], ["os", "inventory"])
-    expect(await screen.findByRole("heading", { level: 1, name: "Centro de Comando" })).toBeInTheDocument()
+    expect(await screen.findByRole("heading", { level: 1, name: "Início" })).toBeInTheDocument()
     expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1)
-    const quickAccess = await screen.findByRole("navigation", { name: "Acesso rápido" })
-    expect(quickAccess).toBeInTheDocument()
-    expect(screen.getByRole("link", { name: /Equipamentos.*Abrir/ })).toHaveAttribute("href", "/ativos")
-    expect(screen.getByRole("link", { name: /Manutenção.*Abrir/ })).toHaveAttribute("href", "/manutencao")
+    expect(screen.getByText("O que está acontecendo hoje.")).toBeInTheDocument()
+    expect(screen.queryByText("Centro de Comando")).not.toBeInTheDocument()
+    expect(screen.queryByRole("navigation", { name: "Acesso rápido" })).not.toBeInTheDocument()
+    expect(within(screen.getByRole("banner")).getByRole("link", { name: "Manutenção" })).toHaveAttribute("href", "/manutencao")
     expect(screen.queryByRole("link", { name: /Reservas/ })).not.toBeInTheDocument()
     expect(screen.getByRole("heading", { level: 2, name: "Clientes no portal" })).toBeInTheDocument()
   })
@@ -97,6 +97,8 @@ describe("staff dashboard states", () => {
     expect(within(hero).getByText("12", { selector: "strong" })).toBeInTheDocument()
     expect(within(hero).getByText("3 aguardando · 8 confirmadas")).toBeInTheDocument()
     expect(within(hero).getByRole("link", { name: "Reservas" })).toHaveAttribute("href", "/configuracoes/reservas")
+    // "Reservas hoje" appears once on the screen (hero pulse), not repeated in the rentals section.
+    expect(screen.getAllByText("Reservas hoje")).toHaveLength(1)
     const orders = screen.getByRole("region", { name: "Status das ordens de serviço" })
     expect(within(orders).getByText("23")).toBeInTheDocument()
     expect(within(orders).getByText("Em andamento")).toBeInTheDocument()

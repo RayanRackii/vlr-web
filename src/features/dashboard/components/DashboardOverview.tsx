@@ -1,5 +1,4 @@
 import type { ReactNode } from "react"
-import { ArrowRight } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { Link } from "react-router-dom"
 
@@ -60,27 +59,6 @@ export function DashboardHero({ metrics }: { metrics: DashboardMetrics | null })
         </div>)}
       </dl> : null}
     </header>
-  )
-}
-
-export function DashboardQuickAccess() {
-  const { t } = useTranslation()
-  const shortcuts = useDashboardShortcuts()
-  if (!shortcuts.length) return null
-  return (
-    <nav className="staff-dashboard-section" aria-labelledby="dashboard-quick-access">
-      <SectionHeading id="dashboard-quick-access" title={t("dashboard.home.quickAccess")} />
-      <div className="staff-dashboard-shortcuts">
-        {shortcuts.map(({ to, labelKey, icon: Icon }, index) => (
-          <Link key={labelKey} to={to} className="staff-dashboard-tile" style={{ animationDelay: `${index * 55}ms` }}>
-            <span className="staff-dashboard-tile-icon"><Icon aria-hidden="true" /></span>
-            <strong>{t(labelKey)}</strong>
-            <p>{labelKey === "nav.manutencao" ? t("maintenance.subtitle") : t(`dashboard.home.shortcuts.${labelKey.slice(4)}`)}</p>
-            <span className="staff-dashboard-go">{t("dashboard.home.open")}<ArrowRight aria-hidden="true" /></span>
-          </Link>
-        ))}
-      </div>
-    </nav>
   )
 }
 

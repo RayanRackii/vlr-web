@@ -27,4 +27,22 @@ describe("dashboard customer portal copy", () => {
       expect(locale.dashboard.kpi.rentableGoods.subtitle).not.toMatch(leakedWords)
     }
   })
+
+  it("uses plain business wording instead of system wording in every locale", () => {
+    const visible = [pt, en, es].flatMap((locale) => [
+      locale.dashboard.title, locale.dashboard.description,
+      locale.pages.dashboard.title, locale.pages.dashboard.description,
+      locale.dashboard.kpi.totalCustomers.subtitle, locale.dashboard.charts.families.description,
+    ])
+    for (const text of visible) {
+      expect(text).not.toMatch(/Centro de Comando|Command Center|tenant|módulos e famílias|módulos y familias|asset families/i)
+    }
+    expect([pt.dashboard.title, en.dashboard.title, es.dashboard.title]).toEqual(["Início", "Home", "Inicio"])
+  })
+
+  it("keeps the first-steps copy free of technical wording", () => {
+    for (const locale of [pt, en, es]) {
+      expect(locale.assistant.firstSteps.description).not.toMatch(/selo|badge|sello|progres/i)
+    }
+  })
 })

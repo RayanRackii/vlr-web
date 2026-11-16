@@ -87,7 +87,7 @@
     },
     "firstSteps": {
       "title": "First steps",
-      "description": "What is left before the first booking. Each badge is calculated now, with no saved progress.",
+      "description": "What is left before the first booking.",
       "preview": "View as customer",
       "company": "Company details",
       "pricedOffer": "Priced offer that reaches a resource",
@@ -95,10 +95,12 @@
       "resource": "Published resource",
       "admin": "Invited admin",
       "previewItem": "View as customer",
+      "remaining_one": "{{count}} step left",
+      "remaining_other": "{{count}} steps left",
       "state": {
-        "published": "Published",
+        "published": "Done",
         "draft": "Draft",
-        "missing": "Still missing"
+        "missing": "Missing"
       },
       "detail": {
         "company": "Name and document shown on the public page.",
@@ -1801,6 +1803,7 @@
       "subtitle": "{{date}} · resources and products",
       "viewAll": "View agenda",
       "rowLink": "View agenda",
+      "rowLinkOrder": "View order",
       "seeAll": "View all",
       "empty": "Nothing scheduled for today.",
       "reserved": "Reserved",
@@ -1815,11 +1818,20 @@
         "inUse": "Now: {{ref}} · until {{time}}",
         "prep": "Prep: {{ref}} · starts {{time}}",
         "cleaning": "Cleaning: {{ref}} · until {{time}}",
-        "overdue": "{{minutes}} min late",
+        "overdue": "Overdue by {{duration}}",
+        "overdueOrder": "Start of order {{ref}} · overdue by {{duration}}",
         "freeNext": "Next: {{ref}} · {{time}}",
         "freeNone": "No use today"
       }
     }
+  },
+  "lateDuration": {
+    "days_one": "{{count}} day",
+    "days_other": "{{count}} days",
+    "hours_one": "{{count}} h",
+    "hours_other": "{{count}} h",
+    "minutes_one": "{{count}} min",
+    "minutes_other": "{{count}} min"
   },
   "notifications": {
     "settings": {
@@ -3022,8 +3034,8 @@
   },
   "pages": {
     "dashboard": {
-      "title": "Command Center",
-      "description": "KPIs based on the modules and asset families active in this environment."
+      "title": "Home",
+      "description": "What is happening today."
     },
     "assets": {
       "title": "Assets Module",
@@ -3060,8 +3072,8 @@
     "viewOrders": "View work orders",
     "clientEmptyHint": "New activity linked to your profile will appear here.",
     "ordersEmptyHint": "You can view the work order list to follow other activity.",
-    "title": "Command Center",
-    "description": "KPIs based on the modules and asset families active in this environment.",
+    "title": "Home",
+    "description": "What is happening today.",
     "emptyModules": "No operational modules active beyond the customer portal.",
     "rentalsReadiness": {
       "title": "Configure Rentals",
@@ -3127,7 +3139,7 @@
       },
       "totalCustomers": {
         "title": "Registered customers",
-        "subtitle": "Total on this tenant's portal"
+        "subtitle": "Total on this company's portal"
       },
       "totalAssets": {
         "title": "Total resources",
@@ -3227,7 +3239,7 @@
       },
       "families": {
         "title": "By family",
-        "description": "Counts for this tenant's active families.",
+        "description": "Counts for this company's active families.",
         "empty": "No active families."
       }
     },

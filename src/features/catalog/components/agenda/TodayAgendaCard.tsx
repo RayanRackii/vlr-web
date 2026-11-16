@@ -21,6 +21,7 @@ import {
   listCatalogResourceAgenda,
 } from "@/features/catalog/services/catalogService"
 import { usePermissions } from "@/features/users/permissions/PermissionContext"
+import { formatLateDuration } from "@/lib/lateDuration"
 
 const MAX_ROWS = 6
 const RESOURCE_ROUTE = "/agendas/recursos"
@@ -228,6 +229,15 @@ function TodayAgendaCardContent() {
   if (!mode) return null
 
   const route = mode === "resource" ? RESOURCE_ROUTE : PRODUCT_ROUTE
+  const canOpenOrder = can("catalog.orders.read")
+  /** Agenda filtered to this row's resource/product (URL params read by the agenda pages). */
+  function rowHref(row: AgendaRow): string {
+    if (row.state.key === "overdue" && row.state.item && canOpenOrder) {
+      return `/pedidos/${row.state.item.orderId}`
+    }
+    const param = mode === "resource" ? "recursos" : "produto"
+    return `${route}?${param}=${encodeURIComponent(row.id)}`
+  }
   const RowIcon = mode === "resource" ? Wrench : Package
   const reserved = t("catalog.todayAgenda.reserved")
   const dateLabel = new Intl.DateTimeFormat(i18n.language, {
@@ -261,9 +271,11 @@ function TodayAgendaCardContent() {
         })
       case "overdue": {
         const late = parse(state.item!.workStart)
-        return t("catalog.todayAgenda.sub.overdue", {
-          minutes: late != null ? Math.max(0, Math.round((now - late) / 60000)) : 0,
-        })
+        const duration = formatLateDuration(t, late != null ? Math.max(0, Math.round((now - late) / 60000)) : 0)
+        const ref = state.item!.displayNumber
+        return ref
+          ? t("catalog.todayAgenda.sub.overdueOrder", { ref, duration })
+          : t("catalog.todayAgenda.sub.overdue", { duration })
       }
       default:
         return state.next
@@ -323,7 +335,7 @@ function TodayAgendaCardContent() {
             {visibleRows.map((row) => (
               <li key={row.id}>
                 <Link
-                  to={route}
+                  to={rowHref(row)}
                   className="flex min-w-0 flex-wrap items-center gap-3 rounded-lg border border-border p-3 hover:bg-muted"
                 >
                   <RowIcon className="size-4 shrink-0 text-muted-foreground" aria-hidden="true" />
@@ -335,7 +347,7 @@ function TodayAgendaCardContent() {
                     {t(`catalog.todayAgenda.status.${row.state.key}`)}
                   </Badge>
                   <span className="inline-flex items-center gap-1 text-xs font-semibold text-primary">
-                    {t("catalog.todayAgenda.rowLink")}
+                    {row.state.key === "overdue" && rowHref(row).startsWith("/pedidos/") ? t("catalog.todayAgenda.rowLinkOrder") : t("catalog.todayAgenda.rowLink")}
                     <ChevronRight className="size-3" aria-hidden="true" />
                   </span>
                 </Link>
