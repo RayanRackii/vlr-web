@@ -1,4 +1,5 @@
 import { Ban, Plus } from "lucide-react"
+import { useState } from "react"
 import { Link, useNavigate, useSearchParams } from "react-router-dom"
 import { useTranslation } from "react-i18next"
 import { FilterTabs } from "@/components/data-table/FilterTabs"
@@ -11,6 +12,7 @@ import { usePermissions } from "@/features/users/permissions/PermissionContext"
 import { ICON_SIZE, ICON_STROKE_WIDTH } from "@/lib/icon"
 import { AgendaFooter, BusinessHoursLabel } from "./AgendaCardParts"
 import { AgendaDayGrid } from "./AgendaDayGrid"
+import { BlockPeriodDialog, type BlockPeriodPrefill } from "./BlockPeriodDialog"
 import { AgendaFilterMenu, type AgendaFilterFieldsProps } from "./AgendaFilterPanel"
 import { AgendaFilters } from "./AgendaFilters"
 import { AgendaWeek } from "./AgendaWeek"
@@ -56,7 +58,8 @@ export function AgendasPage({ view }: { view: AgendasView }) {
     orders: catalog && can("catalog.orders.read"),
   }, tenantId, !isLoading, productView ? state.produto : null)
   const canReserve = rentals && can("rentals.reservations.read")
-  const canBlock = rentals && can("rentals.schedule.read") && can("rentals.assets.read")
+  const canBlock = rentals && can("rentals.schedule.write")
+  const [blockPrefill, setBlockPrefill] = useState<BlockPeriodPrefill | null>(null)
   const canReadProducts = catalog && can("catalog.products.read")
   const products = useAgendaProductOptions(tenantId, canReadProducts)
   const locale = i18n.resolvedLanguage ?? i18n.language
@@ -101,7 +104,7 @@ export function AgendasPage({ view }: { view: AgendasView }) {
         actions: canReserve || canBlock ? (
           <>
             {canBlock && (
-              <Button variant="outline" className="touch-target min-h-11" render={<Link to="/configuracoes/agenda" />}>
+              <Button variant="outline" className="touch-target min-h-11" onClick={() => setBlockPrefill({ date: state.date })}>
                 <Ban className={ICON_SIZE.sm} strokeWidth={ICON_STROKE_WIDTH} aria-hidden />
                 {t("staffAgenda.blockPeriod")}
               </Button>
@@ -158,6 +161,7 @@ export function AgendasPage({ view }: { view: AgendasView }) {
           : week ? <AgendaWeek loading={loading} failedSources={day.failedSources} days={day.week.days} rows={day.week.rows} focusedRows={day.focusedWeek} today={today} onOpenDay={(date) => update({ visao: "dia", date })} />
           : <AgendaDayGrid loading={loading} failedSources={day.failedSources} rows={day.day.rows} start={day.day.start} end={day.day.end}
               canReserve={canReserve} canBlock={canBlock} nowMinutes={nowMinutes} onCreateReservation={createReservation}
+              onBlockPeriod={(resourceId, minutes) => setBlockPrefill({ resourceId, date: state.date, start: formatClock(minutes) })}
               focusedProductId={productView ? state.produto : null} focusDate={state.date} />}
         <AgendaFooter
           resources={resourceCount}
@@ -167,6 +171,7 @@ export function AgendasPage({ view }: { view: AgendasView }) {
           updatedMinutes={updatedAt !== null && now !== null ? Math.max(0, Math.floor((now - updatedAt) / 60_000)) : null}
         />
       </section>
+      {canBlock && <BlockPeriodDialog open={blockPrefill !== null} onOpenChange={(open) => { if (!open) setBlockPrefill(null) }} resources={day.resources} prefill={blockPrefill ?? { date: state.date }} tenantId={tenantId} />}
     </Page>
   )
 }
