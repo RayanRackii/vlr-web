@@ -56,12 +56,12 @@ export function RowActionsMenu({ items, label, busy }: RowActionsMenuProps) {
         <MoreHorizontal className="size-4" aria-hidden="true" />
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="min-w-[220px] rounded-xl p-1.5 shadow-lg">
-        {items.map((item) => {
+        {items.map((item, index) => {
           const tone = item.tone ?? "default"
           const Icon = item.icon
           return (
             <Fragment key={item.key}>
-              {item.separatorBefore ? <DropdownMenuSeparator className="-mx-1.5 my-1.5" /> : null}
+              {item.separatorBefore && index > 0 ? <DropdownMenuSeparator className="-mx-1.5 my-1.5" /> : null}
               <DropdownMenuItem
                 className={cn(
                   "min-h-10 gap-2.5 rounded-lg px-2.5 py-2",
