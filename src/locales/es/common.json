@@ -268,7 +268,6 @@
     "updateMenuItem": "No se pudo actualizar el ítem de menú.",
     "deleteMenuItem": "No se pudo eliminar el ítem de menú.",
     "checkAvailability": "No se pudo verificar la disponibilidad.",
-    "createReservation": "No se pudo crear la reserva.",
     "loadScheduleDay": "No se pudo cargar la agenda del día.",
     "bookSlot": "No se pudo reservar el horario.",
     "loadBookingPolicy": "No se pudo cargar la política de reservas.",
@@ -1099,11 +1098,8 @@
       "createTitle": "Nuevo producto",
       "editTitle": "Editar producto",
       "quickEdit": "Edición rápida",
-
       "rowMenu": "Acciones de {{name}}",
-
       "menuAccess": "Gestionar acceso",
-
       "menuContinue": "Completar registro",
       "menuEdit": "Editar producto",
       "menuActivate": "Activar producto",
@@ -1117,17 +1113,11 @@
         "PRICE": "un precio mayor que cero"
       },
       "menuActivateHint": "Completa el registro para activar",
-
       "statusIncomplete": "Configuración incompleta · faltan {{count}}",
-
       "filterActive": "Activos",
-
       "filterInactive": "Inactivos",
-
       "filterIncomplete": "Incompletos",
-
       "statusFilter": "Filtrar por estado",
-
       "moreFilters": "Más filtros",
       "quickEditTitle": "Edición rápida",
       "quickEditDescription": "Cambie nombre, precio y estado. Para lo demás, abra la edición completa.",
@@ -1160,7 +1150,7 @@
       "invalidPrice": "Informe un precio válido o déjelo vacío.",
       "toastCreated": "Producto creado.",
       "toastUpdated": "Producto actualizado.",
-      "toastActivated": "Producto activado.",
+      "toastActivated": "Producto activo.",
       "toastDeactivated": "Producto desactivado.",
       "deactivateConfirmTitle": "¿Desactivar producto?",
       "deactivateConfirmBody": "{{name}} deja de aparecer en pedidos nuevos. Los pedidos ya hechos no cambian.",
@@ -6345,7 +6335,7 @@
     "createCategory": "Añadir categoría",
     "createTag": "Añadir tag",
     "noParent": "Ninguna",
-    "taxonomyHelp": "Selecciona las categorías y tags de este producto y guarda el paso.",
+    "taxonomyHelp": "Selecciona las categorías y tags de este producto.",
     "taxonomyLimit": "El límite es 20 categorías y 20 tags.",
     "resourceTaxonomyHelp": "Puedes crear categorías y tags compartidos aquí, pero no se vinculan a este recurso. El tipo operativo del recurso se configura por separado.",
     "taxonomyNoRead": "Necesitas permiso para consultar categorías y tags.",
@@ -6371,8 +6361,8 @@
         "descWith": "El cliente reserva un recurso para una fecha u horario.",
         "titleWithout": "Sin agenda",
         "descWithout": "El producto se vende sin reservar una fecha ni un horario.",
-        "helperWith": "Los pasos Agenda y Cola se incluirán en el registro.",
-        "helperWithout": "Los pasos Agenda y Cola no se aplican a este producto."
+        "helperWith": "Agenda y Cola están disponibles para este producto.",
+        "helperWithout": "Agenda y Cola no se aplican a este producto."
       },
       "nameHelp": "Este nombre se muestra en el catálogo y en las reservas.",
       "codeLabel": "Código interno",
@@ -6453,6 +6443,33 @@
     "offerCodeHelp": "Usa un código único para encontrar el producto en tu operación.",
     "offerDescriptionHelp": "Opcional. Puedes completar esta información después.",
     "offerDescriptionPlaceholder": "Describe qué incluye, los diferenciales y la información principal para el cliente.",
-    "offerPricingInfo": "Los valores y condiciones de cobro se definen en el paso Precios."
+    "offerPricingInfo": "Los valores y condiciones de cobro se definen en el paso Precios.",
+    "productStatusActive": "Activo",
+    "stageName": "· {{name}}",
+    "published": {
+      "title": "Producto publicado",
+      "priceOnRequest": "Bajo consulta",
+      "visibilityPublic": "Visible para todos los clientes (Público).",
+      "visibilityRestricted": "Visible solo para clientes y grupos autorizados (Restringido).",
+      "viewList": "Ver en la lista de productos",
+      "createAnother": "Crear otro producto",
+      "keepEditing": "Seguir editando"
+    },
+    "review": {
+      "title": "Resumen antes de publicar",
+      "edit": "Editar",
+      "editField": "Editar {{field}}",
+      "name": "Nombre",
+      "categories": "Categorías",
+      "noCategories": "Ninguna",
+      "price": "Precio",
+      "priceOnRequest": "Bajo consulta",
+      "agenda": "Agenda",
+      "noAgenda": "No usa agenda",
+      "visibility": "Visibilidad",
+      "visibilityPublic": "Público",
+      "visibilityRestricted": "Restringido",
+      "agendaLinked": "Recursos vinculados"
+    }
   }
 }

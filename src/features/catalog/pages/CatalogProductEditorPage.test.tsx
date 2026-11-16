@@ -138,6 +138,23 @@ describe("CatalogProductEditorPage", () => {
   })
 
   it.each([
+    { language: "pt-BR", expected: "45,50" },
+    { language: "en", expected: "45.50" },
+  ])("shows the price with two decimals in $language", async ({ language, expected }) => {
+    const previousLanguage = i18n.language
+    await i18n.changeLanguage(language)
+    try {
+      getProductMock.mockResolvedValue({ ...PRODUCT, price: 45.5 })
+      const user = userEvent.setup()
+      renderPage()
+      await user.click(await screen.findByRole("tab", { name: i18n.t("catalog.products.tabs.price") }))
+      expect(screen.getByRole("textbox", { name: i18n.t("catalog.products.form.price") })).toHaveValue(expected)
+    } finally {
+      await i18n.changeLanguage(previousLanguage)
+    }
+  })
+
+  it.each([
     { status: "Pending" as const, key: "pendingRecord", url: null },
     { status: "Failed" as const, key: "failedRecord", url: "https://example.test/failed.png" },
     { status: "Pending" as const, key: "pendingRecord", url: "https://example.test/pending.png" },
