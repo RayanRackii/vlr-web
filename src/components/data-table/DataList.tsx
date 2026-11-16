@@ -1,4 +1,4 @@
-import { useEffect, useRef, type ReactNode } from "react"
+import { useEffect, useRef, type MouseEvent, type ReactNode } from "react"
 
 import { ErrorState } from "@/components/ErrorState"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -54,6 +54,8 @@ type DataListBaseProps<T> = {
   loadingLabel?: string
   className?: string
   selection?: DataListSelection<T>
+  /** Makes the whole row (table row and card) clickable. Clicks on controls inside it are ignored. */
+  onRowClick?: (row: T) => void
 }
 
 export type DataListProps<T> = DataListBaseProps<T> &
@@ -61,6 +63,18 @@ export type DataListProps<T> = DataListBaseProps<T> &
     | { state?: "ready" | "loading"; error?: undefined; onRetry?: undefined }
     | { state: "error"; error: string; onRetry: () => void }
   )
+
+const INTERACTIVE_SELECTOR =
+  "a, button, input, select, textarea, label, [role=menuitem], [role=checkbox], [role=menu]"
+
+/** True when a row click should run `onRowClick` (not on controls, menus or a text selection). */
+function isPlainRowClick(event: MouseEvent<HTMLElement>) {
+  const target = event.target
+  if (target instanceof Element && target.closest(INTERACTIVE_SELECTOR)) return false
+  const selection = typeof window !== "undefined" ? window.getSelection() : null
+  if (selection && !selection.isCollapsed && selection.toString() !== "") return false
+  return true
+}
 
 const HIDE_BELOW = { lg: "hidden lg:table-cell" } as const
 
@@ -132,6 +146,7 @@ export function DataList<T>(props: DataListProps<T>) {
     loadingLabel,
     className,
     selection,
+    onRowClick,
   } = props
 
   const ready = props.state !== "loading" && props.state !== "error"
@@ -180,7 +195,12 @@ export function DataList<T>(props: DataListProps<T>) {
             </TableHeader>
             <TableBody>
               {rows.map((row) => (
-                <TableRow key={getRowId(row)} {...rowAttributes?.(row)}>
+                <TableRow
+                  key={getRowId(row)}
+                  {...rowAttributes?.(row)}
+                  className={onRowClick ? "cursor-pointer" : undefined}
+                  onClick={onRowClick ? (event) => { if (isPlainRowClick(event)) onRowClick(row) } : undefined}
+                >
                   {selection ? (
                     <TableCell className="w-11">
                       <RowCheckbox selection={selection} row={row} id={getRowId(row)} />
@@ -200,8 +220,12 @@ export function DataList<T>(props: DataListProps<T>) {
           {rows.map((row) => (
             <li
               key={getRowId(row)}
-              className="flex min-w-0 flex-col gap-3 rounded-lg border border-border p-4"
+              className={cn(
+                "flex min-w-0 flex-col gap-3 rounded-lg border border-border p-4",
+                onRowClick && "cursor-pointer transition-colors hover:bg-muted/40",
+              )}
               {...rowAttributes?.(row)}
+              onClick={onRowClick ? (event) => { if (isPlainRowClick(event)) onRowClick(row) } : undefined}
             >
               {selection ? (
                 <div className="flex min-h-11 min-w-11 items-center">
