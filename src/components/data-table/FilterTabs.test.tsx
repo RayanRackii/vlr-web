@@ -20,6 +20,17 @@ describe("FilterTabs", () => {
     expect(screen.getByRole("button", { name: /Todos/ })).toHaveClass("border-b-2", "border-transparent")
   })
 
+  it("clips the vertical axis and hides the scrollbar so no stray scroll arrows appear", () => {
+    render(<FilterTabs label="Tipo" allLabel="Todos" value={null} onChange={() => {}} options={options} className="border-b border-border" />)
+    expect(screen.getByRole("group", { name: "Tipo" })).toHaveClass(
+      "overflow-x-auto",
+      "overflow-y-hidden",
+      "[scrollbar-width:none]",
+      "[&::-webkit-scrollbar]:hidden",
+      "border-b",
+    )
+  })
+
   it("selects an option and returns to all with null", async () => {
     const onChange = vi.fn()
     render(<FilterTabs label="Tipo" allLabel="Todos" value="a" onChange={onChange} options={options} />)

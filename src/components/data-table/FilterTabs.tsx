@@ -39,10 +39,12 @@ function Tab({ active, onClick, label, count }: { active: boolean; onClick: () =
 /**
  * Single-select underlined tabs with count pills ("all" first). Same contract as StatusChips,
  * for toolbars that sit on the top edge of a card. Scrolls sideways when it does not fit.
+ * The tabs overlap the bottom border by 1px (-mb-px), so the vertical axis must be clipped and the
+ * scrollbar hidden, or Windows draws a tiny vertical scrollbar at the end of the row.
  */
 export function FilterTabs<T extends string>({ label, allLabel, value, onChange, options, allCount, className }: FilterTabsProps<T>) {
   return (
-    <div role="group" aria-label={label} className={cn("flex min-w-0 items-center gap-5 overflow-x-auto", className)}>
+    <div role="group" aria-label={label} className={cn("flex min-w-0 items-center gap-5 overflow-x-auto overflow-y-hidden [scrollbar-width:none] [&::-webkit-scrollbar]:hidden", className)}>
       <Tab active={value === null} onClick={() => onChange(null)} label={allLabel} count={allCount} />
       {options.map((option) => (
         <Tab key={option.value} active={value === option.value} onClick={() => onChange(option.value)} label={option.label} count={option.count} />
