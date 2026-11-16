@@ -1100,9 +1100,13 @@
 
       "rowMenu": "Ações de {{name}}",
 
-      "menuAccess": "Acesso",
+      "menuAccess": "Gerenciar acesso",
 
-      "menuContinue": "Continuar configuração",
+      "menuContinue": "Concluir cadastro",
+      "menuEdit": "Editar produto",
+      "menuActivate": "Ativar produto",
+      "menuDeactivate": "Desativar produto",
+      "menuActivateHint": "Conclua o cadastro para ativar",
 
       "statusIncomplete": "Configuração incompleta · falta {{count}}",
 

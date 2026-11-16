@@ -293,34 +293,77 @@ describe("CatalogProductsPage validity gate", () => {
     expect(await screen.findByTestId("location")).toHaveTextContent(`/catalogo/produtos/${PRODUCT.id}`)
   })
 
-  it("row menu: Acesso links to the access step, Desativar confirms then deactivates, no Continuar when complete", async () => {
+  it("row menu (complete): Editar, Gerenciar acesso, then Desativar confirms before deactivating", async () => {
     listProductsMock.mockResolvedValue([PRODUCT])
     vi.mocked(deactivateCatalogProduct).mockResolvedValue(undefined as never)
     const user = userEvent.setup()
     renderPage()
     const table = await screen.findByRole("table")
     await user.click(await within(table).findByRole("button", { name: i18n.t("catalog.products.rowMenu", { name: PRODUCT.name }) }))
-    expect(await screen.findByRole("menuitem", { name: i18n.t("catalog.products.menuAccess") })).toHaveAttribute("href", productEditorPath(PRODUCT.id, "access"))
+    expect(await screen.findByRole("menuitem", { name: i18n.t("catalog.products.menuEdit") })).toHaveAttribute("href", `/catalogo/produtos/${PRODUCT.id}`)
+    expect(screen.getByRole("menuitem", { name: i18n.t("catalog.products.menuAccess") })).toHaveAttribute("href", productEditorPath(PRODUCT.id, "access"))
     expect(screen.queryByRole("menuitem", { name: i18n.t("catalog.products.menuContinue") })).not.toBeInTheDocument()
-    await user.click(screen.getByRole("menuitem", { name: i18n.t("catalog.products.deactivate") }))
+    await user.click(screen.getByRole("menuitem", { name: i18n.t("catalog.products.menuDeactivate") }))
     expect(deactivateCatalogProduct).not.toHaveBeenCalled()
     await user.click(await screen.findByRole("button", { name: i18n.t("catalog.products.deactivate") }))
     await waitFor(() => expect(deactivateCatalogProduct).toHaveBeenCalledWith(PRODUCT.id))
     expect(toastSuccess).toHaveBeenCalledWith(i18n.t("catalog.products.toastDeactivated"))
   })
 
-  it("row menu: Ativar acts at once and Continuar configuração appears only for incomplete products", async () => {
+  it("row menu (complete, inactive): Ativar produto acts at once", async () => {
+    const inactive = { ...PRODUCT, id: "off", name: "Parada", isActive: false }
+    listProductsMock.mockResolvedValue([inactive])
+    vi.mocked(activateCatalogProduct).mockResolvedValue(undefined as never)
+    const user = userEvent.setup()
+    renderPage()
+    const table = await screen.findByRole("table")
+    await user.click(await within(table).findByRole("button", { name: i18n.t("catalog.products.rowMenu", { name: "Parada" }) }))
+    await user.click(await screen.findByRole("menuitem", { name: i18n.t("catalog.products.menuActivate") }))
+    await waitFor(() => expect(activateCatalogProduct).toHaveBeenCalledWith("off"))
+  })
+
+  it("row menu (incomplete): Concluir cadastro, Gerenciar acesso and a disabled Ativar produto with its hint", async () => {
     const incomplete = { ...PRODUCT, id: "inc", name: "Sem preco", price: null, isActive: false }
     listProductsMock.mockResolvedValue([incomplete])
-    vi.mocked(activateCatalogProduct).mockResolvedValue(undefined as never)
     const user = userEvent.setup()
     renderPage()
     const table = await screen.findByRole("table")
     await user.click(await within(table).findByRole("button", { name: i18n.t("catalog.products.rowMenu", { name: "Sem preco" }) }))
     const proceed = await screen.findByRole("menuitem", { name: i18n.t("catalog.products.menuContinue") })
     expect(proceed.getAttribute("href")).toContain("/catalogo/produtos/inc/cadastro")
-    await user.click(screen.getByRole("menuitem", { name: i18n.t("catalog.products.activate") }))
-    await waitFor(() => expect(activateCatalogProduct).toHaveBeenCalledWith("inc"))
+    expect(screen.getByRole("menuitem", { name: i18n.t("catalog.products.menuAccess") })).toBeInTheDocument()
+    const activate = screen.getByRole("menuitem", { name: new RegExp(i18n.t("catalog.products.menuActivate")) })
+    expect(activate).toHaveAttribute("aria-disabled", "true")
+    expect(activate).toHaveTextContent(i18n.t("catalog.products.menuActivateHint"))
+    await user.click(activate)
+    expect(activateCatalogProduct).not.toHaveBeenCalled()
+  })
+
+  it("row menu without manage permission hides access and activation", async () => {
+    const incomplete = { ...PRODUCT, id: "inc", name: "Sem preco", price: null, isActive: false }
+    listProductsMock.mockResolvedValue([incomplete])
+    const user = userEvent.setup()
+    render(
+      <MemoryRouter>
+        <TestPermissionProvider permissions={["catalog.products.read"]}>
+          <CatalogProductsPage />
+        </TestPermissionProvider>
+      </MemoryRouter>,
+    )
+    const table = await screen.findByRole("table")
+    await user.click(await within(table).findByRole("button", { name: i18n.t("catalog.products.rowMenu", { name: "Sem preco" }) }))
+    expect(await screen.findByRole("menuitem", { name: i18n.t("catalog.products.menuContinue") })).toBeInTheDocument()
+    expect(screen.queryByRole("menuitem", { name: i18n.t("catalog.products.menuAccess") })).not.toBeInTheDocument()
+    expect(screen.queryByRole("menuitem", { name: new RegExp(i18n.t("catalog.products.menuActivate")) })).not.toBeInTheDocument()
+  })
+
+  it("opens the editor when the row is clicked", async () => {
+    listProductsMock.mockResolvedValue([PRODUCT])
+    const user = userEvent.setup()
+    renderPage()
+    const table = await screen.findByRole("table")
+    await user.click(within(table).getByText(PRODUCT.code!))
+    expect(await screen.findByTestId("location")).toHaveTextContent(`/catalogo/produtos/${PRODUCT.id}`)
   })
 
   it("does not call a product without schedule incomplete for lacking resources, but does for a schedulable one", async () => {

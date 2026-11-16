@@ -204,3 +204,38 @@ describe("DataList", () => {
     })
   })
 })
+
+describe("DataList onRowClick", () => {
+  it("calls onRowClick when a row is clicked, but not for controls inside it", () => {
+    const onRowClick = vi.fn()
+    renderList({
+      onRowClick,
+      columns: [
+        { id: "name", header: "Nome", cell: (row) => row.name },
+        { id: "act", header: "Ações", cell: (row) => <button type="button">menu {row.id}</button> },
+      ],
+    })
+    const table = screen.getByRole("table", { name: "Pessoas" })
+    fireEvent.click(within(table).getByText("Bruno"))
+    expect(onRowClick).toHaveBeenCalledTimes(1)
+    expect(onRowClick).toHaveBeenCalledWith(rows[1])
+    fireEvent.click(within(table).getByRole("button", { name: "menu a" }))
+    expect(onRowClick).toHaveBeenCalledTimes(1)
+  })
+
+  it("ignores clicks inside menu items", () => {
+    const onRowClick = vi.fn()
+    renderList({
+      onRowClick,
+      columns: [{ id: "name", header: "Nome", cell: () => <div role="menu"><div role="menuitem"><span>item</span></div></div> }],
+    })
+    fireEvent.click(within(screen.getByRole("table", { name: "Pessoas" })).getAllByText("item")[0])
+    expect(onRowClick).not.toHaveBeenCalled()
+  })
+
+  it("does not make rows clickable without the prop", () => {
+    renderList()
+    const row = within(screen.getByRole("table", { name: "Pessoas" })).getAllByRole("row")[1]
+    expect(row.className).not.toContain("cursor-pointer")
+  })
+})

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { Link, useNavigate, useSearchParams } from "react-router-dom"
-import { MoreHorizontal, Package, Plus, SlidersHorizontal } from "lucide-react"
+import { Lock, Package, Pencil, Plus, Power, Settings, SlidersHorizontal } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 
@@ -10,10 +10,10 @@ import { Badge } from "@/components/ui/badge"
 import { Button, buttonVariants } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { DataList, type DataListColumn } from "@/components/data-table/DataList"
+import { RowActionsMenu, type RowActionItem } from "@/components/data-table/RowActionsMenu"
 import { FilterBar } from "@/components/data-table/FilterBar"
 import { StatusChips } from "@/components/data-table/StatusChips"
 import { StatusBadge } from "@/components/ui/status"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import type { EmptyStateProps } from "@/components/ui/empty-state"
 import { SegmentedControl } from "@/components/ui/segmented-control"
 import {
@@ -424,6 +424,7 @@ export function CatalogProductsPage({ view = "products" }: { view?: "products" |
         toolbar={filterBar}
         columns={columns}
         rows={visibleProducts}
+        onRowClick={openEdit}
         getRowId={(product) => product.id}
         empty={emptyProducts}
         renderCard={(product) => (
@@ -555,7 +556,7 @@ function TaxonomyChips({ items, hideEmpty = false }: { items?: readonly { id: st
   return <div className="staff-catalog-tags">{items.map((item) => <span key={item.id}>{item.name}</span>)}</div>
 }
 
-/** One 44px row menu: Acesso, Ativar/Desativar and, only when incomplete, Continuar configuração. */
+/** Row menu: edit/complete (primary when incomplete), access, then activation. */
 function ProductMenu({ product, state, onToggle, busyId }: {
   product: CatalogProduct
   state: ProductState
@@ -566,34 +567,36 @@ function ProductMenu({ product, state, onToggle, busyId }: {
   const { can } = usePermissions()
   const canManage = can("catalog.products.manage")
   const incomplete = state.kind === "incomplete"
-  if (!canManage && !incomplete) return null
   const busy = busyId === product.id
-  return (
-    <DropdownMenu>
-      <DropdownMenuTrigger
-        render={<Button type="button" variant="ghost" size="icon" className="size-11 shrink-0" aria-label={t("catalog.products.rowMenu", { name: product.name })} aria-busy={busy} />}
-      >
-        <MoreHorizontal aria-hidden="true" />
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        {canManage ? (
-          <DropdownMenuItem className="min-h-11 py-2.5" render={<Link to={productEditorPath(product.id, "access")} />}>
-            {t("catalog.products.menuAccess")}
-          </DropdownMenuItem>
-        ) : null}
-        {canManage ? (
-          <DropdownMenuItem className="min-h-11 py-2.5" disabled={busy} onClick={() => onToggle(product)}>
-            {t(product.isActive ? "catalog.products.deactivate" : "catalog.products.activate")}
-          </DropdownMenuItem>
-        ) : null}
-        {incomplete ? (
-          <DropdownMenuItem className="min-h-11 py-2.5" render={<Link to={productWizardPath(product.id)} />}>
-            {t("catalog.products.menuContinue")}
-          </DropdownMenuItem>
-        ) : null}
-      </DropdownMenuContent>
-    </DropdownMenu>
-  )
+  const items: RowActionItem[] = []
+  if (incomplete) {
+    items.push({ key: "continue", label: t("catalog.products.menuContinue"), icon: Settings, href: productWizardPath(product.id), tone: "primary" })
+  } else {
+    items.push({ key: "edit", label: t("catalog.products.menuEdit"), icon: Pencil, href: `/catalogo/produtos/${product.id}` })
+  }
+  if (canManage) {
+    items.push({ key: "access", label: t("catalog.products.menuAccess"), icon: Lock, href: productEditorPath(product.id, "access") })
+    if (incomplete && !product.isActive) {
+      items.push({
+        key: "activate",
+        label: t("catalog.products.menuActivate"),
+        icon: Power,
+        disabled: true,
+        hint: t("catalog.products.menuActivateHint"),
+        separatorBefore: true,
+      })
+    } else {
+      items.push({
+        key: "toggle",
+        label: t(product.isActive ? "catalog.products.menuDeactivate" : "catalog.products.menuActivate"),
+        icon: Power,
+        disabled: busy,
+        onSelect: () => onToggle(product),
+        separatorBefore: true,
+      })
+    }
+  }
+  return <RowActionsMenu items={items} busy={busy} label={t("catalog.products.rowMenu", { name: product.name })} />
 }
 
 function MoreFilters({ options, taxonomy, onTaxonomyChange, visibility, onVisibilityChange }: {
