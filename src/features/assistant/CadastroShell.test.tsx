@@ -209,3 +209,19 @@ it("centres the content in a 1120px container", () => {
   setup({}, "/c")
   expect(screen.getByTestId("cadastro-page")).toHaveClass("cadastro-page", "mx-auto", "w-full", "max-w-[1120px]")
 })
+
+it("names the current step above one dot per step, the current one included", () => {
+  setup({}, "/c?passo=publicacao")
+  expect(screen.getByText("Etapa 7 de 7")).toBeInTheDocument()
+  expect(screen.getByTestId("cadastro-stepper-name")).toHaveTextContent("· Publicação")
+  const dots = screen.getAllByTestId("cadastro-stepper-dot")
+  expect(dots).toHaveLength(7)
+  expect(dots.filter((dot) => dot.hasAttribute("data-current"))).toHaveLength(1)
+  expect(dots[6]).toHaveAttribute("data-current")
+})
+
+it("draws one dot per applicable step", () => {
+  setup({ notApplicable: ["agenda", "fila"] }, "/c?passo=regras")
+  expect(screen.getAllByTestId("cadastro-stepper-dot")).toHaveLength(5)
+  expect(screen.getByTestId("cadastro-stepper-name")).toHaveTextContent("· Regras")
+})

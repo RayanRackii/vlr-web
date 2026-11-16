@@ -16,10 +16,12 @@ import "./cadastro.css"
 export type CadastroKind = "product" | "resource"
 
 /** Rascunho until the item is published; Publicado afterwards. No percent indicator. */
-export function CadastroStatusChip({ status }: { status: ItemStatus | null | undefined }) {
+export function CadastroStatusChip({ status, kind = "resource" }: { status: ItemStatus | null | undefined; kind?: CadastroKind }) {
   const { t } = useTranslation()
   const published = status?.kind === "published"
-  return <StatusBadge tone={published ? "success" : "neutral"}>{t(published ? "assistant.status.published" : "assistant.status.draft")}</StatusBadge>
+  // Products are "Ativo" everywhere (list, toast, badge); resources keep "Publicado".
+  const publishedKey = kind === "product" ? "cadastro.productStatusActive" : "assistant.status.published"
+  return <StatusBadge tone={published ? "success" : "neutral"}>{t(published ? publishedKey : "assistant.status.draft")}</StatusBadge>
 }
 
 /** Steps that apply, in order (the rest are "Não se aplica"). */
@@ -41,14 +43,14 @@ function neighborStep(step: CadastroStep, direction: -1 | 1, notApplicable: read
   return null
 }
 
-export function CadastroHeader({ title, step = "dados", description, status, notApplicable = [] }: { title: string; step?: CadastroStep; description?: string; status?: ItemStatus | null; notApplicable?: readonly CadastroStep[] }) {
+export function CadastroHeader({ title, step = "dados", description, status, notApplicable = [], kind = "resource" }: { title: string; step?: CadastroStep; description?: string; status?: ItemStatus | null; notApplicable?: readonly CadastroStep[]; kind?: CadastroKind }) {
   const { t } = useTranslation()
   return <header className="flex min-w-0 items-start justify-between gap-3">
     <div className="min-w-0 space-y-1">
       <h1 className="text-xl font-semibold tracking-tight sm:text-2xl">{title}</h1>
       <p className="text-sm text-muted-foreground">{description ?? t("cadastro.stepOf", { count: stagePosition(step, notApplicable), total: applicableSteps(notApplicable).length })}</p>
     </div>
-    {description !== undefined ? <CadastroStatusChip status={status} /> : null}
+    {description !== undefined ? <CadastroStatusChip status={status} kind={kind} /> : null}
   </header>
 }
 
@@ -67,7 +69,13 @@ export function CadastroStepper({ step, go, disabled = false, kind = "resource",
   const product = kind === "product"
   return <nav aria-label={t("cadastro.steps")} className="cadastro-progress min-w-0 max-w-full">
     <p className="hidden text-xs font-medium uppercase tracking-wide text-muted-foreground lg:block">{t(product ? "cadastro.progressCaptionProduct" : "cadastro.progressCaptionResource")}</p>
-    <p className="text-sm text-muted-foreground lg:mt-3" data-testid="cadastro-stepper-compact">{t("cadastro.stage", { count: stagePosition(step, notApplicable), total: applicableSteps(notApplicable).length })}</p>
+    <p className="text-sm text-muted-foreground lg:mt-3" data-testid="cadastro-stepper-compact">
+      <span>{t("cadastro.stage", { count: stagePosition(step, notApplicable), total: applicableSteps(notApplicable).length })}</span>{" "}
+      <span data-testid="cadastro-stepper-name">{t("cadastro.stageName", { name: product ? t(`cadastro.productSteps.${step}.title`) : t(`assistant.steps.${step}`) })}</span>
+    </p>
+    <ol className="mt-2 flex items-center gap-1.5 lg:hidden" aria-hidden="true" data-testid="cadastro-stepper-dots">
+      {applicableSteps(notApplicable).map((item) => <li key={item} data-testid="cadastro-stepper-dot" data-current={item === step || undefined} className={cn("size-2 rounded-full", item === step ? "bg-primary" : "bg-border")} />)}
+    </ol>
     <ol className="mt-2 flex min-w-0 max-w-full gap-1 overflow-x-auto lg:mt-3 lg:flex-col lg:overflow-visible">
       {cadastroSteps.map((item, i) => {
         const current = step === item
@@ -117,7 +125,7 @@ function ShellLeaveGuard({ dirty, bypass }: { dirty: boolean; bypass: { current:
   />
 }
 
-export function CadastroShell({ kind = "resource", title, description, status, step, go, interactive = true, busy, dirty = false, done, optional, notApplicable = [], submitDisabled = false, canPublish, onPublish, onBack, children }: {
+export function CadastroShell({ kind = "resource", title, description, status, step, go, interactive = true, busy, dirty = false, done, optional, notApplicable = [], submitDisabled = false, canPublish, completed = false, onPublish, onBack, children }: {
   kind?: CadastroKind
   title: string
   /** Header description. Defaults to the product description for products. */
@@ -136,6 +144,8 @@ export function CadastroShell({ kind = "resource", title, description, status, s
   /** Steps that do not apply (e.g. Agenda and Fila for a product without schedule): shown muted and skipped. */
   notApplicable?: readonly CadastroStep[]
   canPublish: boolean
+  /** The item was just published: the step body is a success state, so the step intro and footer are hidden. */
+  completed?: boolean
   onPublish: () => void | Promise<void>
   /** Leaves the cadastro for the list (Cancelar on step 1 and "Salvar e sair"). */
   onBack: () => void
@@ -188,11 +198,11 @@ export function CadastroShell({ kind = "resource", title, description, status, s
     }
   }
 
-  const info = product ? { heading: t(`cadastro.productSteps.${step}.title`), text: t(`cadastro.productSteps.${step}.description`) } : null
+  const info = product && !completed ? { heading: t(`cadastro.productSteps.${step}.title`), text: t(`cadastro.productSteps.${step}.description`) } : null
   return <StepSubmitContext.Provider value={registry}>
     <div className="cadastro-page mx-auto w-full max-w-[1120px] self-center" data-testid="cadastro-page">
       {hasDataRouter ? <ShellLeaveGuard dirty={dirty} bypass={bypass} /> : null}
-      <CadastroHeader title={title} step={step} description={description ?? (product ? t("cadastro.productDescription") : undefined)} status={status ?? null} notApplicable={notApplicable} />
+      <CadastroHeader kind={kind} title={title} step={step} description={description ?? (product ? t("cadastro.productDescription") : undefined)} status={status ?? null} notApplicable={notApplicable} />
       <div className="cadastro-layout">
         <CadastroStepper step={step} go={interactive ? go : undefined} disabled={locked} kind={kind} done={done} optional={optional} notApplicable={notApplicable} />
         <section aria-label={info?.heading ?? t(`assistant.steps.${step}`)} className="min-w-0 rounded-xl border bg-card text-card-foreground shadow-sm">
@@ -203,7 +213,7 @@ export function CadastroShell({ kind = "resource", title, description, status, s
             </div> : null}
             {children}
           </div>
-          <footer className="flex flex-wrap items-center justify-between gap-3 border-t px-4 py-4 sm:px-8">
+          {completed ? null : <footer className="flex flex-wrap items-center justify-between gap-3 border-t px-4 py-4 sm:px-8">
             <Button type="button" variant="outline" className="min-h-11" disabled={locked} onClick={() => previousStep ? go(previousStep) : onBack()}>{t(previousStep ? "cadastro.back" : "common.cancel")}</Button>
             <div className="flex flex-wrap items-center justify-end gap-2">
               <LoadingButton type="button" variant="ghost" className="min-h-11" loading={pending === "exit"} disabled={locked || submitDisabled} onClick={() => void saveThen("exit")}>{t("cadastro.saveAndExit")}</LoadingButton>
@@ -211,7 +221,7 @@ export function CadastroShell({ kind = "resource", title, description, status, s
                 {last ? t("assistant.publish") : <>{t("cadastro.saveAndContinue")}<ChevronRight aria-hidden="true" /></>}
               </LoadingButton>
             </div>
-          </footer>
+          </footer>}
         </section>
       </div>
       {product ? <p className="text-xs text-muted-foreground">{t("cadastro.requiredNote")}</p> : null}

@@ -138,6 +138,23 @@ describe("CatalogProductEditorPage", () => {
   })
 
   it.each([
+    { language: "pt-BR", expected: "45,50" },
+    { language: "en", expected: "45.50" },
+  ])("shows the price with two decimals in $language", async ({ language, expected }) => {
+    const previousLanguage = i18n.language
+    await i18n.changeLanguage(language)
+    try {
+      getProductMock.mockResolvedValue({ ...PRODUCT, price: 45.5 })
+      const user = userEvent.setup()
+      renderPage()
+      await user.click(await screen.findByRole("tab", { name: i18n.t("catalog.products.tabs.price") }))
+      expect(screen.getByRole("textbox", { name: i18n.t("catalog.products.form.price") })).toHaveValue(expected)
+    } finally {
+      await i18n.changeLanguage(previousLanguage)
+    }
+  })
+
+  it.each([
     { status: "Pending" as const, key: "pendingRecord", url: null },
     { status: "Failed" as const, key: "failedRecord", url: "https://example.test/failed.png" },
     { status: "Pending" as const, key: "pendingRecord", url: "https://example.test/pending.png" },
@@ -589,6 +606,24 @@ describe("CatalogProductEditorPage", () => {
     await user.clear(name)
     expect(save()).toBeDisabled()
     expect(updateProductMock).not.toHaveBeenCalled()
+  })
+
+  it("sends the numeric price when a pt-BR price shown as 45,50 is saved", async () => {
+    const previousLanguage = i18n.language
+    await i18n.changeLanguage("pt-BR")
+    try {
+      getProductMock.mockResolvedValue({ ...PRODUCT, price: 45.5 })
+      updateProductMock.mockResolvedValue({ ...PRODUCT, price: 45.5, name: "Raquete pro" })
+      const user = userEvent.setup()
+      renderPage()
+      const name = await screen.findByLabelText(i18n.t("catalog.products.form.name"))
+      await user.clear(name)
+      await user.type(name, "Raquete pro")
+      await user.click(save())
+      await waitFor(() => expect(updateProductMock).toHaveBeenCalledWith(PRODUCT.id, expect.objectContaining({ price: 45.5 })))
+    } finally {
+      await i18n.changeLanguage(previousLanguage)
+    }
   })
 
   it("sends the same update payload as the dialog edit path", async () => {

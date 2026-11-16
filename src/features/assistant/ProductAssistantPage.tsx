@@ -1,4 +1,5 @@
 import { CadastroShell } from "./CadastroShell"
+import { ProductPublishSuccess, ProductPublishSummary } from "./ProductPublishPanels"
 import { useBreadcrumbTitle } from "@/components/layout/useBreadcrumbTitle"
 import { toast } from "sonner"
 import { activateCatalogProduct } from "@/features/catalog/services/catalogService"
@@ -35,6 +36,8 @@ function ProductCadastroPage() {
   const permissions = useOptionalPermissions()
   const [stepDirty, setStepDirty] = useState(false)
   const [stepSaving, setStepSaving] = useState(false)
+  const [justPublished, setJustPublished] = useState(false)
+  const [menuFailed, setMenuFailed] = useState(false)
   const { id = "" } = useParams()
   const { t } = useTranslation()
   const wizard = useProductWizard(id)
@@ -95,11 +98,17 @@ function ProductCadastroPage() {
       }
     }
     if (model.menuItems !== null && !catalogMenuIsActive(model.menuItems) && permissions?.can("core.module_menu.write") && !wizard.readOnly) {
-      await wizard.publishMenu()
+      const menuOk = await wizard.publishMenu()
+      setMenuFailed(!menuOk)
+      if (!menuOk) return
     } else {
       await wizard.reload()
     }
+    setMenuFailed(false)
+    setJustPublished(true)
   }
+
+  const visibility = model.access?.visibility ?? product.visibility ?? "Public"
 
   const body = (
       <div className="space-y-4">
@@ -126,15 +135,24 @@ function ProductCadastroPage() {
           />
         ) : null}
         {cadastroStep === "publicacao" ? (
-          <div className="space-y-3">
+          <div className="space-y-4">
             <p className="text-sm text-muted-foreground">{t(`assistant.publication.${status.kind}`, { count: status.kind === "missing" ? status.count : 0 })}</p>
+            {menuFailed ? <p className="text-sm text-muted-foreground" role="status">{t("cadastro.published.menuFailed")}</p> : null}
+            <ProductPublishSummary
+              product={product}
+              categoryNames={taxonomy?.categories.map((category) => category.name) ?? []}
+              usesAgenda={product.usesSchedule && wizard.rentalsActive}
+              resourceNames={linkedAssets.map((asset) => asset.name)}
+              visibility={visibility}
+              go={goSkipping}
+            />
             <ResourceLinks assets={linkedAssets} />
           </div>
         ) : null}
       </div>
   )
 
-  return <CadastroShell kind="product" title={product.name} status={status} step={cadastroStep} go={goSkipping} notApplicable={notApplicable} dirty={stepDirty} busy={wizard.busy || stepSaving} done={done} optional={["categorias"]} canPublish={missingStep == null && wizard.canManage} onPublish={publish} onBack={() => navigate("/catalogo/produtos")}>
-    {cadastroStep === "categorias" ? <CadastroTaxonomyStep onDirtyChange={setStepDirty} onSavingChange={setStepSaving} product={product} canAssign={wizard.canManage} onSaved={() => wizard.reload()} /> : body}
+  return <CadastroShell kind="product" title={product.name} status={status} step={cadastroStep} go={goSkipping} notApplicable={notApplicable} dirty={stepDirty} busy={wizard.busy || stepSaving} done={done} optional={["categorias"]} canPublish={missingStep == null && wizard.canManage && !justPublished} completed={justPublished && cadastroStep === "publicacao"} onPublish={publish} onBack={() => navigate("/catalogo/produtos")}>
+    {justPublished && cadastroStep === "publicacao" ? <ProductPublishSuccess product={product} visibility={visibility} editorPath={`/catalogo/produtos/${product.id}`} /> : cadastroStep === "categorias" ? <CadastroTaxonomyStep onDirtyChange={setStepDirty} onSavingChange={setStepSaving} product={product} canAssign={wizard.canManage} onSaved={() => wizard.reload()} /> : body}
   </CadastroShell>
 }

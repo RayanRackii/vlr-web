@@ -68,19 +68,25 @@ const CUSTOMER_VISIBLE_FILE_ACCEPT =
   "image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp"
 const INTERNAL_FILE_ACCEPT = ".pdf,.stl,.step,.stp,.dxf,application/pdf"
 
-function productToForm(product: CatalogProduct): CatalogProductFormValues {
+/** Editable price text with two decimals in the UI locale ("45,50"), no symbol or grouping so it parses back on save. */
+function formatPriceInput(price: number | null | undefined, locale: string): string {
+  if (price == null) return ""
+  return new Intl.NumberFormat(locale, { minimumFractionDigits: 2, maximumFractionDigits: 2, useGrouping: false }).format(price)
+}
+
+function productToForm(product: CatalogProduct, locale: string): CatalogProductFormValues {
   return {
     name: product.name,
     code: product.code ?? "",
     description: product.description ?? "",
-    price: product.price == null ? "" : String(product.price),
+    price: formatPriceInput(product.price, locale),
     currency: product.currency,
     usesSchedule: product.usesSchedule,
   }
 }
 
 export function CatalogProductEditorPage() {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const { id } = useParams()
   const navigate = useNavigate()
   const { can } = usePermissions()
@@ -134,9 +140,9 @@ export function CatalogProductEditorPage() {
   const applyProduct = useCallback(
     (next: CatalogProduct) => {
       setProduct(next)
-      form.reset(productToForm(next))
+      form.reset(productToForm(next, i18n.language))
     },
-    [form],
+    [form, i18n.language],
   )
 
   // Re-sign an expired preview URL for a file, counting each try against the
@@ -771,7 +777,7 @@ export function CatalogProductEditorPage() {
         unsavedCount={unsavedCount}
         onSave={canManage ? () => void form.handleSubmit(onSubmit)() : undefined}
         onDiscard={canManage ? () => {
-          form.reset(productToForm(product))
+          form.reset(productToForm(product, i18n.language))
           accessSectionRef.current?.reset()
         } : undefined}
         saving={saving || stepSaving}
