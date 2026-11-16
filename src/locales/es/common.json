@@ -4333,6 +4333,9 @@
       "startedSuccess": "OT iniciada con éxito.",
       "completedSuccess": "OT finalizada con éxito.",
       "mandatoryIncomplete": "Complete las tareas obligatorias: {{tasks}}",
+      "assigneeNoTechniciansLinked": "Nadie puede ser técnico todavía. Dé a alguien el permiso de ejecutar OS en <link>Personas y acceso</link>.",
+      "assigneeNoTechniciansPlain": "Nadie puede ser técnico todavía. Dé a alguien el permiso de ejecutar OS en Personas y acceso.",
+      "moreActions": "Más acciones de la OS",
       "mandatoryIncompleteTitle": "Complete las tareas obligatorias antes de finalizar:",
       "save": {
         "saving": "guardando",

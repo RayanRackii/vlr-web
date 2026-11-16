@@ -7,6 +7,7 @@ import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 
 import { PageHeader } from "@/components/layout/PageHeader"
+import { RowActionsMenu, type RowActionItem } from "@/components/data-table/RowActionsMenu"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -1060,23 +1061,24 @@ export function WorkOrderExecutionPage() {
     </div>
   ) : null
 
-  const cancelButton = canCancel(workOrder) ? (
-    <Button
-      type="button"
-      variant="destructive"
-      className="min-h-11"
-      onClick={() => setCancelOpen(true)}
-    >
-      <Ban data-icon="inline-start" />
-      {t("workOrders.cancel.action")}
-    </Button>
-  ) : null
+  const menuItems: readonly RowActionItem[] = canCancel(workOrder)
+    ? [
+        {
+          key: "cancel",
+          label: t("workOrders.cancel.action"),
+          icon: Ban,
+          tone: "danger",
+          separatorBefore: true,
+          onSelect: () => setCancelOpen(true),
+        },
+      ]
+    : []
 
   const headerActions =
-    cancelButton || (isDesktop && actionButtons) ? (
-      <div className="flex shrink-0 flex-col gap-3 sm:flex-row sm:justify-end">
-        {cancelButton}
+    menuItems.length > 0 || (isDesktop && actionButtons) ? (
+      <div className="flex shrink-0 items-center justify-end gap-3">
         {isDesktop ? actionButtons : null}
+        <RowActionsMenu items={menuItems} label={t("workOrders.execution.moreActions")} />
       </div>
     ) : undefined
 
