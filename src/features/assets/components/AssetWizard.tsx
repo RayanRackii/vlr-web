@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react"
-import { LoaderCircle } from "lucide-react"
+import { CircleDot, Folder, LoaderCircle, MapPin, Shapes } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 import { readApiValidation } from "@/features/rentals/lib/readApiValidation"
@@ -727,7 +727,7 @@ export function AssetWizard({
                         label: displayUnitName(unit.name, t),
                       }))}
                     >
-                      <SelectTrigger
+                      <SelectTrigger icon={MapPin}
                         className={cn(
                           "w-full",
                           fieldInvalidClass(Boolean(fieldErrors.unitId)),
@@ -775,7 +775,7 @@ export function AssetWizard({
                         label: category.name,
                       }))}
                     >
-                      <SelectTrigger
+                      <SelectTrigger icon={Folder}
                         className={cn(
                           "w-full",
                           fieldInvalidClass(Boolean(fieldErrors.categoryId)),
@@ -819,7 +819,7 @@ export function AssetWizard({
                         label: family.label,
                       }))}
                     >
-                      <SelectTrigger
+                      <SelectTrigger icon={Shapes}
                         className={cn(
                           "w-full",
                           fieldInvalidClass(Boolean(fieldErrors.familyId)),
@@ -887,7 +887,7 @@ export function AssetWizard({
                           },
                         ]}
                       >
-                        <SelectTrigger className="w-full">
+                        <SelectTrigger icon={Shapes} className="w-full">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
@@ -1129,7 +1129,7 @@ export function AssetWizard({
                           },
                         ]}
                       >
-                        <SelectTrigger className="w-full">
+                        <SelectTrigger icon={CircleDot} className="w-full">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
@@ -1434,7 +1434,7 @@ export function AssetWizard({
                           },
                         ]}
                       >
-                        <SelectTrigger className="w-full">
+                        <SelectTrigger icon={Shapes} className="w-full">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>

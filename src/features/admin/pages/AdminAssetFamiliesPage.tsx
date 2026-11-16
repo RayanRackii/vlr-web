@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { Plus, Trash2 } from "lucide-react"
+import { Plus, Shapes, Trash2 } from "lucide-react"
 import { useFieldArray, useForm, useWatch } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
@@ -769,7 +769,7 @@ export function AdminAssetFamiliesPage() {
                             }}
                           >
                             <FormControl>
-                              <SelectTrigger className="w-full">
+                              <SelectTrigger icon={Shapes} className="w-full">
                                 <SelectValue />
                               </SelectTrigger>
                             </FormControl>

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react"
 import { useNavigate, useParams } from "react-router-dom"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { ArrowLeft } from "lucide-react"
+import { ArrowLeft, Folder, MapPin } from "lucide-react"
 import { useBreadcrumbTitle } from "@/components/layout/useBreadcrumbTitle"
 import { useForm, useWatch } from "react-hook-form"
 import { useTranslation } from "react-i18next"
@@ -398,7 +398,7 @@ export function PmocTemplatePreviewPage() {
                         items={unitItems}
                       >
                         <FormControl>
-                          <SelectTrigger className="w-full">
+                          <SelectTrigger icon={MapPin} className="w-full">
                             <SelectValue
                               placeholder={t("pmoc.create.form.unitPlaceholder")}
                             />
@@ -430,7 +430,7 @@ export function PmocTemplatePreviewPage() {
                         items={categoryItems}
                       >
                         <FormControl>
-                          <SelectTrigger className="w-full">
+                          <SelectTrigger icon={Folder} className="w-full">
                             <SelectValue
                               placeholder={t(
                                 "pmoc.create.form.categoryPlaceholder",

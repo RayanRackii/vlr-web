@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { ShieldCheck } from "lucide-react"
+import { CircleDot, ShieldCheck } from "lucide-react"
 import { useForm, useWatch } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
@@ -125,7 +125,7 @@ export function CatalogPolicyPage() {
               value={<FormField control={form.control} name="orderCancelableUpToStatus" render={({ field }) => <FormItem className="space-y-0">
                 <Select modal={false} items={orderItems} value={field.value} disabled={fieldsDisabled} onValueChange={(next) => { if (typeof next === "string") field.onChange(next) }}>
                   <FormControl>
-                    <SelectTrigger className="min-h-11 w-48" aria-label={t("catalog.policy.ordersUpTo")}><SelectValue /></SelectTrigger>
+                    <SelectTrigger icon={CircleDot} className="min-h-11 w-48" aria-label={t("catalog.policy.ordersUpTo")}><SelectValue /></SelectTrigger>
                   </FormControl>
                   <SelectContent>
                     {orderItems.map((item) => <SelectItem key={item.value} value={item.value}>{item.label}</SelectItem>)}

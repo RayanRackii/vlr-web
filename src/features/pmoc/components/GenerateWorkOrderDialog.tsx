@@ -24,6 +24,7 @@ import {
   FormMessage,
 } from "@/components/ui/form"
 import { FormPrimaryButton } from "@/components/ui/form-primary-button"
+import { Box, User } from "lucide-react"
 import {
   Select,
   SelectContent,
@@ -300,7 +301,7 @@ export function GenerateWorkOrderDialog({
                       disabled={isPending || Boolean(assetId)}
                     >
                       <FormControl>
-                        <SelectTrigger className="w-full">
+                        <SelectTrigger icon={Box} className="w-full">
                           <SelectValue
                             placeholder={t(
                               "workOrders.create.form.assetPlaceholder",
@@ -357,7 +358,7 @@ export function GenerateWorkOrderDialog({
                       disabled={isPending}
                     >
                       <FormControl>
-                        <SelectTrigger className="w-full">
+                        <SelectTrigger icon={User} className="w-full">
                           <SelectValue />
                         </SelectTrigger>
                       </FormControl>

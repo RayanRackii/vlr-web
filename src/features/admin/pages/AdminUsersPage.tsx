@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react"
-import { LoaderCircle, Trash2, Users } from "lucide-react"
+import { ListFilter, LoaderCircle, Trash2, Users } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 
@@ -189,7 +189,7 @@ export function AdminUsersPage() {
             }}
             items={tenantItems}
           >
-            <SelectTrigger id="platform-users-tenant" className="min-h-11 w-full">
+            <SelectTrigger icon={ListFilter} id="platform-users-tenant" className="min-h-11 w-full">
               <SelectValue
                 placeholder={t("admin.platformUsers.filters.tenantPlaceholder")}
               />

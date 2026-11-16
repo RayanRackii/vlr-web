@@ -1,6 +1,6 @@
 import { bookingEndClock } from "@/lib/tenantTimeZone"
 import { PortalSessionExpiredError, notifyPortalSessionExpired } from "@/features/tenantPortal/lib/portalSessionError"
-import { CalendarIcon, Check, CheckCheck, Loader2, Minus, Plus } from "lucide-react"
+import { CalendarIcon, Check, CheckCheck, Clock, Loader2, Minus, Plus } from "lucide-react"
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react"
 import { useTranslation } from "react-i18next"
 import {
@@ -2343,7 +2343,7 @@ export function TenantPortalAgendaPage() {
                   schedulePending || slotsError || timeWindows.length === 0
                 }
               >
-                <SelectTrigger className="w-full tabular-nums" aria-busy={schedulePending}>
+                <SelectTrigger icon={Clock} className="w-full tabular-nums" aria-busy={schedulePending}>
                   <SelectValue
                     placeholder={
                       schedulePending

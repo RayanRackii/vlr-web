@@ -76,8 +76,7 @@ function CategoryCreateForm({ categories, onCancel, onSubmittingChange, onCreate
     <div className="space-y-1">
       <span id={`${id}-parent`} className="text-sm font-medium">{t("cadastro.categoryParentLabel")}</span>
       <Select modal={false} value={parentId ?? NO_PARENT} items={parentItems} disabled={submitting} onValueChange={(value) => setParentId(value === NO_PARENT ? null : value)}>
-        <SelectTrigger aria-labelledby={`${id}-parent`} className="min-h-11 w-full">
-          <Folder className="size-4 text-muted-foreground" aria-hidden="true" />
+        <SelectTrigger aria-labelledby={`${id}-parent`} icon={Folder} className="min-h-11 w-full">
           <SelectValue />
         </SelectTrigger>
         <SelectContent>

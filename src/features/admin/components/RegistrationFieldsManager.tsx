@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { CalendarDays, ChevronRight, ClipboardList, Hash, Image, List, ListPlus, LockKeyhole, Mail, MapPin, Phone, ToggleRight, Type, type LucideIcon } from "lucide-react"
+import { CalendarDays, ChevronRight, ClipboardList, Hash, Image, List, ListPlus, LockKeyhole, type LucideIcon, Mail, MapPin, Phone, Shapes, ToggleRight, Type } from "lucide-react"
 import { Controller, useForm } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
@@ -473,7 +473,7 @@ export function RegistrationFieldsManager({
                       label: t(registrationFieldTypeLabelKey(type)),
                     }))}
                   >
-                    <SelectTrigger
+                    <SelectTrigger icon={Shapes}
                       id="registration-field-type"
                       className="w-full"
                     >

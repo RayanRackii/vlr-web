@@ -1,17 +1,6 @@
 import { useEffect, useState } from "react"
 import { useTranslation } from "react-i18next"
-import {
-  Ban,
-  BookOpen,
-  Calendar,
-  CheckCircle2,
-  Lock,
-  Sparkles,
-  Tag,
-  Users,
-  Wrench,
-  type LucideIcon,
-} from "lucide-react"
+import { Ban, BookOpen, Calendar, CheckCircle2, Lock, type LucideIcon, Shapes, Sparkles, Tag, Users, Wrench } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { FieldLabel } from "@/components/ui/field-label"
@@ -218,7 +207,7 @@ export function OccupancyKindSheet({
                   label: iconKey,
                 }))}
               >
-                <SelectTrigger className="w-full">
+                <SelectTrigger icon={Shapes} className="w-full">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
