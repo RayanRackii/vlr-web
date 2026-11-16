@@ -1,6 +1,6 @@
 import { Ban, Plus } from "lucide-react"
 import { useState } from "react"
-import { Link, useNavigate, useSearchParams } from "react-router-dom"
+import { useSearchParams } from "react-router-dom"
 import { useTranslation } from "react-i18next"
 import { FilterTabs } from "@/components/data-table/FilterTabs"
 import { Page } from "@/components/layout/Page"
@@ -13,6 +13,7 @@ import { ICON_SIZE, ICON_STROKE_WIDTH } from "@/lib/icon"
 import { AgendaFooter, BusinessHoursLabel } from "./AgendaCardParts"
 import { AgendaDayGrid } from "./AgendaDayGrid"
 import { BlockPeriodDialog, type BlockPeriodPrefill } from "./BlockPeriodDialog"
+import { NewReservationDialog, type NewReservationPrefill } from "./NewReservationDialog"
 import { AgendaFilterMenu, type AgendaFilterFieldsProps } from "./AgendaFilterPanel"
 import { AgendaFilters } from "./AgendaFilters"
 import { AgendaWeek } from "./AgendaWeek"
@@ -42,7 +43,6 @@ export function AgendasPage({ view }: { view: AgendasView }) {
   const timeZone = useTenantTimeZone()
   const { can, activeModules, isLoading, currentUser } = usePermissions()
   const [params, setParams] = useSearchParams()
-  const navigate = useNavigate()
   const today = civilToday(timeZone)
   const state = parseAgendaState(params, today)
   const tenantId = currentUser?.tenantId ?? null
@@ -57,8 +57,9 @@ export function AgendasPage({ view }: { view: AgendasView }) {
     reservations: rentals && can("rentals.reservations.read"),
     orders: catalog && can("catalog.orders.read"),
   }, tenantId, !isLoading, productView ? state.produto : null)
-  const canReserve = rentals && can("rentals.reservations.read")
+  const canReserve = rentals && can("rentals.reservations.create")
   const canBlock = rentals && can("rentals.schedule.write")
+  const [reservePrefill, setReservePrefill] = useState<NewReservationPrefill | null>(null)
   const [blockPrefill, setBlockPrefill] = useState<BlockPeriodPrefill | null>(null)
   const canReadProducts = catalog && can("catalog.products.read")
   const products = useAgendaProductOptions(tenantId, canReadProducts)
@@ -75,9 +76,8 @@ export function AgendasPage({ view }: { view: AgendasView }) {
   const activities = week
     ? day.week.rows.reduce((sum, row) => sum + row.cells.reduce((cellSum, cell) => cellSum + agendaTypes.reduce((kindSum, kind) => kindSum + cell.counts[kind], 0), 0), 0)
     : day.day.rows.reduce((sum, row) => sum + row.blocks.length, 0)
-  // The reservations screen opens as before; the resource and slot travel as query params for it to pick up.
-  const createReservation = (rentalAssetId: string, minutes: number) =>
-    navigate(`/configuracoes/reservas?${new URLSearchParams({ rentalAssetId, date: state.date, startTime: formatClock(minutes) })}`)
+  const createReservation = (resourceId: string, minutes: number) =>
+    setReservePrefill({ resourceId, date: state.date, start: formatClock(minutes) })
 
   const filterProps: AgendaFilterFieldsProps = {
     state,
@@ -110,7 +110,7 @@ export function AgendasPage({ view }: { view: AgendasView }) {
               </Button>
             )}
             {canReserve && (
-              <Button className="touch-target min-h-11" render={<Link to="/configuracoes/reservas" />}>
+              <Button className="touch-target min-h-11" onClick={() => setReservePrefill({ date: state.date })}>
                 <Plus className={ICON_SIZE.sm} strokeWidth={ICON_STROKE_WIDTH} aria-hidden />
                 {t("agendas.newReservation")}
               </Button>
@@ -171,6 +171,7 @@ export function AgendasPage({ view }: { view: AgendasView }) {
           updatedMinutes={updatedAt !== null && now !== null ? Math.max(0, Math.floor((now - updatedAt) / 60_000)) : null}
         />
       </section>
+      {canReserve && <NewReservationDialog open={reservePrefill !== null} onOpenChange={(open) => { if (!open) setReservePrefill(null) }} prefill={reservePrefill ?? { date: state.date }} tenantId={tenantId} />}
       {canBlock && <BlockPeriodDialog open={blockPrefill !== null} onOpenChange={(open) => { if (!open) setBlockPrefill(null) }} resources={day.resources} prefill={blockPrefill ?? { date: state.date }} tenantId={tenantId} />}
     </Page>
   )

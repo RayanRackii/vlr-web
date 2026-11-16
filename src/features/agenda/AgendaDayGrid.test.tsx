@@ -148,14 +148,14 @@ describe("empty slots", () => {
   it("maps the click position to the slot hour", async () => {
     vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockReturnValue({ left: 0, width: 1000, top: 0, height: 68, right: 1000, bottom: 68, x: 0, y: 0, toJSON: () => ({}) })
     const { onCreateReservation } = setup([row({ blocks: [block({ start: 480, end: 540 })] })])
-    await userEvent.pointer({ keys: "[MouseLeft]", target: screen.getByRole("button", { name: "Ver reservas de Cortadora" }), coords: { clientX: 500 } })
+    await userEvent.pointer({ keys: "[MouseLeft]", target: screen.getByRole("button", { name: "Reservar Cortadora" }), coords: { clientX: 500 } })
     expect(onCreateReservation).toHaveBeenCalledWith("r1", 840)
   })
 
   it("does nothing, and offers no button, without reservation permission", () => {
     setup([row()], { canReserve: false })
     expect(screen.getByText("Disponível para reserva")).toBeInTheDocument()
-    expect(screen.queryByRole("button", { name: "Ver reservas de Cortadora" })).not.toBeInTheDocument()
+    expect(screen.queryByRole("button", { name: "Reservar Cortadora" })).not.toBeInTheDocument()
   })
 
   it("keeps Bloquear período reachable from the row menu", async () => {
@@ -184,7 +184,7 @@ describe("below md", () => {
     expect(within(card).getByText("09:00 – 11:00")).toBeInTheDocument()
     expect(within(section("Kit Som")).queryByText("Dia inteiro")).not.toBeInTheDocument()
     expect(within(card).getByRole("button", { name: /Pedido/ })).toHaveTextContent("Pedido #30 · E2E Customer")
-    await userEvent.click(within(section("Kit Som")).getByRole("button", { name: "Ver reservas de Kit Som" }))
+    await userEvent.click(within(section("Kit Som")).getByRole("button", { name: "Reservar Kit Som" }))
     expect(onCreateReservation).toHaveBeenCalledWith("r2", 480)
   })
 
