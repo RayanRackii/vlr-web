@@ -3,19 +3,13 @@ import { useTranslation } from "react-i18next"
 import { Link } from "react-router-dom"
 
 import { PageHeader } from "@/components/layout/PageHeader"
-import { Button } from "@/components/ui/button"
+import { ChevronRight } from "lucide-react"
+
+import { FIRST_STEP_HREF, FIRST_STEP_KEYS } from "@/features/rentals/lib/firstSteps"
 import {
   getSetupStatus,
   type SetupStatus,
 } from "@/features/rentals/services/setupStatusService"
-
-const checklistKeys = ["company", "pricedOffer", "hours", "resource", "admin", "previewItem"] as const
-
-const continueHref: Partial<Record<(typeof checklistKeys)[number], string>> = {
-  hours: "/configuracoes/agenda",
-  resource: "/configuracoes/recursos",
-  pricedOffer: "/catalogo/produtos",
-}
 
 export function FirstStepsPage() {
   const { t } = useTranslation()
@@ -42,12 +36,12 @@ export function FirstStepsPage() {
       {error ? <p role="alert" className="text-sm text-destructive">{t("assets.inventory.errors.loadFailed")}</p> : null}
       {status === null && !error ? <p role="status">{t("common.loading")}</p> : null}
       {status ? <section className="space-y-3 rounded-xl border border-border bg-card p-4" aria-label={t("assistant.firstSteps.title")}>
-        {checklistKeys.map((key) => {
+        {FIRST_STEP_KEYS.map((key) => {
           const apiKey = key === "previewItem" ? "preview" : key
           const state = byKey.get(apiKey) ?? "missing"
-          const href = continueHref[key]
-          return (
-            <div key={key} className="flex flex-col gap-3 border-b border-border py-3 last:border-b-0 sm:flex-row sm:items-start sm:justify-between">
+          const href = FIRST_STEP_HREF[key]
+          const content = (
+            <>
               <div className="min-w-0 space-y-1">
                 <div className="flex flex-wrap items-center gap-2">
                   <h2 className="text-sm font-medium">{t(`assistant.firstSteps.${key}`)}</h2>
@@ -55,12 +49,14 @@ export function FirstStepsPage() {
                 </div>
                 <p className="text-sm text-muted-foreground">{t(`assistant.firstSteps.detail.${key}`)}</p>
               </div>
-              {href && state !== "published" ? (
-                <Button nativeButton={false} variant="outline" className="min-h-11" render={<Link to={href} />}>
-                  {t("cadastro.next")}
-                </Button>
-              ) : null}
-            </div>
+              {href ? <ChevronRight className="size-4 shrink-0 text-muted-foreground" aria-hidden="true" /> : null}
+            </>
+          )
+          const rowClass = "flex items-start justify-between gap-3 border-b border-border py-3 last:border-b-0"
+          return href ? (
+            <Link key={key} to={href} className={`${rowClass} min-h-11 rounded-md hover:bg-muted/50`}>{content}</Link>
+          ) : (
+            <div key={key} className={rowClass}>{content}</div>
           )
         })}
       </section> : null}

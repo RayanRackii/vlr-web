@@ -148,4 +148,52 @@ describe("TodayAgendaCard", () => {
       vi.useRealTimers()
     }
   })
+
+  it("links each row to the agenda filtered to that resource", async () => {
+    vi.mocked(listCatalogResourceAgenda).mockResolvedValue({
+      resources: [{ id: "r1", name: "Palco A", category: null }, { id: "r2", name: "Som B", category: null }],
+      items: [],
+    })
+    renderCard(["rentals.schedule.read"])
+    expect((await screen.findByText("Palco A")).closest("a")).toHaveAttribute("href", "/agendas/recursos?recursos=r1")
+    expect(screen.getByText("Som B").closest("a")).toHaveAttribute("href", "/agendas/recursos?recursos=r2")
+  })
+
+  it("links product rows to the agenda filtered to that product", async () => {
+    vi.mocked(listCatalogProductAgenda).mockResolvedValue([
+      item({ orderId: "o9", productId: "p9", productName: "Coffee break", allocationStatus: "Scheduled", workStart: "2999-01-01T09:00:00.000Z" }),
+    ])
+    renderCard(["catalog.orders.read"])
+    expect((await screen.findByText("Coffee break")).closest("a")).toHaveAttribute("href", "/agendas/produto?produto=p9")
+  })
+
+  it("shows a human delay and links an overdue row to its order", async () => {
+    vi.useFakeTimers({ toFake: ["Date"], now: new Date("2026-11-03T15:00:00Z") })
+    try {
+      vi.mocked(listCatalogResourceAgenda).mockResolvedValue({
+        resources: [{ id: "r1", name: "Palco A", category: null }],
+        items: [item({ orderId: "ord-30", rentalAssetId: "r1", displayNumber: "#30", allocationStatus: "Scheduled", workStart: "2026-11-01T15:00:00Z", workEnd: "2026-11-01T17:00:00Z" })],
+      })
+      renderCard(["rentals.schedule.read", "catalog.orders.read"])
+      const sub = await screen.findByText("Início do Pedido #30 · atrasado há 2 dias")
+      expect(sub.closest("a")).toHaveAttribute("href", "/pedidos/ord-30")
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
+  it("keeps the resource link for an overdue row when orders cannot be read", async () => {
+    vi.useFakeTimers({ toFake: ["Date"], now: new Date("2026-11-03T15:00:00Z") })
+    try {
+      vi.mocked(listCatalogResourceAgenda).mockResolvedValue({
+        resources: [{ id: "r1", name: "Palco A", category: null }],
+        items: [item({ orderId: "ord-30", rentalAssetId: "r1", displayNumber: "#30", allocationStatus: "Scheduled", workStart: "2026-11-03T14:20:00Z", workEnd: "2026-11-03T14:50:00Z" })],
+      })
+      renderCard(["rentals.schedule.read"])
+      const sub = await screen.findByText("Início do Pedido #30 · atrasado há 40 min")
+      expect(sub.closest("a")).toHaveAttribute("href", "/agendas/recursos?recursos=r1")
+    } finally {
+      vi.useRealTimers()
+    }
+  })
 })
