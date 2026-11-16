@@ -206,6 +206,15 @@ it("shows the row menu for an open order and cancels it, reloading the data", as
   await waitFor(() => expect(toast.success).toHaveBeenCalledWith(i18n.t("workOrders.cancel.success")))
   await waitFor(() => expect(vi.mocked(getWorkOrders).mock.calls.length).toBeGreaterThan(callsBefore))
 })
+it("shows the OS number in the Agenda and Ordens rows", async () => {
+  vi.mocked(getWorkOrders).mockResolvedValue([makeWorkOrder({ number: 12, scheduledDate: addCivilDays(today, 20) })])
+  const { unmount } = mount()
+  const upcoming = (await screen.findAllByRole("table"))[1]
+  expect(within(upcoming).getByText("OS #12")).toBeInTheDocument()
+  unmount()
+  mount(all, "/manutencao?aba=ordens")
+  expect(await screen.findAllByText("OS #12")).not.toHaveLength(0)
+})
 it("shows the same menu in the Ordens tab", async () => {
   mount(all, "/manutencao?aba=ordens")
   expect(await screen.findAllByRole("button", { name: i18n.t("workOrders.cancel.menu", { name: "Split sala 1" }) })).not.toHaveLength(0)

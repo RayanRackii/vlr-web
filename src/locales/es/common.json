@@ -3155,6 +3155,10 @@
         "title": "Tasa de conclusión",
         "subtitle": "Completadas sobre el total del mes"
       },
+      "openDueWorkOrders": {
+        "title": "OT abiertas hasta hoy",
+        "subtitle": "Pendientes y en curso con fecha hasta hoy"
+      },
       "pendingWorkOrders": {
         "title": "OT pendientes",
         "subtitle": "Esperando inicio de ejecución"
@@ -4295,9 +4299,10 @@
       "redirecting": "OT creada"
     },
     "execution": {
-      "breadcrumb": "OT {{id}} · {{asset}}",
+      "breadcrumb": "{{title}}",
+      "numberPrefix": "OT",
       "title": "Ejecución de OT",
-      "subtitle": "{{tag}} · OT {{code}}",
+      "subtitle": "{{tag}} · {{code}}",
       "details": "Detalles de la OT",
       "loading": "Cargando OT...",
       "back": "Volver a la lista",

@@ -3155,6 +3155,10 @@
         "title": "Taxa de conclusão",
         "subtitle": "Concluídas sobre o total do mês"
       },
+      "openDueWorkOrders": {
+        "title": "OS em aberto até hoje",
+        "subtitle": "Pendentes e em andamento com data até hoje"
+      },
       "pendingWorkOrders": {
         "title": "OS pendentes",
         "subtitle": "Aguardando início de execução"
@@ -4295,9 +4299,10 @@
       "redirecting": "OS criada"
     },
     "execution": {
-      "breadcrumb": "OS {{id}} · {{asset}}",
+      "breadcrumb": "{{title}}",
+      "numberPrefix": "OS",
       "title": "Execução da OS",
-      "subtitle": "{{tag}} · OS {{code}}",
+      "subtitle": "{{tag}} · {{code}}",
       "details": "Detalhes da OS",
       "loading": "Carregando OS...",
       "back": "Voltar para lista",

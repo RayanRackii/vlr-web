@@ -10,6 +10,8 @@ export type AgendaRow = {
   kind: "order" | "need"
   /** Work order id for "order" rows, null for "need" rows. */
   orderId: string | null
+  /** Sequential OS number for "order" rows (null when absent). */
+  orderNumber?: number | null
   section: AgendaSection
   assetId: string
   assetName: string
@@ -63,7 +65,7 @@ export function buildAgendaRows(
   today: string,
 ): AgendaRow[] {
   const rows: AgendaRow[] = orders.filter(order => !CLOSED.includes(order.status)).map(order => ({
-    id: `order-${order.id}`, kind: "order", orderId: order.id, section: sectionFor(order.scheduledDate, today),
+    id: `order-${order.id}`, kind: "order", orderId: order.id, orderNumber: order.number ?? null, section: sectionFor(order.scheduledDate, today),
     assetId: order.assetId, assetName: order.asset.name, assetTag: order.asset.tag,
     planId: order.maintenancePlanId ?? null, planName: order.sourcePlanName ?? null,
     technician: order.assignedUser?.fullName ?? null, assignedUserId: order.assignedUserId ?? order.assignedUser?.id ?? null,

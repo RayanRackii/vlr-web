@@ -27,8 +27,8 @@ import "./maintenance.css"
 const SECTIONS: AgendaSection[] = ["overdue", "week", "upcoming"]
 const ORDER_TONE: Record<string, StatusTone> = { Pending: "info", Scheduled: "info", InProgress: "progress", Completed: "success", Canceled: "neutral" }
 
-function Equipment({ name, tag, to }: { name: string; tag: string; to?: string }) {
-  const body = <><span className="font-medium">{name}</span> <span className="text-xs text-muted-foreground">{tag}</span></>
+function Equipment({ name, tag, to, orderLabel }: { name: string; tag: string; to?: string; orderLabel?: string }) {
+  const body = <>{orderLabel ? <span className="text-xs font-semibold tabular-nums text-muted-foreground">{orderLabel}</span> : null}<span className="font-medium">{name}</span> <span className="text-xs text-muted-foreground">{tag}</span></>
   return to ? <Link to={to} className="inline-flex min-h-11 items-center gap-1.5 rounded-sm hover:underline">{body}</Link> : <span className="inline-flex items-center gap-1.5">{body}</span>
 }
 
@@ -97,8 +97,11 @@ export function MaintenancePage() {
   }
   const generateLink = (row: AgendaRow) => row.kind === "need" && data.access.createOrder ? <Button variant="outline" render={<Link to={`/manutencao/ordens/nova?plano=${row.planId}`} />}>{t("maintenance.generate")}</Button> : null
   const agendaAction = (row: AgendaRow) => row.kind === "need" ? generateLink(row) : rowMenu(row.orderId ? ordersById.get(row.orderId) : undefined)
+  const numberLabel = (value?: number | null) => value != null ? `${t("workOrders.execution.numberPrefix")} #${value}` : undefined
+  const orderLabel = (order: WorkOrder) => numberLabel(order.number)
+  const agendaOrderLabel = (row: AgendaRow) => row.kind === "order" ? numberLabel(row.orderNumber) : undefined
   const agendaColumns: DataListColumn<AgendaRow>[] = [
-    { id: "equipment", header: t("maintenance.columns.equipment"), cell: row => <Equipment name={row.assetName} tag={row.assetTag} to={row.to} /> },
+    { id: "equipment", header: t("maintenance.columns.equipment"), cell: row => <Equipment name={row.assetName} tag={row.assetTag} to={row.to} orderLabel={agendaOrderLabel(row)} /> },
     { id: "plan", header: t("maintenance.columns.plan"), cell: row => row.planName ?? "—", hideBelow: "lg" },
     { id: "technician", header: t("maintenance.columns.technician"), cell: row => row.kind === "need" ? "—" : row.technician ?? <span className="text-muted-foreground">{t("maintenance.noTechnician")}</span>, hideBelow: "lg" },
     { id: "date", header: t("maintenance.columns.date"), cell: row => <span className="flex flex-wrap items-center gap-2">{date(row.date)}{overdueBadge(row)}</span> },
@@ -106,7 +109,7 @@ export function MaintenancePage() {
     { id: "action", header: <span className="sr-only">{t("maintenance.columns.action")}</span>, align: "end", cell: agendaAction },
   ]
   const agendaCard = (row: AgendaRow) => <div className="space-y-2 text-sm">
-    <Equipment name={row.assetName} tag={row.assetTag} to={row.to} />
+    <Equipment name={row.assetName} tag={row.assetTag} to={row.to} orderLabel={agendaOrderLabel(row)} />
     {row.planName && <p className="text-muted-foreground">{row.planName}</p>}
     <p className="text-muted-foreground">{row.kind === "need" ? t("maintenance.needsOrder") : row.technician ?? t("maintenance.noTechnician")}</p>
     <div className="flex flex-wrap items-center gap-2">{date(row.date)}{overdueBadge(row)}
@@ -117,7 +120,7 @@ export function MaintenancePage() {
   const orderRows = data.orders.filter(order => (!chip || order.status === chip) && matches(order.asset.name, order.asset.tag, order.sourcePlanName, order.assignedUser?.fullName)).sort((a, b) => a.scheduledDate.localeCompare(b.scheduledDate))
   const orderBadge = (order: WorkOrder) => <StatusBadge tone={ORDER_TONE[order.status] ?? "neutral"}>{t(`workOrders.status.${order.status}`)}</StatusBadge>
   const orderColumns: DataListColumn<WorkOrder>[] = [
-    { id: "equipment", header: t("maintenance.columns.equipment"), cell: order => <Equipment name={order.asset.name} tag={order.asset.tag} to={`/os/${order.id}`} /> },
+    { id: "equipment", header: t("maintenance.columns.equipment"), cell: order => <Equipment name={order.asset.name} tag={order.asset.tag} to={`/os/${order.id}`} orderLabel={orderLabel(order)} /> },
     { id: "plan", header: t("maintenance.columns.plan"), cell: order => order.sourcePlanName ?? "—", hideBelow: "lg" },
     { id: "technician", header: t("maintenance.columns.technician"), cell: order => order.assignedUser?.fullName ?? <span className="text-muted-foreground">{t("maintenance.noTechnician")}</span> },
     { id: "date", header: t("maintenance.columns.date"), cell: order => date(order.scheduledDate) },
@@ -160,7 +163,7 @@ export function MaintenancePage() {
           columns={agendaColumns} rows={agendaFiltered.filter(row => row.section === section)} getRowId={row => row.id} renderCard={agendaCard} empty={emptyBase} onRowClick={row => void navigate(row.to)} />)}</div>
   } else if (tab === "ordens") {
     body = <DataList<WorkOrder> label={t("maintenance.tabs.ordens")} columns={orderColumns} rows={orderRows} getRowId={order => order.id} onRowClick={order => void navigate(`/os/${order.id}`)}
-      renderCard={order => <div className="space-y-2 text-sm"><Equipment name={order.asset.name} tag={order.asset.tag} to={`/os/${order.id}`} /><p className="text-muted-foreground">{order.assignedUser?.fullName ?? t("maintenance.noTechnician")}</p><div className="flex flex-wrap items-center gap-2">{date(order.scheduledDate)}{orderBadge(order)}</div>{rowMenu(order)}</div>}
+      renderCard={order => <div className="space-y-2 text-sm"><Equipment name={order.asset.name} tag={order.asset.tag} to={`/os/${order.id}`} orderLabel={orderLabel(order)} /><p className="text-muted-foreground">{order.assignedUser?.fullName ?? t("maintenance.noTechnician")}</p><div className="flex flex-wrap items-center gap-2">{date(order.scheduledDate)}{orderBadge(order)}</div>{rowMenu(order)}</div>}
       empty={{ ...emptyBase, action: emptyAction }} {...common} />
   } else {
     body = <DataList<MaintenancePlan> label={t("maintenance.tabs.planos")} columns={planColumns} rows={planRows} getRowId={plan => plan.id}

@@ -33,6 +33,8 @@ export const workOrderMetricsSchema = z.object({
   inProgress: z.number().int().nonnegative(),
   completed: z.number().int().nonnegative(),
   canceled: z.number().int().nonnegative(),
+  /** Pending + InProgress with scheduled date <= tenant today; absent on older APIs. */
+  openDue: z.number().int().nonnegative().optional(),
 })
 
 export type WorkOrderMetrics = z.infer<typeof workOrderMetricsSchema>

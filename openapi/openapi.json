@@ -8289,6 +8289,10 @@
             "format": "int32",
             "type": "integer"
           },
+          "openDue": {
+            "format": "int32",
+            "type": "integer"
+          },
           "pending": {
             "format": "int32",
             "type": "integer"
@@ -8339,6 +8343,10 @@
           "notes": {
             "nullable": true,
             "type": "string"
+          },
+          "number": {
+            "format": "int32",
+            "type": "integer"
           },
           "scheduledDate": {
             "format": "date",

@@ -86,6 +86,8 @@ export type WorkOrderTask = z.infer<typeof workOrderTaskSchema>
 
 export const workOrderSchema = z.object({
   id: z.string().uuid(),
+  /** Sequential per-tenant OS number; absent on older payloads. */
+  number: z.number().int().positive().nullish(),
   tenantId: z.string().uuid(),
   assetId: z.string().uuid(),
   maintenancePlanId: z.string().uuid().nullish(),
