@@ -251,6 +251,7 @@
     "seedTemplates": "Could not create the default grid.",
     "updateSchedulePolicy": "Could not update the schedule policy.",
     "applyDailyOccurrence": "Could not update this day’s time slot.",
+    "upsertSlot": "Could not save the time slot.",
     "applyWeeklyRule": "Could not apply the weekly rule.",
     "noBookableKind": "No bookable occupancy kind found. Create an Open kind first.",
     "register": "Could not complete registration.",
@@ -6097,7 +6098,7 @@
     "chooseProduct": "Choose a product to view its agenda.",
     "newReservation": "New reservation",
     "block": {
-      "description": "Blocks a time range on the resource so nobody can book it.",
+      "description": "Slots that overlap the period are blocked whole. If the resource has no slots in it, the period is blocked exactly as entered.",
       "resource": "Resource",
       "resourcePlaceholder": "Choose a resource",
       "date": "Date",

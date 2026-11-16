@@ -564,7 +564,7 @@ export async function upsertSlot(body: {
     return parsed.data
   } catch (error) {
     throw new Error(
-      parseApiError(getAxiosErrorPayload(error), i18n.t("apiErrors.applyDailyOccurrence")),
+      parseApiError(getAxiosErrorPayload(error), i18n.t("apiErrors.upsertSlot")),
       { cause: error },
     )
   }

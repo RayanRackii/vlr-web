@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react"
+import { useMemo, useRef, useState } from "react"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { tenantKey } from "@/lib/queryKeys"
 import { usePermissions } from "@/features/users/permissions/PermissionContext"
 import { agendaQueries } from "./agendaQueries"
-import { blockingKinds, blockPeriod, type BlockPeriodResult } from "./blockPeriod"
+import { blockingKinds, blockPeriod, endMinutes, minutes, type BlockPeriodResult } from "./blockPeriod"
 
 export type BlockPeriodPrefill = {
   resourceId?: string | null
@@ -67,15 +67,17 @@ function BlockPeriodForm({ onOpenChange, resources, prefill, tenantId, onBlocked
   const kindId = pickedKind || (options.length === 1 ? options[0].id : "")
   const [note, setNote] = useState("")
   const [busy, setBusy] = useState(false)
+  const submitting = useRef(false)
   const [result, setResult] = useState<BlockPeriodResult | null>(null)
   const [error, setError] = useState<string | null>(null)
 
-  const valid = resourceId !== "" && date !== "" && start !== "" && end !== "" && end > start && kindId !== ""
+  const valid = resourceId !== "" && date !== "" && start !== "" && end !== "" && endMinutes(end) > minutes(start) && kindId !== ""
   const resourceItems = resources.map((resource) => ({ value: resource.id, label: resource.name }))
   const kindItems = options.map((kind) => ({ value: kind.id, label: kind.label }))
 
   async function submit() {
-    if (!valid || busy) return
+    if (!valid || busy || submitting.current) return
+    submitting.current = true
     setBusy(true)
     setError(null)
     try {
@@ -93,6 +95,7 @@ function BlockPeriodForm({ onOpenChange, resources, prefill, tenantId, onBlocked
     } catch (cause) {
       setError(cause instanceof Error && cause.message ? cause.message : t("agendas.block.error"))
     } finally {
+      submitting.current = false
       setBusy(false)
     }
   }
@@ -106,7 +109,7 @@ function BlockPeriodForm({ onOpenChange, resources, prefill, tenantId, onBlocked
         {result ? (
           <>
             <div className="space-y-2 text-sm" role="status">
-              <p>{t("agendas.block.success", { count: result.blocked })}</p>
+              {result.blocked > 0 && <p>{t("agendas.block.success", { count: result.blocked })}</p>}
               {result.skipped.length > 0 && <p>{t("agendas.block.skipped", { count: result.skipped.length, ranges: result.skipped.join(", ") })}</p>}
               {result.failed.length > 0 && <p className="text-destructive">{t("agendas.block.failed", { ranges: result.failed.map((item) => item.range).join(", ") })}</p>}
             </div>
@@ -135,7 +138,7 @@ function BlockPeriodForm({ onOpenChange, resources, prefill, tenantId, onBlocked
                 <Input id="block-end" type="time" value={end} onChange={(event) => setEnd(event.target.value)} />
               </div>
             </div>
-            {start !== "" && end !== "" && end <= start && <p className="text-xs text-destructive">{t("agendas.block.endAfterStart")}</p>}
+            {start !== "" && end !== "" && endMinutes(end) <= minutes(start) && <p className="text-xs text-destructive">{t("agendas.block.endAfterStart")}</p>}
             <div className="space-y-1.5">
               <Label htmlFor="block-kind">{t("agendas.block.reason")}</Label>
               <Select modal={false} value={kindId} onValueChange={(value) => { if (typeof value === "string") setKindId(value) }} items={kindItems}>

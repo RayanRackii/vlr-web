@@ -72,6 +72,21 @@ describe("BlockPeriodDialog", () => {
     expect(onOpenChange).not.toHaveBeenCalled()
   })
 
+  it("hides the zero count when everything in range was already booked", async () => {
+    vi.mocked(blockPeriod).mockResolvedValue({ blocked: 0, skipped: ["15:00–16:00"], failed: [] })
+    setup()
+    await waitFor(() => expect(screen.getByRole("combobox", { name: "Motivo" })).toHaveTextContent("Fechado"))
+    await userEvent.click(screen.getByRole("button", { name: "Bloquear" }))
+    expect(await screen.findByText("1 já reservado não foi bloqueado: 15:00–16:00.")).toBeInTheDocument()
+    expect(screen.queryByText(/0 horários/)).not.toBeInTheDocument()
+  })
+
+  it("accepts an end at midnight", async () => {
+    setup({ resourceId: "r1", date: "2026-11-10", start: "22:00", end: "00:00" })
+    await waitFor(() => expect(screen.getByRole("combobox", { name: "Motivo" })).toHaveTextContent("Fechado"))
+    expect(screen.getByRole("button", { name: "Bloquear" })).toBeEnabled()
+  })
+
   it("renders nothing without rentals.schedule.write", () => {
     access(["rentals.schedule.read"])
     setup()

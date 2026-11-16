@@ -251,6 +251,7 @@
     "seedTemplates": "No se pudo crear la grilla estándar.",
     "updateSchedulePolicy": "No se pudo actualizar la política de escala.",
     "applyDailyOccurrence": "No se pudo actualizar el horario de este día.",
+    "upsertSlot": "No se pudo guardar el horario.",
     "applyWeeklyRule": "No se pudo aplicar la regla semanal.",
     "noBookableKind": "No hay tipo reservable. Cree un tipo Abierto primero.",
     "register": "No se pudo completar el registro.",
@@ -6097,7 +6098,7 @@
     "chooseProduct": "Elige un producto para consultar su agenda.",
     "newReservation": "Nueva reserva",
     "block": {
-      "description": "Bloquea un horario del recurso para que nadie lo reserve.",
+      "description": "Los horarios que cruzan el período se bloquean completos. Si el recurso no tiene horarios en él, el período se bloquea exactamente como se indicó.",
       "resource": "Recurso",
       "resourcePlaceholder": "Elige un recurso",
       "date": "Fecha",

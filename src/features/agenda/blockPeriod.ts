@@ -20,10 +20,14 @@ export type BlockPeriodResult = {
   failed: { range: string; message: string }[]
 }
 
-const minutes = (time: string) => {
+/** Minutes from midnight; accepts "HH:mm", "HH:mm:ss" and "24:00". */
+export const minutes = (time: string) => {
   const [hour = 0, minute = 0] = time.split(":").map(Number)
   return hour * 60 + minute
 }
+/** A slot or range that ends at midnight is stored as 00:00:00 (or 24:00:00): that is the end of the day, not 0. */
+export const endMinutes = (time: string) => minutes(time) || 24 * 60
+const slotEnd = (slot: Pick<AdminDaySlot, "endTime">) => endMinutes(slot.endTime)
 const clock = (time: string) => time.slice(0, 5)
 const rangeLabel = (slot: Pick<AdminDaySlot, "startTime" | "endTime">) => `${clock(slot.startTime)}–${clock(slot.endTime)}`
 
@@ -41,16 +45,16 @@ const isBooked = (slot: AdminDaySlot) => slot.status === "Booked" || Boolean(slo
  */
 export async function blockPeriod(input: BlockPeriodInput): Promise<BlockPeriodResult> {
   const from = minutes(input.start)
-  const to = minutes(input.end)
+  const to = endMinutes(input.end)
   const note = input.note.trim() || null
   const day = await fetchAdminScheduleDay(input.date, [input.rentalAssetId])
   const overlapping = day.slots
-    .filter((slot) => slot.rentalAssetId === input.rentalAssetId && minutes(slot.startTime) < to && minutes(slot.endTime) > from)
+    .filter((slot) => slot.rentalAssetId === input.rentalAssetId && minutes(slot.startTime) < to && slotEnd(slot) > from)
     .sort((a, b) => minutes(a.startTime) - minutes(b.startTime))
   const result: BlockPeriodResult = { blocked: 0, skipped: [], failed: [] }
 
   if (overlapping.length === 0) {
-    await upsertSlot({ rentalAssetId: input.rentalAssetId, date: input.date, startTime: input.start, endTime: input.end, occupancyKindId: input.kindId, label: note })
+    await upsertSlot({ rentalAssetId: input.rentalAssetId, date: input.date, startTime: input.start, endTime: to === 24 * 60 ? "00:00" : input.end, occupancyKindId: input.kindId, label: note })
     result.blocked = 1
     return result
   }
