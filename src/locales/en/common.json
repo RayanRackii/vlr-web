@@ -1100,9 +1100,13 @@
 
       "rowMenu": "Actions for {{name}}",
 
-      "menuAccess": "Access",
+      "menuAccess": "Manage access",
 
-      "menuContinue": "Continue setup",
+      "menuContinue": "Complete setup",
+      "menuEdit": "Edit product",
+      "menuActivate": "Activate product",
+      "menuDeactivate": "Deactivate product",
+      "menuActivateHint": "Complete setup to activate",
 
       "statusIncomplete": "Setup incomplete · {{count}} missing",
 

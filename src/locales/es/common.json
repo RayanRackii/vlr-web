@@ -1100,9 +1100,13 @@
 
       "rowMenu": "Acciones de {{name}}",
 
-      "menuAccess": "Acceso",
+      "menuAccess": "Gestionar acceso",
 
-      "menuContinue": "Continuar configuración",
+      "menuContinue": "Completar registro",
+      "menuEdit": "Editar producto",
+      "menuActivate": "Activar producto",
+      "menuDeactivate": "Desactivar producto",
+      "menuActivateHint": "Completa el registro para activar",
 
       "statusIncomplete": "Configuración incompleta · faltan {{count}}",
 
