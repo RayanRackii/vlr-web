@@ -8,14 +8,14 @@ import { basePlanJson } from "@/features/pmoc/test/pmocFixtures"
 import type { MaintenancePlanCoverage } from "@/features/pmoc/schemas/coverageSchemas"
 import { makeWorkOrder } from "@/features/workOrders/test/workOrderFixtures"
 import { getPlanCoverage, getPlans } from "@/features/pmoc/services/pmocService"
-import { generateWorkOrderFromPlan, getWorkOrders } from "@/features/workOrders/services/workOrdersService"
+import { cancelWorkOrder, generateWorkOrderFromPlan, getWorkOrders } from "@/features/workOrders/services/workOrdersService"
 import { tenantTodayIsoDate } from "@/lib/tenantTimeZone"
 import { MaintenancePage } from "./MaintenancePage"
 import { addCivilDays } from "./agendaModel"
 import i18n from "@/lib/i18n"
 vi.mock("sonner", () => ({ toast: { success: vi.fn(), error: vi.fn() } }))
 vi.mock("@/features/pmoc/services/pmocService", () => ({ getPlans: vi.fn(), getPlanCoverage: vi.fn() }))
-vi.mock("@/features/workOrders/services/workOrdersService", async importOriginal => ({ ...await importOriginal<typeof import("@/features/workOrders/services/workOrdersService")>(), getWorkOrders: vi.fn(), generateWorkOrderFromPlan: vi.fn() }))
+vi.mock("@/features/workOrders/services/workOrdersService", async importOriginal => ({ ...await importOriginal<typeof import("@/features/workOrders/services/workOrdersService")>(), getWorkOrders: vi.fn(), generateWorkOrderFromPlan: vi.fn(), cancelWorkOrder: vi.fn() }))
 const all = ["pmoc.plans.read", "pmoc.templates.read", "pmoc.plans.write", "os.work_orders.read", "os.work_orders.create"]
 const USER_ID = "77777777-7777-4777-8777-777777777777"
 const today = tenantTodayIsoDate("America/Sao_Paulo")
@@ -190,4 +190,49 @@ it("supports keyboard navigation between URL tabs", async () => {
   agendaTab.focus(); await userEvent.keyboard("{End}")
   await waitFor(() => expect(screen.getByTestId("location")).toHaveTextContent("aba=planos"))
   expect(screen.getByRole("tab", { name: i18n.t("maintenance.tabs.planos") })).toHaveFocus()
+})
+const OTHER_USER_ID = "66666666-6666-4666-8666-666666666666"
+const cancelLabel = () => i18n.t("workOrders.cancel.action")
+it("shows the row menu for an open order and cancels it, reloading the data", async () => {
+  const user = userEvent.setup(); mount()
+  const menu = (await screen.findAllByRole("button", { name: i18n.t("workOrders.cancel.menu", { name: "Split sala 1" }) }))[0]
+  await user.click(menu)
+  expect(await screen.findByRole("menuitem", { name: i18n.t("workOrders.cancel.open") })).toHaveAttribute("href", "/os/99999999-9999-4999-8999-999999999999")
+  vi.mocked(cancelWorkOrder).mockResolvedValue(makeWorkOrder({ status: "Canceled" }))
+  const callsBefore = vi.mocked(getWorkOrders).mock.calls.length
+  await user.click(screen.getByRole("menuitem", { name: cancelLabel() }))
+  await user.click(within(await screen.findByRole("alertdialog")).getByRole("button", { name: cancelLabel() }))
+  await waitFor(() => expect(cancelWorkOrder).toHaveBeenCalledWith("99999999-9999-4999-8999-999999999999"))
+  await waitFor(() => expect(toast.success).toHaveBeenCalledWith(i18n.t("workOrders.cancel.success")))
+  await waitFor(() => expect(vi.mocked(getWorkOrders).mock.calls.length).toBeGreaterThan(callsBefore))
+})
+it("shows the same menu in the Ordens tab", async () => {
+  mount(all, "/manutencao?aba=ordens")
+  expect(await screen.findAllByRole("button", { name: i18n.t("workOrders.cancel.menu", { name: "Split sala 1" }) })).not.toHaveLength(0)
+})
+it("hides the menu for Completed and Canceled orders", async () => {
+  vi.mocked(getWorkOrders).mockResolvedValue([makeWorkOrder({ status: "Completed" }), makeWorkOrder({ id: "88888888-8888-4888-8888-888888888881", status: "Canceled" })])
+  mount(all, "/manutencao?aba=ordens")
+  await screen.findAllByText("Split sala 1")
+  expect(screen.queryByRole("button", { name: /Split sala 1/ })).not.toBeInTheDocument()
+})
+it("lets an execute-only user cancel only orders assigned to them", async () => {
+  const execute = ["pmoc.plans.read", "os.work_orders.read", "os.work_orders.execute"]
+  vi.mocked(getWorkOrders).mockResolvedValue([
+    makeWorkOrder({ assignedUserId: OTHER_USER_ID, scheduledDate: addCivilDays(today, 20) }),
+  ])
+  mount(execute, "/manutencao?aba=ordens")
+  await screen.findAllByText("Split sala 1")
+  expect(screen.queryByRole("button", { name: i18n.t("workOrders.cancel.menu", { name: "Split sala 1" }) })).not.toBeInTheDocument()
+})
+it("shows the menu to an execute-only user on their own order", async () => {
+  const execute = ["pmoc.plans.read", "os.work_orders.read", "os.work_orders.execute"]
+  vi.mocked(getWorkOrders).mockResolvedValue([makeWorkOrder({ assignedUserId: USER_ID, scheduledDate: addCivilDays(today, 20) })])
+  mount(execute, "/manutencao?aba=ordens")
+  expect(await screen.findAllByRole("button", { name: i18n.t("workOrders.cancel.menu", { name: "Split sala 1" }) })).not.toHaveLength(0)
+})
+it("opens the OS when a plain cell of an Ordens row is clicked", async () => {
+  const user = userEvent.setup(); mount(all, "/manutencao?aba=ordens")
+  await user.click(within(await screen.findByRole("table")).getByText(i18n.t("maintenance.noTechnician")))
+  expect(screen.getByTestId("location")).toHaveTextContent("/os/99999999-9999-4999-8999-999999999999")
 })

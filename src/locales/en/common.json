@@ -4173,6 +4173,15 @@
     }
   },
   "workOrders": {
+    "cancel": {
+      "action": "Cancel work order",
+      "title": "Cancel this work order?",
+      "description": "It stays in the history as canceled, and the equipment shows as \"Needs work order\" in the plan again.",
+      "back": "Back",
+      "success": "Work order canceled",
+      "open": "Open work order",
+      "menu": "Actions for {{name}} work order"
+    },
     "viewOpen": "View open work orders",
     "title": "Work Orders",
     "description": "Run field checklists and track each work order status.",
@@ -4327,6 +4336,8 @@
       "loadOneFailed": "Could not load the work order.",
       "invalidResponse": "Invalid API response.",
       "updateTaskFailed": "Could not save the task response.",
+      "cancelFailed": "Could not cancel the work order.",
+      "cancelNotAllowed": "This work order can no longer be canceled.",
       "updateStatusFailed": "Could not update the work order status.",
       "mandatoryTasksIncomplete": "Mandatory tasks are still incomplete.",
       "mandatoryTasksIncompleteList": "Mandatory tasks are still incomplete: {{tasks}}",
