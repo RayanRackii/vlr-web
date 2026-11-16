@@ -357,6 +357,20 @@ describe("CatalogProductsPage validity gate", () => {
     expect(screen.queryByRole("menuitem", { name: new RegExp(i18n.t("catalog.products.menuActivate")) })).not.toBeInTheDocument()
   })
 
+  it("Gerenciar acesso navigates to the access path; the trigger alone does not navigate", async () => {
+    listProductsMock.mockResolvedValue([PRODUCT])
+    const user = userEvent.setup()
+    renderPage()
+    const table = await screen.findByRole("table")
+    await user.click(await within(table).findByRole("button", { name: i18n.t("catalog.products.rowMenu", { name: PRODUCT.name }) }))
+    const item = await screen.findByRole("menuitem", { name: i18n.t("catalog.products.menuAccess") })
+    expect(screen.getByTestId("location")).toHaveTextContent(/^\/$/)
+    await user.click(item)
+    await waitFor(() => expect(screen.getByTestId("location")).toHaveTextContent(`/catalogo/produtos/${PRODUCT.id}`))
+    expect(screen.getByTestId("search")).toHaveTextContent("?aba=access")
+    expect(productEditorPath(PRODUCT.id, "access")).toBe(`/catalogo/produtos/${PRODUCT.id}?aba=access`)
+  })
+
   it("opens the editor when the row is clicked", async () => {
     listProductsMock.mockResolvedValue([PRODUCT])
     const user = userEvent.setup()

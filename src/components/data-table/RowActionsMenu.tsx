@@ -34,8 +34,8 @@ export type RowActionsMenuProps = {
 
 const TONE_CLASS = {
   default: "",
-  primary: "bg-primary/10 text-primary focus:bg-primary/15 focus:text-primary",
-  danger: "text-destructive focus:bg-destructive/10 focus:text-destructive",
+  primary: "bg-primary/10 text-primary focus:bg-primary/20 focus:text-primary focus:**:!text-primary",
+  danger: "text-destructive focus:bg-destructive/10 focus:text-destructive focus:**:!text-destructive",
 } as const
 
 /** Shared "⋯" row menu: bordered square trigger, rounded panel, icon + label items. */
@@ -78,7 +78,7 @@ export function RowActionsMenu({ items, label, busy }: RowActionsMenuProps) {
                 />
                 <span className="flex min-w-0 flex-col">
                   <span className="text-sm">{item.label}</span>
-                  {item.hint ? <span className="text-xs text-muted-foreground">{item.hint}</span> : null}
+                  {item.hint ? <span className="text-xs !text-muted-foreground">{item.hint}</span> : null}
                 </span>
               </DropdownMenuItem>
             </Fragment>
