@@ -1,6 +1,6 @@
 import { z } from "zod"
 
-import { api, getAxiosErrorPayload, parseApiError } from "@/lib/api"
+import { api, getAxiosErrorPayload, isAxiosError, parseApiError } from "@/lib/api"
 import {
   formatLocaleCurrency,
   formatLocaleDateTimeRange,
@@ -196,4 +196,64 @@ export function formatReservationRange(
 /** Rentals amounts have no currency on the API; callers pass the tenant currency. */
 export function formatMoney(amount: number, currency = "BRL"): string {
   return formatLocaleCurrency(amount, currency, i18n.language)
+}
+
+export type CreateStaffReservationInput = {
+  /** Exactly one of `customerId` / `newCustomer`. */
+  customerId?: string
+  newCustomer?: { name: string; whatsApp: string; email?: string }
+  /** The API infers the unit from the first item's asset when omitted. */
+  unitId?: string
+  /** yyyy-MM-dd */
+  date: string
+  endDate?: string
+  /** "HH:mm" */
+  startTime: string
+  /** "HH:mm" */
+  endTime: string
+  items: { assetId: string; quantity?: number }[]
+  awaitingDeposit: boolean
+}
+
+/** Failure of POST /api/reservations/staff, with the API code when it sent one. */
+export class StaffReservationError extends Error {
+  constructor(
+    message: string,
+    readonly code: string | null,
+    readonly status: number | null,
+    readonly customerId: string | null,
+  ) {
+    super(message)
+    this.name = "StaffReservationError"
+  }
+}
+
+const staffErrorSchema = z.object({
+  code: z.string().optional(),
+  customerId: z.string().uuid().optional(),
+})
+
+export async function createStaffReservation(
+  input: CreateStaffReservationInput,
+): Promise<AdminReservation> {
+  try {
+    const response = await api.post("/api/reservations/staff", input)
+    const parsed = reservationSchema.safeParse(response.data)
+    if (!parsed.success) {
+      throw new StaffReservationError(i18n.t("apiErrors.invalidResponse"), null, null, null)
+    }
+    return parsed.data
+  } catch (error) {
+    if (error instanceof StaffReservationError) throw error
+    const payload = getAxiosErrorPayload(error)
+    const extra = staffErrorSchema.safeParse(payload)
+    const status = isAxiosError(error) ? (error.response?.status ?? null) : null
+    const code = extra.success ? (extra.data.code ?? null) : null
+    throw new StaffReservationError(
+      parseApiError(payload, i18n.t("apiErrors.createReservation")),
+      code,
+      status,
+      extra.success ? (extra.data.customerId ?? null) : null,
+    )
+  }
 }

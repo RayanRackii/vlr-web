@@ -24,7 +24,8 @@ vi.mock("@/features/rentals/services/scheduleService", async (importOriginal) =>
   fetchAdminScheduleDay: vi.fn(),
   listOccupancyKinds: vi.fn().mockResolvedValue([]),
 }))
-vi.mock("@/features/rentals/services/reservationsService", () => ({
+vi.mock("@/features/rentals/services/reservationsService", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/features/rentals/services/reservationsService")>()),
   listAdminReservations: vi.fn().mockResolvedValue([]),
 }))
 const productId = "22222222-2222-4222-8222-222222222222"
@@ -86,9 +87,9 @@ describe("agenda overview toolbar", () => {
   })
 
   it("shows header actions only with the matching permissions", () => {
-    access(["rentals", "catalog"], [...grants, "rentals.reservations.read", "rentals.schedule.write"])
+    access(["rentals", "catalog"], [...grants, "rentals.reservations.create", "rentals.schedule.write"])
     setup()
-    expect(screen.getByRole("link", { name: "Nova reserva" })).toHaveAttribute("href", "/configuracoes/reservas")
+    expect(screen.getByRole("button", { name: "Nova reserva" })).toBeInTheDocument()
     expect(screen.getByRole("button", { name: "Bloquear período" })).toBeInTheDocument()
   })
 
@@ -103,7 +104,7 @@ describe("agenda overview toolbar", () => {
   it("hides the header actions without reservation or schedule access", () => {
     access(["rentals", "catalog"], ["rentals.assets.read", "catalog.orders.read"])
     setup()
-    expect(screen.queryByRole("link", { name: "Nova reserva" })).not.toBeInTheDocument()
+    expect(screen.queryByRole("button", { name: "Nova reserva" })).not.toBeInTheDocument()
     expect(screen.queryByRole("button", { name: "Bloquear período" })).not.toBeInTheDocument()
   })
 
@@ -296,20 +297,29 @@ describe("agenda card", () => {
     expect(await within(footer).findByText("Atualizado agora")).toBeInTheDocument()
   })
 
-  it("opens the create-reservation flow from an empty slot with the resource and slot time", async () => {
-    access(["rentals", "catalog"], [...grants, "rentals.reservations.read"])
+  it("opens the new-reservation dialog from an empty slot prefilled with the resource, day and slot time", async () => {
+    access(["rentals", "catalog"], [...grants, "rentals.reservations.create"])
     setup()
-    await userEvent.click(await screen.findByRole("button", { name: "Ver reservas de Câmera" }))
-    const query = params()
-    expect(query.get("rentalAssetId")).toBe(loose.id)
-    expect(query.get("date")).toBe("2026-11-10")
-    expect(query.get("startTime")).toMatch(/^\d{2}:00$/)
+    await userEvent.click(await screen.findByRole("button", { name: "Reservar Câmera" }))
+    expect(await screen.findByRole("dialog")).toBeInTheDocument()
+    expect(screen.getByLabelText("Data")).toHaveValue("2026-11-10")
+    expect(screen.getByLabelText("Início")).toHaveValue(expect.stringMatching(/^\d{2}:00$/))
+    expect(await screen.findByRole("combobox", { name: "Recurso" })).toHaveTextContent("Câmera")
+    expect(params().has("rentalAssetId")).toBe(false)
   })
 
-  it("offers no empty-slot action without reservation access", async () => {
+  it("keeps the reservation entry points hidden with read access only", async () => {
+    access(["rentals", "catalog"], [...grants, "rentals.reservations.read"])
     setup()
     await screen.findByText("Horário comercial · 06:00 – 23:00")
-    expect(screen.queryByRole("button", { name: /^Ver reservas de / })).not.toBeInTheDocument()
+    expect(screen.queryByRole("button", { name: /^Reservar / })).not.toBeInTheDocument()
+    expect(screen.queryByRole("button", { name: "Nova reserva" })).not.toBeInTheDocument()
+  })
+
+  it("offers no empty-slot action without reservation create access", async () => {
+    setup()
+    await screen.findByText("Horário comercial · 06:00 – 23:00")
+    expect(screen.queryByRole("button", { name: /^Reservar / })).not.toBeInTheDocument()
   })
 
   it("renders the week as the same card: resource column, day cells with counts, today tinted, a click opens the day", async () => {
