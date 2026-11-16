@@ -1,5 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod"
-import { Lock, Mail, Phone, User } from "lucide-react"
+import { ListFilter, Lock, Mail, Phone, User } from "lucide-react"
 import { useEffect, useMemo, useRef, useState } from "react"
 import { useForm } from "react-hook-form"
 import { useTranslation } from "react-i18next"
@@ -502,7 +502,7 @@ export function TenantPortalRegisterPage() {
                           label: option,
                         }))}
                       >
-                        <SelectTrigger className="h-11 w-full">
+                        <SelectTrigger icon={ListFilter} className="h-11 w-full">
                           <SelectValue
                             placeholder={t(
                               "tenantPortal.register.selectPlaceholder",

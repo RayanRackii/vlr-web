@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Box, ListFilter } from "lucide-react"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { tenantKey } from "@/lib/queryKeys"
 import { usePermissions } from "@/features/users/permissions/PermissionContext"
@@ -120,7 +121,7 @@ function BlockPeriodForm({ onOpenChange, resources, prefill, tenantId, onBlocked
             <div className="space-y-1.5">
               <Label htmlFor="block-resource">{t("agendas.block.resource")}</Label>
               <Select modal={false} value={resourceId} onValueChange={(value) => { if (typeof value === "string") setResourceId(value) }} items={resourceItems}>
-                <SelectTrigger id="block-resource" className="min-h-11 w-full"><SelectValue placeholder={t("agendas.block.resourcePlaceholder")} /></SelectTrigger>
+                <SelectTrigger id="block-resource" icon={Box} className="min-h-11 w-full"><SelectValue placeholder={t("agendas.block.resourcePlaceholder")} /></SelectTrigger>
                 <SelectContent>{resourceItems.map((item) => <SelectItem key={item.value} value={item.value}>{item.label}</SelectItem>)}</SelectContent>
               </Select>
             </div>
@@ -142,7 +143,7 @@ function BlockPeriodForm({ onOpenChange, resources, prefill, tenantId, onBlocked
             <div className="space-y-1.5">
               <Label htmlFor="block-kind">{t("agendas.block.reason")}</Label>
               <Select modal={false} value={kindId} onValueChange={(value) => { if (typeof value === "string") setKindId(value) }} items={kindItems}>
-                <SelectTrigger id="block-kind" className="min-h-11 w-full"><SelectValue placeholder={t("agendas.block.reasonPlaceholder")} /></SelectTrigger>
+                <SelectTrigger id="block-kind" icon={ListFilter} className="min-h-11 w-full"><SelectValue placeholder={t("agendas.block.reasonPlaceholder")} /></SelectTrigger>
                 <SelectContent>{kindItems.map((item) => <SelectItem key={item.value} value={item.value}>{item.label}</SelectItem>)}</SelectContent>
               </Select>
               {!kinds.isPending && options.length === 0 && <p className="text-xs text-muted-foreground">{t("agendas.block.noReasons")}</p>}

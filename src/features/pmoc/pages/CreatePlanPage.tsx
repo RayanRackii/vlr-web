@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react"
 import { Link, useNavigate, useSearchParams } from "react-router-dom"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { ClipboardList, LibraryBig, LoaderCircle, PencilLine } from "lucide-react"
+import { ClipboardList, LibraryBig, LoaderCircle, MapPin, PencilLine } from "lucide-react"
 import { useFieldArray, useForm, useWatch } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
@@ -383,7 +383,7 @@ export function CreatePlanPage({ maintenance = false }: { maintenance?: boolean 
                       }}
                     >
                       <FormControl>
-                        <SelectTrigger ref={field.ref} className="min-h-11 w-full">
+                        <SelectTrigger icon={MapPin} ref={field.ref} className="min-h-11 w-full">
                           <SelectValue placeholder={t("pmoc.create.form.unitPlaceholder")} />
                         </SelectTrigger>
                       </FormControl>

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react"
-import { ChevronDown, ChevronUp, ListPlus, Monitor, Smartphone } from "lucide-react"
+import { Box, ChevronDown, ChevronUp, ListPlus, Monitor, Shapes, Smartphone } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 import { z } from "zod"
@@ -762,7 +762,7 @@ export function ModuleMenuItemsManager({
                         : t("admin.modules.Catalog"),
                   }))}
                 >
-                  <SelectTrigger
+                  <SelectTrigger icon={Shapes}
                     id="module-menu-functionality"
                     className="w-full"
                   >
@@ -815,7 +815,7 @@ export function ModuleMenuItemsManager({
                     })),
                   ]}
                 >
-                  <SelectTrigger
+                  <SelectTrigger icon={Box}
                     id="module-menu-destination"
                     className="w-full"
                   >

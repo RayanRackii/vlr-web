@@ -1,13 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
-import { Boxes, Clock, Pencil, Plus, Search, Trash2 } from "lucide-react"
+import { Boxes, Clock, Pencil, Plus, Search, Shapes, Trash2 } from "lucide-react"
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { fieldControlClass } from "@/components/ui/fieldControl"
 import { Input } from "@/components/ui/input"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { LoadingButton } from "@/components/ui/loading-button"
 import { useStepSubmit } from "@/features/assistant/stepSubmit"
 import {
@@ -101,6 +101,7 @@ function RequirementDialog({
   const editing = mode === "edit"
   const selected = assets.find((asset) => asset.id === selectedId)
   const types = useMemo(() => [...new Set(assets.map((asset) => asset.type))], [assets])
+  const typeItems = useMemo(() => [{ value: "all", label: t("catalog.resourcePlanning.dialog.allTypes") }, ...types.map((type) => ({ value: type, label: t(`agendas.grid.resourceType.${type}`) }))], [types, t])
   const visible = useMemo(() => {
     const needle = search.trim().toLowerCase()
     return assets.filter(
@@ -177,17 +178,14 @@ function RequirementDialog({
               </div>
               <div className="flex items-center justify-between gap-2 text-xs text-muted-foreground">
                 <span>{t("catalog.resourcePlanning.dialog.count", { count: visible.length })}</span>
-                <select
-                  aria-label={t("catalog.resourcePlanning.dialog.typeFilter")}
-                  className={`${fieldControlClass} h-8 w-auto max-w-[9rem] rounded-md px-2 text-xs`}
-                  value={typeFilter}
-                  onChange={(event) => setTypeFilter(event.target.value)}
-                >
-                  <option value="all">{t("catalog.resourcePlanning.dialog.allTypes")}</option>
-                  {types.map((type) => (
-                    <option key={type} value={type}>{t(`agendas.grid.resourceType.${type}`)}</option>
-                  ))}
-                </select>
+                <Select modal={false} value={typeFilter} items={typeItems} onValueChange={(value) => setTypeFilter(value ?? "all")}>
+                  <SelectTrigger size="sm" icon={Shapes} aria-label={t("catalog.resourcePlanning.dialog.typeFilter")} className="w-auto max-w-[9rem] text-xs">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {typeItems.map((item) => <SelectItem key={item.value} value={item.value}>{item.label}</SelectItem>)}
+                  </SelectContent>
+                </Select>
               </div>
               {assets.length === 0 ? (
                 <p className="text-sm text-muted-foreground">{t("catalog.productWizard.noResources")}</p>

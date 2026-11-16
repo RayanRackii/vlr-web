@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
-import { CircleCheck, Layers, MoreHorizontal, Plus, Trash2 } from "lucide-react"
+import { CircleCheck, Folder, Layers, MapPin, MoreHorizontal, Plus, Trash2, type LucideIcon } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 import { useNavigate } from "react-router-dom"
@@ -680,6 +680,7 @@ export function AssetsPage() {
     value: string,
     options: string[],
     onChange: (next: string) => void,
+    icon: LucideIcon,
   ) => (
     <div className="flex min-w-0 flex-col gap-1 sm:w-48">
       <label htmlFor={id} className="text-xs font-medium text-muted-foreground">
@@ -698,7 +699,7 @@ export function AssetsPage() {
           label: filterOptionLabel(option),
         }))}
       >
-        <SelectTrigger id={id} className="min-h-11 w-full">
+        <SelectTrigger id={id} icon={icon} className="min-h-11 w-full">
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
@@ -889,6 +890,7 @@ export function AssetsPage() {
                   (value) => {
                     applyFilters({ category: value })
                   },
+                  Folder,
                 )}
                 {filterSelect(
                   "assets-filter-location",
@@ -898,6 +900,7 @@ export function AssetsPage() {
                   (value) => {
                     applyFilters({ location: value })
                   },
+                  MapPin,
                 )}
               </>
             }

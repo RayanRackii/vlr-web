@@ -1,9 +1,10 @@
 import { useState } from "react"
-import { ChevronDown, Search } from "lucide-react"
+import { ChevronDown, Package, Search } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Label } from "@/components/ui/label"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
 import { ICON_SIZE, ICON_STROKE_WIDTH } from "@/lib/icon"
@@ -89,26 +90,30 @@ function ResourceTree({ state, resources, onChange }: Pick<AgendaFilterFieldsPro
   )
 }
 
+const PRODUCT_ALL = "__all__"
+
 /** Body shared by the Popover and the small-screen Sheet. */
 export function AgendaFilterFields(props: AgendaFilterFieldsProps) {
   const { t } = useTranslation()
   const { state, showResources, showProducts, products, productsLoading, productsError, requiredProduct, onChange } = props
+  const productItems = [
+    ...(requiredProduct ? [] : [{ value: PRODUCT_ALL, label: t("agendas.filters.allProducts") }]),
+    ...products.map((product) => ({ value: product.id, label: product.label })),
+  ]
   return (
     <div className="space-y-5">
       {showResources && <ResourceTree state={state} resources={props.resources} onChange={onChange} />}
       {(showProducts || requiredProduct) && (
         <div className="space-y-2">
-          <Label htmlFor="agenda-product-filter" className="block text-sm font-semibold">{t("agendas.filters.product")}</Label>
-          <select
-            id="agenda-product-filter"
-            value={state.produto ?? ""}
-            disabled={productsLoading}
-            onChange={(event) => onChange({ produto: event.target.value || null })}
-            className="min-h-11 w-full rounded-lg border border-input bg-background px-3 text-sm"
-          >
-            {requiredProduct ? <option value="" disabled>{t("agendas.filters.pickProduct")}</option> : <option value="">{t("agendas.filters.allProducts")}</option>}
-            {products.map((product) => <option key={product.id} value={product.id}>{product.label}</option>)}
-          </select>
+          <Label id="agenda-product-filter-label" className="block text-sm font-semibold">{t("agendas.filters.product")}</Label>
+          <Select modal={false} value={state.produto ?? (requiredProduct ? null : PRODUCT_ALL)} items={productItems} disabled={productsLoading} onValueChange={(value) => onChange({ produto: value === null || value === PRODUCT_ALL ? null : value })}>
+            <SelectTrigger id="agenda-product-filter" aria-labelledby="agenda-product-filter-label" icon={Package}>
+              <SelectValue placeholder={t("agendas.filters.pickProduct")} />
+            </SelectTrigger>
+            <SelectContent>
+              {productItems.map((item) => <SelectItem key={item.value} value={item.value}>{item.label}</SelectItem>)}
+            </SelectContent>
+          </Select>
           {productsError && <p role="alert" className="text-sm text-destructive">{t("staffAgenda.loadError", { label: t("agendas.filters.product") })}</p>}
         </div>
       )}
