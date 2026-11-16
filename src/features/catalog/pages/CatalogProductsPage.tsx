@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { Link, useNavigate, useSearchParams } from "react-router-dom"
-import { Lock, Package, Pencil, Plus, Power, Settings, SlidersHorizontal } from "lucide-react"
+import { Folder, Lock, Package, Pencil, Plus, Power, Settings, SlidersHorizontal } from "lucide-react"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 
@@ -614,6 +615,8 @@ function ProductMenu({ product, state, onToggle, busyId }: {
   return <RowActionsMenu items={items} busy={busy} label={t("catalog.products.rowMenu", { name: product.name })} />
 }
 
+const CATEGORY_ALL = "__all__"
+
 function MoreFilters({ options, taxonomy, onTaxonomyChange, visibility, onVisibilityChange }: {
   options: TaxonomyOptions
   taxonomy: { categoryId: string | null; tagIds: string[] }
@@ -642,14 +645,17 @@ function MoreFilters({ options, taxonomy, onTaxonomyChange, visibility, onVisibi
             { value: "Restricted", label: t("catalog.products.visibilityFilter.restricted") },
           ]}
         />
-        <label className="grid gap-2 text-sm font-medium">
-          {t("tenantPortal.catalog.categoryLabel")}
-          <select className="min-h-11 w-full rounded-lg border border-input bg-background px-3" value={taxonomy.categoryId ?? ""}
-            onChange={(event) => onTaxonomyChange({ ...taxonomy, categoryId: event.target.value || null })}>
-            <option value="">{t("tenantPortal.catalog.allCategories")}</option>
-            {categories.map((category) => <option key={category.id} value={category.id}>{category.name}</option>)}
-          </select>
-        </label>
+        <div className="grid gap-2 text-sm font-medium">
+          <span id="catalog-category-filter-label">{t("tenantPortal.catalog.categoryLabel")}</span>
+          <Select modal={false} value={taxonomy.categoryId ?? CATEGORY_ALL} items={[{ value: CATEGORY_ALL, label: t("tenantPortal.catalog.allCategories") }, ...categories.map((category) => ({ value: category.id, label: category.name }))]}
+            onValueChange={(value) => onTaxonomyChange({ ...taxonomy, categoryId: value === null || value === CATEGORY_ALL ? null : value })}>
+            <SelectTrigger aria-labelledby="catalog-category-filter-label" icon={Folder}><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value={CATEGORY_ALL}>{t("tenantPortal.catalog.allCategories")}</SelectItem>
+              {categories.map((category) => <SelectItem key={category.id} value={category.id}>{category.name}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        </div>
         {options.tags.length > 0 ? (
           <fieldset>
             <legend className="text-sm font-medium">{t("taxonomy.tags")}</legend>
