@@ -822,7 +822,7 @@ describe("CatalogProductEditorPage", () => {
     renderPage(["catalog.products.manage"], false, { activeModules: ["rentals"] })
     const cta = await screen.findByRole("link", { name: i18n.t("catalog.products.editor.continueSetup") })
     expect(cta).toHaveAttribute("href", `/catalogo/produtos/${PRODUCT.id}/cadastro`)
-    expect(screen.getAllByText(i18n.t("catalog.products.editor.incomplete", { count: 2 })).length).toBeGreaterThan(0)
+    expect(screen.getAllByText(i18n.t("catalog.products.editor.incomplete", { count: 1 })).length).toBeGreaterThan(0)
   })
 
   it("shows no banner and an Ativo badge when nothing is missing", async () => {

@@ -165,6 +165,16 @@ describe("empty slots", () => {
   })
 })
 
+describe("block period from the row menu", () => {
+  it("opens the block flow for the row's resource and opening time", async () => {
+    const onBlockPeriod = vi.fn()
+    setup([row()], { canBlock: true, onBlockPeriod })
+    await userEvent.click(screen.getByRole("button", { name: "Ações de Cortadora" }))
+    await userEvent.click(await screen.findByRole("menuitem", { name: "Bloquear período" }))
+    expect(onBlockPeriod).toHaveBeenCalledWith("r1", 480)
+  })
+})
+
 describe("below md", () => {
   it("lists each resource as a card with its blocks, or Disponível para reserva", async () => {
     vi.stubGlobal("matchMedia", vi.fn(() => ({ matches: false, addEventListener: vi.fn(), removeEventListener: vi.fn() })))

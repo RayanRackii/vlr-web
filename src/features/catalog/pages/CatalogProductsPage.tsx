@@ -44,6 +44,7 @@ import { catalogMenuIsActive } from "@/features/catalog/components/productWizard
 import { productWizardPath } from "@/features/catalog/components/productWizard/wizardSteps"
 import { productEditorPath } from "@/features/catalog/lib/productEditorPath"
 import { productItemStatus } from "@/features/assistant/itemStatus"
+import { saleMissingLabels } from "@/features/catalog/lib/catalogApiErrors"
 import { productAgendaReady } from "@/features/catalog/lib/productSetupStatus"
 import { CatalogEmptyState, CatalogHeading } from "@/features/catalog/components/StaffCatalogChrome"
 import {
@@ -501,6 +502,12 @@ function productState(
   product: CatalogProduct,
   setup: { menuPublished: boolean | null; linked: Readonly<Record<string, boolean>>; rentals: boolean },
 ): ProductState {
+  // The API knows best: use its sale readiness when present, else the local guess.
+  if (product.saleReadiness != null) {
+    return product.saleReadiness.ready
+      ? { kind: product.isActive ? "active" : "inactive", missing: 0 }
+      : { kind: "incomplete", missing: Math.max(product.saleReadiness.missing.length, 1) }
+  }
   const status = productItemStatus({
     name: product.name,
     isActive: product.isActive,
@@ -556,6 +563,14 @@ function TaxonomyChips({ items, hideEmpty = false }: { items?: readonly { id: st
   return <div className="staff-catalog-tags">{items.map((item) => <span key={item.id}>{item.name}</span>)}</div>
 }
 
+/** Why "Ativar" is disabled: the API's missing items when present, else the generic hint. */
+function activateHint(product: CatalogProduct, t: (key: string, options?: Record<string, unknown>) => string): string {
+  const labels = saleMissingLabels(product.saleReadiness?.missing ?? [])
+  return labels.length > 0
+    ? t("catalog.products.notReady.message", { items: labels.join(", ") })
+    : t("catalog.products.menuActivateHint")
+}
+
 /** Row menu: edit/complete (primary when incomplete), access, then activation. */
 function ProductMenu({ product, state, onToggle, busyId }: {
   product: CatalogProduct
@@ -582,7 +597,7 @@ function ProductMenu({ product, state, onToggle, busyId }: {
         label: t("catalog.products.menuActivate"),
         icon: Power,
         disabled: true,
-        hint: t("catalog.products.menuActivateHint"),
+        hint: activateHint(product, t),
         separatorBefore: true,
       })
     } else {

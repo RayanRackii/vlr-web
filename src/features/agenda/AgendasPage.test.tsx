@@ -86,17 +86,25 @@ describe("agenda overview toolbar", () => {
   })
 
   it("shows header actions only with the matching permissions", () => {
-    access(["rentals", "catalog"], [...grants, "rentals.reservations.read"])
+    access(["rentals", "catalog"], [...grants, "rentals.reservations.read", "rentals.schedule.write"])
     setup()
     expect(screen.getByRole("link", { name: "Nova reserva" })).toHaveAttribute("href", "/configuracoes/reservas")
-    expect(screen.getByRole("link", { name: "Bloquear período" })).toHaveAttribute("href", "/configuracoes/agenda")
+    expect(screen.getByRole("button", { name: "Bloquear período" })).toBeInTheDocument()
+  })
+
+  it("opens the block dialog from the header, prefilled with the visible day", async () => {
+    access(["rentals", "catalog"], [...grants, "rentals.schedule.write"])
+    setup()
+    await userEvent.click(await screen.findByRole("button", { name: "Bloquear período" }))
+    expect(await screen.findByRole("dialog")).toBeInTheDocument()
+    expect(screen.getByLabelText("Data")).toHaveValue("2026-11-10")
   })
 
   it("hides the header actions without reservation or schedule access", () => {
     access(["rentals", "catalog"], ["rentals.assets.read", "catalog.orders.read"])
     setup()
     expect(screen.queryByRole("link", { name: "Nova reserva" })).not.toBeInTheDocument()
-    expect(screen.queryByRole("link", { name: "Bloquear período" })).not.toBeInTheDocument()
+    expect(screen.queryByRole("button", { name: "Bloquear período" })).not.toBeInTheDocument()
   })
 
   it("lists Todos first, then Pedidos, Reservas, Manutenção, Bloqueios, with counts", async () => {

@@ -80,11 +80,13 @@ type AgendaDayGridProps = {
   nowMinutes?: number | null
   /** Opens the create-reservation flow for a resource at a slot time (minutes from midnight). */
   onCreateReservation?: (resourceId: string, minutes: number) => void
+  /** Opens the block-period dialog for a resource at a time (minutes from midnight). */
+  onBlockPeriod?: (resourceId: string, minutes: number) => void
   focusDate?: string
   focusedProductId?: string | null
 }
 
-export function AgendaDayGrid({ loading, failedSources, rows, start: axisStart, end: axisEnd, canReserve, canBlock, nowMinutes = null, onCreateReservation, focusedProductId, focusDate }: AgendaDayGridProps) {
+export function AgendaDayGrid({ loading, failedSources, rows, start: axisStart, end: axisEnd, canReserve, canBlock, nowMinutes = null, onCreateReservation, onBlockPeriod, focusedProductId, focusDate }: AgendaDayGridProps) {
   const { t } = useTranslation()
   const timeZone = useTenantTimeZone()
   const wide = useIsMedium()
@@ -129,7 +131,7 @@ export function AgendaDayGrid({ loading, failedSources, rows, start: axisStart, 
                       <h2 className="text-sm font-medium">{row.name}</h2>
                       <p className="text-xs text-muted-foreground">{resourceMeta(row, t)}</p>
                     </div>
-                    <RowMenu row={row} axisStart={axisStart} canBlock={canBlock} create={create} />
+                    <RowMenu row={row} axisStart={axisStart} canBlock={canBlock} create={create} block={canBlock && onBlockPeriod ? onBlockPeriod : null} />
                   </div>
                   {ordered.map((block) => {
                     const kindLabel = t(`staffAgenda.types.${block.kind}`)
@@ -213,7 +215,7 @@ export function AgendaDayGrid({ loading, failedSources, rows, start: axisStart, 
                       <p className="truncate text-xs text-muted-foreground">{resourceMeta(row, t)}</p>
                       {hidden > 0 && <p className="truncate text-xs text-muted-foreground">{t("agendas.grid.outside", { count: hidden })}</p>}
                     </div>
-                    <RowMenu row={row} axisStart={axisStart} canBlock={canBlock} create={create} reveal />
+                    <RowMenu row={row} axisStart={axisStart} canBlock={canBlock} create={create} block={canBlock && onBlockPeriod ? onBlockPeriod : null} reveal />
                   </div>
                   <div className="relative border-l" style={{ minHeight: `${Math.max(4.25, laneCount * LANE_REM + ROW_PADDING_REM)}rem` }}>
                     {tintHour !== null && <div aria-hidden="true" data-testid="now-hour" className="absolute inset-y-0 bg-muted/60" style={{ left: `${pct(axisStart + tintHour * 60)}%`, width: `${(60 / span) * 100}%` }} />}
@@ -275,7 +277,7 @@ export function AgendaDayGrid({ loading, failedSources, rows, start: axisStart, 
 }
 
 /** Kebab of a resource row: reserve or block this resource. Hidden when the viewer can do neither. */
-function RowMenu({ row, axisStart, canBlock, create, reveal }: { row: AgendaRow; axisStart: number; canBlock: boolean; create: ((resourceId: string, minutes: number) => void) | null; reveal?: boolean }) {
+function RowMenu({ row, axisStart, canBlock, create, block, reveal }: { row: AgendaRow; axisStart: number; canBlock: boolean; create: ((resourceId: string, minutes: number) => void) | null; block: ((resourceId: string, minutes: number) => void) | null; reveal?: boolean }) {
   const { t } = useTranslation()
   if (!canBlock && !create) return null
   return (
@@ -287,7 +289,9 @@ function RowMenu({ row, axisStart, canBlock, create, reveal }: { row: AgendaRow;
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-52">
         {create && <DropdownMenuItem className="min-h-11" onClick={() => create(row.id, row.open ?? axisStart)}>{t("agendas.grid.reserveHere")}</DropdownMenuItem>}
-        {canBlock && <DropdownMenuItem className="min-h-11" render={<Link to="/configuracoes/agenda" />}>{t("staffAgenda.blockPeriod")}</DropdownMenuItem>}
+        {canBlock && (block
+          ? <DropdownMenuItem className="min-h-11" onClick={() => block(row.id, row.open ?? axisStart)}>{t("staffAgenda.blockPeriod")}</DropdownMenuItem>
+          : <DropdownMenuItem className="min-h-11" render={<Link to="/configuracoes/agenda" />}>{t("staffAgenda.blockPeriod")}</DropdownMenuItem>)}
       </DropdownMenuContent>
     </DropdownMenu>
   )
