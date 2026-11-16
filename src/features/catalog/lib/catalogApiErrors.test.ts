@@ -4,6 +4,22 @@ import { localizeCatalogApiError } from "@/features/catalog/lib/catalogApiErrors
 import i18n from "@/lib/i18n"
 
 describe("localizeCatalogApiError", () => {
+  it("lists what is missing when activation is refused as not ready", () => {
+    const message = localizeCatalogApiError(
+      { error: "not ready", code: "PRODUCT_NOT_READY", missing: ["NAME", "RESOURCE", "AUDIENCE", "PRICE"] },
+      "fallback",
+    )
+    expect(message).toBe(
+      "Não dá para ativar: falta nome, um recurso na agenda, quem pode ver (clientes ou grupos), preço maior que zero.",
+    )
+  })
+
+  it("keeps a generic refusal when the missing list is empty or unknown", () => {
+    expect(localizeCatalogApiError({ code: "PRODUCT_NOT_READY", missing: ["WHATEVER"] }, "fallback")).toBe(
+      i18n.t("catalog.products.notReady.generic"),
+    )
+  })
+
   it("falls back for the removed pending-file cooldown code", () => {
     expect(localizeCatalogApiError({ code: "catalog.file.pendingTooRecent" }, "fallback")).toBe("fallback")
   })

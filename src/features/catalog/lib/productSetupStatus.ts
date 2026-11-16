@@ -1,5 +1,5 @@
 import type { CadastroStep } from "@/features/assistant/useCadastroStep"
-import { itemStatus, productSetupSteps, type ItemStatus, type SetupStepId } from "@/features/assistant/itemStatus"
+import { productMissingSteps, productSetupSteps, statusFromMissing, type ItemStatus, type SetupStepId } from "@/features/assistant/itemStatus"
 import { audienceBlocksSale, catalogMenuIsActive } from "@/features/catalog/components/productWizard/sellableChecklist"
 import type { ProductWizardModel } from "@/features/catalog/components/productWizard/useProductWizard"
 
@@ -35,7 +35,7 @@ export function productSetupFromModel(model: ProductWizardModel, rentalsActive: 
     agendaReady: productAgendaReady(rentalsActive, product.usesSchedule, linkedAssetIds.length),
     menuPublished: model.menuItems === null ? null : catalogMenuIsActive(model.menuItems),
   })
-  const status = itemStatus(product.isActive && model.menuItems !== null && catalogMenuIsActive(model.menuItems), steps)
-  const missing = (Object.keys(steps) as SetupStepId[]).filter((step) => !steps[step])
+  const missing = productMissingSteps(steps)
+  const status = statusFromMissing(product.isActive && model.menuItems !== null && catalogMenuIsActive(model.menuItems), missing.length)
   return { steps, status, firstMissing: missing[0], missingCount: missing.length, linkedAssetIds }
 }

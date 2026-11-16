@@ -93,10 +93,17 @@ export function productSetupSteps(input: ProductStatusInput): Record<SetupStepId
     agenda,
     fila: agenda,
     regras: input.audienceReady,
-    precos: input.price != null && input.price > 0,
+    // No price is "Sob consulta" and is valid; only a price of zero or less blocks the sale.
+    precos: input.price == null || input.price > 0,
   }
 }
 
+/** Open steps that count toward "falta N". Fila follows Agenda for a product, so it is not counted twice. */
+export function productMissingSteps(steps: Record<SetupStepId, boolean>): SetupStepId[] {
+  return setupStepIds.filter((step) => !steps[step] && !(step === "fila" && !steps.agenda))
+}
+
 export function productItemStatus(input: ProductStatusInput): ItemStatus {
-  return itemStatus(input.isActive && input.menuPublished === true, productSetupSteps(input))
+  const steps = productSetupSteps(input)
+  return statusFromMissing(input.isActive && input.menuPublished === true, productMissingSteps(steps).length)
 }

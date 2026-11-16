@@ -172,7 +172,7 @@ describe("CatalogProductsPage validity gate", () => {
   })
 
   it("filters by status chips with counts", async () => {
-    listProductsMock.mockResolvedValue([PRODUCT, { ...PRODUCT, id: "inactive", name: "Item inativo", isActive: false }, { ...PRODUCT, id: "inc", name: "Sem preco", price: null }])
+    listProductsMock.mockResolvedValue([PRODUCT, { ...PRODUCT, id: "inactive", name: "Item inativo", isActive: false }, { ...PRODUCT, id: "inc", name: "Sem preco", price: 0 }])
     const user = userEvent.setup()
     renderPage()
     await within(await screen.findByRole("table")).findByText("Item inativo")
@@ -197,8 +197,34 @@ describe("CatalogProductsPage validity gate", () => {
     expect(listProductsMock).toHaveBeenCalledTimes(1)
   })
 
+  it("takes the incomplete badge and the Ativar hint from the API sale readiness", async () => {
+    const notReady = { ...PRODUCT, id: "api", name: "Do servidor", isActive: false, saleReadiness: { ready: false, missing: ["RESOURCE", "PRICE"] } }
+    const user = userEvent.setup()
+    listProductsMock.mockResolvedValue([notReady])
+    renderPage()
+    const table = await screen.findByRole("table")
+    const row = (await within(table).findByText("Do servidor")).closest("tr") as HTMLElement
+    expect(within(row).getByText(i18n.t("catalog.products.statusIncomplete", { count: 2 }))).toBeInTheDocument()
+    await user.click(within(row).getByRole("button", { name: i18n.t("catalog.products.rowMenu", { name: "Do servidor" }) }))
+    const activate = await screen.findByRole("menuitem", { name: new RegExp(i18n.t("catalog.products.menuActivate")) })
+    expect(activate).toHaveAttribute("aria-disabled", "true")
+    expect(activate).toHaveTextContent("falta um recurso na agenda, preço maior que zero")
+  })
+
+  it("trusts a ready API verdict even when the local guess would say incomplete, and keeps Sob consulta complete", async () => {
+    const ready = { ...PRODUCT, id: "ok", name: "Consulta ok", price: null, saleReadiness: { ready: true, missing: [] } }
+    const guess = { ...PRODUCT, id: "g", name: "Sem verdict", price: 0 }
+    listProductsMock.mockResolvedValue([ready, guess])
+    renderPage()
+    const table = await screen.findByRole("table")
+    const readyRow = (await within(table).findByText("Consulta ok")).closest("tr") as HTMLElement
+    const guessRow = within(table).getByText("Sem verdict").closest("tr") as HTMLElement
+    expect(within(readyRow).getByText(i18n.t("catalog.products.active"))).toBeInTheDocument()
+    expect(within(guessRow).getByText(i18n.t("catalog.products.statusIncomplete", { count: 1 }))).toBeInTheDocument()
+  })
+
   it("shows one status column value per product and no separate published badge", async () => {
-    listProductsMock.mockResolvedValue([PRODUCT, { ...PRODUCT, id: "inactive", name: "Item inativo", isActive: false }, { ...PRODUCT, id: "inc", name: "Sem preco", price: null }])
+    listProductsMock.mockResolvedValue([PRODUCT, { ...PRODUCT, id: "inactive", name: "Item inativo", isActive: false }, { ...PRODUCT, id: "inc", name: "Sem preco", price: 0 }])
     renderPage()
     const table = await screen.findByRole("table")
     await within(table).findByText("Item inativo")
@@ -323,7 +349,7 @@ describe("CatalogProductsPage validity gate", () => {
   })
 
   it("row menu (incomplete): Concluir cadastro, Gerenciar acesso and a disabled Ativar produto with its hint", async () => {
-    const incomplete = { ...PRODUCT, id: "inc", name: "Sem preco", price: null, isActive: false }
+    const incomplete = { ...PRODUCT, id: "inc", name: "Sem preco", price: 0, isActive: false }
     listProductsMock.mockResolvedValue([incomplete])
     const user = userEvent.setup()
     renderPage()
@@ -340,7 +366,7 @@ describe("CatalogProductsPage validity gate", () => {
   })
 
   it("row menu without manage permission hides access and activation", async () => {
-    const incomplete = { ...PRODUCT, id: "inc", name: "Sem preco", price: null, isActive: false }
+    const incomplete = { ...PRODUCT, id: "inc", name: "Sem preco", price: 0, isActive: false }
     listProductsMock.mockResolvedValue([incomplete])
     const user = userEvent.setup()
     render(
@@ -388,8 +414,8 @@ describe("CatalogProductsPage validity gate", () => {
     const table = await screen.findByRole("table")
     const withRow = (await within(table).findByText("Com agenda")).closest("tr")!
     const withoutRow = within(table).getByText("Sem agenda").closest("tr")!
-    await waitFor(() => expect(within(withRow).getByText(i18n.t("catalog.products.statusIncomplete", { count: 2 }))).toBeInTheDocument())
-    expect(within(withoutRow).queryByText(i18n.t("catalog.products.statusIncomplete", { count: 2 }))).not.toBeInTheDocument()
+    await waitFor(() => expect(within(withRow).getByText(i18n.t("catalog.products.statusIncomplete", { count: 1 }))).toBeInTheDocument())
+    expect(within(withoutRow).queryByText(i18n.t("catalog.products.statusIncomplete", { count: 1 }))).not.toBeInTheDocument()
     expect(within(withoutRow).queryByText(/^(Falta|Faltam)/)).not.toBeInTheDocument()
   })
 

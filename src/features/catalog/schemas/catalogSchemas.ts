@@ -73,6 +73,14 @@ export type CatalogProductVisibility = z.infer<
   typeof catalogProductVisibilitySchema
 >
 
+/** Sale readiness computed by the API (codes NAME, RESOURCE, AUDIENCE, PRICE). Absent on older responses. */
+export const catalogSaleReadinessSchema = z.object({
+  ready: z.boolean(),
+  missing: z.array(z.string()).nullish().transform((value) => value ?? []),
+})
+
+export type CatalogSaleReadiness = z.infer<typeof catalogSaleReadinessSchema>
+
 export const catalogProductSchema = z.object({
   id: z.string().uuid(),
   name: z.string(),
@@ -91,6 +99,7 @@ export const catalogProductSchema = z.object({
   visibility: catalogProductVisibilitySchema.optional().default("Public"),
   grantedCustomerCount: z.number().int().optional().default(0),
   grantedGroupCount: z.number().int().optional().default(0),
+  saleReadiness: catalogSaleReadinessSchema.optional(),
 })
 
 export type CatalogProduct = z.infer<typeof catalogProductSchema>

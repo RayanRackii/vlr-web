@@ -1107,6 +1107,14 @@
       "menuEdit": "Editar produto",
       "menuActivate": "Ativar produto",
       "menuDeactivate": "Desativar produto",
+      "notReady": {
+        "message": "Não dá para ativar: falta {{items}}.",
+        "generic": "Não dá para ativar: o cadastro está incompleto.",
+        "NAME": "nome",
+        "RESOURCE": "um recurso na agenda",
+        "AUDIENCE": "quem pode ver (clientes ou grupos)",
+        "PRICE": "preço maior que zero"
+      },
       "menuActivateHint": "Conclua o cadastro para ativar",
 
       "statusIncomplete": "Configuração incompleta · falta {{count}}",
