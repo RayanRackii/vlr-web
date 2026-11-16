@@ -76,7 +76,7 @@ export type CatalogProductVisibility = z.infer<
 /** Sale readiness computed by the API (codes NAME, RESOURCE, AUDIENCE, PRICE). Absent on older responses. */
 export const catalogSaleReadinessSchema = z.object({
   ready: z.boolean(),
-  missing: z.array(z.string()),
+  missing: z.array(z.string()).nullish().transform((value) => value ?? []),
 })
 
 export type CatalogSaleReadiness = z.infer<typeof catalogSaleReadinessSchema>
