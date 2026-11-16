@@ -1106,6 +1106,14 @@
       "menuEdit": "Edit product",
       "menuActivate": "Activate product",
       "menuDeactivate": "Deactivate product",
+      "notReady": {
+        "message": "Cannot activate: missing {{items}}.",
+        "generic": "Cannot activate: setup is incomplete.",
+        "NAME": "a name",
+        "RESOURCE": "a resource on the schedule",
+        "AUDIENCE": "who can see it (customers or groups)",
+        "PRICE": "a price above zero"
+      },
       "menuActivateHint": "Complete setup to activate",
 
       "statusIncomplete": "Setup incomplete · {{count}} missing",

@@ -1106,6 +1106,14 @@
       "menuEdit": "Editar producto",
       "menuActivate": "Activar producto",
       "menuDeactivate": "Desactivar producto",
+      "notReady": {
+        "message": "No se puede activar: falta {{items}}.",
+        "generic": "No se puede activar: el registro está incompleto.",
+        "NAME": "nombre",
+        "RESOURCE": "un recurso en la agenda",
+        "AUDIENCE": "quién puede verlo (clientes o grupos)",
+        "PRICE": "un precio mayor que cero"
+      },
       "menuActivateHint": "Completa el registro para activar",
 
       "statusIncomplete": "Configuración incompleta · faltan {{count}}",

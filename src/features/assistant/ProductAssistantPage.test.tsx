@@ -36,7 +36,7 @@ beforeEach(() => {
     publishMenu: vi.fn(),
     modelRef: { current: null },
     model: {
-      product: { id: productId, name: "Diária", isActive: true, usesSchedule: true, price: null, visibility: "Public" },
+      product: { id: productId, name: "Diária", isActive: true, usesSchedule: true, price: 0, visibility: "Public" },
       access: { visibility: "Public", customerIds: [], groupIds: [] },
       groups: [],
       menuItems: [],
