@@ -39,7 +39,7 @@ export function NewReservationDialog({ open, onOpenChange, prefill, tenantId, on
   if (!can("rentals.reservations.create")) return null
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="max-h-[calc(100dvh-2rem)] overflow-y-auto sm:max-w-md">
         {/* Mounted only while open, so the form re-seeds from the prefill every time. */}
         <NewReservationForm onOpenChange={onOpenChange} prefill={prefill} tenantId={tenantId} onCreated={onCreated} />
       </DialogContent>
@@ -48,6 +48,16 @@ export function NewReservationDialog({ open, onOpenChange, prefill, tenantId, on
 }
 
 type FormProps = Omit<Props, "open">
+/** Maps an API failure to a localized message key; raw server text is never shown. */
+function errorKey(cause: unknown, newCustomerPath: boolean) {
+  if (!(cause instanceof StaffReservationError)) return "error"
+  if (cause.code === "START_IN_THE_PAST") return "startInThePast"
+  if (cause.status === 409) return "slotTaken"
+  if (cause.status === 404) return "customerNotFound"
+  if (cause.status === 400 && newCustomerPath) return "invalidPhone"
+  return "error"
+}
+
 type PickedCustomer = { id: string; name: string }
 
 function NewReservationForm({ onOpenChange, prefill, tenantId, onCreated }: FormProps) {
@@ -72,7 +82,10 @@ function NewReservationForm({ onOpenChange, prefill, tenantId, onCreated }: Form
   const [awaiting, setAwaiting] = useState(false)
   const [busy, setBusy] = useState(false)
   const submitting = useRef(false)
-  const [error, setError] = useState<string | null>(null)
+  const [failure, setFailure] = useState<{ form: string; message: string } | null>(null)
+  // An error belongs to the form values it was raised for: any edit makes it stale.
+  const formKey = JSON.stringify([resourceId, date, start, end, mode, customer?.id, name, whatsApp, email, awaiting])
+  const error = failure !== null && failure.form === formKey ? failure.message : null
 
   useEffect(() => {
     const handle = setTimeout(() => setTerm(search.trim()), 250)
@@ -100,7 +113,8 @@ function NewReservationForm({ onOpenChange, prefill, tenantId, onCreated }: Form
     if (!valid || busy || submitting.current || !resource) return
     submitting.current = true
     setBusy(true)
-    setError(null)
+    setFailure(null)
+    const newCustomerPath = mode === "new"
     try {
       await createStaffReservation({
         ...(mode === "existing" && customer
@@ -124,7 +138,7 @@ function NewReservationForm({ onOpenChange, prefill, tenantId, onCreated }: Form
         setMode("existing")
         toast.info(t("agendas.newReservationDialog.customerExists"))
       } else {
-        setError(cause instanceof Error && cause.message ? cause.message : t("agendas.newReservationDialog.error"))
+        setFailure({ form: formKey, message: t(`agendas.newReservationDialog.${errorKey(cause, newCustomerPath)}`) })
       }
     } finally {
       submitting.current = false
@@ -218,7 +232,7 @@ function NewReservationForm({ onOpenChange, prefill, tenantId, onCreated }: Form
           </div>
         )}
         {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
-        <DialogFooter>
+        <DialogFooter className="sticky bottom-0 -mx-4 bg-background px-4 pt-2">
           <Button type="button" variant="outline" className="min-h-11" onClick={() => onOpenChange(false)}>{t("agendas.newReservationDialog.cancel")}</Button>
           <Button type="submit" className="min-h-11" disabled={!valid || busy}>{busy ? t("agendas.newReservationDialog.saving") : t("agendas.newReservationDialog.submit")}</Button>
         </DialogFooter>

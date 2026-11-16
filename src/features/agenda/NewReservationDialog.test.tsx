@@ -1,4 +1,4 @@
-import { screen, waitFor } from "@testing-library/react"
+import { fireEvent, screen, waitFor } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { toast } from "sonner"
 import { beforeEach, describe, expect, it, vi } from "vitest"
@@ -117,14 +117,61 @@ describe("NewReservationDialog", () => {
     expect(vi.mocked(createStaffReservation).mock.calls[1]?.[0]).not.toHaveProperty("newCustomer")
   })
 
-  it("shows the API message and stays open on another error", async () => {
-    vi.mocked(createStaffReservation).mockRejectedValueOnce(new StaffReservationError("Horário já reservado.", null, 409, null))
+  it.each([
+    ["a start in the past", new StaffReservationError("raw", "START_IN_THE_PAST", 400, null), "A data e o horário de início já passaram.", false],
+    ["an overlap", new StaffReservationError("raw server text", null, 409, null), "Esse horário já está ocupado.", false],
+    ["a missing customer", new StaffReservationError("raw", null, 404, null), "Cliente não encontrado.", false],
+    ["an invalid phone", new StaffReservationError("raw", null, 400, null), "WhatsApp inválido. Use DDD e número.", true],
+    ["anything else", new StaffReservationError("raw", null, 500, null), "Não foi possível criar a reserva.", false],
+  ])("shows a localized message for %s and stays open", async (_name, failure, message, newCustomer) => {
+    vi.mocked(createStaffReservation).mockRejectedValueOnce(failure)
     const { onOpenChange } = setup()
+    await resourceReady()
+    if (newCustomer) await fillNewCustomer()
+    else await pickCustomer()
+    await userEvent.click(screen.getByRole("button", { name: "Criar reserva" }))
+    expect(await screen.findByRole("alert")).toHaveTextContent(message)
+    expect(screen.queryByText(/raw/)).not.toBeInTheDocument()
+    expect(onOpenChange).not.toHaveBeenCalled()
+  })
+
+  it("clears the error when a field changes", async () => {
+    vi.mocked(createStaffReservation).mockRejectedValueOnce(new StaffReservationError("x", null, 409, null))
+    setup()
     await resourceReady()
     await pickCustomer()
     await userEvent.click(screen.getByRole("button", { name: "Criar reserva" }))
-    expect(await screen.findByRole("alert")).toHaveTextContent("Horário já reservado.")
-    expect(onOpenChange).not.toHaveBeenCalled()
+    await screen.findByRole("alert")
+    fireEvent.change(screen.getByLabelText("Fim"), { target: { value: "16:00" } })
+    await waitFor(() => expect(screen.queryByRole("alert")).not.toBeInTheDocument())
+  })
+
+  it("treats a 2xx with an unexpected body as success", async () => {
+    vi.mocked(createStaffReservation).mockResolvedValueOnce({})
+    const { onOpenChange, onCreated } = setup()
+    await resourceReady()
+    await pickCustomer()
+    await userEvent.click(screen.getByRole("button", { name: "Criar reserva" }))
+    await waitFor(() => expect(onOpenChange).toHaveBeenCalledWith(false))
+    expect(onCreated).toHaveBeenCalled()
+    expect(toast.success).toHaveBeenCalledWith("Reserva criada")
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument()
+  })
+
+  it("sends an end of 00:00 as 23:59", async () => {
+    setup({ resourceId: court.id, date: "2026-11-10", start: "22:00", end: "00:00" })
+    await resourceReady()
+    await pickCustomer()
+    await userEvent.click(screen.getByRole("button", { name: "Criar reserva" }))
+    await waitFor(() => expect(createStaffReservation).toHaveBeenCalledWith(expect.objectContaining({ startTime: "22:00", endTime: "23:59" })))
+  })
+
+  it.each(["14:00", "13:00"])("disables submit when the end (%s) is not after the start", async (end) => {
+    setup({ resourceId: court.id, date: "2026-11-10", start: "14:00", end })
+    await resourceReady()
+    await pickCustomer()
+    expect(screen.getByRole("button", { name: "Criar reserva" })).toBeDisabled()
+    expect(screen.getByText("O fim deve ser depois do início.")).toBeInTheDocument()
   })
 
   it("does not offer Aguardando sinal for a resource without a deposit", async () => {

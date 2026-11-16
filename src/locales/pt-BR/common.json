@@ -6131,6 +6131,10 @@
       "submit": "Criar reserva",
       "saving": "Criando…",
       "success": "Reserva criada",
+      "startInThePast": "A data e o horário de início já passaram.",
+      "slotTaken": "Esse horário já está ocupado.",
+      "customerNotFound": "Cliente não encontrado.",
+      "invalidPhone": "WhatsApp inválido. Use DDD e número.",
       "customerExists": "Cliente já cadastrado — selecionado",
       "error": "Não foi possível criar a reserva."
     },

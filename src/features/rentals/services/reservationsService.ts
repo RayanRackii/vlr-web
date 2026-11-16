@@ -235,27 +235,27 @@ const staffErrorSchema = z.object({
   customerId: z.string().uuid().optional(),
 })
 
+/** A 2xx means the reservation exists: an unexpected body is never reported as a failure. */
 export async function createStaffReservation(
   input: CreateStaffReservationInput,
-): Promise<AdminReservation> {
+): Promise<{ id?: string }> {
+  let response
   try {
-    const response = await api.post("/api/reservations/staff", input)
-    const parsed = reservationSchema.safeParse(response.data)
-    if (!parsed.success) {
-      throw new StaffReservationError(i18n.t("apiErrors.invalidResponse"), null, null, null)
-    }
-    return parsed.data
+    response = await api.post("/api/reservations/staff", input)
   } catch (error) {
-    if (error instanceof StaffReservationError) throw error
     const payload = getAxiosErrorPayload(error)
     const extra = staffErrorSchema.safeParse(payload)
     const status = isAxiosError(error) ? (error.response?.status ?? null) : null
-    const code = extra.success ? (extra.data.code ?? null) : null
     throw new StaffReservationError(
       parseApiError(payload, i18n.t("apiErrors.createReservation")),
-      code,
+      extra.success ? (extra.data.code ?? null) : null,
       status,
       extra.success ? (extra.data.customerId ?? null) : null,
     )
   }
+  const parsed = reservationSchema.safeParse(response.data)
+  if (parsed.success) return parsed.data
+  const raw: unknown = response.data
+  const id = typeof raw === "object" && raw !== null && "id" in raw && typeof raw.id === "string" ? raw.id : undefined
+  return id ? { id } : {}
 }
