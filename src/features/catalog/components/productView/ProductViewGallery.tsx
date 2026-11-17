@@ -1,7 +1,9 @@
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
-import { Package } from "lucide-react"
+import { ImagePlus, Package } from "lucide-react"
+import { Link } from "react-router-dom"
 
+import { buttonVariants } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog"
 import type { CatalogProductGalleryImage } from "@/features/catalog/lib/selectCatalogProductImages"
 import { cn } from "@/lib/utils"
@@ -10,6 +12,8 @@ type ProductViewGalleryProps = {
   images: readonly CatalogProductGalleryImage[]
   /** Product name: alt text and lightbox title. */
   name: string
+  /** Where the "Adicionar fotos" button goes; omit to hide it (read-only users). Only used with no images. */
+  addPhotosHref?: string
   className?: string
 }
 
@@ -17,14 +21,38 @@ type ProductViewGalleryProps = {
  * Read-only product photos: the main image is shown whole (object-contain, never cropped) on a neutral
  * background; thumbnails appear only with more than one image; clicking the main image opens a lightbox.
  */
-export function ProductViewGallery({ images, name, className }: ProductViewGalleryProps) {
+export function ProductViewGallery({ images, name, addPhotosHref, className }: ProductViewGalleryProps) {
   const { t } = useTranslation()
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [failedIds, setFailedIds] = useState<ReadonlySet<string>>(() => new Set())
   const [lightboxOpen, setLightboxOpen] = useState(false)
 
   const current = images.find((image) => image.id === selectedId) ?? images[0]
-  if (current == null) return null
+  if (current == null) {
+    return (
+      <section
+        aria-label={t("catalog.products.view.gallery.thumbnails")}
+        className={cn("min-w-0", className)}
+        data-testid="product-view-no-photo"
+      >
+        <div className="flex h-[180px] flex-col items-center justify-center gap-3 overflow-hidden rounded-xl border border-border bg-muted px-4 text-center aspect-[4/3] sm:h-auto sm:max-h-[320px]">
+          <span
+            className="grid size-16 place-items-center rounded-2xl bg-primary/10 text-primary"
+            data-testid="product-view-no-photo-icon"
+          >
+            <Package className="size-7" aria-hidden="true" />
+          </span>
+          <p className="text-sm text-muted-foreground">{t("catalog.products.view.gallery.noPhoto")}</p>
+          {addPhotosHref ? (
+            <Link className={buttonVariants({ variant: "outline", size: "sm" })} to={addPhotosHref}>
+              <ImagePlus data-icon="inline-start" aria-hidden="true" />
+              {t("catalog.products.view.gallery.addPhotos")}
+            </Link>
+          ) : null}
+        </div>
+      </section>
+    )
+  }
   const failed = failedIds.has(current.id)
   const markFailed = (id: string) => setFailedIds((ids) => new Set(ids).add(id))
 

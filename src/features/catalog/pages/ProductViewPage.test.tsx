@@ -230,20 +230,23 @@ describe("ProductViewPage states", () => {
     expect(within(dialog).getByRole("img", { name: "Engrenagem plástica de reposição" })).toHaveAttribute("src", "https://img.test/img-2.jpg")
   })
 
-  it("uses a compact summary-first layout without photos and links managers to the photos step", () => {
+  it("shows a placeholder with the icon, text and add-photos button for managers when there are no photos", () => {
     mockWizard({ product: { files: [] } })
     renderPage()
     expect(screen.queryByTestId("product-view-gallery")).not.toBeInTheDocument()
-    expect(screen.getByTestId("product-view-main").className).not.toContain("lg:grid-cols")
-    const note = screen.getByTestId("product-view-no-photo")
-    expect(note).toHaveTextContent("Sem foto cadastrada")
-    expect(within(note).getByRole("link", { name: "Adicionar fotos" })).toHaveAttribute("href", `/catalogo/produtos/${ID}/cadastro?modo=editar&passo=arquivos`)
+    expect(screen.getByTestId("product-view-main").className).toContain("lg:grid-cols")
+    const placeholder = screen.getByTestId("product-view-no-photo")
+    expect(within(placeholder).getByTestId("product-view-no-photo-icon")).toBeInTheDocument()
+    expect(placeholder).toHaveTextContent("Sem foto cadastrada")
+    expect(within(placeholder).getByRole("link", { name: "Adicionar fotos" })).toHaveAttribute("href", `/catalogo/produtos/${ID}/cadastro?modo=editar&passo=arquivos`)
   })
 
-  it("hides the add-photos link when the user cannot manage", () => {
+  it("shows only the placeholder text when the user cannot manage", () => {
     mockWizard({ product: { files: [] }, canManage: false })
     renderPage(["catalog.products.read"])
-    expect(screen.getByTestId("product-view-no-photo")).toHaveTextContent("Sem foto cadastrada")
+    const placeholder = screen.getByTestId("product-view-no-photo")
+    expect(placeholder).toHaveTextContent("Sem foto cadastrada")
+    expect(within(placeholder).getByTestId("product-view-no-photo-icon")).toBeInTheDocument()
     expect(screen.queryByRole("link", { name: "Adicionar fotos" })).not.toBeInTheDocument()
     expect(screen.queryByRole("link", { name: "Editar produto" })).not.toBeInTheDocument()
     expect(screen.queryByRole("button", { name: "Mais ações" })).not.toBeInTheDocument()

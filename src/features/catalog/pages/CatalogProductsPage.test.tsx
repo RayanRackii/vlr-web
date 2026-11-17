@@ -1,4 +1,4 @@
-import { render, screen, waitFor, within } from "@testing-library/react"
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { MemoryRouter, useLocation, useSearchParams } from "react-router-dom"
 import { toast } from "sonner"
@@ -506,6 +506,42 @@ describe("CatalogProductsPage validity gate", () => {
     resolveOld([oldProduct])
     expect(await within(await screen.findByRole("table")).findByText("Current result")).toBeInTheDocument()
     expect(screen.queryByText("Old result")).not.toBeInTheDocument()
+  })
+
+  describe("product thumbnails", () => {
+    const FILE = {
+      id: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+      fileName: "raquete.jpg",
+      mimeType: "image/jpeg",
+      sizeBytes: 10,
+      visibility: "CustomerVisible" as const,
+      status: "Ready" as const,
+      url: "https://img.test/raquete.jpg",
+    }
+
+    it("shows the first photo for a product with an image URL and the icon for one without", async () => {
+      listProductsMock.mockResolvedValue([
+        { ...PRODUCT, files: [FILE] },
+        { ...PRODUCT, id: "cccccccc-cccc-4ccc-8ccc-cccccccccccc", name: "Bola", files: [] },
+        { ...PRODUCT, id: "dddddddd-dddd-4ddd-8ddd-dddddddddddd", name: "Rede", files: [{ ...FILE, url: null }] },
+      ])
+      renderPage()
+      const table = within(await screen.findByRole("table", { name: i18n.t("catalog.products.title") }))
+      const img = await table.findByRole("img", { name: "Raquete" })
+      expect(img).toHaveAttribute("src", "https://img.test/raquete.jpg")
+      expect(img).toHaveAttribute("loading", "lazy")
+      expect(table.getAllByTestId("product-thumb-image")).toHaveLength(1)
+      expect(table.getAllByTestId("product-thumb-icon")).toHaveLength(2)
+    })
+
+    it("falls back to the icon when the image fails to load", async () => {
+      listProductsMock.mockResolvedValue([{ ...PRODUCT, files: [FILE] }])
+      renderPage()
+      const table = within(await screen.findByRole("table", { name: i18n.t("catalog.products.title") }))
+      fireEvent.error(await table.findByTestId("product-thumb-image"))
+      expect(table.queryByTestId("product-thumb-image")).not.toBeInTheDocument()
+      expect(table.getByTestId("product-thumb-icon")).toBeInTheDocument()
+    })
   })
 })
 

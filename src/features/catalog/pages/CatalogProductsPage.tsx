@@ -43,6 +43,7 @@ import {
 } from "@/features/catalog/schemas/catalogSchemas"
 import { catalogMenuIsActive } from "@/features/catalog/components/productWizard/sellableChecklist"
 import { productWizardPath } from "@/features/catalog/components/productWizard/wizardSteps"
+import { selectCatalogProductImages } from "@/features/catalog/lib/selectCatalogProductImages"
 import { productEditPath, productViewPath } from "@/features/catalog/lib/productEditorPath"
 import { productItemStatus } from "@/features/assistant/itemStatus"
 import { saleMissingLabels } from "@/features/catalog/lib/catalogApiErrors"
@@ -521,13 +522,35 @@ function productState(
   return { kind: product.isActive ? "active" : "inactive", missing: 0 }
 }
 
+/** First customer-visible photo with a usable URL; falls back to the icon tile (no URL, or load error). */
+function ProductThumb({ product }: { product: CatalogProduct }) {
+  const [failed, setFailed] = useState(false)
+  const image = selectCatalogProductImages(
+    product.files.filter((file) => file.visibility === "CustomerVisible" && file.status === "Ready"),
+  )[0]
+  if (image == null || failed) {
+    return <span className="staff-catalog-product-icon" data-testid="product-thumb-icon"><Package size={20} aria-hidden="true" /></span>
+  }
+  return (
+    <img
+      src={image.url}
+      alt={product.name}
+      loading="lazy"
+      draggable={false}
+      className="size-10 flex-none rounded-[10px] object-cover"
+      data-testid="product-thumb-image"
+      onError={() => setFailed(true)}
+    />
+  )
+}
+
 function ProductNameBlock({ product, onEdit }: { product: CatalogProduct; onEdit: (product: CatalogProduct) => void }) {
   const { t } = useTranslation()
   const { can } = usePermissions()
   const restricted = (product.visibility ?? "Public") === "Restricted"
   return (
     <div className="flex min-w-0 items-center gap-3">
-      <span className="staff-catalog-product-icon"><Package size={20} aria-hidden="true" /></span>
+      <ProductThumb product={product} />
       <span className="min-w-0 space-y-1 [overflow-wrap:anywhere]">
         <span className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
           {can("catalog.products.manage") ? (
