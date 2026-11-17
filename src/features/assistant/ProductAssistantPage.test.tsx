@@ -102,7 +102,7 @@ it("defaults an unknown cadastro step to Dados", () => {
 function mockReadyProduct(overrides: { isActive: boolean; menuItems: unknown[]; taxonomy?: unknown; files?: unknown[] }) {
   const publishMenu = vi.fn().mockResolvedValue(true)
   const reload = vi.fn()
-  vi.mocked(useProductWizard).mockReturnValue({
+  const wizard = {
     loading: false,
     error: null,
     busy: false,
@@ -122,8 +122,9 @@ function mockReadyProduct(overrides: { isActive: boolean; menuItems: unknown[]; 
       requirements: [{ rentalAssetId: assetId }],
       resourceCapability: "ready",
     },
-  } as never)
-  return { publishMenu, reload }
+  }
+  vi.mocked(useProductWizard).mockReturnValue(wizard as never)
+  return { publishMenu, reload, wizard }
 }
 
 const activeCatalogMenu = [{ id: "m", moduleName: "catalog", label: "Catálogo", sortOrder: 1, isActive: true }]
@@ -389,4 +390,23 @@ it("Cancelar goes to the product view, not the list", async () => {
   renderEdit("?modo=editar&passo=arquivos")
   await user.click(screen.getByRole("button", { name: "Cancelar" }))
   await waitFor(() => expect(screen.getByTestId("editor-location").textContent).toBe(`/catalogo/produtos/${productId}`))
+})
+
+it("publishing a draft shows the publish success, not edit mode, even though the product becomes active", async () => {
+  vi.mocked(activateCatalogProduct).mockResolvedValue({} as never)
+  const { publishMenu, wizard: draftValue } = mockReadyProduct({ isActive: false, menuItems: [] })
+  publishMenu.mockImplementation(async () => {
+    vi.mocked(useProductWizard).mockReturnValue({
+      ...draftValue,
+      model: { ...draftValue.model, product: { ...draftValue.model.product, isActive: true }, menuItems: activeCatalogMenu },
+    } as never)
+    return true
+  })
+  const user = userEvent.setup()
+  renderCadastro("?passo=publicacao")
+  expect(screen.queryByRole("heading", { level: 1, name: "Editar produto" })).not.toBeInTheDocument()
+  await user.click(screen.getByRole("button", { name: "Publicar" }))
+  expect(await screen.findByText("Produto publicado")).toBeInTheDocument()
+  expect(screen.queryByRole("heading", { level: 1, name: "Editar produto" })).not.toBeInTheDocument()
+  expect(screen.queryByRole("button", { name: "Salvar alterações" })).not.toBeInTheDocument()
 })

@@ -26,7 +26,6 @@ vi.mock("@/features/catalog/services/catalogService", () => ({
   getCatalogProductFileUrl: vi.fn(),
   uploadCatalogProductFile: vi.fn(),
   getCatalogProductAccess: vi.fn().mockResolvedValue({ productId: "x", visibility: "Public", customerIds: [], groupIds: [], restrictedWithoutGrants: false }),
-  getCatalogProductAccessHistory: vi.fn().mockResolvedValue([]),
   listCustomerGroups: vi.fn().mockResolvedValue([]),
   putCatalogProductAccess: vi.fn(),
   getCatalogProductResourceRequirements: vi.fn().mockResolvedValue({ expectedVersion: 0, requirements: [] }),

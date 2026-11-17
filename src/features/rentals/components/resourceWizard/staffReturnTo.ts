@@ -78,7 +78,6 @@ function isAllowedProductWizardPath(path: string, query: string): boolean {
   return keys.length > 0 && keys.length <= 2 && new Set(keys).size === keys.length && keys.every((key) => key === "passo" || key === "modo") && passoOk && modoOk
 }
 
-
 function isAllowedResourcePath(path: string, query: string): boolean {
   const parts = path.split("/")
   if (parts[0] !== "" || parts[1] !== "configuracoes" || parts[2] !== "recursos") {

@@ -47,6 +47,9 @@ function ProductCadastroPage() {
   const wizard = useProductWizard(id)
   const [assets, setAssets] = useState<AdminRentalAsset[]>([])
   useBreadcrumbTitle(wizard.model?.product.name)
+  // Frozen on the first load: publishing a draft activates it, which must not flip the page into edit mode.
+  const [startedActive, setStartedActive] = useState<boolean | null>(null)
+  if (startedActive === null && wizard.model) setStartedActive(wizard.model.product.isActive)
 
   useEffect(() => {
     let active = true
@@ -68,8 +71,8 @@ function ProductCadastroPage() {
 
   const model = wizard.model
   const { product } = model
-  // Editing an existing product: asked for explicitly, or implied by an already active product.
-  const editing = editRequested || product.isActive
+  // Editing an existing product: asked for explicitly, or implied by a product that was already active on arrival.
+  const editing = editRequested || startedActive === true
   const wizardPath = editing ? productEditPath(product.id, "regras") : wizard.wizardPath
   const { steps, status, firstMissing, linkedAssetIds: linkedIds } = productSetupFromModel(model, wizard.rentalsActive)
   const linkedAssets = assets.filter((asset) => linkedIds.includes(asset.id))
@@ -135,6 +138,7 @@ function ProductCadastroPage() {
             productId={product.id}
             visibility={model.access.visibility}
             customerIds={model.access.customerIds}
+            customerNames={model.access.customerNames}
             groupIds={model.access.groupIds}
             groups={model.groups}
             wizardPath={wizardPath}

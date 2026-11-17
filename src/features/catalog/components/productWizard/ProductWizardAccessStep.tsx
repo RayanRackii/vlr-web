@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react"
+import { X } from "lucide-react"
 import { Link } from "react-router-dom"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
@@ -6,6 +7,7 @@ import { toast } from "sonner"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { CustomerGrantPicker } from "@/features/catalog/components/productWizard/CustomerGrantPicker"
 import { useStepSubmit } from "@/features/assistant/stepSubmit"
 import { isSameTabPrimaryClick } from "@/features/catalog/components/productWizard/plainClick"
 import { productGroupDeepLink } from "@/features/catalog/components/productWizard/wizardSteps"
@@ -21,6 +23,8 @@ type ProductWizardAccessStepProps = {
   productId: string
   visibility: CatalogProductVisibility
   customerIds: readonly string[]
+  /** Names of the granted customers, keyed by id (from the access response). */
+  customerNames?: Record<string, string>
   groupIds: readonly string[]
   groups: readonly CustomerGroup[]
   wizardPath: string
@@ -44,7 +48,8 @@ function sameIds(left: readonly string[], right: readonly string[]): boolean {
 export function ProductWizardAccessStep({
   productId,
   visibility: initialVisibility,
-  customerIds,
+  customerIds: initialCustomerIds,
+  customerNames = {},
   groupIds: initialGroupIds,
   groups,
   wizardPath,
@@ -58,6 +63,9 @@ export function ProductWizardAccessStep({
   const { t } = useTranslation()
   const [visibility, setVisibility] = useState<CatalogProductVisibility>(initialVisibility)
   const [groupIds, setGroupIds] = useState<string[]>([...initialGroupIds])
+  const [customerIds, setCustomerIds] = useState<string[]>([...initialCustomerIds])
+  const [savedCustomerIds, setSavedCustomerIds] = useState<string[]>([...initialCustomerIds])
+  const [pickedNames, setPickedNames] = useState<Record<string, string>>({})
   const [savedVisibility, setSavedVisibility] = useState(initialVisibility)
   const [savedGroupIds, setSavedGroupIds] = useState<string[]>([...initialGroupIds])
   const [queries, setQueries] = useState<Record<string, string>>({})
@@ -66,12 +74,12 @@ export function ProductWizardAccessStep({
   const [saving, setSaving] = useState(false)
   const [addingId, setAddingId] = useState<string | null>(null)
   const [saveError, setSaveError] = useState<string | null>(null)
-  const dirty = visibility !== savedVisibility || !sameIds(groupIds, savedGroupIds)
-  const draftRef = useRef({ visibility, groupIds })
+  const dirty = visibility !== savedVisibility || !sameIds(groupIds, savedGroupIds) || !sameIds(customerIds, savedCustomerIds)
+  const draftRef = useRef({ visibility, groupIds, customerIds })
 
   useEffect(() => {
-    draftRef.current = { visibility, groupIds }
-  }, [visibility, groupIds])
+    draftRef.current = { visibility, groupIds, customerIds }
+  }, [visibility, groupIds, customerIds])
 
   useEffect(() => {
     onDirtyChange?.(dirty)
@@ -91,19 +99,21 @@ export function ProductWizardAccessStep({
     }
     const sentVisibility = visibility
     const sentGroupIds = [...groupIds]
+    const sentCustomerIds = [...customerIds]
     setSaving(true)
     setSaveError(null)
     onSavingChange?.(true)
     try {
       await putCatalogProductAccess(productId, {
         visibility: sentVisibility,
-        customerIds: [...customerIds],
+        customerIds: sentCustomerIds,
         groupIds: sentGroupIds,
       })
       const current = draftRef.current
-      if (current.visibility === sentVisibility && sameIds(current.groupIds, sentGroupIds)) {
+      if (current.visibility === sentVisibility && sameIds(current.groupIds, sentGroupIds) && sameIds(current.customerIds, sentCustomerIds)) {
         setSavedVisibility(sentVisibility)
         setSavedGroupIds(sentGroupIds)
+        setSavedCustomerIds(sentCustomerIds)
       }
       toast.success(t("catalog.productWizard.accessSaved"))
       await onSaved()
@@ -126,6 +136,21 @@ export function ProductWizardAccessStep({
     }
     return save()
   })
+
+  const grantCount = groupIds.length + customerIds.length
+  const locked = readOnly || saving
+
+  function addCustomer(customer: TenantCustomer) {
+    setPickedNames((current) => ({ ...current, [customer.id]: customer.name }))
+    setCustomerIds((current) => current.includes(customer.id) ? current : [...current, customer.id])
+  }
+
+  function removeCustomer(id: string) {
+    setCustomerIds((current) => current.filter((item) => item !== id))
+  }
+
+  const nameOf = (id: string) => pickedNames[id] ?? customerNames[id]
+  const missingNames = customerIds.some((id) => !nameOf(id))
 
   async function searchMembers(groupId: string) {
     const query = (queries[groupId] ?? "").trim()
@@ -195,6 +220,12 @@ export function ProductWizardAccessStep({
           {t("catalog.products.visibilityFilter.restricted")}
         </Button>
       </div>
+      {visibility === "Public" && grantCount > 0 ? (
+        <p className="text-xs text-muted-foreground">{t("catalog.products.access.storedGrantsHint", { count: grantCount })}</p>
+      ) : null}
+      {visibility === "Restricted" && grantCount === 0 ? (
+        <p role="alert" className="rounded-lg bg-warning/10 p-2 text-sm text-warning-foreground">{t("catalog.products.access.emptyWarning")}</p>
+      ) : null}
       {visibility === "Restricted" ? (
         <fieldset className="space-y-2">
           <legend className="text-sm font-medium">{t("catalog.productWizard.groupsLabel")}</legend>
@@ -225,6 +256,26 @@ export function ProductWizardAccessStep({
             )
           })}
         </fieldset>
+      ) : null}
+      {visibility === "Restricted" ? (
+        <div className="space-y-2" data-testid="access-customers">
+          <p className="text-sm font-medium">{t("catalog.products.access.customers")}</p>
+          {customerIds.length > 0 ? (
+            <ul className="flex flex-wrap gap-2">
+              {customerIds.map((id) => (
+                <li key={id}>
+                  <Button type="button" variant="outline" size="sm" className="min-h-11" disabled={locked} onClick={() => removeCustomer(id)}>
+                    {nameOf(id) ?? t("catalog.customerGroups.members.unknown")}
+                    <X size={14} aria-hidden="true" />
+                  </Button>
+                </li>
+              ))}
+            </ul>
+          ) : null}
+          {missingNames ? <p className="text-xs text-muted-foreground">{t("catalog.products.access.namesUnavailable")}</p> : null}
+          {!locked && canSearchCustomers ? <CustomerGrantPicker excludeIds={customerIds} onAdd={addCustomer} /> : null}
+          {!locked && !canSearchCustomers ? <p className="text-xs text-muted-foreground">{t("catalog.products.access.needCustomersPermission")}</p> : null}
+        </div>
       ) : null}
       {emptyGroups.map((group) => {
         const query = queries[group.id] ?? ""

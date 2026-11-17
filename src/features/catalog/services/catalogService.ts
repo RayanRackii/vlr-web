@@ -825,22 +825,6 @@ export async function putCatalogProductAccess(
   }
 }
 
-export async function getCatalogProductAccessHistory(
-  productId: string,
-): Promise<CatalogAuditEntry[]> {
-  try {
-    const response = await api.get(
-      `/api/catalog/products/${productId}/access/history`,
-    )
-    return parseOrThrow(catalogAuditEntryListSchema.safeParse(response.data))
-  } catch (error) {
-    if (error instanceof Error && error.message === i18n.t("apiErrors.invalidPayload")) {
-      throw error
-    }
-    throwCatalogError(error, "catalog.customerGroups.errors.loadHistory")
-  }
-}
-
 export async function getCatalogPolicy(): Promise<CatalogPolicy> {
   try {
     const response = await api.get("/api/catalog/policy")
