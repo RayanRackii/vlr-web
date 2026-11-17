@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react"
 import { Link, useNavigate, useParams } from "react-router-dom"
-import { Copy, ImageOff, Pencil, Power, Settings, Trash2 } from "lucide-react"
+import { Copy, Pencil, Power, Settings, Trash2 } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 
@@ -155,7 +155,6 @@ function ProductView({ wizard, model }: { wizard: Wizard; model: WizardModel }) 
   const linkedAssetIds = requirements.flatMap((row) => (row.rentalAssetId ? [row.rentalAssetId] : []))
   const linkedAssets = assets.filter((asset) => linkedAssetIds.includes(asset.id))
   const assetNames = linkedAssets.map((asset) => asset.name)
-  const hasImages = images.length > 0
   const short = shortDescription(description)
 
   async function run(action: () => Promise<void>, fallbackKey: string) {
@@ -298,12 +297,12 @@ function ProductView({ wizard, model }: { wizard: Wizard; model: WizardModel }) 
       <div
         className={cn(
           "grid min-w-0 gap-x-10 gap-y-6",
-          hasImages ? "lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)] lg:grid-rows-[auto_1fr]" : "max-w-3xl",
+          "lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)] lg:grid-rows-[auto_1fr]",
         )}
         data-testid="product-view-main"
       >
         <div
-          className={cn("order-1 min-w-0 space-y-3 lg:order-none", hasImages && "lg:col-start-2 lg:row-start-1")}
+          className={cn("order-1 min-w-0 space-y-3 lg:order-none lg:col-start-2 lg:row-start-1")}
           data-testid="product-view-summary-head"
         >
           {!product.isActive || incomplete ? (
@@ -330,14 +329,16 @@ function ProductView({ wizard, model }: { wizard: Wizard; model: WizardModel }) 
           {product.code ? <p className="break-all text-sm text-muted-foreground">{t("catalog.products.view.code", { code: product.code })}</p> : null}
         </div>
 
-        {hasImages ? (
-          <div className="order-2 min-w-0 lg:order-none lg:col-start-1 lg:row-span-2 lg:row-start-1">
-            <ProductViewGallery images={images} name={product.name} />
-          </div>
-        ) : null}
+        <div className="order-2 min-w-0 lg:order-none lg:col-start-1 lg:row-span-2 lg:row-start-1">
+          <ProductViewGallery
+            images={images}
+            name={product.name}
+            addPhotosHref={canManage ? productEditPath(product.id, "arquivos") : undefined}
+          />
+        </div>
 
         <div
-          className={cn("order-3 min-w-0 space-y-5 lg:order-none", hasImages && "lg:col-start-2 lg:row-start-2")}
+          className={cn("order-3 min-w-0 space-y-5 lg:order-none lg:col-start-2 lg:row-start-2")}
           data-testid="product-view-summary-body"
         >
           {description ? (
@@ -396,17 +397,6 @@ function ProductView({ wizard, model }: { wizard: Wizard; model: WizardModel }) 
 
           <p className="text-sm text-muted-foreground" data-testid="product-view-portal">{portalLine}</p>
 
-          {!hasImages ? (
-            <p className="flex flex-wrap items-center gap-x-2 text-xs text-muted-foreground" data-testid="product-view-no-photo">
-              <ImageOff className="size-4" aria-hidden="true" />
-              {t("catalog.products.view.gallery.noPhoto")}
-              {canManage ? (
-                <Link className="inline-flex min-h-11 items-center font-medium text-primary underline-offset-4 hover:underline" to={productEditPath(product.id, "arquivos")}>
-                  {t("catalog.products.view.gallery.addPhotos")}
-                </Link>
-              ) : null}
-            </p>
-          ) : null}
         </div>
       </div>
 

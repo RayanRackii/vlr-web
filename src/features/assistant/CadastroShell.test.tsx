@@ -295,6 +295,13 @@ it("edit mode of an inactive product keeps the Rascunho chip and the step counte
   setupEdit({ active: false, published: false })
   expect(screen.getByText("Rascunho")).toBeInTheDocument()
   expect(screen.getByText(/Etapa 1 de 8/)).toBeInTheDocument()
+  expect(screen.getByText("No seu tempo")).toBeInTheDocument()
+})
+
+it("edit mode of an active product hides the publish-time hint in the side panel", () => {
+  setupEdit()
+  expect(screen.queryByText("No seu tempo")).not.toBeInTheDocument()
+  expect(screen.queryByText(/depois da publicação/)).not.toBeInTheDocument()
 })
 
 it("Salvar alterações saves the current step, then runs onSaved; a failed save stays", async () => {

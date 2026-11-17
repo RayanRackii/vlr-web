@@ -114,7 +114,7 @@ export function CadastroStepper({ step, go, disabled = false, kind = "resource",
         </li>
       })}
     </ol>
-    {product ? <div className="mt-6 hidden space-y-1 px-3 lg:block">
+    {product && !hideStage ? <div className="mt-6 hidden space-y-1 px-3 lg:block" data-testid="cadastro-time-hint">
       <p className="text-sm font-medium">{t("cadastro.timeTitle")}</p>
       <p className="text-sm text-muted-foreground">{t("cadastro.timeBody")}</p>
     </div> : null}
