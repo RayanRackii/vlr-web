@@ -23,6 +23,7 @@ import { useProductWizard } from "@/features/catalog/components/productWizard/us
 import { catalogMenuIsActive } from "@/features/catalog/components/productWizard/sellableChecklist"
 import { productNotApplicableSteps, productSetupFromModel } from "@/features/catalog/lib/productSetupStatus"
 import { listAdminRentalAssets, type AdminRentalAsset } from "@/features/rentals/services/scheduleService"
+import { productViewPath } from "@/features/catalog/lib/productEditorPath"
 
 /** Editing an existing product lives in the product editor; this page is only the cadastro wizard. */
 export function ProductAssistantPage({ cadastro = false }: { cadastro?: boolean } = {}) {
@@ -153,6 +154,6 @@ function ProductCadastroPage() {
   )
 
   return <CadastroShell kind="product" title={product.name} status={status} step={cadastroStep} go={goSkipping} notApplicable={notApplicable} dirty={stepDirty} busy={wizard.busy || stepSaving} done={done} optional={["categorias"]} canPublish={missingStep == null && wizard.canManage && !justPublished} completed={justPublished && cadastroStep === "publicacao"} onPublish={publish} onBack={() => navigate("/catalogo/produtos")}>
-    {justPublished && cadastroStep === "publicacao" ? <ProductPublishSuccess product={product} visibility={visibility} editorPath={`/catalogo/produtos/${product.id}`} /> : cadastroStep === "categorias" ? <CadastroTaxonomyStep onDirtyChange={setStepDirty} onSavingChange={setStepSaving} product={product} canAssign={wizard.canManage} onSaved={() => wizard.reload()} /> : body}
+    {justPublished && cadastroStep === "publicacao" ? <ProductPublishSuccess product={product} visibility={visibility} editorPath={productViewPath(product.id)} /> : cadastroStep === "categorias" ? <CadastroTaxonomyStep onDirtyChange={setStepDirty} onSavingChange={setStepSaving} product={product} canAssign={wizard.canManage} onSaved={() => wizard.reload()} /> : body}
   </CadastroShell>
 }

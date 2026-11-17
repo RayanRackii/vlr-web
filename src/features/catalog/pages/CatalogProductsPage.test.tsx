@@ -4,7 +4,7 @@ import { MemoryRouter, useLocation, useSearchParams } from "react-router-dom"
 import { toast } from "sonner"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 
-import { productEditorPath } from "@/features/catalog/lib/productEditorPath"
+import { productWizardPath } from "@/features/catalog/components/productWizard/wizardSteps"
 import { CatalogProductsPage } from "@/features/catalog/pages/CatalogProductsPage"
 import type { CatalogProduct } from "@/features/catalog/schemas/catalogSchemas"
 import { TestPermissionProvider } from "@/features/users/permissions/PermissionContext"
@@ -326,8 +326,8 @@ describe("CatalogProductsPage validity gate", () => {
     renderPage()
     const table = await screen.findByRole("table")
     await user.click(await within(table).findByRole("button", { name: i18n.t("catalog.products.rowMenu", { name: PRODUCT.name }) }))
-    expect(await screen.findByRole("menuitem", { name: i18n.t("catalog.products.menuEdit") })).toHaveAttribute("href", `/catalogo/produtos/${PRODUCT.id}`)
-    expect(screen.getByRole("menuitem", { name: i18n.t("catalog.products.menuAccess") })).toHaveAttribute("href", productEditorPath(PRODUCT.id, "access"))
+    expect(await screen.findByRole("menuitem", { name: i18n.t("catalog.products.menuEdit") })).toHaveAttribute("href", `/catalogo/produtos/${PRODUCT.id}/cadastro`)
+    expect(screen.getByRole("menuitem", { name: i18n.t("catalog.products.menuAccess") })).toHaveAttribute("href", `/catalogo/produtos/${PRODUCT.id}/cadastro?passo=regras`)
     expect(screen.queryByRole("menuitem", { name: i18n.t("catalog.products.menuContinue") })).not.toBeInTheDocument()
     await user.click(screen.getByRole("menuitem", { name: i18n.t("catalog.products.menuDeactivate") }))
     expect(deactivateCatalogProduct).not.toHaveBeenCalled()
@@ -392,9 +392,9 @@ describe("CatalogProductsPage validity gate", () => {
     const item = await screen.findByRole("menuitem", { name: i18n.t("catalog.products.menuAccess") })
     expect(screen.getByTestId("location")).toHaveTextContent(/^\/$/)
     await user.click(item)
-    await waitFor(() => expect(screen.getByTestId("location")).toHaveTextContent(`/catalogo/produtos/${PRODUCT.id}`))
-    expect(screen.getByTestId("search")).toHaveTextContent("?aba=access")
-    expect(productEditorPath(PRODUCT.id, "access")).toBe(`/catalogo/produtos/${PRODUCT.id}?aba=access`)
+    await waitFor(() => expect(screen.getByTestId("location")).toHaveTextContent(`/catalogo/produtos/${PRODUCT.id}/cadastro`))
+    expect(screen.getByTestId("search")).toHaveTextContent("?passo=regras")
+    expect(productWizardPath(PRODUCT.id, "access")).toBe(`/catalogo/produtos/${PRODUCT.id}/cadastro?passo=regras`)
   })
 
   it("opens the editor when the row is clicked", async () => {

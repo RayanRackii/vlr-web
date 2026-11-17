@@ -19,6 +19,7 @@ const CatalogPolicyPage = lazyPage(() => import("@/features/catalog/pages/Catalo
 const CustomerGroupFormPage = lazyPage(() => import("@/features/catalog/pages/CustomerGroupFormPage"), "CustomerGroupFormPage")
 const CustomerGroupsPage = lazyPage(() => import("@/features/catalog/pages/CustomerGroupsPage"), "CustomerGroupsPage")
 const CatalogProductEditorPage = lazyPage(() => import("@/features/catalog/pages/CatalogProductEditorPage"), "CatalogProductEditorPage")
+const ProductViewPage = lazyPage(() => import("@/features/catalog/pages/ProductViewPage"), "ProductViewPage")
 const ProductAssistantPage = lazyPage(() => import("@/features/assistant/ProductAssistantPage"), "ProductAssistantPage")
 const CatalogProductsPage = lazyPage(() => import("@/features/catalog/pages/CatalogProductsPage"), "CatalogProductsPage")
 const PortalCartPage = lazyPage(() => import("@/features/catalog/pages/PortalCartPage"), "PortalCartPage")
@@ -127,8 +128,13 @@ export const catalogManifest = {
         permission: "catalog.products.read",
       },
       {
-        path: "/catalogo/produtos/:id",
+        path: "/catalogo/produtos/:id/editar-legado",
         element: <CatalogProductEditorPage />,
+        permission: "catalog.products.read",
+      },
+      {
+        path: "/catalogo/produtos/:id",
+        element: <ProductViewPage />,
         permission: "catalog.products.read",
       },
       {

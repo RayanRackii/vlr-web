@@ -51,7 +51,7 @@ function setup(entry = `/catalogo/produtos/${productId}/passos`) {
     <MemoryRouter initialEntries={[entry]}>
       <Routes>
         <Route path="/catalogo/produtos/:id/passos" element={<ProductAssistantPage />} />
-        <Route path="/catalogo/produtos/:id" element={<LocationProbe />} />
+        <Route path="/catalogo/produtos/:id/editar-legado" element={<LocationProbe />} />
       </Routes>
     </MemoryRouter>,
   )
@@ -64,13 +64,13 @@ function LocationProbe() {
 
 it("sends the non-cadastro assistant to the single product editor", () => {
   setup()
-  expect(screen.getByTestId("editor-location")).toHaveTextContent(`/catalogo/produtos/${productId}`)
+  expect(screen.getByTestId("editor-location")).toHaveTextContent(`/catalogo/produtos/${productId}/editar-legado`)
   expect(screen.queryByRole("region", { name: "Preços" })).not.toBeInTheDocument()
 })
 
 it("opens the Agenda tab when the old link targeted the agenda step", () => {
   setup(`/catalogo/produtos/${productId}/passos?passo=agenda`)
-  expect(screen.getByTestId("editor-location")).toHaveTextContent(`/catalogo/produtos/${productId}?aba=agenda`)
+  expect(screen.getByTestId("editor-location")).toHaveTextContent(`/catalogo/produtos/${productId}/editar-legado?aba=agenda`)
 })
 
 function renderCadastro(query = "") {

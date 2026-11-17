@@ -14,6 +14,7 @@ import {
   catalogOrderListSchema,
   catalogOrderSchema,
   catalogProductFileSchema,
+  catalogProductHistoryListSchema,
   catalogProductListSchema,
   catalogProductResourceRequirementsResponseSchema,
   catalogProductSchema,
@@ -38,6 +39,7 @@ import {
   type CatalogOrderAllocationPreview,
   type CatalogOrderStatus,
   type CatalogProduct,
+  type CatalogProductHistoryEntry,
   type CatalogProductFile,
   type CatalogProductResourceRequirement,
   type CatalogProductResourceRequirementsResponse,
@@ -225,6 +227,51 @@ export async function activateCatalogProduct(
       throw error
     }
     throwCatalogError(error, "apiErrors.updateCatalogProductStatus")
+  }
+}
+
+export type CatalogProductHistoryCursor = { before: string; beforeId: string }
+
+/** Newest first. Page with the last entry's `createdAt` + `id` as the cursor. */
+export async function getCatalogProductHistory(
+  productId: string,
+  options?: { limit?: number; cursor?: CatalogProductHistoryCursor },
+): Promise<CatalogProductHistoryEntry[]> {
+  try {
+    const response = await api.get(`/api/catalog/products/${productId}/history`, {
+      params: {
+        limit: options?.limit ?? 50,
+        ...(options?.cursor ? { before: options.cursor.before, beforeId: options.cursor.beforeId } : {}),
+      },
+    })
+    return parseOrThrow(catalogProductHistoryListSchema.safeParse(response.data))
+  } catch (error) {
+    if (error instanceof Error && error.message === i18n.t("apiErrors.invalidPayload")) {
+      throw error
+    }
+    throwCatalogError(error, "catalog.products.view.history.loadError")
+  }
+}
+
+/** Creates an inactive copy. Files are not copied. */
+export async function duplicateCatalogProduct(id: string): Promise<CatalogProduct> {
+  try {
+    const response = await api.post(`/api/catalog/products/${id}/duplicate`)
+    return parseOrThrow(catalogProductSchema.safeParse(response.data))
+  } catch (error) {
+    if (error instanceof Error && error.message === i18n.t("apiErrors.invalidPayload")) {
+      throw error
+    }
+    throwCatalogError(error, "catalog.products.view.errors.duplicate")
+  }
+}
+
+/** 409 PRODUCT_HAS_ORDERS (orders keep their product) is mapped to a message that suggests deactivating. */
+export async function deleteCatalogProduct(id: string): Promise<void> {
+  try {
+    await api.delete(`/api/catalog/products/${id}`)
+  } catch (error) {
+    throwCatalogError(error, "catalog.products.view.errors.delete")
   }
 }
 
