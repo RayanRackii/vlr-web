@@ -7,6 +7,7 @@ import { taxonomyManifest } from "@/features/taxonomy/manifest"
 import { TestPermissionProvider } from "@/features/users/permissions/PermissionContext"
 
 vi.mock("@/features/catalog/pages/CatalogProductEditorPage", () => ({ CatalogProductEditorPage: () => <h1>Legacy product detail</h1> }))
+vi.mock("@/features/catalog/pages/ProductViewPage", () => ({ ProductViewPage: () => <h1>Product view</h1> }))
 vi.mock("@/features/assistant/ProductCadastroCreatePage", () => ({ ProductCadastroCreatePage: () => <h1>Product cadastro create</h1> }))
 vi.mock("@/features/assistant/ProductAssistantPage", () => ({ ProductAssistantPage: ({ cadastro }: { cadastro?: boolean }) => <h1>{cadastro ? "Product cadastro" : "Legacy product steps"}</h1> }))
 vi.mock("@/features/rentals/pages/RentalResourceEditorPage", () => ({ RentalResourceEditorPage: ({ cadastro }: { cadastro?: boolean }) => <h1>{cadastro ? "Resource cadastro create" : "Legacy resource editor"}</h1> }))
@@ -17,7 +18,8 @@ it.each([
   ["/catalogo/produtos/cadastro", "Product cadastro create"],
   ["/catalogo/produtos/p1/cadastro", "Product cadastro"],
   ["/catalogo/produtos/novo", "Product cadastro create"],
-  ["/catalogo/produtos/p1", "Legacy product detail"],
+  ["/catalogo/produtos/p1", "Product view"],
+  ["/catalogo/produtos/p1/editar-legado", "Legacy product detail"],
   ["/catalogo/produtos/p1/assistente", "Legacy product detail"],
   ["/catalogo/produtos/p1/passos", "Legacy product detail"],
   ["/configuracoes/recursos/cadastro", "Resource cadastro create"],

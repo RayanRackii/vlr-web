@@ -58,6 +58,8 @@ describe("feature manifests", () => {
       "/catalogo/produtos/novo",
       "/catalogo/produtos/:id/assistente",
       "/catalogo/produtos/:id/passos",
+      // Legacy editor: removed by slice W3.
+      "/catalogo/produtos/:id/editar-legado",
       "/catalogo/produtos/:id",
       "/catalogo/produtos",
       "/catalogo/solicitacoes",
