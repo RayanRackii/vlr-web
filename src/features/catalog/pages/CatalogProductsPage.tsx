@@ -43,7 +43,8 @@ import {
 } from "@/features/catalog/schemas/catalogSchemas"
 import { catalogMenuIsActive } from "@/features/catalog/components/productWizard/sellableChecklist"
 import { productWizardPath } from "@/features/catalog/components/productWizard/wizardSteps"
-import { selectCatalogProductImages } from "@/features/catalog/lib/selectCatalogProductImages"
+import { selectFirstReadyImageFile } from "@/features/catalog/lib/selectCatalogProductImages"
+import { getSignedProductFileUrl } from "@/features/catalog/lib/signedFileUrlCache"
 import { productEditPath, productViewPath } from "@/features/catalog/lib/productEditorPath"
 import { productItemStatus } from "@/features/assistant/itemStatus"
 import { saleMissingLabels } from "@/features/catalog/lib/catalogApiErrors"
@@ -522,19 +523,41 @@ function productState(
   return { kind: product.isActive ? "active" : "inactive", missing: 0 }
 }
 
-/** First customer-visible photo with a usable URL; falls back to the icon tile (no URL, or load error). */
+/**
+ * First Ready image (same rule as the view page, any visibility: staff-only screen). A file without a public URL
+ * is signed on mount (cached, deduped per file id). Icon tile while signing and on any error.
+ */
 function ProductThumb({ product }: { product: CatalogProduct }) {
+  const file = selectFirstReadyImageFile(product.files)
+  const publicUrl = file?.url?.trim() ? file.url.trim() : null
+  const fileId = file?.id ?? null
+  const [signed, setSigned] = useState<{ id: string; url: string } | null>(null)
+
+  useEffect(() => {
+    if (fileId == null || publicUrl != null) return
+    let active = true
+    getSignedProductFileUrl(product.id, fileId)
+      .then((url) => { if (active) setSigned({ id: fileId, url }) })
+      .catch(() => undefined)
+    return () => { active = false }
+  }, [product.id, fileId, publicUrl])
+
+  const url = publicUrl ?? (signed != null && signed.id === fileId ? signed.url : null)
+  if (url == null) {
+    return <span className="staff-catalog-product-icon" data-testid="product-thumb-icon"><Package size={20} aria-hidden="true" /></span>
+  }
+  return <ProductThumbImage key={url} url={url} name={product.name} />
+}
+
+function ProductThumbImage({ url, name }: { url: string; name: string }) {
   const [failed, setFailed] = useState(false)
-  const image = selectCatalogProductImages(
-    product.files.filter((file) => file.visibility === "CustomerVisible" && file.status === "Ready"),
-  )[0]
-  if (image == null || failed) {
+  if (failed) {
     return <span className="staff-catalog-product-icon" data-testid="product-thumb-icon"><Package size={20} aria-hidden="true" /></span>
   }
   return (
     <img
-      src={image.url}
-      alt={product.name}
+      src={url}
+      alt={name}
       loading="lazy"
       draggable={false}
       className="size-10 flex-none rounded-[10px] object-cover"
