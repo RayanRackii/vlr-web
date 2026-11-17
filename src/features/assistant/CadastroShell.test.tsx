@@ -4,7 +4,7 @@ import { useState } from "react"
 import { createMemoryRouter, MemoryRouter, Route, RouterProvider, Routes, useLocation } from "react-router-dom"
 import { beforeEach, expect, it, vi } from "vitest"
 
-import { CadastroShell } from "./CadastroShell"
+import { CadastroShell, CadastroStepper } from "./CadastroShell"
 import { useStepSubmit, type StepSubmit } from "./stepSubmit"
 import { useCadastroStep, type CadastroStep } from "./useCadastroStep"
 
@@ -27,7 +27,7 @@ function SubmittingStep({ submit }: { submit: StepSubmit }) {
 }
 
 function Page({ submit, done, canPublish = true, dirty = false, notApplicable }: { submit?: StepSubmit; done?: CadastroStep[]; canPublish?: boolean; dirty?: boolean; notApplicable?: CadastroStep[] }) {
-  const { step, go } = useCadastroStep()
+  const { step, go } = useCadastroStep("product")
   return <CadastroShell kind="product" title="Diária" status={{ kind: "draft" }} step={step} go={go} dirty={dirty} busy={false} done={done} notApplicable={notApplicable} optional={["categorias"]} canPublish={canPublish} onPublish={onPublish} onBack={onBack}>
     {submit ? <SubmittingStep key={step} submit={submit} /> : <p>sem passo</p>}
   </CadastroShell>
@@ -102,9 +102,9 @@ it("Voltar goes to the previous step without saving or discarding", async () => 
   const submit = vi.fn().mockResolvedValue(true)
   setup({ submit })
   await user.click(screen.getByRole("button", { name: "Voltar" }))
-  expect(screen.getByTestId("location")).toHaveTextContent("/c?passo=dados")
+  expect(screen.getByTestId("location")).toHaveTextContent("/c?passo=arquivos")
   expect(submit).not.toHaveBeenCalled()
-  expect(screen.getByRole("button", { name: "Cancelar" })).toBeInTheDocument()
+  expect(screen.getByRole("button", { name: "Voltar" })).toBeInTheDocument()
 })
 
 it("shows Cancelar on step 1 and leaves for the list", async () => {
@@ -150,7 +150,7 @@ it("marks steps from the saved data, not from visits", async () => {
   expect(within(nav).getByRole("button", { name: "Regras" })).toHaveAttribute("aria-current", "step")
   expect(within(nav).getAllByRole("button").filter((button) => /concluída/.test(button.getAttribute("aria-label") ?? ""))).toHaveLength(2)
   expect(within(nav).getByText("Opcional")).toBeInTheDocument()
-  expect(screen.getByText("Etapa 5 de 7")).toBeInTheDocument()
+  expect(screen.getByText("Etapa 6 de 8")).toBeInTheDocument()
 })
 
 it("renders the header, the vertical progress copy and one panel with the step title", () => {
@@ -193,7 +193,7 @@ it("shows not-applicable steps muted and not clickable, counted as done, with a 
   expect(within(nav).queryByRole("button", { name: /^Agenda/ })).not.toBeInTheDocument()
   expect(within(nav).queryByRole("button", { name: /^Fila/ })).not.toBeInTheDocument()
   expect(within(nav).getAllByText("Não se aplica")).toHaveLength(2)
-  expect(screen.getByText("Etapa 3 de 5")).toBeInTheDocument()
+  expect(screen.getByText("Etapa 4 de 6")).toBeInTheDocument()
 })
 
 it("Salvar e continuar and Voltar skip the steps that do not apply", async () => {
@@ -212,16 +212,41 @@ it("centres the content in a 1120px container", () => {
 
 it("names the current step above one dot per step, the current one included", () => {
   setup({}, "/c?passo=publicacao")
-  expect(screen.getByText("Etapa 7 de 7")).toBeInTheDocument()
+  expect(screen.getByText("Etapa 8 de 8")).toBeInTheDocument()
   expect(screen.getByTestId("cadastro-stepper-name")).toHaveTextContent("· Publicação")
   const dots = screen.getAllByTestId("cadastro-stepper-dot")
-  expect(dots).toHaveLength(7)
+  expect(dots).toHaveLength(8)
   expect(dots.filter((dot) => dot.hasAttribute("data-current"))).toHaveLength(1)
-  expect(dots[6]).toHaveAttribute("data-current")
+  expect(dots[7]).toHaveAttribute("data-current")
 })
 
 it("draws one dot per applicable step", () => {
   setup({ notApplicable: ["agenda", "fila"] }, "/c?passo=regras")
-  expect(screen.getAllByTestId("cadastro-stepper-dot")).toHaveLength(5)
+  expect(screen.getAllByTestId("cadastro-stepper-dot")).toHaveLength(6)
   expect(screen.getByTestId("cadastro-stepper-name")).toHaveTextContent("· Regras")
+})
+
+it("lists Fotos e arquivos right after Dados do produto", () => {
+  setup({}, "/c?passo=dados")
+  const nav = screen.getByRole("navigation", { name: "Etapas do cadastro" })
+  const names = within(nav).getAllByRole("button").map((button) => button.getAttribute("aria-label"))
+  expect(names.slice(0, 3)).toEqual(["Dados do produto", "Fotos e arquivos", "Categorias e tags"])
+  expect(screen.getByText("Etapa 1 de 8")).toBeInTheDocument()
+})
+
+it("Salvar e continuar on Dados goes to Fotos e arquivos, and Voltar returns to Dados", async () => {
+  const user = userEvent.setup()
+  setup({}, "/c?passo=dados")
+  await user.click(screen.getByRole("button", { name: "Salvar e continuar" }))
+  await waitFor(() => expect(screen.getByTestId("location")).toHaveTextContent("/c?passo=arquivos"))
+  expect(screen.getByRole("heading", { level: 2, name: "Fotos e arquivos" })).toBeInTheDocument()
+  await user.click(screen.getByRole("button", { name: "Voltar" }))
+  await waitFor(() => expect(screen.getByTestId("location")).toHaveTextContent("/c?passo=dados"))
+})
+
+it("does not add the product-only step to a resource cadastro", () => {
+  render(<MemoryRouter><CadastroStepper step="dados" kind="resource" /></MemoryRouter>)
+  const nav = screen.getByRole("navigation", { name: "Etapas do cadastro" })
+  expect(within(nav).queryByText("Fotos e arquivos")).not.toBeInTheDocument()
+  expect(screen.getByText("Etapa 1 de 7")).toBeInTheDocument()
 })

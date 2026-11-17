@@ -9,6 +9,11 @@ describe("safeStaffReturnTo", () => {
     ).toBe("/configuracoes/recursos/abc/assistente?passo=rules")
   })
 
+  it("accepts the files step for products but not for resources", () => {
+    expect(safeStaffReturnTo("/catalogo/produtos/abc/cadastro?passo=arquivos")).toBe("/catalogo/produtos/abc/cadastro?passo=arquivos")
+    expect(safeStaffReturnTo("/configuracoes/recursos/abc/cadastro?passo=arquivos")).toBeNull()
+  })
+
   it("keeps the resource list and the resource editor", () => {
     expect(safeStaffReturnTo("/configuracoes/recursos")).toBe("/configuracoes/recursos")
     expect(safeStaffReturnTo("/configuracoes/recursos/abc")).toBe("/configuracoes/recursos/abc")

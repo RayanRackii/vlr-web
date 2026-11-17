@@ -1,8 +1,9 @@
-import { cadastroSteps } from "@/features/assistant/useCadastroStep"
+import { cadastroSteps, productOnlySteps } from "@/features/assistant/useCadastroStep"
 import { isProductWizardStep } from "@/features/catalog/components/productWizard/wizardSteps"
 import { isResourceWizardStep } from "@/features/rentals/components/resourceWizard/wizardSteps"
 
 function isAllowedPasso(value: string | null, kind: "product" | "resource"): boolean {
+  if (kind === "resource" && (productOnlySteps as readonly string[]).includes(value ?? "")) return false
   if ((cadastroSteps as readonly string[]).includes(value ?? "")) return true
   return kind === "product" ? isProductWizardStep(value) : isResourceWizardStep(value)
 }

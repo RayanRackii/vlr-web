@@ -36,7 +36,7 @@ beforeEach(() => {
     publishMenu: vi.fn(),
     modelRef: { current: null },
     model: {
-      product: { id: productId, name: "Diária", isActive: true, usesSchedule: true, currency: "BRL", price: 0, visibility: "Public" },
+      product: { id: productId, name: "Diária", isActive: true, usesSchedule: true, currency: "BRL", price: 0, visibility: "Public", files: [] },
       access: { visibility: "Public", customerIds: [], groupIds: [] },
       groups: [],
       menuItems: [],
@@ -99,7 +99,7 @@ it("defaults an unknown cadastro step to Dados", () => {
   expect(screen.getByRole("button", { name: /^Dados do produto/ })).toHaveAttribute("aria-current", "step")
   expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1)
 })
-function mockReadyProduct(overrides: { isActive: boolean; menuItems: unknown[]; taxonomy?: unknown }) {
+function mockReadyProduct(overrides: { isActive: boolean; menuItems: unknown[]; taxonomy?: unknown; files?: unknown[] }) {
   const publishMenu = vi.fn().mockResolvedValue(true)
   const reload = vi.fn()
   vi.mocked(useProductWizard).mockReturnValue({
@@ -115,7 +115,7 @@ function mockReadyProduct(overrides: { isActive: boolean; menuItems: unknown[]; 
     publishMenu,
     modelRef: { current: null },
     model: {
-      product: { id: productId, name: "Diária", isActive: overrides.isActive, usesSchedule: true, currency: "BRL", price: 10, visibility: "Public", taxonomy: overrides.taxonomy },
+      product: { id: productId, name: "Diária", isActive: overrides.isActive, usesSchedule: true, currency: "BRL", price: 10, visibility: "Public", files: overrides.files ?? [], taxonomy: overrides.taxonomy },
       access: { visibility: "Public", customerIds: [], groupIds: [] },
       groups: [],
       menuItems: overrides.menuItems,
@@ -168,7 +168,7 @@ it("shows Rascunho and marks steps from the saved data, not from visits", async 
     expect(within(nav).getByRole("button", { name: `${done}, concluída` })).toBeInTheDocument()
   }
   expect(within(nav).getByRole("button", { name: "Categorias e tags" })).toBeInTheDocument()
-  expect(within(nav).getByText("Opcional")).toBeInTheDocument()
+  expect(within(nav).getAllByText("Opcional")).toHaveLength(2)
   expect(within(nav).getByRole("button", { name: "Publicação" })).toBeInTheDocument()
   await user.click(within(nav).getByRole("button", { name: "Publicação" }))
   expect(within(nav).getByRole("button", { name: "Publicação" })).toHaveAttribute("aria-current", "step")
@@ -181,7 +181,7 @@ it("shows Publicado and completes Categorias when the product has taxonomy", () 
   expect(screen.getByText("Ativo")).toBeInTheDocument()
   expect(within(nav).getByRole("button", { name: "Categorias e tags, concluída" })).toBeInTheDocument()
   expect(within(nav).getByRole("button", { name: "Publicação, concluída" })).toBeInTheDocument()
-  expect(within(nav).queryByText("Opcional")).not.toBeInTheDocument()
+  expect(within(nav).getAllByText("Opcional")).toHaveLength(1)
 })
 
 it("keeps Publicar disabled while a setup step is missing", () => {
@@ -213,7 +213,7 @@ it("shows Agenda and Fila as not applicable for a product without schedule and s
     loading: false, error: null, busy: false, readOnly: false, rentalsActive: true, canManage: true, canSearchCustomers: false,
     wizardPath: "", reload: vi.fn(), publishMenu: vi.fn(), modelRef: { current: null },
     model: {
-      product: { id: productId, name: "Diária", isActive: false, usesSchedule: false, currency: "BRL", price: 10, visibility: "Public" },
+      product: { id: productId, name: "Diária", isActive: false, usesSchedule: false, currency: "BRL", price: 10, visibility: "Public", files: [] },
       access: { visibility: "Public", customerIds: [], groupIds: [] }, groups: [], menuItems: [],
       requirements: [], resourceCapability: "ready",
     },
@@ -224,7 +224,7 @@ it("shows Agenda and Fila as not applicable for a product without schedule and s
   expect(within(nav).getByRole("group", { name: "Agenda, Não se aplica" })).toBeInTheDocument()
   expect(within(nav).getByRole("group", { name: "Fila, Não se aplica" })).toBeInTheDocument()
   expect(within(nav).queryByRole("button", { name: /^Agenda/ })).not.toBeInTheDocument()
-  expect(screen.getByText("Etapa 2 de 5")).toBeInTheDocument()
+  expect(screen.getByText("Etapa 3 de 6")).toBeInTheDocument()
   await user.click(screen.getByRole("button", { name: "Salvar e continuar" }))
   await waitFor(() => expect(screen.getByRole("button", { name: /^Regras/ })).toHaveAttribute("aria-current", "step"))
 })
@@ -246,7 +246,7 @@ it("summarizes the product before publishing, with Sob consulta and an Editar li
     loading: false, error: null, busy: false, readOnly: false, rentalsActive: true, canManage: true, canSearchCustomers: false,
     wizardPath: "", reload: vi.fn(), publishMenu: vi.fn(), modelRef: { current: null },
     model: {
-      product: { id: productId, name: "Diária", isActive: false, usesSchedule: false, currency: "BRL", price: null, visibility: "Restricted", taxonomy: { categories: [{ id: "c", name: "Hospedagem" }], tags: [] } },
+      product: { id: productId, name: "Diária", isActive: false, usesSchedule: false, currency: "BRL", price: null, visibility: "Restricted", files: [], taxonomy: { categories: [{ id: "c", name: "Hospedagem" }], tags: [] } },
       access: { visibility: "Restricted", customerIds: [], groupIds: [] }, groups: [], menuItems: [],
       requirements: [], resourceCapability: "ready",
     },
@@ -314,4 +314,31 @@ it("stays on the step with a muted note when the product is active but the menu 
   expect(await screen.findByText("O produto está ativo, mas não entrou no menu do portal.")).toBeInTheDocument()
   expect(screen.queryByText("Produto publicado")).not.toBeInTheDocument()
   expect(screen.getByRole("button", { name: "Publicar" })).toBeEnabled()
+})
+
+it("shows Fotos e arquivos right after Dados, never counts it as missing and saves nothing on continue", async () => {
+  const user = userEvent.setup()
+  mockReadyProduct({ isActive: false, menuItems: [] })
+  renderCadastro("?passo=dados")
+  const nav = screen.getByRole("navigation", { name: "Etapas do cadastro" })
+  const labels = within(nav).getAllByRole("button").map((button) => button.getAttribute("aria-label"))
+  expect(labels.slice(0, 3)).toEqual(["Dados do produto, concluída", "Fotos e arquivos", "Categorias e tags"])
+  await user.click(within(nav).getByRole("button", { name: "Fotos e arquivos" }))
+  expect(await screen.findByTestId("product-files-manager")).toBeInTheDocument()
+  expect(screen.getByText("Etapa 2 de 8")).toBeInTheDocument()
+  // Optional with no files: not done, not missing.
+  expect(within(nav).getByRole("button", { name: "Fotos e arquivos" })).toHaveAttribute("aria-current", "step")
+  await user.click(screen.getByRole("button", { name: "Salvar e continuar" }))
+  await waitFor(() => expect(screen.getByRole("button", { name: /^Categorias e tags/ })).toHaveAttribute("aria-current", "step"))
+})
+
+it("marks Fotos e arquivos done only for a Ready file, not for Pending or Failed ones", () => {
+  const file = (status: string) => ({ id: status, fileName: `${status}.png`, mimeType: "image/png", sizeBytes: 1, visibility: "CustomerVisible", status, url: null })
+  mockReadyProduct({ isActive: false, menuItems: [], files: [file("Pending"), file("Failed")] })
+  const view = renderCadastro("?passo=dados")
+  expect(within(screen.getByRole("navigation", { name: "Etapas do cadastro" })).getByRole("button", { name: "Fotos e arquivos" })).toBeInTheDocument()
+  view.unmount()
+  mockReadyProduct({ isActive: false, menuItems: [], files: [file("Ready")] })
+  renderCadastro("?passo=dados")
+  expect(within(screen.getByRole("navigation", { name: "Etapas do cadastro" })).getByRole("button", { name: "Fotos e arquivos, concluída" })).toBeInTheDocument()
 })

@@ -10,7 +10,7 @@ import { StatusBadge } from "@/components/ui/status"
 import { cn } from "@/lib/utils"
 import { StepSubmitContext, type StepSubmit, type StepSubmitRegistry } from "./stepSubmit"
 import type { ItemStatus } from "./itemStatus"
-import { cadastroSteps, type CadastroStep } from "./useCadastroStep"
+import { cadastroSteps, productOnlySteps, type CadastroStep } from "./useCadastroStep"
 import "./cadastro.css"
 
 export type CadastroKind = "product" | "resource"
@@ -24,21 +24,28 @@ export function CadastroStatusChip({ status, kind = "resource" }: { status: Item
   return <StatusBadge tone={published ? "success" : "neutral"}>{t(published ? publishedKey : "assistant.status.draft")}</StatusBadge>
 }
 
+/** Steps shown for a kind of item, in order. Resources do not have the product-only steps. */
+function stepsOf(kind: CadastroKind): readonly CadastroStep[] {
+  return kind === "product" ? cadastroSteps : cadastroSteps.filter((item) => !productOnlySteps.includes(item))
+}
+
 /** Steps that apply, in order (the rest are "Não se aplica"). */
-function applicableSteps(notApplicable: readonly CadastroStep[]): CadastroStep[] {
-  return cadastroSteps.filter((item) => !notApplicable.includes(item))
+function applicableSteps(notApplicable: readonly CadastroStep[], kind: CadastroKind): CadastroStep[] {
+  return stepsOf(kind).filter((item) => !notApplicable.includes(item))
 }
 
 /** 1-based position among the applicable steps (a not-applicable current step counts the applicable ones before it). */
-function stagePosition(step: CadastroStep, notApplicable: readonly CadastroStep[]): number {
-  const before = cadastroSteps.slice(0, cadastroSteps.indexOf(step)).filter((item) => !notApplicable.includes(item)).length
+function stagePosition(step: CadastroStep, notApplicable: readonly CadastroStep[], kind: CadastroKind): number {
+  const list = stepsOf(kind)
+  const before = list.slice(0, Math.max(list.indexOf(step), 0)).filter((item) => !notApplicable.includes(item)).length
   return notApplicable.includes(step) ? Math.max(before, 1) : before + 1
 }
 
 /** Closest applicable step in a direction, or null at the ends. */
-function neighborStep(step: CadastroStep, direction: -1 | 1, notApplicable: readonly CadastroStep[]): CadastroStep | null {
-  for (let i = cadastroSteps.indexOf(step) + direction; i >= 0 && i < cadastroSteps.length; i += direction) {
-    if (!notApplicable.includes(cadastroSteps[i])) return cadastroSteps[i]
+function neighborStep(step: CadastroStep, direction: -1 | 1, notApplicable: readonly CadastroStep[], kind: CadastroKind): CadastroStep | null {
+  const list = stepsOf(kind)
+  for (let i = list.indexOf(step) + direction; i >= 0 && i < list.length; i += direction) {
+    if (!notApplicable.includes(list[i])) return list[i]
   }
   return null
 }
@@ -48,7 +55,7 @@ export function CadastroHeader({ title, step = "dados", description, status, not
   return <header className="flex min-w-0 items-start justify-between gap-3">
     <div className="min-w-0 space-y-1">
       <h1 className="text-xl font-semibold tracking-tight sm:text-2xl">{title}</h1>
-      <p className="text-sm text-muted-foreground">{description ?? t("cadastro.stepOf", { count: stagePosition(step, notApplicable), total: applicableSteps(notApplicable).length })}</p>
+      <p className="text-sm text-muted-foreground">{description ?? t("cadastro.stepOf", { count: stagePosition(step, notApplicable, kind), total: applicableSteps(notApplicable, kind).length })}</p>
     </div>
     {description !== undefined ? <CadastroStatusChip status={status} kind={kind} /> : null}
   </header>
@@ -70,14 +77,14 @@ export function CadastroStepper({ step, go, disabled = false, kind = "resource",
   return <nav aria-label={t("cadastro.steps")} className="cadastro-progress min-w-0 max-w-full">
     <p className="hidden text-xs font-medium uppercase tracking-wide text-muted-foreground lg:block">{t(product ? "cadastro.progressCaptionProduct" : "cadastro.progressCaptionResource")}</p>
     <p className="text-sm text-muted-foreground lg:mt-3" data-testid="cadastro-stepper-compact">
-      <span>{t("cadastro.stage", { count: stagePosition(step, notApplicable), total: applicableSteps(notApplicable).length })}</span>{" "}
+      <span>{t("cadastro.stage", { count: stagePosition(step, notApplicable, kind), total: applicableSteps(notApplicable, kind).length })}</span>{" "}
       <span data-testid="cadastro-stepper-name">{t("cadastro.stageName", { name: product ? t(`cadastro.productSteps.${step}.title`) : t(`assistant.steps.${step}`) })}</span>
     </p>
     <ol className="mt-2 flex items-center gap-1.5 lg:hidden" aria-hidden="true" data-testid="cadastro-stepper-dots">
-      {applicableSteps(notApplicable).map((item) => <li key={item} data-testid="cadastro-stepper-dot" data-current={item === step || undefined} className={cn("size-2 rounded-full", item === step ? "bg-primary" : "bg-border")} />)}
+      {applicableSteps(notApplicable, kind).map((item) => <li key={item} data-testid="cadastro-stepper-dot" data-current={item === step || undefined} className={cn("size-2 rounded-full", item === step ? "bg-primary" : "bg-border")} />)}
     </ol>
     <ol className="mt-2 flex min-w-0 max-w-full gap-1 overflow-x-auto lg:mt-3 lg:flex-col lg:overflow-visible">
-      {cadastroSteps.map((item, i) => {
+      {stepsOf(kind).map((item, i) => {
         const current = step === item
         const skipped = notApplicable.includes(item)
         const isDone = skipped || done.includes(item)
@@ -153,8 +160,8 @@ export function CadastroShell({ kind = "resource", title, description, status, s
 }) {
   const { t } = useTranslation()
   const hasDataRouter = useContext(DataRouterContext) != null
-  const nextStep = neighborStep(step, 1, notApplicable)
-  const previousStep = neighborStep(step, -1, notApplicable)
+  const nextStep = neighborStep(step, 1, notApplicable, kind)
+  const previousStep = neighborStep(step, -1, notApplicable, kind)
   const last = nextStep === null
   const product = kind === "product"
   const submitRef = useRef<StepSubmit | null>(null)
