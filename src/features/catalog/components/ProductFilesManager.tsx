@@ -33,12 +33,14 @@ export type ProductFilesReload = (options?: { filesOnly?: boolean }) => void | P
  * Photos and files of a product: upload with a visibility choice, list, open (signed URL) and delete with confirm.
  * Every action saves immediately; the parent only supplies the current files and a reload.
  */
-export function ProductFilesManager({ productId, productName, files, canManage, onReload }: {
+export function ProductFilesManager({ productId, productName, files, canManage, onReload, onBusyChange }: {
   productId: string
   productName: string
   files: readonly CatalogProductFile[]
   canManage: boolean
   onReload: ProductFilesReload
+  /** True while an upload or delete is in flight, so the host can hold navigation and saving. */
+  onBusyChange?: (busy: boolean) => void
 }) {
   const { t } = useTranslation()
   const [uploadVisibility, setUploadVisibility] = useState<CatalogFileVisibility>("CustomerVisible")
@@ -46,6 +48,8 @@ export function ProductFilesManager({ productId, productName, files, canManage, 
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [selectedFileName, setSelectedFileName] = useState("")
   const [fileError, setFileError] = useState<string | null>(null)
+  useEffect(() => { onBusyChange?.(fileBusy) }, [fileBusy, onBusyChange])
+  useEffect(() => () => onBusyChange?.(false), [onBusyChange])
   const [pendingDelete, setPendingDelete] = useState<CatalogProductFile | null>(null)
   const [signedImageUrls, setSignedImageUrls] = useState<Record<string, string>>({})
   const [previewFailures, setPreviewFailures] = useState<Record<string, boolean>>({})

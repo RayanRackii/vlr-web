@@ -32,7 +32,7 @@ export function ProductAssistantPage({ cadastro = false }: { cadastro?: boolean 
 }
 
 function ProductCadastroPage() {
-  const { step: cadastroStep, go } = useCadastroStep()
+  const { step: cadastroStep, go } = useCadastroStep("product")
   const navigate = useNavigate()
   const permissions = useOptionalPermissions()
   const [stepDirty, setStepDirty] = useState(false)
@@ -83,7 +83,7 @@ function ProductCadastroPage() {
   const taxonomy = product.taxonomy
   const done: CadastroStep[] = [
     ...(Object.entries(steps) as [SetupStepId, boolean][]).filter(([, ok]) => ok).map(([id]) => id),
-    ...(product.files.length > 0 ? ["arquivos" as const] : []),
+    ...(product.files.some((file) => file.status === "Ready") ? ["arquivos" as const] : []),
     ...((taxonomy?.categories.length ?? 0) + (taxonomy?.tags.length ?? 0) > 0 ? ["categorias" as const] : []),
     ...(status.kind === "published" ? ["publicacao" as const] : []),
   ]
@@ -118,7 +118,7 @@ function ProductCadastroPage() {
           <ProductWizardOfferStep product={product} mode={cadastroStep === "precos" ? "precos" : "dados"} showUsesSchedule={wizard.rentalsActive} readOnly={!wizard.canManage} onDirtyChange={setStepDirty} onSavingChange={setStepSaving} onSaved={() => wizard.reload()} />
         ) : null}
         {cadastroStep === "arquivos" ? (
-          <ProductWizardFilesStep product={product} canManage={wizard.canManage} onReload={() => wizard.reload()} />
+          <ProductWizardFilesStep product={product} canManage={wizard.canManage} onBusyChange={setStepSaving} onReload={() => wizard.reload()} />
         ) : null}
         {cadastroStep === "agenda" ? (
           <CatalogProductResourceRequirements productId={product.id} readOnly={!wizard.canManage} onDirtyChange={setStepDirty} onSavingChange={setStepSaving} onSaved={() => wizard.reload()} />

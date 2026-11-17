@@ -27,7 +27,7 @@ function SubmittingStep({ submit }: { submit: StepSubmit }) {
 }
 
 function Page({ submit, done, canPublish = true, dirty = false, notApplicable }: { submit?: StepSubmit; done?: CadastroStep[]; canPublish?: boolean; dirty?: boolean; notApplicable?: CadastroStep[] }) {
-  const { step, go } = useCadastroStep()
+  const { step, go } = useCadastroStep("product")
   return <CadastroShell kind="product" title="Diária" status={{ kind: "draft" }} step={step} go={go} dirty={dirty} busy={false} done={done} notApplicable={notApplicable} optional={["categorias"]} canPublish={canPublish} onPublish={onPublish} onBack={onBack}>
     {submit ? <SubmittingStep key={step} submit={submit} /> : <p>sem passo</p>}
   </CadastroShell>

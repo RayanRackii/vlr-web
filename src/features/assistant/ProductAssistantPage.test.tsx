@@ -99,7 +99,7 @@ it("defaults an unknown cadastro step to Dados", () => {
   expect(screen.getByRole("button", { name: /^Dados do produto/ })).toHaveAttribute("aria-current", "step")
   expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1)
 })
-function mockReadyProduct(overrides: { isActive: boolean; menuItems: unknown[]; taxonomy?: unknown }) {
+function mockReadyProduct(overrides: { isActive: boolean; menuItems: unknown[]; taxonomy?: unknown; files?: unknown[] }) {
   const publishMenu = vi.fn().mockResolvedValue(true)
   const reload = vi.fn()
   vi.mocked(useProductWizard).mockReturnValue({
@@ -115,7 +115,7 @@ function mockReadyProduct(overrides: { isActive: boolean; menuItems: unknown[]; 
     publishMenu,
     modelRef: { current: null },
     model: {
-      product: { id: productId, name: "Diária", isActive: overrides.isActive, usesSchedule: true, currency: "BRL", price: 10, visibility: "Public", files: [], taxonomy: overrides.taxonomy },
+      product: { id: productId, name: "Diária", isActive: overrides.isActive, usesSchedule: true, currency: "BRL", price: 10, visibility: "Public", files: overrides.files ?? [], taxonomy: overrides.taxonomy },
       access: { visibility: "Public", customerIds: [], groupIds: [] },
       groups: [],
       menuItems: overrides.menuItems,
@@ -330,4 +330,15 @@ it("shows Fotos e arquivos right after Dados, never counts it as missing and sav
   expect(within(nav).getByRole("button", { name: "Fotos e arquivos" })).toHaveAttribute("aria-current", "step")
   await user.click(screen.getByRole("button", { name: "Salvar e continuar" }))
   await waitFor(() => expect(screen.getByRole("button", { name: /^Categorias e tags/ })).toHaveAttribute("aria-current", "step"))
+})
+
+it("marks Fotos e arquivos done only for a Ready file, not for Pending or Failed ones", () => {
+  const file = (status: string) => ({ id: status, fileName: `${status}.png`, mimeType: "image/png", sizeBytes: 1, visibility: "CustomerVisible", status, url: null })
+  mockReadyProduct({ isActive: false, menuItems: [], files: [file("Pending"), file("Failed")] })
+  const view = renderCadastro("?passo=dados")
+  expect(within(screen.getByRole("navigation", { name: "Etapas do cadastro" })).getByRole("button", { name: "Fotos e arquivos" })).toBeInTheDocument()
+  view.unmount()
+  mockReadyProduct({ isActive: false, menuItems: [], files: [file("Ready")] })
+  renderCadastro("?passo=dados")
+  expect(within(screen.getByRole("navigation", { name: "Etapas do cadastro" })).getByRole("button", { name: "Fotos e arquivos, concluída" })).toBeInTheDocument()
 })

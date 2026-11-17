@@ -93,6 +93,18 @@ describe("ProductFilesManager", () => {
     await waitFor(() => expect(onReload).toHaveBeenCalled())
   })
 
+  it("reports busy while an upload is in flight", async () => {
+    let finish: (value: CatalogProductFile) => void = () => {}
+    vi.mocked(uploadCatalogProductFile).mockImplementation(() => new Promise((resolve) => { finish = resolve }))
+    const onBusyChange = vi.fn()
+    const user = userEvent.setup()
+    render(<ProductFilesManager productId="prod-1" productName="Quadra" files={[]} canManage onReload={vi.fn()} onBusyChange={onBusyChange} />)
+    await user.upload(screen.getByLabelText(t("catalog.products.files.select")), new File(["x"], "foto.png", { type: "image/png" }))
+    await waitFor(() => expect(onBusyChange).toHaveBeenLastCalledWith(true))
+    finish(photo)
+    await waitFor(() => expect(onBusyChange).toHaveBeenLastCalledWith(false))
+  })
+
   it("hides upload and delete for a read-only user", () => {
     setup([doc], false)
     expect(screen.queryByLabelText(t("catalog.products.files.select"))).not.toBeInTheDocument()
