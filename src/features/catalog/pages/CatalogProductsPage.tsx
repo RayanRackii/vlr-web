@@ -43,7 +43,7 @@ import {
 } from "@/features/catalog/schemas/catalogSchemas"
 import { catalogMenuIsActive } from "@/features/catalog/components/productWizard/sellableChecklist"
 import { productWizardPath } from "@/features/catalog/components/productWizard/wizardSteps"
-import { productEditorPath } from "@/features/catalog/lib/productEditorPath"
+import { productViewPath } from "@/features/catalog/lib/productEditorPath"
 import { productItemStatus } from "@/features/assistant/itemStatus"
 import { saleMissingLabels } from "@/features/catalog/lib/catalogApiErrors"
 import { productAgendaReady } from "@/features/catalog/lib/productSetupStatus"
@@ -169,7 +169,7 @@ export function CatalogProductsPage({ view = "products" }: { view?: "products" |
   }, [])
 
   function openEdit(product: CatalogProduct) {
-    void navigate(`/catalogo/produtos/${product.id}`)
+    void navigate(productViewPath(product.id))
   }
 
   function requestToggleActive(product: CatalogProduct) {
@@ -588,10 +588,10 @@ function ProductMenu({ product, state, onToggle, busyId }: {
   if (incomplete) {
     items.push({ key: "continue", label: t("catalog.products.menuContinue"), icon: Settings, href: productWizardPath(product.id), tone: "primary" })
   } else {
-    items.push({ key: "edit", label: t("catalog.products.menuEdit"), icon: Pencil, href: `/catalogo/produtos/${product.id}` })
+    items.push({ key: "edit", label: t("catalog.products.menuEdit"), icon: Pencil, href: productWizardPath(product.id) })
   }
   if (canManage) {
-    items.push({ key: "access", label: t("catalog.products.menuAccess"), icon: Lock, href: productEditorPath(product.id, "access") })
+    items.push({ key: "access", label: t("catalog.products.menuAccess"), icon: Lock, href: productWizardPath(product.id, "access") })
     if (incomplete && !product.isActive) {
       items.push({
         key: "activate",

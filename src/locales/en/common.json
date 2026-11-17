@@ -1264,6 +1264,177 @@
         "title": "Visibility",
         "public": "Public",
         "restricted": "Restricted"
+      },
+      "view": {
+        "title": "Product details",
+        "edit": "Edit product",
+        "moreActions": "More actions",
+        "duplicate": "Duplicate product",
+        "delete": "Delete product",
+        "toastDuplicated": "Copy created (without photos).",
+        "toastDeleted": "Product deleted.",
+        "deleteTitle": "Delete product?",
+        "deleteBody": "{{name}} will be permanently deleted, with its files, access and categories. This cannot be undone.",
+        "deleteConfirm": "Delete",
+        "statusIncomplete": "Setup incomplete",
+        "bannerInactive": "This product is inactive: customers cannot see it.",
+        "bannerIncomplete": "Setup is incomplete: customers cannot buy this product.",
+        "bannerMissing": "Missing: {{items}}.",
+        "completeSetup": "Finish setup",
+        "code": "Internal code: {{code}}",
+        "priceLabel": "Price",
+        "onRequest": "On request",
+        "seeMore": "Show more",
+        "seeLess": "Show less",
+        "usesAgenda": "Uses schedule",
+        "usesAgendaWith": "Uses schedule: {{resources}}",
+        "noAgenda": "Sold without a schedule",
+        "seeAgenda": "View schedule",
+        "portalAvailable": "Available in the customer portal",
+        "portalRestricted": "Restricted to approved groups and customers",
+        "portalInactive": "Inactive — customers cannot see it",
+        "gallery": {
+          "noPhoto": "No photo added",
+          "addPhotos": "Add photos",
+          "photo": "Photo {{current}} of {{total}}",
+          "thumbnails": "Product photos",
+          "mainImage": "Main image",
+          "lightbox": "Enlarged photo of {{name}}"
+        },
+        "tabs": {
+          "overview": "Overview",
+          "operation": "Operation",
+          "files": "Files",
+          "history": "History"
+        },
+        "overview": {
+          "about": "About the product",
+          "info": "Registration details",
+          "code": "Internal code",
+          "category": "Category",
+          "tags": "Tags",
+          "visibility": "Visibility",
+          "visibilityPublic": "Customer portal",
+          "visibilityRestricted": "Restricted",
+          "created": "Created on",
+          "updated": "Updated on"
+        },
+        "operation": {
+          "agenda": "Schedule",
+          "noResources": "No resource linked.",
+          "notScheduled": "This product is sold without a schedule.",
+          "qty": "Qty {{count}}",
+          "duration": "{{count}} min per unit",
+          "prep": "Prep {{count}} min",
+          "cleanup": "Cleanup {{count}} min",
+          "resourceCategory": "Resource category",
+          "queue": "Queue",
+          "access": "Access rules",
+          "accessPublic": "Public: every customer sees this product.",
+          "accessRestricted": "Restricted: only approved customers see this product.",
+          "groups": "Groups: {{names}}",
+          "customers_one": "{{count}} customer approved",
+          "customers_other": "{{count}} customers approved",
+          "unknownResource": "Resource"
+        },
+        "files": {
+          "title": "Internal documents",
+          "open": "Open"
+        },
+        "history": {
+          "title": "History",
+          "empty": "No changes recorded.",
+          "loadMore": "Load more",
+          "loadError": "Could not load the history.",
+          "system": "System",
+          "yes": "Yes",
+          "no": "No",
+          "meta": "{{actor}} · {{date}}",
+          "actions": {
+            "created": "Product created",
+            "activated": "Product activated",
+            "deactivated": "Product deactivated",
+            "deleted": "Product deleted",
+            "duplicated": "Product duplicated",
+            "copyCreated": "Copy created",
+            "copiedFrom": "Created as a copy of {{name}}",
+            "fileAdded": "File added: {{name}}",
+            "fileRemoved": "File removed: {{name}}",
+            "requirementsChanged": "Schedule resources changed",
+            "changed": "Product changed",
+            "unknownField": "Registration changed"
+          },
+          "fields": {
+            "name": {
+              "changed": "Name changed from {{old}} to {{new}}",
+              "set": "Name set to {{new}}",
+              "cleared": "Name removed (was {{old}})"
+            },
+            "code": {
+              "changed": "Code changed from {{old}} to {{new}}",
+              "set": "Code set to {{new}}",
+              "cleared": "Code removed (was {{old}})"
+            },
+            "description": {
+              "text": "Description changed"
+            },
+            "price": {
+              "changed": "Price changed from {{old}} to {{new}}",
+              "set": "Price set to {{new}}",
+              "cleared": "Price removed (was {{old}})"
+            },
+            "currency": {
+              "changed": "Currency changed from {{old}} to {{new}}",
+              "set": "Currency set to {{new}}",
+              "cleared": "Currency removed (was {{old}})"
+            },
+            "usesSchedule": {
+              "changed": "Schedule use changed from {{old}} to {{new}}",
+              "set": "Schedule use set to {{new}}",
+              "cleared": "Schedule use removed (was {{old}})"
+            },
+            "isActive": {
+              "changed": "Status changed from {{old}} to {{new}}",
+              "set": "Status set to {{new}}",
+              "cleared": "Status removed (was {{old}})"
+            },
+            "categories": {
+              "changed": "Categories changed from {{old}} to {{new}}",
+              "set": "Categories set to {{new}}",
+              "cleared": "Categories removed (was {{old}})"
+            },
+            "tags": {
+              "changed": "Tags changed from {{old}} to {{new}}",
+              "set": "Tags set to {{new}}",
+              "cleared": "Tags removed (was {{old}})"
+            },
+            "visibility": {
+              "changed": "Visibility changed from {{old}} to {{new}}",
+              "set": "Visibility set to {{new}}",
+              "cleared": "Visibility removed (was {{old}})"
+            },
+            "accessCustomers": {
+              "changed": "Customers with access changed from {{old}} to {{new}}",
+              "set": "Customers with access set to {{new}}",
+              "cleared": "Customers with access removed (was {{old}})"
+            },
+            "accessGroups": {
+              "changed": "Groups with access changed from {{old}} to {{new}}",
+              "set": "Groups with access set to {{new}}",
+              "cleared": "Groups with access removed (was {{old}})"
+            },
+            "resourceRequirements": {
+              "changed": "Schedule resources changed from {{old}} to {{new}}",
+              "set": "Schedule resources set to {{new}}",
+              "cleared": "Schedule resources removed (was {{old}})"
+            }
+          }
+        },
+        "errors": {
+          "hasOrders": "This product has orders; deactivate it instead of deleting.",
+          "duplicate": "Could not duplicate the product.",
+          "delete": "Could not delete the product."
+        }
       }
     },
     "customerGroups": {

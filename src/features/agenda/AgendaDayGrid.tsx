@@ -13,6 +13,7 @@ import { useIsMedium } from "./agendaFilterModel"
 import { clipBlock, formatClock, layoutLanes, type AgendaBlock, type AgendaRow } from "./dayGridModel"
 import type { AgendaSourceId } from "./useAgendaDay"
 import { AgendaProductPads } from "./AgendaProductPads"
+import { productViewPath } from "@/features/catalog/lib/productEditorPath"
 
 const RESOURCE_COLUMN = "grid-cols-[13.75rem_minmax(0,1fr)] lg:grid-cols-[16rem_minmax(0,1fr)]"
 // Row geometry: one lane is 3.5rem (block 3.25rem + gap); a single-lane row is 4.25rem.
@@ -323,7 +324,7 @@ function BlockDetail({ block, resourceName, onClose }: { block: AgendaBlock; res
         {block.productId && block.productName && (
           <div>
             <dt className="text-muted-foreground">{t("staffAgenda.produto")}</dt>
-            <dd><Link className="font-medium text-primary underline-offset-4 hover:underline" to={`/catalogo/produtos/${block.productId}`}>{block.productName}</Link></dd>
+            <dd><Link className="font-medium text-primary underline-offset-4 hover:underline" to={productViewPath(block.productId)}>{block.productName}</Link></dd>
           </div>
         )}
         {orderNumber(block) && (

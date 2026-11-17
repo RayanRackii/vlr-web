@@ -8,9 +8,14 @@ export function isProductEditorTab(value: string | null | undefined): value is P
   return PRODUCT_EDITOR_TABS.some((tab) => tab === value)
 }
 
-/** The single editor of an existing product. `aba` selects the opening tab. */
+/** The read-only "Ver produto" page. */
+export function productViewPath(productId: string): string {
+  return `/catalogo/produtos/${encodeURIComponent(productId)}`
+}
+
+/** The legacy editor of an existing product (until slice W3 retires it). `aba` selects the opening tab. */
 export function productEditorPath(productId: string, tab?: ProductEditorTab | null): string {
-  const base = `/catalogo/produtos/${encodeURIComponent(productId)}`
+  const base = `${productViewPath(productId)}/editar-legado`
   return tab && tab !== "dados" ? `${base}?aba=${tab}` : base
 }
 

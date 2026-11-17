@@ -175,6 +175,14 @@ describe("block period from the row menu", () => {
   })
 })
 
+describe("block detail", () => {
+  it("links the product to the read-only product view", async () => {
+    setup([row({ blocks: [block({ productId: "p-9" })] })])
+    await userEvent.click(within(section("Cortadora")).getByRole("button", { name: /Pedido/ }))
+    expect(screen.getByRole("link", { name: "Corte a laser" })).toHaveAttribute("href", "/catalogo/produtos/p-9")
+  })
+})
+
 describe("below md", () => {
   it("lists each resource as a card with its blocks, or Disponível para reserva", async () => {
     vi.stubGlobal("matchMedia", vi.fn(() => ({ matches: false, addEventListener: vi.fn(), removeEventListener: vi.fn() })))

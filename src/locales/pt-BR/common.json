@@ -1264,6 +1264,177 @@
         "title": "Visibilidade",
         "public": "Público",
         "restricted": "Restrito"
+      },
+      "view": {
+        "title": "Detalhes do produto",
+        "edit": "Editar produto",
+        "moreActions": "Mais ações",
+        "duplicate": "Duplicar produto",
+        "delete": "Excluir produto",
+        "toastDuplicated": "Cópia criada (sem fotos).",
+        "toastDeleted": "Produto excluído.",
+        "deleteTitle": "Excluir produto?",
+        "deleteBody": "{{name}} será excluído em definitivo, com arquivos, acesso e categorias. Isso não pode ser desfeito.",
+        "deleteConfirm": "Excluir",
+        "statusIncomplete": "Configuração incompleta",
+        "bannerInactive": "Este produto está inativo: os clientes não o veem.",
+        "bannerIncomplete": "O cadastro está incompleto: os clientes não conseguem comprar este produto.",
+        "bannerMissing": "Falta: {{items}}.",
+        "completeSetup": "Concluir cadastro",
+        "code": "Código interno: {{code}}",
+        "priceLabel": "Preço",
+        "onRequest": "Sob consulta",
+        "seeMore": "Ver mais",
+        "seeLess": "Ver menos",
+        "usesAgenda": "Usa agenda",
+        "usesAgendaWith": "Usa agenda: {{resources}}",
+        "noAgenda": "Vendido sem agenda",
+        "seeAgenda": "Ver agenda",
+        "portalAvailable": "Disponível no portal do cliente",
+        "portalRestricted": "Restrito a grupos e clientes liberados",
+        "portalInactive": "Inativo — clientes não veem",
+        "gallery": {
+          "noPhoto": "Sem foto cadastrada",
+          "addPhotos": "Adicionar fotos",
+          "photo": "Foto {{current}} de {{total}}",
+          "thumbnails": "Fotos do produto",
+          "mainImage": "Imagem principal",
+          "lightbox": "Foto ampliada de {{name}}"
+        },
+        "tabs": {
+          "overview": "Visão geral",
+          "operation": "Operação",
+          "files": "Arquivos",
+          "history": "Histórico"
+        },
+        "overview": {
+          "about": "Sobre o produto",
+          "info": "Informações do cadastro",
+          "code": "Código interno",
+          "category": "Categoria",
+          "tags": "Tags",
+          "visibility": "Visibilidade",
+          "visibilityPublic": "Portal do cliente",
+          "visibilityRestricted": "Restrito",
+          "created": "Criado em",
+          "updated": "Atualizado em"
+        },
+        "operation": {
+          "agenda": "Agenda",
+          "noResources": "Nenhum recurso vinculado.",
+          "notScheduled": "Este produto é vendido sem agenda.",
+          "qty": "Qtd {{count}}",
+          "duration": "{{count}} min por unidade",
+          "prep": "Preparo {{count}} min",
+          "cleanup": "Limpeza {{count}} min",
+          "resourceCategory": "Categoria de recursos",
+          "queue": "Fila",
+          "access": "Regras de acesso",
+          "accessPublic": "Público: todos os clientes veem este produto.",
+          "accessRestricted": "Restrito: só quem foi liberado vê este produto.",
+          "groups": "Grupos: {{names}}",
+          "customers_one": "{{count}} cliente liberado",
+          "customers_other": "{{count}} clientes liberados",
+          "unknownResource": "Recurso"
+        },
+        "files": {
+          "title": "Documentos internos",
+          "open": "Abrir"
+        },
+        "history": {
+          "title": "Histórico",
+          "empty": "Nenhuma alteração registrada.",
+          "loadMore": "Carregar mais",
+          "loadError": "Não foi possível carregar o histórico.",
+          "system": "Sistema",
+          "yes": "Sim",
+          "no": "Não",
+          "meta": "{{actor}} · {{date}}",
+          "actions": {
+            "created": "Produto criado",
+            "activated": "Produto ativado",
+            "deactivated": "Produto desativado",
+            "deleted": "Produto excluído",
+            "duplicated": "Produto duplicado",
+            "copyCreated": "Cópia criada",
+            "copiedFrom": "Criado como cópia de {{name}}",
+            "fileAdded": "Arquivo adicionado: {{name}}",
+            "fileRemoved": "Arquivo removido: {{name}}",
+            "requirementsChanged": "Recursos da agenda alterados",
+            "changed": "Produto alterado",
+            "unknownField": "Cadastro alterado"
+          },
+          "fields": {
+            "name": {
+              "changed": "Nome alterado de {{old}} para {{new}}",
+              "set": "Nome definido como {{new}}",
+              "cleared": "Nome removido (era {{old}})"
+            },
+            "code": {
+              "changed": "Código alterado de {{old}} para {{new}}",
+              "set": "Código definido como {{new}}",
+              "cleared": "Código removido (era {{old}})"
+            },
+            "description": {
+              "text": "Descrição alterada"
+            },
+            "price": {
+              "changed": "Preço alterado de {{old}} para {{new}}",
+              "set": "Preço definido como {{new}}",
+              "cleared": "Preço removido (era {{old}})"
+            },
+            "currency": {
+              "changed": "Moeda alterada de {{old}} para {{new}}",
+              "set": "Moeda definida como {{new}}",
+              "cleared": "Moeda removida (era {{old}})"
+            },
+            "usesSchedule": {
+              "changed": "Uso da agenda alterado de {{old}} para {{new}}",
+              "set": "Uso da agenda definido como {{new}}",
+              "cleared": "Uso da agenda removido (era {{old}})"
+            },
+            "isActive": {
+              "changed": "Status alterado de {{old}} para {{new}}",
+              "set": "Status definido como {{new}}",
+              "cleared": "Status removido (era {{old}})"
+            },
+            "categories": {
+              "changed": "Categorias alteradas de {{old}} para {{new}}",
+              "set": "Categorias definidas como {{new}}",
+              "cleared": "Categorias removidas (era {{old}})"
+            },
+            "tags": {
+              "changed": "Tags alteradas de {{old}} para {{new}}",
+              "set": "Tags definidas como {{new}}",
+              "cleared": "Tags removidas (era {{old}})"
+            },
+            "visibility": {
+              "changed": "Visibilidade alterada de {{old}} para {{new}}",
+              "set": "Visibilidade definida como {{new}}",
+              "cleared": "Visibilidade removida (era {{old}})"
+            },
+            "accessCustomers": {
+              "changed": "Clientes liberados alterados de {{old}} para {{new}}",
+              "set": "Clientes liberados definidos como {{new}}",
+              "cleared": "Clientes liberados removidos (era {{old}})"
+            },
+            "accessGroups": {
+              "changed": "Grupos liberados alterados de {{old}} para {{new}}",
+              "set": "Grupos liberados definidos como {{new}}",
+              "cleared": "Grupos liberados removidos (era {{old}})"
+            },
+            "resourceRequirements": {
+              "changed": "Recursos da agenda alterados de {{old}} para {{new}}",
+              "set": "Recursos da agenda definidos como {{new}}",
+              "cleared": "Recursos da agenda removidos (era {{old}})"
+            }
+          }
+        },
+        "errors": {
+          "hasOrders": "Este produto tem pedidos; desative-o em vez de excluir.",
+          "duplicate": "Não foi possível duplicar o produto.",
+          "delete": "Não foi possível excluir o produto."
+        }
       }
     },
     "customerGroups": {
