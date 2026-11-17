@@ -99,6 +99,7 @@ export function useProductWizard(productId: string) {
           visibility: accessResult.access?.visibility ?? "Public",
           customerIds: accessResult.access?.customerIds ?? [],
           groupIds: accessResult.access?.groupIds ?? [],
+          customerNames: accessResult.access?.customerNames ?? {},
         },
         groups: groupsResult.failed ? null : groupsResult.groups,
         menuItems: menuResult.failed ? null : menuResult.items,

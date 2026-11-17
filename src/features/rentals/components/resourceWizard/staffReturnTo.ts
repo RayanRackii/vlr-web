@@ -71,8 +71,11 @@ function isAllowedProductWizardPath(path: string, query: string): boolean {
     return true
   }
   const params = new URLSearchParams(query)
-  const keys = [...params.keys()]
-  return keys.length === 1 && keys[0] === "passo" && isAllowedPasso(params.get("passo"), "product")
+  const keys = [...params.keys()].sort()
+  const passoOk = !params.has("passo") || isAllowedPasso(params.get("passo"), "product")
+  // `modo=editar` is the wizard's edit mode; `passo` alone is the creation flow.
+  const modoOk = !params.has("modo") || params.get("modo") === "editar"
+  return keys.length > 0 && keys.length <= 2 && new Set(keys).size === keys.length && keys.every((key) => key === "passo" || key === "modo") && passoOk && modoOk
 }
 
 function isAllowedResourcePath(path: string, query: string): boolean {

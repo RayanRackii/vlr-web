@@ -250,3 +250,97 @@ it("does not add the product-only step to a resource cadastro", () => {
   expect(within(nav).queryByText("Fotos e arquivos")).not.toBeInTheDocument()
   expect(screen.getByText("Etapa 1 de 7")).toBeInTheDocument()
 })
+
+const onCancel = vi.fn()
+const onSaved = vi.fn()
+
+function EditPage({ submit, active = true, dirty = false, published = true }: { submit?: StepSubmit; active?: boolean; dirty?: boolean; published?: boolean }) {
+  const { step, go } = useCadastroStep("product")
+  return <CadastroShell kind="product" edit={{ active, onCancel, onSaved }} title="Diária" status={{ kind: published ? "published" : "draft" }} step={step} go={go} dirty={dirty} busy={false} optional={["categorias"]} canPublish onPublish={onPublish} onBack={onBack}>
+    {submit ? <SubmittingStep key={step} submit={submit} /> : <p>sem passo</p>}
+  </CadastroShell>
+}
+
+function setupEdit(props: Parameters<typeof EditPage>[0] = {}, entry = "/c?modo=editar&passo=dados") {
+  return render(<MemoryRouter initialEntries={[entry]}>
+    <Routes><Route path="/c" element={<EditPage {...props} />} /></Routes>
+    <Probe />
+  </MemoryRouter>)
+}
+
+it("edit mode of an active product: title, product name subtitle, no chip or step counters, free stepper", () => {
+  onCancel.mockReset()
+  setupEdit()
+  expect(screen.getByRole("heading", { level: 1, name: "Editar produto" })).toBeInTheDocument()
+  expect(screen.getByText("Diária")).toBeInTheDocument()
+  expect(screen.queryByText("Rascunho")).not.toBeInTheDocument()
+  expect(screen.queryByText("Ativo")).not.toBeInTheDocument()
+  expect(screen.queryByText(/Etapa \d+ de \d+/)).not.toBeInTheDocument()
+  expect(screen.getByRole("button", { name: /^Regras/ })).toBeEnabled()
+  expect(screen.getByRole("button", { name: "Salvar alterações" })).toBeInTheDocument()
+  expect(screen.getByRole("button", { name: "Cancelar" })).toBeInTheDocument()
+  expect(screen.queryByRole("button", { name: "Salvar e continuar" })).not.toBeInTheDocument()
+  expect(screen.queryByRole("button", { name: "Salvar e sair" })).not.toBeInTheDocument()
+})
+
+it("edit mode footer stacks on mobile with the primary action full width", () => {
+  setupEdit()
+  const footer = screen.getByTestId("cadastro-edit-footer")
+  expect(footer).toHaveClass("flex-col-reverse", "sm:flex-row")
+  expect(screen.getByRole("button", { name: "Salvar alterações" })).toHaveClass("w-full", "sm:w-auto")
+  expect(screen.getByRole("button", { name: "Cancelar" })).toHaveClass("w-full", "sm:w-auto")
+})
+
+it("edit mode of an inactive product keeps the Rascunho chip and the step counters", () => {
+  setupEdit({ active: false, published: false })
+  expect(screen.getByText("Rascunho")).toBeInTheDocument()
+  expect(screen.getByText(/Etapa 1 de 8/)).toBeInTheDocument()
+})
+
+it("Salvar alterações saves the current step, then runs onSaved; a failed save stays", async () => {
+  const user = userEvent.setup()
+  onSaved.mockReset()
+  const submit = vi.fn().mockResolvedValueOnce(false).mockResolvedValueOnce(true)
+  setupEdit({ submit })
+  await user.click(screen.getByRole("button", { name: "Salvar alterações" }))
+  await waitFor(() => expect(submit).toHaveBeenCalledTimes(1))
+  expect(onSaved).not.toHaveBeenCalled()
+  await user.click(screen.getByRole("button", { name: "Salvar alterações" }))
+  await waitFor(() => expect(onSaved).toHaveBeenCalledTimes(1))
+})
+
+it("Salvar alterações on a step without dirty state just runs onSaved", async () => {
+  const user = userEvent.setup()
+  onSaved.mockReset()
+  setupEdit({}, "/c?modo=editar&passo=arquivos")
+  await user.click(screen.getByRole("button", { name: "Salvar alterações" }))
+  await waitFor(() => expect(onSaved).toHaveBeenCalledTimes(1))
+})
+
+it("Cancelar runs onCancel", async () => {
+  const user = userEvent.setup()
+  onCancel.mockReset()
+  setupEdit()
+  await user.click(screen.getByRole("button", { name: "Cancelar" }))
+  expect(onCancel).toHaveBeenCalledTimes(1)
+})
+
+it("edit mode keeps the leave guard when switching steps with unsaved changes, and keeps modo=editar", async () => {
+  const user = userEvent.setup()
+  const router = createMemoryRouter([{ path: "/c", element: <><EditPage dirty /><Probe /></> }], { initialEntries: ["/c?modo=editar&passo=dados"] })
+  render(<RouterProvider router={router} />)
+  await user.click(screen.getByRole("button", { name: /^Regras/ }))
+  const dialog = await screen.findByRole("alertdialog")
+  expect(screen.getByTestId("location")).toHaveTextContent("/c?modo=editar&passo=dados")
+  await user.click(within(dialog).getByRole("button", { name: "Cancelar" }))
+  await waitFor(() => expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument())
+})
+
+it("edit mode of an unpublished product ends with Publicar on the last step", async () => {
+  const user = userEvent.setup()
+  onPublish.mockReset()
+  setupEdit({ active: false, published: false }, "/c?modo=editar&passo=publicacao")
+  expect(screen.queryByRole("button", { name: "Salvar alterações" })).not.toBeInTheDocument()
+  await user.click(screen.getByRole("button", { name: "Publicar" }))
+  await waitFor(() => expect(onPublish).toHaveBeenCalledTimes(1))
+})

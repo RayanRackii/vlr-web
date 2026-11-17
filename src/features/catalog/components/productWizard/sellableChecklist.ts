@@ -37,6 +37,7 @@ export type SellableAccess = {
   visibility: "Public" | "Restricted"
   customerIds: readonly string[]
   groupIds: readonly string[]
+  customerNames?: Readonly<Record<string, string>>
 }
 
 export type SellableGroup = {

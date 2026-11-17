@@ -19,6 +19,14 @@ describe("safeStaffReturnTo", () => {
     expect(safeStaffReturnTo("/configuracoes/recursos/abc")).toBe("/configuracoes/recursos/abc")
   })
 
+  it("keeps the product wizard edit mode, alone or with a step", () => {
+    expect(safeStaffReturnTo("/catalogo/produtos/abc/cadastro?modo=editar&passo=regras")).toBe("/catalogo/produtos/abc/cadastro?modo=editar&passo=regras")
+    expect(safeStaffReturnTo("/catalogo/produtos/abc/cadastro?modo=editar")).toBe("/catalogo/produtos/abc/cadastro?modo=editar")
+    expect(safeStaffReturnTo("/catalogo/produtos/abc/cadastro?modo=outro")).toBeNull()
+    expect(safeStaffReturnTo("/catalogo/produtos/abc/cadastro?modo=editar&passo=nope")).toBeNull()
+    expect(safeStaffReturnTo("/catalogo/produtos/abc/cadastro?modo=editar&x=1")).toBeNull()
+  })
+
   it("keeps a product wizard path and its step", () => {
     expect(
       safeStaffReturnTo("/catalogo/produtos/abc/assistente?passo=access"),

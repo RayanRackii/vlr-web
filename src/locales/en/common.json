@@ -1133,12 +1133,6 @@
         "history": "History"
       },
       "editor": {
-        "createStatusFailed": "Product created, but it is still active because deactivation failed. Try again to finish.",
-        "accessSaveFailed": "Could not save access. Try again.",
-        "breadcrumbRoot": "Catalog",
-        "incomplete_one": "Setup incomplete · {{count}} step left",
-        "incomplete_other": "Setup incomplete · {{count}} steps left",
-        "continueSetup": "Continue setup",
         "notFound": "Product not found.",
         "back": "Back to products"
       },
@@ -6544,6 +6538,9 @@
     "productDescription": "Set up your product and get everything ready to receive bookings.",
     "saveAndContinue": "Save and continue",
     "saveAndExit": "Save and exit",
+    "editTitle": "Edit product",
+    "saveChanges": "Save changes",
+    "changesSaved": "Changes saved",
     "requiredNote": "* Required field",
     "crumbCatalog": "Catalog",
     "product": {

@@ -43,7 +43,7 @@ import {
 } from "@/features/catalog/schemas/catalogSchemas"
 import { catalogMenuIsActive } from "@/features/catalog/components/productWizard/sellableChecklist"
 import { productWizardPath } from "@/features/catalog/components/productWizard/wizardSteps"
-import { productViewPath } from "@/features/catalog/lib/productEditorPath"
+import { productEditPath, productViewPath } from "@/features/catalog/lib/productEditorPath"
 import { productItemStatus } from "@/features/assistant/itemStatus"
 import { saleMissingLabels } from "@/features/catalog/lib/catalogApiErrors"
 import { productAgendaReady } from "@/features/catalog/lib/productSetupStatus"
@@ -588,10 +588,10 @@ function ProductMenu({ product, state, onToggle, busyId }: {
   if (incomplete) {
     items.push({ key: "continue", label: t("catalog.products.menuContinue"), icon: Settings, href: productWizardPath(product.id), tone: "primary" })
   } else {
-    items.push({ key: "edit", label: t("catalog.products.menuEdit"), icon: Pencil, href: productWizardPath(product.id) })
+    items.push({ key: "edit", label: t("catalog.products.menuEdit"), icon: Pencil, href: productEditPath(product.id) })
   }
   if (canManage) {
-    items.push({ key: "access", label: t("catalog.products.menuAccess"), icon: Lock, href: productWizardPath(product.id, "access") })
+    items.push({ key: "access", label: t("catalog.products.menuAccess"), icon: Lock, href: productEditPath(product.id, "regras") })
     if (incomplete && !product.isActive) {
       items.push({
         key: "activate",

@@ -1133,12 +1133,6 @@
         "history": "Histórico"
       },
       "editor": {
-        "createStatusFailed": "Produto criado, mas continua ativo porque não foi possível desativá-lo. Tente novamente para concluir.",
-        "accessSaveFailed": "Não foi possível salvar o acesso. Tente novamente.",
-        "breadcrumbRoot": "Catálogo",
-        "incomplete_one": "Configuração incompleta · falta {{count}} passo",
-        "incomplete_other": "Configuração incompleta · falta {{count}} passos",
-        "continueSetup": "Continuar configuração",
         "notFound": "Produto não encontrado.",
         "back": "Voltar para produtos"
       },
@@ -6544,6 +6538,9 @@
     "productDescription": "Configure seu produto e deixe tudo pronto para receber reservas.",
     "saveAndContinue": "Salvar e continuar",
     "saveAndExit": "Salvar e sair",
+    "editTitle": "Editar produto",
+    "saveChanges": "Salvar alterações",
+    "changesSaved": "Alterações salvas",
     "requiredNote": "* Campo obrigatório",
     "crumbCatalog": "Catálogo",
     "product": {

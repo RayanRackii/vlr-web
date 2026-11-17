@@ -1,6 +1,6 @@
 import type { ReactElement } from "react"
 import { lazyPage } from "@/routes/lazyPage"
-import { ProductEditorRedirect } from "@/features/catalog/components/ProductEditorRedirect"
+import { ProductEditorRedirect, ProductLegacyEditorRedirect, ProductViewEntry } from "@/features/catalog/components/ProductEditorRedirect"
 import { Package, Settings, Tag } from "lucide-react"
 
 import type { AppNavigationItem } from "@/components/layout/navigation"
@@ -18,7 +18,6 @@ const CatalogOrderDetailPage = lazyPage(() => import("@/features/catalog/pages/C
 const CatalogPolicyPage = lazyPage(() => import("@/features/catalog/pages/CatalogPolicyPage"), "CatalogPolicyPage")
 const CustomerGroupFormPage = lazyPage(() => import("@/features/catalog/pages/CustomerGroupFormPage"), "CustomerGroupFormPage")
 const CustomerGroupsPage = lazyPage(() => import("@/features/catalog/pages/CustomerGroupsPage"), "CustomerGroupsPage")
-const CatalogProductEditorPage = lazyPage(() => import("@/features/catalog/pages/CatalogProductEditorPage"), "CatalogProductEditorPage")
 const ProductViewPage = lazyPage(() => import("@/features/catalog/pages/ProductViewPage"), "ProductViewPage")
 const ProductAssistantPage = lazyPage(() => import("@/features/assistant/ProductAssistantPage"), "ProductAssistantPage")
 const CatalogProductsPage = lazyPage(() => import("@/features/catalog/pages/CatalogProductsPage"), "CatalogProductsPage")
@@ -129,12 +128,12 @@ export const catalogManifest = {
       },
       {
         path: "/catalogo/produtos/:id/editar-legado",
-        element: <CatalogProductEditorPage />,
+        element: <ProductLegacyEditorRedirect />,
         permission: "catalog.products.read",
       },
       {
         path: "/catalogo/produtos/:id",
-        element: <ProductViewPage />,
+        element: <ProductViewEntry><ProductViewPage /></ProductViewEntry>,
         permission: "catalog.products.read",
       },
       {

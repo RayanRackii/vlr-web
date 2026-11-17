@@ -26,7 +26,6 @@ vi.mock("@/features/catalog/services/catalogService", () => ({
   getCatalogProductFileUrl: vi.fn(),
   uploadCatalogProductFile: vi.fn(),
   getCatalogProductAccess: vi.fn().mockResolvedValue({ productId: "x", visibility: "Public", customerIds: [], groupIds: [], restrictedWithoutGrants: false }),
-  getCatalogProductAccessHistory: vi.fn().mockResolvedValue([]),
   listCustomerGroups: vi.fn().mockResolvedValue([]),
   putCatalogProductAccess: vi.fn(),
   getCatalogProductResourceRequirements: vi.fn().mockResolvedValue({ expectedVersion: 0, requirements: [] }),
@@ -326,8 +325,8 @@ describe("CatalogProductsPage validity gate", () => {
     renderPage()
     const table = await screen.findByRole("table")
     await user.click(await within(table).findByRole("button", { name: i18n.t("catalog.products.rowMenu", { name: PRODUCT.name }) }))
-    expect(await screen.findByRole("menuitem", { name: i18n.t("catalog.products.menuEdit") })).toHaveAttribute("href", `/catalogo/produtos/${PRODUCT.id}/cadastro`)
-    expect(screen.getByRole("menuitem", { name: i18n.t("catalog.products.menuAccess") })).toHaveAttribute("href", `/catalogo/produtos/${PRODUCT.id}/cadastro?passo=regras`)
+    expect(await screen.findByRole("menuitem", { name: i18n.t("catalog.products.menuEdit") })).toHaveAttribute("href", `/catalogo/produtos/${PRODUCT.id}/cadastro?modo=editar`)
+    expect(screen.getByRole("menuitem", { name: i18n.t("catalog.products.menuAccess") })).toHaveAttribute("href", `/catalogo/produtos/${PRODUCT.id}/cadastro?modo=editar&passo=regras`)
     expect(screen.queryByRole("menuitem", { name: i18n.t("catalog.products.menuContinue") })).not.toBeInTheDocument()
     await user.click(screen.getByRole("menuitem", { name: i18n.t("catalog.products.menuDeactivate") }))
     expect(deactivateCatalogProduct).not.toHaveBeenCalled()
@@ -393,7 +392,7 @@ describe("CatalogProductsPage validity gate", () => {
     expect(screen.getByTestId("location")).toHaveTextContent(/^\/$/)
     await user.click(item)
     await waitFor(() => expect(screen.getByTestId("location")).toHaveTextContent(`/catalogo/produtos/${PRODUCT.id}/cadastro`))
-    expect(screen.getByTestId("search")).toHaveTextContent("?passo=regras")
+    expect(screen.getByTestId("search")).toHaveTextContent("?modo=editar&passo=regras")
     expect(productWizardPath(PRODUCT.id, "access")).toBe(`/catalogo/produtos/${PRODUCT.id}/cadastro?passo=regras`)
   })
 

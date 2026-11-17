@@ -6,7 +6,6 @@ import { rentalsManifest } from "@/features/rentals/manifest"
 import { taxonomyManifest } from "@/features/taxonomy/manifest"
 import { TestPermissionProvider } from "@/features/users/permissions/PermissionContext"
 
-vi.mock("@/features/catalog/pages/CatalogProductEditorPage", () => ({ CatalogProductEditorPage: () => <h1>Legacy product detail</h1> }))
 vi.mock("@/features/catalog/pages/ProductViewPage", () => ({ ProductViewPage: () => <h1>Product view</h1> }))
 vi.mock("@/features/assistant/ProductCadastroCreatePage", () => ({ ProductCadastroCreatePage: () => <h1>Product cadastro create</h1> }))
 vi.mock("@/features/assistant/ProductAssistantPage", () => ({ ProductAssistantPage: ({ cadastro }: { cadastro?: boolean }) => <h1>{cadastro ? "Product cadastro" : "Legacy product steps"}</h1> }))
@@ -19,9 +18,17 @@ it.each([
   ["/catalogo/produtos/p1/cadastro", "Product cadastro"],
   ["/catalogo/produtos/novo", "Product cadastro create"],
   ["/catalogo/produtos/p1", "Product view"],
-  ["/catalogo/produtos/p1/editar-legado", "Legacy product detail"],
-  ["/catalogo/produtos/p1/assistente", "Legacy product detail"],
-  ["/catalogo/produtos/p1/passos", "Legacy product detail"],
+  ["/catalogo/produtos/p1/editar-legado", "Product view"],
+  ["/catalogo/produtos/p1/editar-legado?aba=history", "Product view"],
+  ["/catalogo/produtos/p1/editar-legado?aba=access", "Product cadastro"],
+  ["/catalogo/produtos/p1?aba=history", "Product view"],
+  ["/catalogo/produtos/p1?aba=access", "Product cadastro"],
+  ["/catalogo/produtos/p1?aba=files", "Product cadastro"],
+  ["/catalogo/produtos/p1?aba=agenda", "Product cadastro"],
+  ["/catalogo/produtos/p1?aba=price", "Product cadastro"],
+  ["/catalogo/produtos/p1?aba=dados", "Product cadastro"],
+  ["/catalogo/produtos/p1/assistente", "Product cadastro"],
+  ["/catalogo/produtos/p1/passos", "Product cadastro"],
   ["/configuracoes/recursos/cadastro", "Resource cadastro create"],
   ["/configuracoes/recursos/r1/cadastro", "Resource cadastro"],
   ["/configuracoes/recursos/novo", "Resource cadastro create"],

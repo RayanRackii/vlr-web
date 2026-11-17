@@ -1,10 +1,8 @@
-import { useEffect, useState } from "react"
 import { Link } from "react-router-dom"
 import { useTranslation } from "react-i18next"
 
 import { resourceAssistantPath } from "@/features/assistant/paths"
-import { CatalogProductResourceRequirements } from "@/features/catalog/components/CatalogProductResourceRequirements"
-import { listAdminRentalAssets, type AdminRentalAsset } from "@/features/rentals/services/scheduleService"
+import { type AdminRentalAsset } from "@/features/rentals/services/scheduleService"
 
 export function ResourceLinks({ assets }: { assets: readonly { id: string; name: string }[] }) {
   const { t } = useTranslation()
@@ -35,32 +33,5 @@ export function QueueSummary({ assets }: { assets: readonly Pick<AdminRentalAsse
         </li>
       ))}
     </ul>
-  )
-}
-
-type ProductScheduleSectionProps = {
-  productId: string
-  linkedAssetIds: readonly string[]
-  readOnly: boolean
-  onDirtyChange?: (dirty: boolean) => void
-  onSavingChange?: (saving: boolean) => void
-  onSaved: () => void | Promise<void>
-}
-
-/** Resource requirements + linked resources + queue summary for a schedulable product. */
-export function ProductScheduleSection({ productId, linkedAssetIds, readOnly, onDirtyChange, onSavingChange, onSaved }: ProductScheduleSectionProps) {
-  const [assets, setAssets] = useState<AdminRentalAsset[]>([])
-  useEffect(() => {
-    let active = true
-    void listAdminRentalAssets().then((rows) => { if (active) setAssets(rows) }).catch(() => { if (active) setAssets([]) })
-    return () => { active = false }
-  }, [])
-  const linkedAssets = assets.filter((asset) => linkedAssetIds.includes(asset.id))
-  return (
-    <div className="max-w-xl space-y-4">
-      <CatalogProductResourceRequirements productId={productId} readOnly={readOnly} onDirtyChange={onDirtyChange} onSavingChange={onSavingChange} onSaved={onSaved} />
-      {linkedAssetIds.length > 0 ? <ResourceLinks assets={linkedAssets.length > 0 ? linkedAssets : linkedAssetIds.map((assetId) => ({ id: assetId, name: assetId }))} /> : null}
-      <QueueSummary assets={linkedAssets} />
-    </div>
   )
 }
