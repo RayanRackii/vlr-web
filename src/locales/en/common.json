@@ -6544,6 +6544,9 @@
     "productDescription": "Set up your product and get everything ready to receive bookings.",
     "saveAndContinue": "Save and continue",
     "saveAndExit": "Save and exit",
+    "editTitle": "Edit product",
+    "saveChanges": "Save changes",
+    "changesSaved": "Changes saved",
     "requiredNote": "* Required field",
     "crumbCatalog": "Catalog",
     "product": {

@@ -20,9 +20,9 @@ import { ProductHistoryTab } from "@/features/catalog/components/productView/Pro
 import { ProductViewGallery } from "@/features/catalog/components/productView/ProductViewGallery"
 import { QueueSummary } from "@/features/catalog/components/ProductScheduleSection"
 import { useProductWizard } from "@/features/catalog/components/productWizard/useProductWizard"
-import { productWizardPath } from "@/features/catalog/components/productWizard/wizardSteps"
 import { saleMissingLabels } from "@/features/catalog/lib/catalogApiErrors"
-import { productViewPath } from "@/features/catalog/lib/productEditorPath"
+import { productWizardPath } from "@/features/catalog/components/productWizard/wizardSteps"
+import { productEditPath, productViewPath } from "@/features/catalog/lib/productEditorPath"
 import { selectCatalogProductImages } from "@/features/catalog/lib/selectCatalogProductImages"
 import {
   formatCatalogDate,
@@ -282,7 +282,7 @@ function ProductView({ wizard, model }: { wizard: Wizard; model: WizardModel }) 
           <div className="flex w-full items-center gap-2 sm:w-auto" data-testid="product-view-actions">
             {canManage ? (
               <Link
-                to={productWizardPath(product.id)}
+                to={productEditPath(product.id)}
                 className={cn(buttonVariants({ variant: "primary" }), "min-h-11 flex-1 sm:flex-none")}
               >
                 <Pencil aria-hidden="true" />
@@ -401,7 +401,7 @@ function ProductView({ wizard, model }: { wizard: Wizard; model: WizardModel }) 
               <ImageOff className="size-4" aria-hidden="true" />
               {t("catalog.products.view.gallery.noPhoto")}
               {canManage ? (
-                <Link className="inline-flex min-h-11 items-center font-medium text-primary underline-offset-4 hover:underline" to={`${productWizardPath(product.id)}?passo=arquivos`}>
+                <Link className="inline-flex min-h-11 items-center font-medium text-primary underline-offset-4 hover:underline" to={productEditPath(product.id, "arquivos")}>
                   {t("catalog.products.view.gallery.addPhotos")}
                 </Link>
               ) : null}

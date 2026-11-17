@@ -8,7 +8,7 @@ import { cadastroSteps, useCadastroStep } from "./useCadastroStep"
 import { CadastroTaxonomyStep } from "./CadastroTaxonomyStep"
 import { useEffect, useState } from "react"
 import { useOptionalPermissions } from "@/features/users/permissions/PermissionContext"
-import { Link, useNavigate, useParams } from "react-router-dom"
+import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom"
 import { useTranslation } from "react-i18next"
 
 import { ErrorState } from "@/components/ErrorState"
@@ -24,9 +24,9 @@ import { useProductWizard } from "@/features/catalog/components/productWizard/us
 import { catalogMenuIsActive } from "@/features/catalog/components/productWizard/sellableChecklist"
 import { productNotApplicableSteps, productSetupFromModel } from "@/features/catalog/lib/productSetupStatus"
 import { listAdminRentalAssets, type AdminRentalAsset } from "@/features/rentals/services/scheduleService"
-import { productViewPath } from "@/features/catalog/lib/productEditorPath"
+import { productEditPath, productViewPath } from "@/features/catalog/lib/productEditorPath"
 
-/** Editing an existing product lives in the product editor; this page is only the cadastro wizard. */
+/** The cadastro wizard, for creating and (`?modo=editar`, or an active product) editing a product. Old assistant links redirect. */
 export function ProductAssistantPage({ cadastro = false }: { cadastro?: boolean } = {}) {
   if (!cadastro) return <ProductEditorRedirect />
   return <ProductCadastroPage />
@@ -34,6 +34,8 @@ export function ProductAssistantPage({ cadastro = false }: { cadastro?: boolean 
 
 function ProductCadastroPage() {
   const { step: cadastroStep, go } = useCadastroStep("product")
+  const [searchParams] = useSearchParams()
+  const editRequested = searchParams.get("modo") === "editar"
   const navigate = useNavigate()
   const permissions = useOptionalPermissions()
   const [stepDirty, setStepDirty] = useState(false)
@@ -66,6 +68,9 @@ function ProductCadastroPage() {
 
   const model = wizard.model
   const { product } = model
+  // Editing an existing product: asked for explicitly, or implied by an already active product.
+  const editing = editRequested || product.isActive
+  const wizardPath = editing ? productEditPath(product.id, "regras") : wizard.wizardPath
   const { steps, status, firstMissing, linkedAssetIds: linkedIds } = productSetupFromModel(model, wizard.rentalsActive)
   const linkedAssets = assets.filter((asset) => linkedIds.includes(asset.id))
   const missingStep: SetupStepId | undefined = firstMissing
@@ -132,7 +137,7 @@ function ProductCadastroPage() {
             customerIds={model.access.customerIds}
             groupIds={model.access.groupIds}
             groups={model.groups}
-            wizardPath={wizard.wizardPath}
+            wizardPath={wizardPath}
             readOnly={!wizard.canManage}
             canSearchCustomers={wizard.canSearchCustomers}
             onDirtyChange={setStepDirty}
@@ -158,7 +163,7 @@ function ProductCadastroPage() {
       </div>
   )
 
-  return <CadastroShell kind="product" title={product.name} status={status} step={cadastroStep} go={goSkipping} notApplicable={notApplicable} dirty={stepDirty} busy={wizard.busy || stepSaving} done={done} optional={["categorias", "arquivos"]} canPublish={missingStep == null && wizard.canManage && !justPublished} completed={justPublished && cadastroStep === "publicacao"} onPublish={publish} onBack={() => navigate("/catalogo/produtos")}>
+  return <CadastroShell kind="product" edit={editing ? { active: product.isActive, onCancel: () => navigate(productViewPath(product.id)), onSaved: () => { toast.success(t("cadastro.changesSaved")); navigate(productViewPath(product.id)) } } : undefined} title={product.name} status={status} step={cadastroStep} go={goSkipping} notApplicable={notApplicable} dirty={stepDirty} busy={wizard.busy || stepSaving} done={done} optional={["categorias", "arquivos"]} canPublish={missingStep == null && wizard.canManage && !justPublished} completed={justPublished && cadastroStep === "publicacao"} onPublish={publish} onBack={() => navigate(editing ? productViewPath(product.id) : "/catalogo/produtos")}>
     {justPublished && cadastroStep === "publicacao" ? <ProductPublishSuccess product={product} visibility={visibility} editorPath={productViewPath(product.id)} /> : cadastroStep === "categorias" ? <CadastroTaxonomyStep onDirtyChange={setStepDirty} onSavingChange={setStepSaving} product={product} canAssign={wizard.canManage} onSaved={() => wizard.reload()} /> : body}
   </CadastroShell>
 }

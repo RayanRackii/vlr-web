@@ -143,7 +143,7 @@ describe("ProductViewPage layout", () => {
     renderPage()
 
     const edit = screen.getByRole("link", { name: "Editar produto" })
-    expect(edit).toHaveAttribute("href", `/catalogo/produtos/${ID}/cadastro`)
+    expect(edit).toHaveAttribute("href", `/catalogo/produtos/${ID}/cadastro?modo=editar`)
     expect(screen.getByRole("button", { name: "Mais ações" })).toBeInTheDocument()
     expect(screen.queryByRole("button", { name: /^salvar/i })).not.toBeInTheDocument()
 
@@ -237,7 +237,7 @@ describe("ProductViewPage states", () => {
     expect(screen.getByTestId("product-view-main").className).not.toContain("lg:grid-cols")
     const note = screen.getByTestId("product-view-no-photo")
     expect(note).toHaveTextContent("Sem foto cadastrada")
-    expect(within(note).getByRole("link", { name: "Adicionar fotos" })).toHaveAttribute("href", `/catalogo/produtos/${ID}/cadastro?passo=arquivos`)
+    expect(within(note).getByRole("link", { name: "Adicionar fotos" })).toHaveAttribute("href", `/catalogo/produtos/${ID}/cadastro?modo=editar&passo=arquivos`)
   })
 
   it("hides the add-photos link when the user cannot manage", () => {

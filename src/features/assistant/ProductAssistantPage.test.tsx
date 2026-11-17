@@ -36,7 +36,7 @@ beforeEach(() => {
     publishMenu: vi.fn(),
     modelRef: { current: null },
     model: {
-      product: { id: productId, name: "Diária", isActive: true, usesSchedule: true, currency: "BRL", price: 0, visibility: "Public", files: [] },
+      product: { id: productId, name: "Diária", isActive: false, usesSchedule: true, currency: "BRL", price: 0, visibility: "Public", files: [] },
       access: { visibility: "Public", customerIds: [], groupIds: [] },
       groups: [],
       menuItems: [],
@@ -51,7 +51,7 @@ function setup(entry = `/catalogo/produtos/${productId}/passos`) {
     <MemoryRouter initialEntries={[entry]}>
       <Routes>
         <Route path="/catalogo/produtos/:id/passos" element={<ProductAssistantPage />} />
-        <Route path="/catalogo/produtos/:id/editar-legado" element={<LocationProbe />} />
+        <Route path="/catalogo/produtos/:id/cadastro" element={<LocationProbe />} />
       </Routes>
     </MemoryRouter>,
   )
@@ -62,15 +62,15 @@ function LocationProbe() {
   return <p data-testid="editor-location">{location.pathname}{location.search}</p>
 }
 
-it("sends the non-cadastro assistant to the single product editor", () => {
+it("sends the non-cadastro assistant to the wizard in edit mode", () => {
   setup()
-  expect(screen.getByTestId("editor-location")).toHaveTextContent(`/catalogo/produtos/${productId}/editar-legado`)
+  expect(screen.getByTestId("editor-location")).toHaveTextContent(`/catalogo/produtos/${productId}/cadastro?modo=editar`)
   expect(screen.queryByRole("region", { name: "Preços" })).not.toBeInTheDocument()
 })
 
-it("opens the Agenda tab when the old link targeted the agenda step", () => {
+it("opens the Agenda step when the old link targeted the agenda step", () => {
   setup(`/catalogo/produtos/${productId}/passos?passo=agenda`)
-  expect(screen.getByTestId("editor-location")).toHaveTextContent(`/catalogo/produtos/${productId}/editar-legado?aba=agenda`)
+  expect(screen.getByTestId("editor-location")).toHaveTextContent(`/catalogo/produtos/${productId}/cadastro?modo=editar&passo=agenda`)
 })
 
 function renderCadastro(query = "") {
@@ -138,14 +138,13 @@ it("Publicar activates the draft product and publishes the catalog menu when it 
   expect(activateCatalogProduct).toHaveBeenCalledWith(productId)
 })
 
-it("Publicar only reloads when the product is active and the menu is already on", async () => {
-  const { publishMenu, reload } = mockReadyProduct({ isActive: true, menuItems: activeCatalogMenu })
+it("an active product that is not on the portal menu still publishes the menu without activating again", async () => {
+  const { publishMenu } = mockReadyProduct({ isActive: true, menuItems: [] })
   const user = userEvent.setup()
   renderCadastro("?passo=publicacao")
   await user.click(screen.getByRole("button", { name: "Publicar" }))
-  await waitFor(() => expect(reload).toHaveBeenCalled())
+  await waitFor(() => expect(publishMenu).toHaveBeenCalledTimes(1))
   expect(activateCatalogProduct).not.toHaveBeenCalled()
-  expect(publishMenu).not.toHaveBeenCalled()
 })
 
 it("does not publish the menu when activating fails", async () => {
@@ -174,11 +173,12 @@ it("shows Rascunho and marks steps from the saved data, not from visits", async 
   expect(within(nav).getByRole("button", { name: "Publicação" })).toHaveAttribute("aria-current", "step")
 })
 
-it("shows Publicado and completes Categorias when the product has taxonomy", () => {
+it("completes Categorias when the product has taxonomy, in the edit mode of an active product", () => {
   mockReadyProduct({ isActive: true, menuItems: activeCatalogMenu, taxonomy: { categories: [{ id: "c", name: "Hospedagem" }], tags: [] } })
   renderCadastro("?passo=dados")
   const nav = screen.getByRole("navigation", { name: "Etapas do cadastro" })
-  expect(screen.getByText("Ativo")).toBeInTheDocument()
+  expect(screen.getByRole("heading", { level: 1, name: "Editar produto" })).toBeInTheDocument()
+  expect(screen.queryByText("Ativo")).not.toBeInTheDocument()
   expect(within(nav).getByRole("button", { name: "Categorias e tags, concluída" })).toBeInTheDocument()
   expect(within(nav).getByRole("button", { name: "Publicação, concluída" })).toBeInTheDocument()
   expect(within(nav).getAllByText("Opcional")).toHaveLength(1)
@@ -341,4 +341,52 @@ it("marks Fotos e arquivos done only for a Ready file, not for Pending or Failed
   mockReadyProduct({ isActive: false, menuItems: [], files: [file("Ready")] })
   renderCadastro("?passo=dados")
   expect(within(screen.getByRole("navigation", { name: "Etapas do cadastro" })).getByRole("button", { name: "Fotos e arquivos, concluída" })).toBeInTheDocument()
+})
+
+function renderEdit(query: string) {
+  return render(<MemoryRouter initialEntries={[`/catalogo/produtos/${productId}/cadastro${query}`]}>
+    <TestPermissionProvider permissions={["core.taxonomy.read", "core.taxonomy.manage", "core.module_menu.write"]}>
+      <Routes>
+        <Route path="/catalogo/produtos/:id/cadastro" element={<ProductAssistantPage cadastro />} />
+        <Route path="/catalogo/produtos/:id" element={<LocationProbe />} />
+        <Route path="/catalogo/produtos" element={<LocationProbe />} />
+      </Routes>
+    </TestPermissionProvider>
+  </MemoryRouter>)
+}
+
+it("edit mode (?modo=editar) shows Editar produto with the product name and no creation footer, even for an inactive product", () => {
+  mockReadyProduct({ isActive: false, menuItems: [] })
+  renderEdit("?modo=editar&passo=precos")
+  expect(screen.getByRole("heading", { level: 1, name: "Editar produto" })).toBeInTheDocument()
+  expect(screen.getByText("Diária")).toBeInTheDocument()
+  expect(screen.getByRole("button", { name: "Salvar alterações" })).toBeInTheDocument()
+  expect(screen.queryByRole("button", { name: "Salvar e continuar" })).not.toBeInTheDocument()
+})
+
+it("an active product opens in edit mode without ?modo=editar (list menu link)", () => {
+  mockReadyProduct({ isActive: true, menuItems: activeCatalogMenu })
+  renderEdit("")
+  expect(screen.getByRole("heading", { level: 1, name: "Editar produto" })).toBeInTheDocument()
+  expect(screen.queryByText("Rascunho")).not.toBeInTheDocument()
+  expect(screen.queryByText(/Etapa \d+ de \d+/)).not.toBeInTheDocument()
+})
+
+it("Salvar alterações shows the toast and returns to the product view", async () => {
+  const { toast } = await import("sonner")
+  const success = vi.spyOn(toast, "success").mockReturnValue(1)
+  mockReadyProduct({ isActive: true, menuItems: activeCatalogMenu })
+  const user = userEvent.setup()
+  renderEdit("?modo=editar&passo=arquivos")
+  await user.click(screen.getByRole("button", { name: "Salvar alterações" }))
+  await waitFor(() => expect(screen.getByTestId("editor-location").textContent).toBe(`/catalogo/produtos/${productId}`))
+  expect(success).toHaveBeenCalledWith("Alterações salvas")
+})
+
+it("Cancelar goes to the product view, not the list", async () => {
+  mockReadyProduct({ isActive: true, menuItems: activeCatalogMenu })
+  const user = userEvent.setup()
+  renderEdit("?modo=editar&passo=arquivos")
+  await user.click(screen.getByRole("button", { name: "Cancelar" }))
+  await waitFor(() => expect(screen.getByTestId("editor-location").textContent).toBe(`/catalogo/produtos/${productId}`))
 })

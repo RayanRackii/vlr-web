@@ -6544,6 +6544,9 @@
     "productDescription": "Configure seu produto e deixe tudo pronto para receber reservas.",
     "saveAndContinue": "Salvar e continuar",
     "saveAndExit": "Salvar e sair",
+    "editTitle": "Editar produto",
+    "saveChanges": "Salvar alterações",
+    "changesSaved": "Alterações salvas",
     "requiredNote": "* Campo obrigatório",
     "crumbCatalog": "Catálogo",
     "product": {
