@@ -42,31 +42,21 @@ import { Textarea } from "@/components/ui/textarea"
 import { usePermissions } from "@/features/users/permissions/PermissionContext"
 import {
   catalogProductFormSchema,
-  type CatalogFileVisibility,
   type CatalogProduct,
   type CatalogProductFormValues,
 } from "@/features/catalog/schemas/catalogSchemas"
 import { CatalogProductAccessSection, CatalogProductAccessHistoryView, type CatalogProductAccessSectionHandle } from "@/features/catalog/components/CatalogProductAccessSection"
-import { CatalogProductImageGallery } from "@/features/catalog/components/CatalogProductImageGallery"
-import { catalogFileRejection } from "@/features/catalog/lib/catalogFileRules"
-import { selectCatalogProductImages } from "@/features/catalog/lib/selectCatalogProductImages"
+import { ProductFilesManager } from "@/features/catalog/components/ProductFilesManager"
 import { ProductUsesScheduleField } from "@/features/catalog/components/ProductUsesScheduleField"
 import { toCatalogProductWriteBody } from "@/features/catalog/lib/createCatalogProductWithFiles"
 import {
   activateCatalogProduct,
   deactivateCatalogProduct,
-  deleteCatalogProductFile,
   getCatalogProduct,
-  getCatalogProductFileUrl,
   updateCatalogProduct,
-  uploadCatalogProductFile,
 } from "@/features/catalog/services/catalogService"
 
 const PRODUCTS_PATH = "/catalogo/produtos"
-const MAX_PREVIEW_REFRESH_ATTEMPTS = 2
-const CUSTOMER_VISIBLE_FILE_ACCEPT =
-  "image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp"
-const INTERNAL_FILE_ACCEPT = ".pdf,.stl,.step,.stp,.dxf,application/pdf"
 
 /** Editable price text with two decimals in the UI locale ("45,50"), no symbol or grouping so it parses back on save. */
 function formatPriceInput(price: number | null | undefined, locale: string): string {
@@ -107,21 +97,7 @@ export function CatalogProductEditorPage() {
   const [agendaDirty, setAgendaDirty] = useState(false)
   const [stepSaving, setStepSaving] = useState(false)
   const wizard = useProductWizard(id ?? "")
-  const [uploadVisibility, setUploadVisibility] = useState<CatalogFileVisibility>("CustomerVisible")
-  const [fileBusy, setFileBusy] = useState(false)
-  const fileInputRef = useRef<HTMLInputElement>(null)
-  const [selectedFileName, setSelectedFileName] = useState("")
-  const [fileError, setFileError] = useState<string | null>(null)
   const [accessDirty, setAccessDirty] = useState(false)
-  const [signedImageUrls, setSignedImageUrls] = useState<Record<string, string>>({})
-  const [previewFailures, setPreviewFailures] = useState<Record<string, boolean>>({})
-  const [previewRevision, setPreviewRevision] = useState(0)
-  // Bounded signed-preview refresh keyed by URL (not by file): a freshly signed
-  // URL that later expires can be refreshed again, and a failed refresh may be
-  // retried until MAX_PREVIEW_REFRESH_ATTEMPTS is reached for that URL.
-  const previewRefreshAttempts = useRef(new Map<string, { attempts: number; pending: boolean }>())
-  // Pending backoff timers for failed refreshes, cleared on unmount/file change.
-  const previewRefreshTimers = useRef(new Set<ReturnType<typeof setTimeout>>())
   const accessSectionRef = useRef<CatalogProductAccessSectionHandle>(null)
 
   const form = useForm<CatalogProductFormValues>({
@@ -144,54 +120,6 @@ export function CatalogProductEditorPage() {
     },
     [form, i18n.language],
   )
-
-  // Re-sign an expired preview URL for a file, counting each try against the
-  // per-URL budget. A broken gallery emits no second error event, so a failed
-  // signing request reschedules itself with a small linear backoff until the
-  // budget is exhausted.
-  const refreshSignedPreview = useCallback(
-    function retryPreview(source: string, productId: string, fileId: string, maxAttempts = MAX_PREVIEW_REFRESH_ATTEMPTS) {
-      const refresh = previewRefreshAttempts.current.get(source) ?? { attempts: 0, pending: false }
-      if (refresh.pending || refresh.attempts >= maxAttempts) return
-      refresh.attempts += 1
-      refresh.pending = true
-      previewRefreshAttempts.current.set(source, refresh)
-      void getCatalogProductFileUrl(productId, fileId)
-        .then(({ url }) => {
-          if (previewRefreshAttempts.current.get(source) !== refresh) return
-          if (!url.trim()) throw new Error("Empty preview URL")
-          refresh.pending = false
-          setSignedImageUrls((current) => ({ ...current, [`${productId}:${fileId}`]: url }))
-          // Re-signing may return the same URL; still reset the gallery's failed image.
-          setPreviewRevision((current) => current + 1)
-        })
-        .catch(() => {
-          if (previewRefreshAttempts.current.get(source) !== refresh) return
-          if (refresh.attempts >= maxAttempts) {
-            refresh.pending = false
-            setPreviewFailures((current) => ({ ...current, [`${productId}:${fileId}`]: true }))
-            return
-          }
-          const timer = setTimeout(() => {
-            previewRefreshTimers.current.delete(timer)
-            refresh.pending = false
-            retryPreview(source, productId, fileId, maxAttempts)
-          }, 500 * refresh.attempts)
-          previewRefreshTimers.current.add(timer)
-        })
-    },
-    [],
-  )
-
-  useEffect(() => {
-    const timers = previewRefreshTimers.current
-    const attempts = previewRefreshAttempts.current
-    return () => {
-      attempts.clear()
-      timers.forEach(clearTimeout)
-      timers.clear()
-    }
-  }, [id])
 
   useEffect(() => {
     if (!id) {
@@ -219,18 +147,6 @@ export function CatalogProductEditorPage() {
     }
   }, [id, navigate, t, applyProduct])
 
-  useEffect(() => {
-    if (!product) return
-    const candidates = selectCatalogProductImages(
-      product.files
-        .filter((file) => file.status !== "Pending" && file.status !== "Failed" && !file.url?.trim() && !signedImageUrls[`${product.id}:${file.id}`])
-        .map((file) => ({ ...file, url: "pending" })),
-    )
-    for (const file of candidates) {
-      refreshSignedPreview(`initial:${product.id}:${file.id}`, product.id, file.id, 3)
-    }
-  }, [product, signedImageUrls, refreshSignedPreview])
-
   const reload = useCallback(async ({ filesOnly = false } = {}) => {
     if (!id) return
     try {
@@ -240,13 +156,6 @@ export function CatalogProductEditorPage() {
         taxonomy: next.taxonomy,
         ...(filesOnly ? {} : { isActive: next.isActive, visibility: next.visibility }),
       } : next)
-      const keys = new Set(next.files.map((file) => `${next.id}:${file.id}`))
-      setSignedImageUrls((current) => Object.fromEntries(Object.entries(current).filter(([key]) => keys.has(key))))
-      // File set changed (upload/delete); reset the per-URL refresh budget and
-      // drop any pending backoff retries that target the old URLs.
-      previewRefreshAttempts.current.clear()
-      previewRefreshTimers.current.forEach(clearTimeout)
-      previewRefreshTimers.current.clear()
     } catch {
       /* keep current values on refetch failure */
     }
@@ -326,64 +235,6 @@ export function CatalogProductEditorPage() {
     }
   }
 
-  function describeFileRejection(file: File): string | null {
-    const rejection = catalogFileRejection(file, uploadVisibility)
-    if (rejection == null) return null
-    return t(`catalog.products.files.${rejection}`, { name: file.name })
-  }
-
-  async function onUploadFile(file: File | undefined) {
-    if (!file || !product) return
-    const rejection = describeFileRejection(file)
-    if (rejection != null) {
-      setFileError(rejection)
-      return
-    }
-    setFileBusy(true)
-    setFileError(null)
-    try {
-      await uploadCatalogProductFile(product.id, file, uploadVisibility)
-      await reload()
-      toast.success(t("catalog.products.toastFileUploaded"))
-    } catch (error) {
-      const message =
-        error instanceof Error ? error.message : t("apiErrors.uploadCatalogFile")
-      setFileError(message)
-      toast.error(message)
-      await reload({ filesOnly: true })
-    } finally {
-      setFileBusy(false)
-    }
-  }
-
-  async function onDeleteFile(fileId: string) {
-    if (!product) return
-    setFileBusy(true)
-    try {
-      await deleteCatalogProductFile(product.id, fileId)
-      await reload()
-      toast.success(t("catalog.products.toastFileDeleted"))
-    } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : t("apiErrors.deleteCatalogFile"),
-      )
-    } finally {
-      setFileBusy(false)
-    }
-  }
-
-  async function onOpenFile(fileId: string) {
-    if (!product) return
-    try {
-      const result = await getCatalogProductFileUrl(product.id, fileId)
-      window.open(result.url, "_blank", "noopener,noreferrer")
-    } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : t("apiErrors.loadCatalogFileUrl"),
-      )
-    }
-  }
-
   if (!canManage && !can("catalog.products.read")) {
     return <AccessDeniedPage />
   }
@@ -417,13 +268,6 @@ export function CatalogProductEditorPage() {
   const dirty = canManage && (formDirty || accessDirty)
   const unsavedCount = (formDirty ? 1 : 0) + (accessDirty ? 1 : 0)
   const fieldsLocked = !canManage || saving
-  const previewImages = selectCatalogProductImages(
-    product.files.filter((file) => file.status !== "Pending" && file.status !== "Failed").map((file) => ({
-      ...file,
-      url: signedImageUrls[`${product.id}:${file.id}`] || file.url?.trim(),
-    })),
-  )
-
   const dadosTab: EntityTab = {
     value: "dados",
     label: t("catalog.products.tabs.dados"),
@@ -577,143 +421,7 @@ export function CatalogProductEditorPage() {
     label: t("catalog.products.files.title"),
     badge: product.files.length,
     content: (
-      <div className="min-w-0 w-full max-w-xl space-y-3" onErrorCapture={(event) => {
-        if (!(event.target instanceof HTMLImageElement)) return
-        const source = event.target.getAttribute("src")
-        if (!source) return
-        const image = previewImages.find((item) => item.url === source)
-        if (!image) return
-        refreshSignedPreview(source, product.id, image.id)
-        setPreviewFailures((current) => ({ ...current, [`${product.id}:${image.id}`]: true }))
-      }} onLoadCapture={(event) => {
-        if (!(event.target instanceof HTMLImageElement)) return
-        const source = event.target.getAttribute("src")
-        const image = previewImages.find((item) => item.url === source)
-        if (!image) return
-        setPreviewFailures((current) => ({ ...current, [`${product.id}:${image.id}`]: false }))
-      }}>
-        {previewImages.length > 0 ? (
-          <CatalogProductImageGallery
-            key={`${previewRevision}:${previewImages.map((image) => image.url).join("|")}`}
-            images={previewImages}
-            alt={product.name}
-            frameClassName="h-40 w-full rounded-lg"
-          />
-        ) : null}
-        {product.files.length > 0 ? (
-          <ul className="space-y-2 text-sm">
-            {product.files.map((file) => (
-              <li key={file.id} className="flex min-w-0 flex-wrap items-center justify-between gap-2">
-                <div className="min-w-0 max-w-full">
-                  <span className="block truncate">
-                    {file.fileName}{" "}
-                    <Badge variant="outline">
-                      {file.visibility === "CustomerVisible"
-                        ? t("catalog.products.files.customerVisible")
-                        : t("catalog.products.files.internal")}
-                    </Badge>
-                  </span>
-                  {file.status === "Pending" || file.status === "Failed" ? (
-                    <p className="text-sm text-destructive">
-                      {t(file.status === "Pending" ? "catalog.products.files.pendingRecord" : "catalog.products.files.failedRecord")}
-                    </p>
-                  ) : null}
-                </div>
-                <div className="flex min-w-0 flex-wrap gap-2">
-                  {file.status !== "Pending" && file.status !== "Failed" ? (
-                    <Button type="button" size="sm" variant="outline" onClick={() => void onOpenFile(file.id)}>
-                      {t("catalog.products.files.open")}
-                    </Button>
-                  ) : null}
-                  {file.status !== "Pending" && file.status !== "Failed" && previewFailures[`${product.id}:${file.id}`] ? (
-                    <Button type="button" size="sm" variant="outline" onClick={() => {
-                      const source = `manual:${product.id}:${file.id}`
-                      previewRefreshAttempts.current.delete(source)
-                      refreshSignedPreview(source, product.id, file.id, 3)
-                    }}>
-                      {t("catalog.products.files.retry")}
-                    </Button>
-                  ) : null}
-                  {canManage ? (
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="ghost"
-                      disabled={fileBusy}
-                      onClick={() => void onDeleteFile(file.id)}
-                    >
-                      {t("common.delete")}
-                    </Button>
-                  ) : null}
-                </div>
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p className="text-sm text-muted-foreground">{t("catalog.products.files.empty")}</p>
-        )}
-        {canManage ? (
-          <div className="flex min-w-0 w-full flex-wrap gap-2">
-            <div className="min-w-0 max-w-full space-y-1">
-              <span className="block text-sm font-medium">
-                {t("catalog.products.files.whoSees")}
-              </span>
-              <SegmentedControl
-                className="min-w-0 max-w-full flex-wrap"
-                label={t("catalog.products.files.whoSees")}
-                value={uploadVisibility}
-                disabled={fileBusy}
-                onChange={setUploadVisibility}
-                options={[
-                  { value: "CustomerVisible", label: t("catalog.products.files.customerShort") },
-                  { value: "InternalB2B", label: t("catalog.products.files.internalShort") },
-                ]}
-              />
-            </div>
-            <div className="relative min-w-0 basis-64 flex-1 space-y-1">
-              <label htmlFor="catalog-product-file-input" className="sr-only">
-                {t("catalog.products.files.select")}
-              </label>
-              <input
-                ref={fileInputRef}
-                className="sr-only"
-                tabIndex={-1}
-                aria-describedby="catalog-product-file-name"
-                id="catalog-product-file-input"
-                type="file"
-                disabled={fileBusy}
-                accept={
-                  uploadVisibility === "CustomerVisible"
-                    ? CUSTOMER_VISIBLE_FILE_ACCEPT
-                    : INTERNAL_FILE_ACCEPT
-                }
-                onChange={(event) => {
-                  setSelectedFileName(event.target.files?.[0]?.name ?? "")
-                  void onUploadFile(event.target.files?.[0])
-                  event.target.value = ""
-                }}
-              />
-              <Button
-                type="button"
-                variant="outline"
-                className="min-h-11"
-                disabled={fileBusy}
-                onClick={() => fileInputRef.current?.click()}
-              >
-                {t("catalog.products.files.select")}
-              </Button>
-              <p id="catalog-product-file-name" role="status" className="break-all text-sm text-muted-foreground">
-                {selectedFileName ? t("catalog.products.files.selectedFile", { name: selectedFileName }) : t("catalog.products.files.noFile")}
-              </p>
-            </div>
-          </div>
-        ) : null}
-        {fileError !== null ? (
-          <p role="alert" className="text-sm text-destructive">
-            {fileError}
-          </p>
-        ) : null}
-      </div>
+      <ProductFilesManager productId={product.id} productName={product.name} files={product.files} canManage={canManage} onReload={reload} />
     ),
   }
 

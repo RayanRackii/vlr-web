@@ -1,7 +1,10 @@
 import { useSearchParams } from "react-router-dom"
 
-export const cadastroSteps = ["dados", "categorias", "agenda", "fila", "regras", "precos", "publicacao"] as const
+export const cadastroSteps = ["dados", "arquivos", "categorias", "agenda", "fila", "regras", "precos", "publicacao"] as const
 export type CadastroStep = typeof cadastroSteps[number]
+
+/** Steps of the product wizard only: resources have no photos and files step. */
+export const productOnlySteps: readonly CadastroStep[] = ["arquivos"]
 
 export type CadastroArea = "produtos" | "recursos"
 

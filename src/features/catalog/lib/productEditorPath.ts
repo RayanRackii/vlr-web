@@ -18,6 +18,7 @@ export function productEditorPath(productId: string, tab?: ProductEditorTab | nu
 export function productEditorTabFromLegacy(step: string | null | undefined): ProductEditorTab | null {
   const passo = cadastroPassoFromLegacy(step, "produtos")
   if (passo === "agenda" || passo === "fila") return "agenda"
+  if (passo === "arquivos") return "files"
   if (passo === "precos") return "price"
   if (passo === "regras") return "access"
   return null

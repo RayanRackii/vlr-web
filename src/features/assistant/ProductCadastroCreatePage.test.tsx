@@ -55,7 +55,7 @@ function renderCreate(activeModules?: string[]) {
 
 const nameField = () => screen.getByRole("textbox", { name: "Nome do produto *" })
 
-it("creates a draft from step 1 and continues to Categorias e tags of the new product", async () => {
+it("creates a draft from step 1 and continues to Fotos e arquivos of the new product", async () => {
   const user = userEvent.setup()
   renderCreate()
   expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1)
@@ -64,7 +64,7 @@ it("creates a draft from step 1 and continues to Categorias e tags of the new pr
   await user.type(nameField(), "Raquete")
   await user.click(screen.getByRole("button", { name: "Salvar e continuar" }))
   expect(await screen.findByRole("heading", { name: "Cadastro salvo" })).toBeInTheDocument()
-  expect(screen.getByTestId("location")).toHaveTextContent(`/catalogo/produtos/${CREATED_ID}/cadastro?passo=categorias`)
+  expect(screen.getByTestId("location")).toHaveTextContent(`/catalogo/produtos/${CREATED_ID}/cadastro?passo=arquivos`)
 })
 
 it("sends the product as Inactive with no price and the default currency", async () => {
@@ -89,7 +89,7 @@ it("asks whether the product uses the schedule on rentals tenants (default Sim) 
   await user.click(screen.getByRole("button", { name: "Salvar e continuar" }))
   await screen.findByRole("heading", { name: "Cadastro salvo" })
   expect(createProductMock.mock.calls[0][0]).toMatchObject({ usesSchedule: false })
-  expect(screen.getByTestId("location")).toHaveTextContent("passo=categorias")
+  expect(screen.getByTestId("location")).toHaveTextContent("passo=arquivos")
 })
 
 it("places the sales mode field between the code and the description", () => {
@@ -161,9 +161,9 @@ it("shows the draft header, the read-only progress and no price or status fields
   renderCreate()
   expect(screen.getByRole("heading", { level: 1, name: "Novo produto" })).toBeInTheDocument()
   expect(screen.getByText("Rascunho")).toBeInTheDocument()
-  expect(screen.getByText(i18n.t("cadastro.stage", { count: 1, total: 7 }))).toBeInTheDocument()
+  expect(screen.getByText(i18n.t("cadastro.stage", { count: 1, total: 8 }))).toBeInTheDocument()
   const nav = screen.getByRole("navigation", { name: i18n.t("cadastro.steps") })
-  for (const step of ["dados", "categorias", "agenda", "fila", "regras", "precos", "publicacao"]) {
+  for (const step of ["dados", "arquivos", "categorias", "agenda", "fila", "regras", "precos", "publicacao"]) {
     expect(within(nav).getAllByText(i18n.t(`cadastro.productSteps.${step}.title`)).length).toBeGreaterThan(0)
   }
   expect(within(nav).queryAllByRole("button")).toHaveLength(0)
