@@ -48,7 +48,9 @@ import {
   deactivateCatalogProduct,
   listCatalogProducts,
   listProductRequests,
+  getCatalogProductFileUrl,
 } from "@/features/catalog/services/catalogService"
+import { clearSignedProductFileUrlCache } from "@/features/catalog/lib/signedFileUrlCache"
 import { getCatalogTaxonomyOptions } from "@/features/taxonomy/services/taxonomyService"
 
 const listProductsMock = vi.mocked(listCatalogProducts)
@@ -519,11 +521,17 @@ describe("CatalogProductsPage validity gate", () => {
       url: "https://img.test/raquete.jpg",
     }
 
+    const signUrlMock = vi.mocked(getCatalogProductFileUrl)
+    beforeEach(() => {
+      clearSignedProductFileUrlCache()
+      signUrlMock.mockReset()
+    })
+
     it("shows the first photo for a product with an image URL and the icon for one without", async () => {
       listProductsMock.mockResolvedValue([
         { ...PRODUCT, files: [FILE] },
         { ...PRODUCT, id: "cccccccc-cccc-4ccc-8ccc-cccccccccccc", name: "Bola", files: [] },
-        { ...PRODUCT, id: "dddddddd-dddd-4ddd-8ddd-dddddddddddd", name: "Rede", files: [{ ...FILE, url: null }] },
+        { ...PRODUCT, id: "dddddddd-dddd-4ddd-8ddd-dddddddddddd", name: "Rede", files: [{ ...FILE, status: "Pending" as never, url: null }] },
       ])
       renderPage()
       const table = within(await screen.findByRole("table", { name: i18n.t("catalog.products.title") }))
@@ -532,6 +540,39 @@ describe("CatalogProductsPage validity gate", () => {
       expect(img).toHaveAttribute("loading", "lazy")
       expect(table.getAllByTestId("product-thumb-image")).toHaveLength(1)
       expect(table.getAllByTestId("product-thumb-icon")).toHaveLength(2)
+      expect(signUrlMock).not.toHaveBeenCalled()
+    })
+
+    it("signs a null-URL image once and then shows it, even when not CustomerVisible", async () => {
+      signUrlMock.mockResolvedValue({ url: "https://signed.test/a.jpg", isPublic: false })
+      listProductsMock.mockResolvedValue([{ ...PRODUCT, files: [{ ...FILE, url: null, visibility: "InternalB2B" as const }] }])
+      renderPage()
+      const table = within(await screen.findByRole("table", { name: i18n.t("catalog.products.title") }))
+      expect(await table.findByTestId("product-thumb-image")).toHaveAttribute("src", "https://signed.test/a.jpg")
+      expect(signUrlMock).toHaveBeenCalledTimes(1)
+      expect(signUrlMock).toHaveBeenCalledWith(PRODUCT.id, FILE.id)
+    })
+
+    it("keeps the icon when signing fails", async () => {
+      signUrlMock.mockRejectedValue(new Error("boom"))
+      listProductsMock.mockResolvedValue([{ ...PRODUCT, files: [{ ...FILE, url: null }] }])
+      renderPage()
+      const table = within(await screen.findByRole("table", { name: i18n.t("catalog.products.title") }))
+      await waitFor(() => expect(signUrlMock).toHaveBeenCalledTimes(1))
+      expect(table.queryByTestId("product-thumb-image")).not.toBeInTheDocument()
+      expect(table.getByTestId("product-thumb-icon")).toBeInTheDocument()
+    })
+
+    it("shares one signing request between rows with the same file id", async () => {
+      signUrlMock.mockResolvedValue({ url: "https://signed.test/a.jpg", isPublic: false })
+      listProductsMock.mockResolvedValue([
+        { ...PRODUCT, files: [{ ...FILE, url: null }] },
+        { ...PRODUCT, id: "cccccccc-cccc-4ccc-8ccc-cccccccccccc", name: "Bola", files: [{ ...FILE, url: null }] },
+      ])
+      renderPage()
+      const table = within(await screen.findByRole("table", { name: i18n.t("catalog.products.title") }))
+      await waitFor(() => expect(table.getAllByTestId("product-thumb-image")).toHaveLength(2))
+      expect(signUrlMock).toHaveBeenCalledTimes(1)
     })
 
     it("falls back to the icon when the image fails to load", async () => {
