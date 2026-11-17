@@ -18,6 +18,7 @@ import { CatalogProductResourceRequirements } from "@/features/catalog/component
 import { ProductEditorRedirect } from "@/features/catalog/components/ProductEditorRedirect"
 import { QueueSummary, ResourceLinks } from "@/features/catalog/components/ProductScheduleSection"
 import { ProductWizardAccessStep } from "@/features/catalog/components/productWizard/ProductWizardAccessStep"
+import { ProductWizardFilesStep } from "@/features/catalog/components/productWizard/ProductWizardFilesStep"
 import { ProductWizardOfferStep } from "@/features/catalog/components/productWizard/ProductWizardOfferStep"
 import { useProductWizard } from "@/features/catalog/components/productWizard/useProductWizard"
 import { catalogMenuIsActive } from "@/features/catalog/components/productWizard/sellableChecklist"
@@ -32,7 +33,7 @@ export function ProductAssistantPage({ cadastro = false }: { cadastro?: boolean 
 }
 
 function ProductCadastroPage() {
-  const { step: cadastroStep, go } = useCadastroStep()
+  const { step: cadastroStep, go } = useCadastroStep("product")
   const navigate = useNavigate()
   const permissions = useOptionalPermissions()
   const [stepDirty, setStepDirty] = useState(false)
@@ -83,6 +84,7 @@ function ProductCadastroPage() {
   const taxonomy = product.taxonomy
   const done: CadastroStep[] = [
     ...(Object.entries(steps) as [SetupStepId, boolean][]).filter(([, ok]) => ok).map(([id]) => id),
+    ...(product.files.some((file) => file.status === "Ready") ? ["arquivos" as const] : []),
     ...((taxonomy?.categories.length ?? 0) + (taxonomy?.tags.length ?? 0) > 0 ? ["categorias" as const] : []),
     ...(status.kind === "published" ? ["publicacao" as const] : []),
   ]
@@ -115,6 +117,9 @@ function ProductCadastroPage() {
       <div className="space-y-4">
         {cadastroStep === "dados" || cadastroStep === "precos" ? (
           <ProductWizardOfferStep product={product} mode={cadastroStep === "precos" ? "precos" : "dados"} showUsesSchedule={wizard.rentalsActive} readOnly={!wizard.canManage} onDirtyChange={setStepDirty} onSavingChange={setStepSaving} onSaved={() => wizard.reload()} />
+        ) : null}
+        {cadastroStep === "arquivos" ? (
+          <ProductWizardFilesStep product={product} canManage={wizard.canManage} onBusyChange={setStepSaving} onReload={() => wizard.reload()} />
         ) : null}
         {cadastroStep === "agenda" ? (
           <CatalogProductResourceRequirements productId={product.id} readOnly={!wizard.canManage} onDirtyChange={setStepDirty} onSavingChange={setStepSaving} onSaved={() => wizard.reload()} />
@@ -153,7 +158,7 @@ function ProductCadastroPage() {
       </div>
   )
 
-  return <CadastroShell kind="product" title={product.name} status={status} step={cadastroStep} go={goSkipping} notApplicable={notApplicable} dirty={stepDirty} busy={wizard.busy || stepSaving} done={done} optional={["categorias"]} canPublish={missingStep == null && wizard.canManage && !justPublished} completed={justPublished && cadastroStep === "publicacao"} onPublish={publish} onBack={() => navigate("/catalogo/produtos")}>
+  return <CadastroShell kind="product" title={product.name} status={status} step={cadastroStep} go={goSkipping} notApplicable={notApplicable} dirty={stepDirty} busy={wizard.busy || stepSaving} done={done} optional={["categorias", "arquivos"]} canPublish={missingStep == null && wizard.canManage && !justPublished} completed={justPublished && cadastroStep === "publicacao"} onPublish={publish} onBack={() => navigate("/catalogo/produtos")}>
     {justPublished && cadastroStep === "publicacao" ? <ProductPublishSuccess product={product} visibility={visibility} editorPath={productViewPath(product.id)} /> : cadastroStep === "categorias" ? <CadastroTaxonomyStep onDirtyChange={setStepDirty} onSavingChange={setStepSaving} product={product} canAssign={wizard.canManage} onSaved={() => wizard.reload()} /> : body}
   </CadastroShell>
 }

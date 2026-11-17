@@ -83,7 +83,8 @@
       "fila": "Queue",
       "regras": "Rules",
       "precos": "Prices",
-      "publicacao": "Publishing"
+      "publicacao": "Publishing",
+      "arquivos": "Photos and files"
     },
     "firstSteps": {
       "title": "First steps",
@@ -1208,8 +1209,10 @@
         "extensionRequired": "{{name}} needs a file extension.",
         "required": "Select a file.",
         "whoSees": "Who sees it",
-        "customerShort": "Customer",
-        "internalShort": "Internal"
+        "customerShort": "Shown in the portal (photos)",
+        "internalShort": "Internal use (documents)",
+        "deleteConfirmTitle": "Delete this file?",
+        "deleteConfirmBody": "{{name}} will be removed from the product. This cannot be undone."
       },
       "gallery": {
         "previous": "Previous image",
@@ -6568,6 +6571,11 @@
         "title": "Product details",
         "subtitle": "Name and identification",
         "description": "Start with the information that identifies your product."
+      },
+      "arquivos": {
+        "title": "Photos and files",
+        "subtitle": "Images and documents",
+        "description": "Optional. Add photos shown in the portal and documents for internal use. Each upload is saved right away."
       },
       "categorias": {
         "title": "Categories and tags",

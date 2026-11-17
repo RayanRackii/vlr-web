@@ -83,7 +83,8 @@
       "fila": "Fila",
       "regras": "Regras",
       "precos": "Preços",
-      "publicacao": "Publicação"
+      "publicacao": "Publicação",
+      "arquivos": "Fotos e arquivos"
     },
     "firstSteps": {
       "title": "Primeiros passos",
@@ -1208,8 +1209,10 @@
         "extensionRequired": "{{name}} precisa de uma extensão.",
         "required": "Selecione um arquivo.",
         "whoSees": "Quem vê",
-        "customerShort": "Cliente",
-        "internalShort": "Interno"
+        "customerShort": "Aparece no portal (fotos)",
+        "internalShort": "Uso interno (documentos)",
+        "deleteConfirmTitle": "Excluir este arquivo?",
+        "deleteConfirmBody": "{{name}} será removido do produto. Esta ação não pode ser desfeita."
       },
       "gallery": {
         "previous": "Imagem anterior",
@@ -6568,6 +6571,11 @@
         "title": "Dados do produto",
         "subtitle": "Nome e identificação",
         "description": "Comece pelas informações que identificam seu produto."
+      },
+      "arquivos": {
+        "title": "Fotos e arquivos",
+        "subtitle": "Imagens e documentos",
+        "description": "Opcional. Adicione fotos que aparecem no portal e documentos de uso interno. Cada envio é salvo na hora."
       },
       "categorias": {
         "title": "Categorias e tags",

@@ -1,7 +1,10 @@
 import { useSearchParams } from "react-router-dom"
 
-export const cadastroSteps = ["dados", "categorias", "agenda", "fila", "regras", "precos", "publicacao"] as const
+export const cadastroSteps = ["dados", "arquivos", "categorias", "agenda", "fila", "regras", "precos", "publicacao"] as const
 export type CadastroStep = typeof cadastroSteps[number]
+
+/** Steps of the product wizard only: resources have no photos and files step. */
+export const productOnlySteps: readonly CadastroStep[] = ["arquivos"]
 
 export type CadastroArea = "produtos" | "recursos"
 
@@ -24,7 +27,10 @@ const legacyWizardPasso: Record<CadastroArea, Record<string, CadastroStep | null
 /** Maps an old wizard `passo` onto a cadastro step. `dados` is the default and is omitted. */
 export function cadastroPassoFromLegacy(step: string | null | undefined, area: CadastroArea): CadastroStep | null {
   if (!step) return null
-  if ((cadastroSteps as readonly string[]).includes(step)) return step === "dados" ? null : step as CadastroStep
+  if ((cadastroSteps as readonly string[]).includes(step)) {
+    if (area === "recursos" && productOnlySteps.includes(step as CadastroStep)) return null
+    return step === "dados" ? null : step as CadastroStep
+  }
   return legacyWizardPasso[area][step] ?? null
 }
 
@@ -33,10 +39,11 @@ export function withCadastroPasso(path: string, step: string | null | undefined,
   return passo ? `${path}?passo=${passo}` : path
 }
 
-export function useCadastroStep() {
+/** `kind` decides which steps exist: a resource ignores the product-only ones and falls back to `dados`. */
+export function useCadastroStep(kind: "product" | "resource" = "resource") {
   const [params, setParams] = useSearchParams()
   const value = params.get("passo")
-  const step: CadastroStep = cadastroSteps.find((item) => item === value) ?? "dados"
+  const step: CadastroStep = cadastroSteps.find((item) => item === value && (kind === "product" || !productOnlySteps.includes(item))) ?? "dados"
   return { step, go: (next: CadastroStep) => setParams((current) => {
     const result = new URLSearchParams(current)
     result.set("passo", next)
