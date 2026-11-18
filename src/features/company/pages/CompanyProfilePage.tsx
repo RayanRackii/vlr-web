@@ -22,6 +22,7 @@ import {
   type CompanyProfile,
 } from "@/features/company/schemas/companySchemas"
 import { getCompanyProfile, updateCompanyProfile } from "@/features/company/services/companyService"
+import { getAxiosErrorPayload, isAxiosError } from "@/lib/api"
 import { maskPhoneInput } from "@/features/tenantPortal/lib/masks"
 import { useTrialStatus } from "@/features/users/hooks/useTrialStatus"
 import { usePermissions } from "@/features/users/permissions/PermissionContext"
@@ -63,6 +64,7 @@ export function CompanyProfilePage() {
 
   const schema = useMemo(() => createCompanyFormSchema({
     legalNameRequired: t("company.validation.legalNameRequired"),
+    taxIdRequired: t("company.validation.taxIdRequired"),
     taxIdInvalid: t("company.validation.taxIdInvalid"),
     emailInvalid: t("company.validation.emailInvalid"),
     phoneInvalid: t("company.validation.phoneInvalid"),
@@ -103,6 +105,32 @@ export function CompanyProfilePage() {
     return () => { cancelled = true }
   }, [apply, fail])
 
+  /** Puts API refusals on the offending field; raw API text is never shown. */
+  function handleSaveError(error: unknown) {
+    const cause = error instanceof Error ? error.cause : error
+    const status = isAxiosError(cause) ? (cause.response?.status ?? null) : null
+    const payload = getAxiosErrorPayload(cause)
+    const apiMessage = typeof payload === "object" && payload !== null && "error" in payload && typeof payload.error === "string" ? payload.error.toLowerCase() : ""
+    if (status === 409) {
+      form.setError("taxId", { message: t("company.validation.taxIdDuplicate") })
+      return
+    }
+    if (status === 400) {
+      const field = /cpf|cnpj|tax|document/.test(apiMessage) ? ("taxId" as const)
+        : /e-?mail/.test(apiMessage) ? ("contactEmail" as const)
+        : /phone|telefone|whatsapp/.test(apiMessage) ? ("contactPhone" as const)
+        : /cep|postal/.test(apiMessage) ? ("postalCode" as const)
+        : null
+      if (field) {
+        form.setError(field, { message: t(field === "taxId" ? "company.validation.taxIdInvalid" : field === "contactEmail" ? "company.validation.emailInvalid" : field === "contactPhone" ? "company.validation.phoneInvalid" : "company.validation.postalCodeInvalid") })
+      } else {
+        toast.error(t("company.saveInvalid"))
+      }
+      return
+    }
+    toast.error(t("company.saveError"))
+  }
+
   async function onSubmit(values: CompanyFormValues) {
     if (!canEdit || saving) return
     setSaving(true)
@@ -113,7 +141,7 @@ export function CompanyProfilePage() {
       reset(next)
       toast.success(t("company.saved"))
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : t("company.saveError"))
+      handleSaveError(error)
     } finally {
       setSaving(false)
     }
@@ -193,7 +221,7 @@ export function CompanyProfilePage() {
                 {textField("street", "company.fields.street", { maxLength: 200, autoComplete: "address-line1", className: "sm:col-span-4" })}
                 {textField("number", "company.fields.number", { maxLength: 30, className: "sm:col-span-2" })}
                 {textField("complement", "company.fields.complement", { maxLength: 100, className: "sm:col-span-4" })}
-                {textField("district", "company.fields.district", { maxLength: 100, className: "sm:col-span-3" })}
+                {textField("district", "company.fields.district", { maxLength: 100, className: "sm:col-span-2" })}
                 {textField("city", "company.fields.city", { maxLength: 100, className: "sm:col-span-2" })}
                 <FormField
                   control={control}
@@ -201,7 +229,7 @@ export function CompanyProfilePage() {
                   render={({ field }) => {
                     const items = [{ value: "none", label: t("company.fields.stateNone") }, ...BRAZILIAN_STATES.map((uf) => ({ value: uf, label: uf }))]
                     return (
-                      <FormItem className="sm:col-span-1">
+                      <FormItem className="sm:col-span-2">
                         <FormLabel>{t("company.fields.state")}</FormLabel>
                         <Select
                           modal={false}

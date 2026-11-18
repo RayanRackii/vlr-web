@@ -53,7 +53,7 @@ export const emptyCompanyForm: CompanyFormValues = {
 export type CompanyWriteBody = {
   legalName: string
   tradeName: string | null
-  taxId: string | null
+  taxId: string
   contactEmail: string | null
   contactPhone: string | null
   address: {
@@ -91,7 +91,7 @@ export function formToWriteBody(values: CompanyFormValues): CompanyWriteBody {
   return {
     legalName: values.legalName.trim(),
     tradeName: blankToNull(values.tradeName),
-    taxId: digitsOrNull(values.taxId),
+    taxId: onlyDigits(values.taxId),
     contactEmail: blankToNull(values.contactEmail),
     contactPhone: digitsOrNull(values.contactPhone),
     address: {
@@ -108,6 +108,7 @@ export function formToWriteBody(values: CompanyFormValues): CompanyWriteBody {
 
 export type CompanyFormMessages = {
   legalNameRequired: string
+  taxIdRequired: string
   taxIdInvalid: string
   emailInvalid: string
   phoneInvalid: string
@@ -115,16 +116,18 @@ export type CompanyFormMessages = {
   stateInvalid: string
 }
 
-/** Same rules as the API: legal name required; CPF/CNPJ, e-mail, phone, CEP and UF only when filled. */
+/** Same rules as the API: legal name required; legal name and CPF/CNPJ required; e-mail, phone, CEP and UF only when filled. */
 export function createCompanyFormSchema(messages: CompanyFormMessages) {
   const maxText = (max: number) => z.string().max(max)
   return z.object({
     legalName: z.string().trim().min(1, messages.legalNameRequired).max(200),
     tradeName: maxText(200),
-    taxId: z.string().refine((value) => {
-      const digits = onlyDigits(value)
-      return digits === "" || (digits.length === 11 ? isValidCpf(digits) : digits.length === 14 && isValidCnpj(digits))
-    }, messages.taxIdInvalid),
+    taxId: z.string()
+      .refine((value) => onlyDigits(value) !== "", messages.taxIdRequired)
+      .refine((value) => {
+        const digits = onlyDigits(value)
+        return digits === "" || (digits.length === 11 ? isValidCpf(digits) : digits.length === 14 && isValidCnpj(digits))
+      }, messages.taxIdInvalid),
     contactEmail: z.string().trim().max(200).refine((value) => value === "" || z.string().email().safeParse(value).success, messages.emailInvalid),
     contactPhone: z.string().refine((value) => value.trim() === "" || isValidBrazilianPhoneDigits(value), messages.phoneInvalid),
     postalCode: z.string().refine((value) => onlyDigits(value) === "" || onlyDigits(value).length === 8, messages.postalCodeInvalid),

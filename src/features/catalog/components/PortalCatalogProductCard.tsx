@@ -1,4 +1,3 @@
-import { priceUnitSuffix } from "@/features/catalog/lib/catalogPriceUnit"
 import { Package, Minus, Plus } from "lucide-react"
 import { useRef } from "react"
 import { Link } from "react-router-dom"
@@ -14,6 +13,7 @@ import {
   clampCatalogQuantity,
 } from "@/features/catalog/cart"
 import { CatalogProductImageGallery } from "@/features/catalog/components/CatalogProductImageGallery"
+import { priceUnitSuffix } from "@/features/catalog/lib/catalogPriceUnit"
 import { selectCatalogProductImages } from "@/features/catalog/lib/selectCatalogProductImages"
 import {
   formatCatalogMoney,

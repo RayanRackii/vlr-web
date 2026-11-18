@@ -1,4 +1,3 @@
-import { priceUnitSuffix } from "@/features/catalog/lib/catalogPriceUnit"
 import "../components/portalCatalog.css"
 
 import { useEffect, useRef, useState } from "react"
@@ -11,6 +10,7 @@ import { PageContentSkeleton } from "@/components/loading/PageContentSkeleton"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogTitle, DialogClose } from "@/components/ui/dialog"
+import { priceUnitSuffix } from "@/features/catalog/lib/catalogPriceUnit"
 import type { CatalogProductGalleryImage } from "@/features/catalog/lib/selectCatalogProductImages"
 import { PortalAddToCartButton } from "@/features/catalog/components/PortalAddToCartButton"
 import type { CustomerAppOutletContext } from "@/features/tenantPortal/components/CustomerAppLayout"

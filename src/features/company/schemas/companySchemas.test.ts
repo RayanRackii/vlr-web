@@ -8,7 +8,7 @@ import {
   profileToForm,
 } from "@/features/company/schemas/companySchemas"
 
-const messages = { legalNameRequired: "name", taxIdInvalid: "tax", emailInvalid: "mail", phoneInvalid: "phone", postalCodeInvalid: "cep", stateInvalid: "uf" }
+const messages = { legalNameRequired: "name", taxIdRequired: "taxreq", taxIdInvalid: "tax", emailInvalid: "mail", phoneInvalid: "phone", postalCodeInvalid: "cep", stateInvalid: "uf" }
 const schema = createCompanyFormSchema(messages)
 const valid = { ...emptyCompanyForm, legalName: "Clube Ltda" }
 
@@ -18,9 +18,13 @@ function firstMessage(values: object): string | undefined {
 }
 
 describe("company form schema", () => {
-  it("only requires the legal name", () => {
-    expect(schema.safeParse(valid).success).toBe(true)
-    expect(firstMessage({ ...valid, legalName: "  " })).toBe("name")
+  const withTaxId = { ...valid, taxId: "529.982.247-25" }
+
+  it("requires the legal name and the CPF/CNPJ, as the API does", () => {
+    expect(schema.safeParse(withTaxId).success).toBe(true)
+    expect(firstMessage({ ...withTaxId, legalName: "  " })).toBe("name")
+    expect(firstMessage(valid)).toBe("taxreq")
+    expect(firstMessage({ ...valid, taxId: "  " })).toBe("taxreq")
   })
 
   it("accepts a valid CPF and CNPJ (masked or not) and rejects bad check digits", () => {
@@ -31,11 +35,11 @@ describe("company form schema", () => {
   })
 
   it("validates e-mail, phone, CEP and UF only when filled", () => {
-    expect(firstMessage({ ...valid, contactEmail: "nope" })).toBe("mail")
-    expect(firstMessage({ ...valid, contactPhone: "123" })).toBe("phone")
-    expect(firstMessage({ ...valid, postalCode: "1234" })).toBe("cep")
-    expect(firstMessage({ ...valid, state: "S" })).toBe("uf")
-    expect(schema.safeParse({ ...valid, contactEmail: "a@b.com", contactPhone: "(11) 91234-5678", postalCode: "01310-100", state: "SP" }).success).toBe(true)
+    expect(firstMessage({ ...withTaxId, contactEmail: "nope" })).toBe("mail")
+    expect(firstMessage({ ...withTaxId, contactPhone: "123" })).toBe("phone")
+    expect(firstMessage({ ...withTaxId, postalCode: "1234" })).toBe("cep")
+    expect(firstMessage({ ...withTaxId, state: "S" })).toBe("uf")
+    expect(schema.safeParse({ ...valid, contactEmail: "a@b.com", contactPhone: "(11) 91234-5678", postalCode: "01310-100", state: "SP", taxId: "529.982.247-25" }).success).toBe(true)
   })
 })
 
@@ -47,8 +51,8 @@ describe("company profile mapping", () => {
   })
 
   it("sends digits only and null for blank optional fields", () => {
-    const body = formToWriteBody({ ...valid, taxId: "529.982.247-25", contactPhone: "(11) 91234-5678", postalCode: "01310-100", state: "sp", city: " " })
-    expect(body).toMatchObject({ legalName: "Clube Ltda", tradeName: null, taxId: "52998224725", contactEmail: null, contactPhone: "11912345678" })
+    const body = formToWriteBody({ ...valid, taxId: "529.982.247-25", contactPhone: "+55 (11) 91234-5678", postalCode: "01310-100", state: "sp", city: " " })
+    expect(body).toMatchObject({ legalName: "Clube Ltda", tradeName: null, taxId: "52998224725", contactEmail: null, contactPhone: "5511912345678" })
     expect(body.address).toMatchObject({ postalCode: "01310100", state: "SP", city: null, street: null })
   })
 })

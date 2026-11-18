@@ -1,3 +1,5 @@
+import { AxiosError } from "axios"
+import { toast } from "sonner"
 import { render, screen, waitFor } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { MemoryRouter } from "react-router-dom"
@@ -20,7 +22,7 @@ const profile = {
   tradeName: "Clube",
   taxId: "11222333000181",
   contactEmail: "oi@clube.com",
-  contactPhone: "11912345678",
+  contactPhone: "+5511912345678",
   address: { postalCode: "01310100", street: "Av. Paulista", number: "1000", complement: "", district: "Bela Vista", city: "São Paulo", state: "SP" },
   subdomain: "clube",
 }
@@ -48,7 +50,7 @@ describe("CompanyProfilePage", () => {
       expect(screen.getByRole("heading", { name: heading })).toBeInTheDocument()
     }
     expect(screen.getByLabelText("CPF/CNPJ")).toHaveValue("11.222.333/0001-81")
-    expect(screen.getByLabelText("WhatsApp/telefone")).toHaveValue("(11) 91234-5678")
+    expect(screen.getByLabelText("WhatsApp/telefone")).toHaveValue("+55 (11) 91234-5678")
     expect(screen.getByLabelText("CEP")).toHaveValue("01310-100")
     expect(screen.getByTestId("company-state-select")).toHaveTextContent("SP")
     expect(screen.getByTestId("company-subdomain")).toHaveTextContent("clube")
@@ -67,7 +69,7 @@ describe("CompanyProfilePage", () => {
     expect(vi.mocked(updateCompanyProfile).mock.calls[0]?.[0]).toMatchObject({
       legalName: "Clube Novo Ltda",
       taxId: "11222333000181",
-      contactPhone: "11912345678",
+      contactPhone: "5511912345678",
       address: expect.objectContaining({ postalCode: "01310100", state: "SP" }),
     })
   })
@@ -80,6 +82,45 @@ describe("CompanyProfilePage", () => {
     await user.type(taxId, "11222333000182")
     expect(await screen.findByText("CPF ou CNPJ inválido.")).toBeInTheDocument()
     expect(screen.getByRole("button", { name: "Salvar" })).toBeDisabled()
+  })
+
+  it("rejects a blank CPF/CNPJ and keeps Salvar disabled", async () => {
+    const user = userEvent.setup()
+    renderPage(["core.company.write"])
+    const taxId = await screen.findByLabelText("CPF/CNPJ")
+    await user.clear(taxId)
+    expect(await screen.findByText("Informe o CPF ou CNPJ.")).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "Salvar" })).toBeDisabled()
+  })
+
+  async function saveWithApiError(status: number, error: string) {
+    const user = userEvent.setup()
+    vi.mocked(updateCompanyProfile).mockRejectedValueOnce(new Error("raw english text", { cause: new AxiosError("x", "ERR", undefined, undefined, { status, data: { error }, statusText: "", headers: {}, config: {} as never }) }))
+    renderPage(["core.company.write"])
+    const name = await screen.findByLabelText("Razão social")
+    await user.type(name, " 2")
+    const save = screen.getByRole("button", { name: "Salvar" })
+    await waitFor(() => expect(save).toBeEnabled())
+    await user.click(save)
+    await waitFor(() => expect(updateCompanyProfile).toHaveBeenCalled())
+  }
+
+  it("shows a 409 duplicate CPF/CNPJ as an error on the field", async () => {
+    await saveWithApiError(409, "Tax id already registered.")
+    expect(await screen.findByText(i18n.t("company.validation.taxIdDuplicate"))).toBeInTheDocument()
+    expect(screen.getByLabelText("CPF/CNPJ")).toHaveAttribute("aria-invalid", "true")
+    expect(toast.error).not.toHaveBeenCalled()
+  })
+
+  it("maps a 400 about the e-mail to that field without showing the raw API text", async () => {
+    await saveWithApiError(400, "Invalid e-mail format.")
+    expect(await screen.findByText(i18n.t("company.validation.emailInvalid"))).toBeInTheDocument()
+    expect(screen.queryByText(/Invalid e-mail format/)).not.toBeInTheDocument()
+  })
+
+  it("shows a localized generic message for any other 400", async () => {
+    await saveWithApiError(400, "Something odd happened.")
+    await waitFor(() => expect(toast.error).toHaveBeenCalledWith(i18n.t("company.saveInvalid")))
   })
 
   it("applies the CEP mask while typing", async () => {

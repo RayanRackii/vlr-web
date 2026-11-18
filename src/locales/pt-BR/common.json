@@ -6736,8 +6736,11 @@
       "emailInvalid": "E-mail inválido.",
       "phoneInvalid": "Telefone inválido. Use DDD + número.",
       "postalCodeInvalid": "CEP deve ter 8 números.",
-      "stateInvalid": "Escolha a UF."
+      "stateInvalid": "Escolha a UF.",
+      "taxIdRequired": "Informe o CPF ou CNPJ.",
+      "taxIdDuplicate": "Este CPF/CNPJ já está cadastrado em outra empresa."
     },
-    "portalHelp": "Endereço do portal dos seus clientes. Só o suporte da Rolvix altera."
+    "portalHelp": "Endereço do portal dos seus clientes. Só o suporte da Rolvix altera.",
+    "saveInvalid": "Confira os dados informados e tente de novo."
   }
 }

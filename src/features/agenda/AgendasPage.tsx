@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button"
 import { DateNavigator } from "@/components/ui/date-navigator"
 import { useTenantTimeZone } from "@/contexts/TenantTimeZoneContext"
 import { addCivilDays, civilToday, formatDayLabel, startOfCivilWeek, zonedDayAndMinutes } from "@/features/catalog/components/agenda/agendaLayout"
+import { useTrialStatus } from "@/features/users/hooks/useTrialStatus"
 import { usePermissions } from "@/features/users/permissions/PermissionContext"
 import { tenantKey } from "@/lib/queryKeys"
 import { ICON_SIZE, ICON_STROKE_WIDTH } from "@/lib/icon"
@@ -61,7 +62,8 @@ export function AgendasPage({ view }: { view: AgendasView }) {
   }, tenantId, !isLoading, productView ? state.produto : null)
   const canReserve = rentals && can("rentals.reservations.create")
   const canBlock = rentals && can("rentals.schedule.write")
-  const canEditNotes = rentals && (can("rentals.reservations.create") || can("rentals.reservations.confirm"))
+  const { isTrialReadOnly } = useTrialStatus()
+  const canEditNotes = rentals && !isTrialReadOnly && (can("rentals.reservations.create") || can("rentals.reservations.confirm"))
   const queryClient = useQueryClient()
   const [reservePrefill, setReservePrefill] = useState<NewReservationPrefill | null>(null)
   const [blockPrefill, setBlockPrefill] = useState<BlockPeriodPrefill | null>(null)

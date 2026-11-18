@@ -16,7 +16,7 @@ describe("companyService", () => {
 
   it("PUTs the body to /api/company", async () => {
     const put = vi.spyOn(api, "put").mockResolvedValue({ data: { legalName: "Y" } })
-    const body = { legalName: "Y", tradeName: null, taxId: null, contactEmail: null, contactPhone: null, address: { postalCode: null, street: null, number: null, complement: null, district: null, city: null, state: null } }
+    const body = { legalName: "Y", tradeName: null, taxId: "52998224725", contactEmail: null, contactPhone: null, address: { postalCode: null, street: null, number: null, complement: null, district: null, city: null, state: null } }
     const profile = await updateCompanyProfile(body)
     expect(put).toHaveBeenCalledWith("/api/company", body)
     expect(profile.legalName).toBe("Y")

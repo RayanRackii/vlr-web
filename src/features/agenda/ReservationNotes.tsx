@@ -20,6 +20,12 @@ type Props = {
 export function ReservationNotes({ reservationId, notes, canEdit, onSaved }: Props) {
   const { t } = useTranslation()
   const [saved, setSaved] = useState(notes ?? "")
+  const [seenNotes, setSeenNotes] = useState(notes)
+  // A fresh note from the server (refetch, another editor) replaces the local copy.
+  if (notes !== seenNotes) {
+    setSeenNotes(notes)
+    setSaved(notes ?? "")
+  }
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState("")
   const [busy, setBusy] = useState(false)

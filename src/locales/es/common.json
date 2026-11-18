@@ -6736,8 +6736,11 @@
       "emailInvalid": "Correo no válido.",
       "phoneInvalid": "Teléfono no válido. Usa código de área + número.",
       "postalCodeInvalid": "El código postal debe tener 8 dígitos.",
-      "stateInvalid": "Elige el estado."
+      "stateInvalid": "Elige el estado.",
+      "taxIdRequired": "Indica el CPF o CNPJ.",
+      "taxIdDuplicate": "Este CPF/CNPJ ya está registrado en otra empresa."
     },
-    "portalHelp": "La dirección del portal de tus clientes. Solo el soporte de Rolvix la cambia."
+    "portalHelp": "La dirección del portal de tus clientes. Solo el soporte de Rolvix la cambia.",
+    "saveInvalid": "Revisa los datos e inténtalo de nuevo."
   }
 }

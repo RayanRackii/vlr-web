@@ -1,4 +1,3 @@
-import { priceUnitSuffix } from "@/features/catalog/lib/catalogPriceUnit"
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { Link, useNavigate, useSearchParams } from "react-router-dom"
 import { Folder, Lock, Package, Pencil, Plus, Power, Settings, SlidersHorizontal } from "lucide-react"
@@ -44,6 +43,7 @@ import {
 } from "@/features/catalog/schemas/catalogSchemas"
 import { catalogMenuIsActive } from "@/features/catalog/components/productWizard/sellableChecklist"
 import { productWizardPath } from "@/features/catalog/components/productWizard/wizardSteps"
+import { priceUnitSuffix } from "@/features/catalog/lib/catalogPriceUnit"
 import { selectFirstReadyImageFile } from "@/features/catalog/lib/selectCatalogProductImages"
 import { getSignedProductFileUrl } from "@/features/catalog/lib/signedFileUrlCache"
 import { productEditPath, productViewPath } from "@/features/catalog/lib/productEditorPath"

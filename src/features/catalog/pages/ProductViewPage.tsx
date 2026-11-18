@@ -1,4 +1,3 @@
-import { priceUnitSuffix } from "@/features/catalog/lib/catalogPriceUnit"
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react"
 import { Link, useNavigate, useParams } from "react-router-dom"
 import { Copy, Pencil, Power, Settings, Trash2 } from "lucide-react"
@@ -23,6 +22,7 @@ import { QueueSummary } from "@/features/catalog/components/ProductScheduleSecti
 import { useProductWizard } from "@/features/catalog/components/productWizard/useProductWizard"
 import { saleMissingLabels } from "@/features/catalog/lib/catalogApiErrors"
 import { productWizardPath } from "@/features/catalog/components/productWizard/wizardSteps"
+import { priceUnitSuffix } from "@/features/catalog/lib/catalogPriceUnit"
 import { productEditPath, productViewPath } from "@/features/catalog/lib/productEditorPath"
 import { selectCatalogProductImages } from "@/features/catalog/lib/selectCatalogProductImages"
 import {
