@@ -83,6 +83,33 @@ describe("NewReservationDialog", () => {
     expect(toast.success).toHaveBeenCalledWith("Reserva criada")
   })
 
+  it("sends the staff-only notes with a counter, and omits them when empty", async () => {
+    setup()
+    await resourceReady()
+    await pickCustomer()
+    expect(screen.getByText("Observações (só a equipe vê)")).toBeInTheDocument()
+    expect(screen.getByTestId("new-res-notes-counter")).toHaveTextContent("0/1000")
+    await userEvent.type(screen.getByLabelText("Observações (só a equipe vê)"), "Levar rede extra")
+    expect(screen.getByTestId("new-res-notes-counter")).toHaveTextContent("16/1000")
+    await userEvent.click(screen.getByRole("button", { name: "Criar reserva" }))
+    await waitFor(() => expect(createStaffReservation).toHaveBeenCalledWith(expect.objectContaining({ notes: "Levar rede extra" })))
+  })
+
+  it("does not send notes when the field is left blank", async () => {
+    setup()
+    await resourceReady()
+    await pickCustomer()
+    await userEvent.click(screen.getByRole("button", { name: "Criar reserva" }))
+    await waitFor(() => expect(createStaffReservation).toHaveBeenCalled())
+    expect(vi.mocked(createStaffReservation).mock.calls[0]?.[0]).not.toHaveProperty("notes")
+  })
+
+  it("caps the notes field at 1000 characters", async () => {
+    setup()
+    await resourceReady()
+    expect(screen.getByLabelText("Observações (só a equipe vê)")).toHaveAttribute("maxlength", "1000")
+  })
+
   it("sends a new customer instead of a customer id, and the deposit flag when ticked", async () => {
     setup()
     await resourceReady()

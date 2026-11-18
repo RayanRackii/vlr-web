@@ -4,10 +4,10 @@ export const FIRST_STEP_KEYS = ["company", "pricedOffer", "hours", "resource", "
 export type FirstStepKey = (typeof FIRST_STEP_KEYS)[number]
 
 /**
- * Screen where each step is done. Company data and the customer preview have no staff screen
- * (the company profile is only editable by platform admins), so they stay unlinked.
+ * Screen where each step is done. The customer preview has no staff screen, so it stays unlinked.
  */
 export const FIRST_STEP_HREF: Partial<Record<FirstStepKey, string>> = {
+  company: "/configuracoes/empresa",
   pricedOffer: "/catalogo/produtos",
   hours: "/configuracoes/agenda",
   resource: "/configuracoes/recursos",

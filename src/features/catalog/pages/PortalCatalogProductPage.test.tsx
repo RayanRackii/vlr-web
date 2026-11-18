@@ -92,6 +92,18 @@ describe("PortalCatalogProductPage layout", () => {
     toast.dismiss()
   })
 
+  it("shows the billing unit beside the price on the detail page", async () => {
+    getMock.mockResolvedValue({ ...product, priceUnit: "Person" })
+    renderPage()
+    expect(await screen.findByTestId("portal-price-unit")).toHaveTextContent("por pessoa")
+  })
+
+  it("shows no unit when the product has none", async () => {
+    renderPage()
+    await screen.findByText("Raquete", { selector: "h1" })
+    expect(screen.queryByTestId("portal-price-unit")).not.toBeInTheDocument()
+  })
+
   it("opens the selected product image in a modal, traps focus, and closes with Escape", async () => {
     getMock.mockResolvedValue({ ...product, files: [
       { id: "image-1", url: "https://example.test/resource.png", fileName: "resource.png", mimeType: "image/png", sizeBytes: 5 },

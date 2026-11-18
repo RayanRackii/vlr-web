@@ -10,6 +10,7 @@ import { PageContentSkeleton } from "@/components/loading/PageContentSkeleton"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogTitle, DialogClose } from "@/components/ui/dialog"
+import { priceUnitSuffix } from "@/features/catalog/lib/catalogPriceUnit"
 import type { CatalogProductGalleryImage } from "@/features/catalog/lib/selectCatalogProductImages"
 import { PortalAddToCartButton } from "@/features/catalog/components/PortalAddToCartButton"
 import type { CustomerAppOutletContext } from "@/features/tenantPortal/components/CustomerAppLayout"
@@ -194,7 +195,12 @@ export function PortalCatalogProductPage() {
             {product.price == null ? (
               <Badge variant="warning">{t("tenantPortal.catalog.priceOnRequest")}</Badge>
             ) : (
-              <p className="min-w-0 break-words text-2xl font-bold tracking-tight text-foreground">{priceLabel}</p>
+              <p className="min-w-0 break-words text-2xl font-bold tracking-tight text-foreground">
+                {priceLabel}
+                {priceUnitSuffix(t, product.priceUnit) ? (
+                  <span className="ml-2 text-sm font-normal text-muted-foreground" data-testid="portal-price-unit">{priceUnitSuffix(t, product.priceUnit)}</span>
+                ) : null}
+              </p>
             )}
             {product.description ? (
               <p className="whitespace-pre-line break-words text-sm leading-relaxed text-muted-foreground">{product.description}</p>

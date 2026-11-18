@@ -64,6 +64,17 @@ describe("FirstStepsPage", () => {
     expect(screen.getAllByText(i18n.t("assistant.firstSteps.state.published")).length).toBeGreaterThan(0)
   })
 
+  it("links the company row to Dados da empresa and leaves the preview row unlinked", async () => {
+    getSetupStatusMock.mockResolvedValue({
+      checklist: [{ key: "company", state: "missing" }, { key: "preview", state: "missing" }],
+      resources: [],
+    })
+    render(<MemoryRouter><FirstStepsPage /></MemoryRouter>)
+    const heading = await screen.findByRole("heading", { name: i18n.t("assistant.firstSteps.company") })
+    expect(heading.closest("a")).toHaveAttribute("href", "/configuracoes/empresa")
+    expect(screen.getByRole("heading", { name: i18n.t("assistant.firstSteps.previewItem") }).closest("a")).toBeNull()
+  })
+
   it("uses plain badges and no technical caption", async () => {
     getSetupStatusMock.mockResolvedValue({ checklist: [{ key: "hours", state: "missing" }, { key: "admin", state: "published" }], resources: [] })
     render(<MemoryRouter><FirstStepsPage /></MemoryRouter>)
@@ -88,7 +99,7 @@ describe("FirstStepsPage", () => {
     expect(await row("Recurso publicado")).toHaveAttribute("href", "/configuracoes/recursos")
     expect(await row("Oferta com preço que alcança um recurso")).toHaveAttribute("href", "/catalogo/produtos")
     expect(await row("Admin convidado")).toHaveAttribute("href", "/pessoas-e-acesso")
-    expect(await row("Dados da empresa")).toBeNull()
+    expect(await row("Dados da empresa")).toHaveAttribute("href", "/configuracoes/empresa")
     expect(await row("Ver como cliente")).toBeNull()
   })
 })

@@ -12,6 +12,7 @@ import { agendaManifest } from "@/features/agenda/manifest"
 import { adminManifest } from "@/features/admin/manifest"
 import { assetsManifest } from "@/features/assets/manifest"
 import { catalogManifest } from "@/features/catalog/manifest"
+import { companyManifest } from "@/features/company/manifest"
 import { dashboardManifest } from "@/features/dashboard/manifest"
 import { notificationsManifest } from "@/features/notifications/manifest"
 import { pmocManifest } from "@/features/pmoc/manifest"
@@ -95,6 +96,7 @@ export type AppNavigationItem = {
     | "nav.catalogSettings"
     | "nav.catalogCustomerGroups"
     | "nav.catalogNotifications"
+    | "nav.company"
   to: string
   tabs?: readonly NavigationTab[]
   icon: LucideIcon
@@ -148,6 +150,7 @@ const peoplePortalItems: readonly AppNavigationItem[] = [
   },
   ...taxonomyManifest.navigationItems,
   ...notificationsManifest.navigationItems,
+  ...companyManifest.navigationItems,
 ]
 
 const maintenanceItems: readonly AppNavigationItem[] = [
@@ -226,7 +229,7 @@ const productNavigationSections: readonly AppNavigationSection[] = [
   { titleKey: "nav.sections.customers", items: navigationItemsAt("/pessoas-e-acesso", "/grupos") },
   { titleKey: "nav.sections.portal", items: navigationItemsAt("/configuracoes/menu", "/configuracoes/layout") },
   { titleKey: "nav.sections.settings", defaultCollapsed: true, items: navigationItemsAt(
-    "/configuracoes/agenda", "/catalogo/configuracoes", "/notificacoes",
+    "/configuracoes/agenda", "/catalogo/configuracoes", "/notificacoes", "/configuracoes/empresa",
   ) },
 ]
 

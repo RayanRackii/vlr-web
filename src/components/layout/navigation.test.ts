@@ -580,7 +580,7 @@ describe("staff sidebar groups", () => {
       ["/configuracoes/recursos", "/catalogo/produtos", "/ativos"],
       ["/pessoas-e-acesso", "/grupos"],
       ["/configuracoes/menu", "/configuracoes/layout"],
-      ["/configuracoes/agenda", "/catalogo/configuracoes", "/notificacoes"],
+      ["/configuracoes/agenda", "/catalogo/configuracoes", "/notificacoes", "/configuracoes/empresa"],
     ])
     const destinations = sections.flatMap((section) => section.items.flatMap((item) =>
       item.children ? item.children.map((child) => child.to) : [item.to],
@@ -595,7 +595,7 @@ describe("staff sidebar groups", () => {
 
   it("hides empty groups and disabled modules even with stale grants", () => {
     expect(buildProductSections([], permissions).map((section) => section.titleKey))
-      .toEqual(["nav.sections.overview", "nav.sections.customers"])
+      .toEqual(["nav.sections.overview", "nav.sections.customers", "nav.sections.settings"])
     expect(buildProductSections(modules, [])).toEqual([])
   })
 

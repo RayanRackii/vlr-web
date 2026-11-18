@@ -16,6 +16,9 @@ import {
   FormMessage,
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Tag } from "lucide-react"
+import { CATALOG_PRICE_UNIT_OPTIONS, parsePriceUnit } from "@/features/catalog/lib/catalogPriceUnit"
 import { Textarea } from "@/components/ui/textarea"
 import { ProductUsesScheduleField } from "@/features/catalog/components/ProductUsesScheduleField"
 import { useStepSubmit } from "@/features/assistant/stepSubmit"
@@ -75,6 +78,7 @@ function sameOfferDraft(left: CatalogProductFormValues, right: CatalogProductFor
     && left.description === right.description
     && left.price === right.price
     && left.currency === right.currency
+    && (left.priceUnit ?? "") === (right.priceUnit ?? "")
     && left.usesSchedule === right.usesSchedule
 }
 
@@ -95,6 +99,7 @@ export function ProductWizardOfferStep({ product, mode = "full", readOnly, showU
       description: product.description ?? "",
       price: product.price == null ? "" : String(product.price),
       currency: product.currency || "BRL",
+      priceUnit: product.priceUnit ?? "",
       usesSchedule: product.usesSchedule,
       taxonomy: {
         categoryIds: product.taxonomy?.categories.map((category) => category.id) ?? [],
@@ -132,7 +137,12 @@ export function ProductWizardOfferStep({ product, mode = "full", readOnly, showU
     setSaveError(null)
     onSavingChange?.(true)
     try {
-      await updateCatalogProduct(product.id, toCatalogProductWriteBody(values, price))
+      // Only the pricing fields send priceUnit; the "dados" step omits it so the stored value is kept.
+      const body = toCatalogProductWriteBody(values, price)
+      await updateCatalogProduct(
+        product.id,
+        showPricing ? { ...body, priceUnit: parsePriceUnit(values.priceUnit) } : body,
+      )
       if (activeAtSave !== product.isActive) {
         if (activeAtSave) {
           await activateCatalogProduct(product.id)
@@ -167,7 +177,7 @@ export function ProductWizardOfferStep({ product, mode = "full", readOnly, showU
     const visibleFields = mode === "dados"
       ? (["name", "code", "description", "usesSchedule"] as const)
       : mode === "precos"
-        ? (["price", "currency"] as const)
+        ? (["price", "currency", "priceUnit"] as const)
         : undefined
     if (!(await form.trigger(visibleFields ? [...visibleFields] : undefined))) {
       return false
@@ -281,6 +291,47 @@ export function ProductWizardOfferStep({ product, mode = "full", readOnly, showU
               )}
             />
           </div>
+        ) : null}
+        {showPricing ? (
+          <FormField
+            control={form.control}
+            name="priceUnit"
+            render={({ field }) => {
+              const options = [
+                { value: "none", label: t("catalog.priceUnit.none") },
+                ...CATALOG_PRICE_UNIT_OPTIONS.map((unit) => ({ value: unit, label: t(`catalog.priceUnit.option.${unit}`) })),
+              ]
+              return (
+                <FormItem>
+                  <FormLabel>{t("catalog.priceUnit.label")}</FormLabel>
+                  <Select
+                    modal={false}
+                    value={field.value && field.value.length > 0 ? field.value : "none"}
+                    onValueChange={(value) => {
+                      if (typeof value === "string") {
+                        field.onChange(value === "none" ? "" : value)
+                      }
+                    }}
+                    items={options}
+                    disabled={readOnly || saving}
+                  >
+                    <FormControl>
+                      <SelectTrigger icon={Tag} className="w-full" data-testid="price-unit-select">
+                        <SelectValue />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {options.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormDescription>{t("catalog.priceUnit.help")}</FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )
+            }}
+          />
         ) : null}
         {showStatus ? (
           <fieldset className="space-y-2" disabled={readOnly || saving}>

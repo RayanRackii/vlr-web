@@ -52,6 +52,18 @@ function renderCard(
 }
 
 describe("PortalCatalogProductCard", () => {
+  it("shows the billing unit next to the price and nothing without one", () => {
+    const { unmount } = render(
+      <MemoryRouter>
+        <PortalCatalogProductCard product={product({ priceUnit: "Day" })} subdomain={SUBDOMAIN} quantity={1} onQuantityChange={vi.fn()} onAdd={vi.fn()} primary="#1a6b4a" />
+      </MemoryRouter>,
+    )
+    expect(screen.getByTestId("portal-price-unit")).toHaveTextContent("por dia")
+    unmount()
+    renderCard()
+    expect(screen.queryByTestId("portal-price-unit")).not.toBeInTheDocument()
+  })
+
   it("renders code, name and price", () => {
     renderCard()
 
