@@ -1,3 +1,4 @@
+import { priceUnitSuffix } from "@/features/catalog/lib/catalogPriceUnit"
 import "../components/portalCatalog.css"
 
 import { useEffect, useRef, useState } from "react"
@@ -194,7 +195,12 @@ export function PortalCatalogProductPage() {
             {product.price == null ? (
               <Badge variant="warning">{t("tenantPortal.catalog.priceOnRequest")}</Badge>
             ) : (
-              <p className="min-w-0 break-words text-2xl font-bold tracking-tight text-foreground">{priceLabel}</p>
+              <p className="min-w-0 break-words text-2xl font-bold tracking-tight text-foreground">
+                {priceLabel}
+                {priceUnitSuffix(t, product.priceUnit) ? (
+                  <span className="ml-2 text-sm font-normal text-muted-foreground" data-testid="portal-price-unit">{priceUnitSuffix(t, product.priceUnit)}</span>
+                ) : null}
+              </p>
             )}
             {product.description ? (
               <p className="whitespace-pre-line break-words text-sm leading-relaxed text-muted-foreground">{product.description}</p>

@@ -1,3 +1,4 @@
+import { priceUnitSuffix } from "@/features/catalog/lib/catalogPriceUnit"
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { Link, useNavigate, useSearchParams } from "react-router-dom"
 import { Folder, Lock, Package, Pencil, Plus, Power, Settings, SlidersHorizontal } from "lucide-react"
@@ -259,7 +260,15 @@ export function CatalogProductsPage({ view = "products" }: { view?: "products" |
       header: t("catalog.products.columns.price"),
       align: "end",
       className: "whitespace-nowrap tabular-nums",
-      cell: (product) => productPrice(product),
+      cell: (product) => {
+        const suffix = product.price == null ? null : priceUnitSuffix(t, product.priceUnit)
+        return (
+          <>
+            {productPrice(product)}
+            {suffix ? <span className="ml-1 text-xs font-normal text-muted-foreground" data-testid="product-price-unit">{suffix}</span> : null}
+          </>
+        )
+      },
     },
     {
       id: "status",

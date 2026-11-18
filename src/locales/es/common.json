@@ -1981,6 +1981,27 @@
         "freeNext": "Próximo: {{ref}} · {{time}}",
         "freeNone": "Sin uso hoy"
       }
+    },
+    "priceUnit": {
+      "label": "Cobro",
+      "none": "Sin unidad",
+      "help": "Cómo se cobra el precio. Sin unidad, solo se muestra el valor.",
+      "option": {
+        "Unit": "Por unidad",
+        "Hour": "Por hora",
+        "Day": "Por día",
+        "Person": "Por persona",
+        "Booking": "Por reserva",
+        "Package": "Por paquete"
+      },
+      "suffix": {
+        "Unit": "por unidad",
+        "Hour": "por hora",
+        "Day": "por día",
+        "Person": "por persona",
+        "Booking": "por reserva",
+        "Package": "por paquete"
+      }
     }
   },
   "lateDuration": {

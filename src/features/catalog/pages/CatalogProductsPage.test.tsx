@@ -155,6 +155,19 @@ describe("CatalogProductsPage validity gate", () => {
     expect(listRequestsMock).toHaveBeenCalledWith({ signal: expect.any(AbortSignal) })
   })
 
+  it("shows the billing unit as a muted suffix on the price, only when the product has one", async () => {
+    listProductsMock.mockResolvedValue([
+      { ...PRODUCT, priceUnit: "Hour" },
+      { ...PRODUCT, id: "second", name: "Garrafa", code: "BEB-001", priceUnit: null },
+    ])
+    renderPage()
+    await within(await screen.findByRole("table")).findByText("Garrafa")
+    const suffixes = within(productsTable()).getAllByTestId("product-price-unit")
+    expect(suffixes).toHaveLength(1)
+    expect(suffixes[0]).toHaveTextContent("por hora")
+    expect(suffixes[0]).toHaveClass("text-muted-foreground")
+  })
+
   it("searches loaded products by name or code without reloading data", async () => {
     listProductsMock.mockResolvedValue([PRODUCT, { ...PRODUCT, id: "second", name: "Garrafa", code: "BEB-001" }])
     const user = userEvent.setup()

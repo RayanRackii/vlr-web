@@ -1,3 +1,4 @@
+import { priceUnitSuffix } from "@/features/catalog/lib/catalogPriceUnit"
 import { Package, Minus, Plus } from "lucide-react"
 import { useRef } from "react"
 import { Link } from "react-router-dom"
@@ -94,7 +95,12 @@ export function PortalCatalogProductCard({
               {t("tenantPortal.catalog.priceOnRequest")}
             </Badge>
           ) : (
-            <p className="portal-catalog-price">{priceLabel}</p>
+            <p className="portal-catalog-price">
+              {priceLabel}
+              {priceUnitSuffix(t, product.priceUnit) ? (
+                <span className="ml-1 text-xs font-normal text-muted-foreground" data-testid="portal-price-unit">{priceUnitSuffix(t, product.priceUnit)}</span>
+              ) : null}
+            </p>
           )}
           <PortalAddToCartButton
             type="button"

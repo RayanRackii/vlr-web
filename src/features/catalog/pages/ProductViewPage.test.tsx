@@ -137,6 +137,15 @@ function before(a: Element, b: Element) {
   return Boolean(a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING)
 }
 
+describe("ProductViewPage price unit", () => {
+  it("shows 'por unidade' under the price when the product has a unit", () => {
+    mockWizard({ product: { priceUnit: "Unit" } })
+    renderPage()
+    expect(screen.getByTestId("product-view-price")).toHaveTextContent("R$ 45,00")
+    expect(screen.getByTestId("product-view-price-unit")).toHaveTextContent("por unidade")
+  })
+})
+
 describe("ProductViewPage layout", () => {
   it("shows the header actions, the summary in the specified order and no Salvar button", () => {
     mockWizard()

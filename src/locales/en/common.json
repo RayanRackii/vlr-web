@@ -1981,6 +1981,27 @@
         "freeNext": "Next: {{ref}} · {{time}}",
         "freeNone": "No use today"
       }
+    },
+    "priceUnit": {
+      "label": "Billing",
+      "none": "No unit",
+      "help": "How the price is charged. With no unit, only the amount is shown.",
+      "option": {
+        "Unit": "Per unit",
+        "Hour": "Per hour",
+        "Day": "Per day",
+        "Person": "Per person",
+        "Booking": "Per booking",
+        "Package": "Per package"
+      },
+      "suffix": {
+        "Unit": "per unit",
+        "Hour": "per hour",
+        "Day": "per day",
+        "Person": "per person",
+        "Booking": "per booking",
+        "Package": "per package"
+      }
     }
   },
   "lateDuration": {

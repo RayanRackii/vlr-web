@@ -1,3 +1,4 @@
+import { priceUnitSuffix } from "@/features/catalog/lib/catalogPriceUnit"
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react"
 import { Link, useNavigate, useParams } from "react-router-dom"
 import { Copy, Pencil, Power, Settings, Trash2 } from "lucide-react"
@@ -364,6 +365,11 @@ function ProductView({ wizard, model }: { wizard: Wizard; model: WizardModel }) 
             <p className="text-3xl font-semibold tracking-tight text-foreground" data-testid="product-view-price">
               {price ?? t("catalog.products.view.onRequest")}
             </p>
+            {price != null && priceUnitSuffix(t, product.priceUnit) ? (
+              <p className="text-sm text-muted-foreground" data-testid="product-view-price-unit">
+                {priceUnitSuffix(t, product.priceUnit)}
+              </p>
+            ) : null}
           </div>
 
           {categories.length > 0 || tags.length > 0 ? (
