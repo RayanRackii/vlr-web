@@ -326,7 +326,8 @@
     "saveTaxonomy": "Could not save categories and tags.",
     "deleteTaxonomy": "Could not delete the category or tag.",
     "loadCatalogAgenda": "Could not load the agenda.",
-    "timeout": "The connection took too long. Please try again."
+    "timeout": "The connection took too long. Please try again.",
+    "updateReservationNotes": "Could not save the note."
   },
   "trial": {
     "banner": {
@@ -5963,7 +5964,8 @@
       "noActions": "No actions available",
       "durationHours": "{{hours}}h",
       "durationMinutes": "{{minutes}}min",
-      "durationHoursMinutes": "{{hours}}h{{minutes}}min"
+      "durationHoursMinutes": "{{hours}}h{{minutes}}min",
+      "noteLabel": "Note: {{note}}"
     },
     "bookingPolicy": {
       "title": "Booking policy",
@@ -6335,7 +6337,9 @@
       "customerNotFound": "Customer not found.",
       "invalidPhone": "Invalid WhatsApp number. Use area code and number.",
       "customerExists": "Customer already registered — selected",
-      "error": "Could not create the reservation."
+      "error": "Could not create the reservation.",
+      "notes": "Notes (staff only)",
+      "notesPlaceholder": "E.g. customer asked for an extra net"
     },
     "newReservation": "New reservation",
     "block": {
@@ -6425,6 +6429,13 @@
       "activitiesWeek_other": "{{count}} activities this week",
       "updatedNow": "Updated just now",
       "updatedAgo": "Updated {{minutes}} min ago"
+    },
+    "reservationNotes": {
+      "label": "Notes (staff only)",
+      "empty": "No notes.",
+      "add": "Add",
+      "edit": "Edit",
+      "saved": "Note saved."
     }
   },
   "pedidos": {

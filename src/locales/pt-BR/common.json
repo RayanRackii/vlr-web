@@ -326,7 +326,8 @@
     "saveTaxonomy": "Não foi possível salvar categorias e tags.",
     "deleteTaxonomy": "Não foi possível excluir a categoria ou tag.",
     "loadCatalogAgenda": "Não foi possível carregar a agenda.",
-    "timeout": "A conexão demorou demais. Tente novamente."
+    "timeout": "A conexão demorou demais. Tente novamente.",
+    "updateReservationNotes": "Não foi possível salvar a observação."
   },
   "trial": {
     "banner": {
@@ -5963,7 +5964,8 @@
       "noActions": "Sem ações disponíveis",
       "durationHours": "{{hours}}h",
       "durationMinutes": "{{minutes}}min",
-      "durationHoursMinutes": "{{hours}}h{{minutes}}min"
+      "durationHoursMinutes": "{{hours}}h{{minutes}}min",
+      "noteLabel": "Observação: {{note}}"
     },
     "bookingPolicy": {
       "title": "Política de reservas",
@@ -6335,7 +6337,9 @@
       "customerNotFound": "Cliente não encontrado.",
       "invalidPhone": "WhatsApp inválido. Use DDD e número.",
       "customerExists": "Cliente já cadastrado — selecionado",
-      "error": "Não foi possível criar a reserva."
+      "error": "Não foi possível criar a reserva.",
+      "notes": "Observações (só a equipe vê)",
+      "notesPlaceholder": "Ex.: cliente pediu rede extra"
     },
     "newReservation": "Nova reserva",
     "block": {
@@ -6425,6 +6429,13 @@
       "activitiesWeek_other": "{{count}} atividades nesta semana",
       "updatedNow": "Atualizado agora",
       "updatedAgo": "Atualizado há {{minutes}} min"
+    },
+    "reservationNotes": {
+      "label": "Observações (só a equipe vê)",
+      "empty": "Sem observações.",
+      "add": "Adicionar",
+      "edit": "Editar",
+      "saved": "Observação salva."
     }
   },
   "pedidos": {

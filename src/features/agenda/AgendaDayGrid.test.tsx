@@ -3,8 +3,16 @@ import userEvent from "@testing-library/user-event"
 import { MemoryRouter } from "react-router-dom"
 import { afterEach, describe, expect, it, vi } from "vitest"
 import { TenantTimeZoneContext } from "@/contexts/TenantTimeZoneContext"
+import { toast } from "sonner"
+import { updateReservationNotes } from "@/features/rentals/services/reservationsService"
 import { AgendaDayGrid } from "./AgendaDayGrid"
 import type { AgendaBlock, AgendaRow } from "./dayGridModel"
+
+vi.mock("sonner", () => ({ toast: { success: vi.fn(), error: vi.fn() } }))
+vi.mock("@/features/rentals/services/reservationsService", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/features/rentals/services/reservationsService")>()),
+  updateReservationNotes: vi.fn(),
+}))
 
 const block = (patch: Partial<AgendaBlock>): AgendaBlock => ({ key: "b", resourceId: "r1", kind: "pedido", start: 540, end: 660, orderId: "o1", displayNumber: "#30", customerName: "E2E Customer", productName: "Corte a laser", ...patch })
 const row = (patch: Partial<AgendaRow> = {}): AgendaRow => ({ id: "r1", name: "Cortadora", resourceType: "Good", categoryName: "QA goods", open: 480, close: 1200, blocks: [], ...patch })
@@ -201,5 +209,61 @@ describe("below md", () => {
     setup([row({ blocks: [block({ start: 0, end: 1440 })] })])
     expect(within(section("Cortadora")).getByText("Dia inteiro")).toBeInTheDocument()
     expect(screen.queryByText(/00:00/)).not.toBeInTheDocument()
+  })
+})
+
+describe("agenda detail panel reservation note", () => {
+  const reservaRow = (notes: string | null | undefined) => row({ blocks: [block({ key: "res", kind: "reserva", orderId: null, displayNumber: null, reservationId: "res-1", customerName: "Ana", notes })] })
+  const open = async () => { await userEvent.click(screen.getByRole("button", { name: /Reserva 09:00/ })) }
+
+  it("shows the note and edits it inline with Salvar", async () => {
+    vi.mocked(updateReservationNotes).mockResolvedValue({ notes: "Nova nota" } as never)
+    const onNotesSaved = vi.fn()
+    setup([reservaRow("Levar rede")], { canEditNotes: true, onNotesSaved })
+    await open()
+    const notes = screen.getByTestId("reservation-notes")
+    expect(notes).toHaveTextContent("Levar rede")
+    await userEvent.click(within(notes).getByRole("button", { name: "Editar" }))
+    const field = within(notes).getByRole("textbox")
+    expect(field).toHaveValue("Levar rede")
+    expect(field).toHaveAttribute("maxlength", "1000")
+    await userEvent.clear(field)
+    await userEvent.type(field, "Nova nota")
+    await userEvent.click(within(notes).getByRole("button", { name: "Salvar" }))
+    expect(updateReservationNotes).toHaveBeenCalledWith("res-1", "Nova nota")
+    expect(await within(screen.getByTestId("reservation-notes")).findByText("Nova nota")).toBeInTheDocument()
+    expect(toast.success).toHaveBeenCalled()
+    expect(onNotesSaved).toHaveBeenCalled()
+  })
+
+  it("keeps the editor open and toasts when saving fails", async () => {
+    vi.mocked(updateReservationNotes).mockRejectedValue(new Error("falhou"))
+    setup([reservaRow(null)], { canEditNotes: true })
+    await open()
+    const notes = screen.getByTestId("reservation-notes")
+    await userEvent.click(within(notes).getByRole("button", { name: "Adicionar" }))
+    await userEvent.type(within(notes).getByRole("textbox"), "x")
+    await userEvent.click(within(notes).getByRole("button", { name: "Salvar" }))
+    expect(toast.error).toHaveBeenCalledWith("falhou")
+    expect(within(notes).getByRole("textbox")).toHaveValue("x")
+  })
+
+  it("is read-only without edit permission and hidden when there is no note", async () => {
+    setup([reservaRow("Só leitura")])
+    await open()
+    expect(screen.getByTestId("reservation-notes")).toHaveTextContent("Só leitura")
+    expect(screen.queryByRole("button", { name: "Editar" })).not.toBeInTheDocument()
+  })
+
+  it("renders nothing for a read-only viewer when the reservation has no note", async () => {
+    setup([reservaRow(null)])
+    await open()
+    expect(screen.queryByTestId("reservation-notes")).not.toBeInTheDocument()
+  })
+
+  it("does not show a note section for blocks that are not reservation rows", async () => {
+    setup([reservaRow(undefined)], { canEditNotes: true })
+    await open()
+    expect(screen.queryByTestId("reservation-notes")).not.toBeInTheDocument()
   })
 })

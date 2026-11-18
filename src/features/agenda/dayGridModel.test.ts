@@ -15,6 +15,12 @@ describe("staff day occupancy model", () => {
   })
 })
 
+it("carries the reservation note onto its block", () => {
+  const reservation = { id: "reservation", tenantId: "tenant", unitId: "unit", customerId: "customer", customerName: "Marina", customerWhatsApp: "", startDateTime: "2026-11-10T15:00:00Z", endDateTime: "2026-11-10T17:00:00Z", status: "Confirmed" as const, totalAmount: 0, depositPaid: 0, createdAt: "2026-11-10T00:00:00Z", notes: "Levar rede", items: [{ id: "item", assetId: asset.assetId, rentalAssetId: asset.id, assetName: asset.name, quantity: 1, unitPrice: 0, subTotal: 0 }] }
+  const day = buildAgendaDay(sources({ reservations: [reservation] }), state(), "America/Sao_Paulo")
+  expect(day.rows[0].blocks[0]?.notes).toBe("Levar rede")
+})
+
 it("deduplicates booked reservation slots and ignores availability/lessons and cancelled reservations", () => {
   const reservation = { id: "reservation", tenantId: "tenant", unitId: "unit", customerId: "customer", customerName: "Marina", customerWhatsApp: "", startDateTime: "2026-11-10T15:00:00Z", endDateTime: "2026-11-10T17:00:00Z", status: "Confirmed" as const, totalAmount: 0, depositPaid: 0, createdAt: "2026-11-10T00:00:00Z", items: [{ id: "item", assetId: asset.assetId, rentalAssetId: asset.id, assetName: asset.name, quantity: 1, unitPrice: 0, subTotal: 0 }] }
   const day = buildAgendaDay(sources({ reservations: [reservation, { ...reservation, id: "cancelled", status: "Canceled" }], slots: [slot({ status: "Booked", reservationId: "reservation", occupancyKindKey: "open", startTime: "12:00:00", endTime: "14:00:00" }), slot({ id: "open", occupancyKindKey: "open" }), slot({ id: "lesson", occupancyKindKey: "lesson" }), slot({ id: "maintenance", occupancyKindKey: "maintenance" }), slot({ id: "closed", occupancyKindKey: "closed" })] }), state(), "America/Sao_Paulo")

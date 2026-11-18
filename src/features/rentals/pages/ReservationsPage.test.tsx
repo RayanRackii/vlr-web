@@ -224,6 +224,27 @@ describe("ReservationsPage", () => {
   })
 })
 
+describe("ReservationsPage note indicator", () => {
+  beforeEach(() => {
+    listMock.mockReset()
+  })
+
+  it("shows a note icon with an excerpt for reservations that have a note, and nothing otherwise", async () => {
+    listMock.mockResolvedValue([
+      makeReservation("Confirmed", { notes: "Cliente pediu rede extra" }),
+      makeReservation("Confirmed", { id: "99999999-9999-4999-8999-999999999999", customerName: "Beto", notes: null }),
+    ])
+    renderPage()
+    const table = await findTable()
+    const hints = within(table).getAllByTestId("reservation-note")
+    expect(hints).toHaveLength(1)
+    expect(hints[0]).toHaveTextContent("Cliente pediu rede extra")
+    expect(hints[0]).toHaveAttribute("title", "Cliente pediu rede extra")
+    expect(hints[0]).toHaveAttribute("aria-label", "Observação: Cliente pediu rede extra")
+    expect(hints[0].querySelector("span")).toHaveClass("truncate")
+  })
+})
+
 describe("ReservationsPage Cancel confirmation", () => {
   beforeEach(() => {
     listMock.mockReset()

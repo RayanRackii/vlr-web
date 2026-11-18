@@ -326,7 +326,8 @@
     "saveTaxonomy": "No se pudieron guardar las categorías y etiquetas.",
     "deleteTaxonomy": "No se pudo eliminar la categoría o etiqueta.",
     "loadCatalogAgenda": "No se pudo cargar la agenda.",
-    "timeout": "La conexión tardó demasiado. Inténtalo de nuevo."
+    "timeout": "La conexión tardó demasiado. Inténtalo de nuevo.",
+    "updateReservationNotes": "No se pudo guardar la observación."
   },
   "trial": {
     "banner": {
@@ -5963,7 +5964,8 @@
       "noActions": "Sin acciones disponibles",
       "durationHours": "{{hours}}h",
       "durationMinutes": "{{minutes}}min",
-      "durationHoursMinutes": "{{hours}}h{{minutes}}min"
+      "durationHoursMinutes": "{{hours}}h{{minutes}}min",
+      "noteLabel": "Observación: {{note}}"
     },
     "bookingPolicy": {
       "title": "Política de reservas",
@@ -6335,7 +6337,9 @@
       "customerNotFound": "Cliente no encontrado.",
       "invalidPhone": "WhatsApp inválido. Usa código de área y número.",
       "customerExists": "Cliente ya registrado — seleccionado",
-      "error": "No se pudo crear la reserva."
+      "error": "No se pudo crear la reserva.",
+      "notes": "Observaciones (solo el equipo)",
+      "notesPlaceholder": "Ej.: el cliente pidió una red extra"
     },
     "newReservation": "Nueva reserva",
     "block": {
@@ -6425,6 +6429,13 @@
       "activitiesWeek_other": "{{count}} actividades esta semana",
       "updatedNow": "Actualizado ahora",
       "updatedAgo": "Actualizado hace {{minutes}} min"
+    },
+    "reservationNotes": {
+      "label": "Observaciones (solo el equipo)",
+      "empty": "Sin observaciones.",
+      "add": "Añadir",
+      "edit": "Editar",
+      "saved": "Observación guardada."
     }
   },
   "pedidos": {

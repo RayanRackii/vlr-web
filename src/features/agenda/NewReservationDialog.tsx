@@ -9,8 +9,9 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input } from "@/components/ui/input"
 import { InputWithIcon } from "@/components/ui/input-icon"
 import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { createStaffReservation, StaffReservationError } from "@/features/rentals/services/reservationsService"
+import { createStaffReservation, RESERVATION_NOTES_MAX_LENGTH, StaffReservationError } from "@/features/rentals/services/reservationsService"
 import { listTenantCustomers } from "@/features/users/services/usersService"
 import { usePermissions } from "@/features/users/permissions/PermissionContext"
 import { tenantKey } from "@/lib/queryKeys"
@@ -82,11 +83,12 @@ function NewReservationForm({ onOpenChange, prefill, tenantId, onCreated }: Form
   const [whatsApp, setWhatsApp] = useState("")
   const [email, setEmail] = useState("")
   const [awaiting, setAwaiting] = useState(false)
+  const [notes, setNotes] = useState("")
   const [busy, setBusy] = useState(false)
   const submitting = useRef(false)
   const [failure, setFailure] = useState<{ form: string; message: string } | null>(null)
   // An error belongs to the form values it was raised for: any edit makes it stale.
-  const formKey = JSON.stringify([resourceId, date, start, end, mode, customer?.id, name, whatsApp, email, awaiting])
+  const formKey = JSON.stringify([resourceId, date, start, end, mode, customer?.id, name, whatsApp, email, awaiting, notes])
   const error = failure !== null && failure.form === formKey ? failure.message : null
 
   useEffect(() => {
@@ -108,7 +110,7 @@ function NewReservationForm({ onOpenChange, prefill, tenantId, onCreated }: Form
   const showDeposit = resource?.requiresDeposit === true
   const customerReady = mode === "existing" ? customer !== null : name.trim() !== "" && whatsApp.trim() !== ""
   const timesOk = start !== "" && end !== "" && endMinutes(end) > minutes(start)
-  const valid = resource !== undefined && date !== "" && timesOk && customerReady
+  const valid = resource !== undefined && date !== "" && timesOk && customerReady && notes.length <= RESERVATION_NOTES_MAX_LENGTH
   const resourceItems = resources.map((asset) => ({ value: asset.id, label: asset.name }))
 
   async function submit() {
@@ -128,6 +130,7 @@ function NewReservationForm({ onOpenChange, prefill, tenantId, onCreated }: Form
         // The API item carries the underlying asset id, not the rental asset id the agenda rows use.
         items: [{ assetId: resource.assetId, quantity: 1 }],
         awaitingDeposit: showDeposit && awaiting,
+        ...(notes.trim() ? { notes: notes.trim() } : {}),
       })
       await queryClient.invalidateQueries({ queryKey: tenantKey("staff", tenantId, "schedule-day") }).catch(() => undefined)
       await queryClient.invalidateQueries({ queryKey: tenantKey("staff", tenantId, "reservations") }).catch(() => undefined)
@@ -233,6 +236,11 @@ function NewReservationForm({ onOpenChange, prefill, tenantId, onCreated }: Form
             </div>
           </div>
         )}
+        <div className="space-y-1.5">
+          <Label htmlFor="new-res-notes">{t("agendas.newReservationDialog.notes")}</Label>
+          <Textarea id="new-res-notes" rows={3} maxLength={RESERVATION_NOTES_MAX_LENGTH} value={notes} placeholder={t("agendas.newReservationDialog.notesPlaceholder")} onChange={(event) => setNotes(event.target.value)} className="min-h-20 w-full resize-y" />
+          <p className="text-right text-xs tabular-nums text-muted-foreground" data-testid="new-res-notes-counter">{notes.length}/{RESERVATION_NOTES_MAX_LENGTH}</p>
+        </div>
         {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
         <DialogFooter className="sticky bottom-0 -mx-4 bg-background px-4 pt-2">
           <Button type="button" variant="outline" className="min-h-11" onClick={() => onOpenChange(false)}>{t("agendas.newReservationDialog.cancel")}</Button>
