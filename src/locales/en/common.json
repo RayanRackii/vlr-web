@@ -2464,7 +2464,7 @@
     "notifications": "Notifications",
     "peopleAccess": "People & access",
     "admin": "Super-Admin",
-    "adminTenants": "Clients",
+    "adminTenants": "Companies",
     "adminUsers": "Users",
     "adminAssetFamilies": "Families",
     "menu": "Navigation menu",
@@ -5314,7 +5314,7 @@
     "support": {
       "banner": "You are in company {{tenant}} as a super-admin",
       "platformPanel": "Platform panel",
-      "bannerSlim": "You are viewing this workspace as super-admin",
+      "bannerSlim": "You are viewing this company as super-admin",
       "exitShort": "Leave company",
       "tenantFallback": "company",
       "exit": "Leave company",

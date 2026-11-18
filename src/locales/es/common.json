@@ -422,10 +422,10 @@
         "accountMismatch": "La sesión actual es de otra cuenta. Entre con el correo de esta invitación para aceptar.",
         "identityConflict": "No se pudo confirmar la cuenta de esta invitación. No se cambió nada. Inténtelo de nuevo o hable con el soporte."
       },
-      "pickerSearch": "Buscar entorno por nombre o subdominio",
-      "pickerEmpty": "No hay entornos disponibles.",
-      "pickerNoResults": "No se encontraron entornos. Prueba otro nombre o subdominio.",
-      "pickerLoading": "Cargando tus entornos...",
+      "pickerSearch": "Buscar empresa por nombre o subdominio",
+      "pickerEmpty": "No hay empresas disponibles.",
+      "pickerNoResults": "No se encontraron empresas. Prueba otro nombre o subdominio.",
+      "pickerLoading": "Cargando tus empresas...",
       "passwordHint": "Usa al menos 8 caracteres.",
       "confirmPasswordHint": "Repite la nueva contraseña para confirmar.",
       "pickerTitle": "Elija la empresa",
@@ -1994,11 +1994,11 @@
   "notifications": {
     "settings": {
       "title": "Notificaciones",
-      "subtitle": "Elija los canales de aviso por evento. Solo aparecen los módulos activos de este entorno.",
-      "subtitleBoth": "Canales de aviso y el historial de entregas de este entorno.",
+      "subtitle": "Elija los canales de aviso por evento. Solo aparecen los módulos activos de esta empresa.",
+      "subtitleBoth": "Canales de aviso y el historial de entregas de esta empresa.",
       "deliveries": "Entregas",
       "emailDefault": "Las notificaciones por correo para los clientes empiezan activadas en organizaciones nuevas. Puede desactivarlas aquí.",
-      "empty": "Ningún módulo con notificaciones está activo en este entorno.",
+      "empty": "Ningún módulo con notificaciones está activo en esta empresa.",
       "inAppAlwaysOn": "En la app siempre activo",
       "channelUnavailable": "No disponible",
       "toggleChannel": "Activar {{channel}} para {{event}}",
@@ -2028,7 +2028,7 @@
       "all": "Todos",
       "clear": "Limpiar búsqueda y filtros",
       "emptyChannelsTitle": "Ningún canal para configurar",
-      "emptyChannels": "Ningún módulo con avisos está activo en este entorno.",
+      "emptyChannels": "Ningún módulo con avisos está activo en esta empresa.",
       "emptyHistoryTitle": "Todavía no hay entregas",
       "emptyHistory": "Los avisos enviados aparecen aquí, con el canal y el resultado.",
       "noResultsTitle": "Ninguna entrega encontrada",
@@ -2464,7 +2464,7 @@
     "notifications": "Notificaciones",
     "peopleAccess": "Personas y acceso",
     "admin": "Super-Admin",
-    "adminTenants": "Clientes",
+    "adminTenants": "Empresas",
     "adminUsers": "Usuarios",
     "adminAssetFamilies": "Familias",
     "menu": "Menú de navegación",
@@ -2546,10 +2546,10 @@
         "how3": "Los planes se relacionan con los equipos y las órdenes de trabajo de Mantenimiento."
       },
       "platform": {
-        "summary": "Administra los entornos de clientes y los registros compartidos de la plataforma.",
-        "how1": "Consulta los clientes y abre el entorno que necesitas administrar.",
+        "summary": "Administra las empresas y los registros compartidos de la plataforma.",
+        "how1": "Consulta las empresas y abre la que necesitas administrar.",
         "how2": "Gestiona los usuarios de la plataforma y las familias de equipos en las pantallas disponibles.",
-        "how3": "Dentro de un entorno, el menú muestra las áreas disponibles para ese cliente."
+        "how3": "Dentro de una empresa, el menú muestra las áreas disponibles para esa empresa."
       }
     }
   },
@@ -3131,7 +3131,7 @@
           "title": "Gestiona usuarios y familias"
         },
         "learn3": {
-          "title": "Explora el menú del entorno"
+          "title": "Explora el menú de la empresa"
         }
       },
       "visit": {
@@ -3223,8 +3223,8 @@
     },
     "limitedTitle": "Información disponible para tu perfil",
     "readOnlyNotice": "Puedes consultar tus datos en modo de solo lectura. El período de prueba terminó. Para seguir usando la plataforma, elige una suscripción antes de la eliminación de los datos en {{days}} día(s).",
-    "limitedNotice": "Tu acceso permite consultar la información disponible para tu perfil. Para solicitar más acceso, contacta a la persona responsable de este entorno.",
-    "emptyDescription": "Los indicadores aparecerán aquí a medida que haya actividad en este entorno.",
+    "limitedNotice": "Tu acceso permite consultar la información disponible para tu perfil. Para solicitar más acceso, contacta a la persona responsable de esta empresa.",
+    "emptyDescription": "Los indicadores aparecerán aquí a medida que haya actividad en esta empresa.",
     "unavailable": "Los indicadores no están disponibles en este momento.",
     "workOrdersEmpty": "No hay órdenes de servicio para mostrar en este período.",
     "viewOrders": "Ver órdenes de servicio",
@@ -3259,7 +3259,7 @@
     "sections": {
       "customers": {
         "title": "Clientes del portal",
-        "description": "Inicios de sesión en el portal de clientes de este entorno."
+        "description": "Inicios de sesión en el portal de clientes de esta empresa."
       },
       "assets": {
         "title": "Recursos",
@@ -4461,7 +4461,7 @@
         "createFailed": "No se pudo crear la orden de trabajo."
       },
       "emptyAssetsTitle": "Ningún recurso disponible",
-      "emptyAssetsDescription": "No hay recursos para abrir una orden de trabajo. Los recursos de este entorno vienen del aprovisionamiento (Super-Admin).",
+      "emptyAssetsDescription": "No hay recursos para abrir una orden de trabajo. Los recursos de esta empresa vienen del aprovisionamiento (Super-Admin).",
       "success": "Orden de trabajo creada correctamente.",
       "submit": "Crear OT",
       "redirecting": "OT creada"
@@ -4579,12 +4579,12 @@
     "dashboard": "Volver al panel",
     "login": "Ir al inicio de sesión",
     "title": "Página no encontrada",
-    "description": "Esta dirección no existe en este entorno.",
+    "description": "Esta dirección no existe en esta empresa.",
     "home": "Ir al inicio"
   },
   "staffProfile": {
     "title": "Mi perfil",
-    "description": "Sus datos de acceso en este entorno.",
+    "description": "Sus datos de acceso en esta empresa.",
     "name": "Nombre",
     "email": "Correo",
     "roles": "Funciones"
@@ -4592,11 +4592,11 @@
   "rbac": {
     "errors": {
       "PRIVILEGE_ESCALATION_BLOCKED": "No puede asignar un perfil de acceso con más permisos que los suyos.",
-      "LAST_ADMIN_PROTECTED": "No se puede quitar al último administrador activo de este entorno.",
+      "LAST_ADMIN_PROTECTED": "No se puede quitar al último administrador activo de esta empresa.",
       "ROLE_IN_USE": "Esta función está en uso y no se puede eliminar.",
       "CANNOT_MODIFY_SYSTEM_ROLE": "Las funciones de sistema no se pueden renombrar ni reducir de esta forma.",
       "CANNOT_DELETE_SYSTEM_ROLE": "Las funciones de sistema no se pueden eliminar.",
-      "CANNOT_ASSIGN_SUPERADMIN": "No se puede asignar la función SuperAdmin en este entorno.",
+      "CANNOT_ASSIGN_SUPERADMIN": "No se puede asignar la función SuperAdmin en esta empresa.",
       "FORBIDDEN": "No tiene permiso para esta acción."
     }
   },
@@ -4609,12 +4609,12 @@
       "actions": "Acciones"
     },
     "roleSummary": {
-      "description": "Quién puede hacer qué en este entorno.",
+      "description": "Quién puede hacer qué en esta empresa.",
       "permissions_one": "{{count}} permiso",
       "permissions_other": "{{count}} permisos"
     },
     "title": "Personas y acceso",
-    "description": "Gestione usuarios del entorno y los perfiles de acceso.",
+    "description": "Gestione usuarios de la empresa y los perfiles de acceso.",
     "tabs": {
       "users": "Equipo",
       "customers": "Clientes del portal",
@@ -4742,8 +4742,8 @@
       "assignTitle": "Asignar funciones",
       "assignDescription": "Defina las funciones de {{name}}.",
       "saveRoles": "Guardar funciones",
-      "empty": "Ningún usuario en este entorno.",
-      "emptyDescription": "Invita a una persona para comenzar a configurar los accesos de este entorno.",
+      "empty": "Ningún usuario en esta empresa.",
+      "emptyDescription": "Invita a una persona para comenzar a configurar los accesos de esta empresa.",
       "noRoles": "Ninguna función asignada",
       "searchLabel": "Buscar en el equipo",
       "searchPlaceholder": "Nombre o e-mail",
@@ -4753,8 +4753,8 @@
     "customers": {
       "customerCount_one": "{{count}} cliente del portal",
       "customerCount_other": "{{count}} clientes del portal",
-      "description": "Clientes que entran por el portal de este entorno.",
-      "empty": "Ningún cliente en este entorno.",
+      "description": "Clientes que entran por el portal de esta empresa.",
+      "empty": "Ningún cliente en esta empresa.",
       "emptyDescription": "Cuando alguien cree una cuenta en el portal, aparece aquí.",
       "verified": "Verificado",
       "unverified": "No verificado",
@@ -4789,7 +4789,7 @@
       "deleteRole": "Solo si no está asignada a nadie"
     },
     "roles": {
-      "description": "Funciones de sistema y perfiles personalizados de este entorno.",
+      "description": "Funciones de sistema y perfiles personalizados de esta empresa.",
       "create": "Nueva función",
       "createTitle": "Nueva función",
       "editTitle": "Perfil de acceso",
@@ -4799,7 +4799,7 @@
       "view": "Ver permisos",
       "save": "Guardar",
       "empty": "Ninguna función visible.",
-      "emptyDescription": "Cree una función personalizada para organizar los accesos de este entorno.",
+      "emptyDescription": "Cree una función personalizada para organizar los accesos de esta empresa.",
       "deleteTitle": "Eliminar función",
       "deleteDescription": "¿Eliminar la función {{name}}? Solo es posible si nadie la tiene asignada."
     },
@@ -4954,7 +4954,7 @@
       },
       "exploreTitle": "Explorar otros módulos",
       "exploreDescription": "Vea lo que la plataforma ofrece para el portal del cliente y para la operación interna.",
-      "exploreAllActive": "Todos los módulos de la plataforma ya están activos en este entorno.",
+      "exploreAllActive": "Todos los módulos de la plataforma ya están activos en esta empresa.",
       "categoryCustomer": "Para sus clientes",
       "categoryOperations": "Para su operación",
       "stateActive": "Activo",
@@ -4962,9 +4962,9 @@
       "exploreDescriptions": {
         "Catalog": "Muestre productos y reciba solicitudes de sus clientes en el portal.",
         "Rentals": "Gestione recursos reservables y horarios.",
-        "PMOC": "Utiliza los recursos registrados en el entorno.",
+        "PMOC": "Utiliza los recursos registrados en la empresa.",
         "Inventory": "Registre y controle activos y recursos de la operación.",
-        "OS": "Permite vincular servicios a los recursos del entorno."
+        "OS": "Permite vincular servicios a los recursos de la empresa."
       },
       "noEligibleFunctionality": "No hay otras funcionalidades activas disponibles.",
       "catalogAutoNav": "El módulo añade automáticamente:",
@@ -5207,9 +5207,9 @@
       "Inventory": "Inventario",
       "InventoryDescription": "Registro y control de activos.",
       "PMOC": "PMOC",
-      "PMOCDescription": "Utiliza los recursos registrados en el entorno.",
+      "PMOCDescription": "Utiliza los recursos registrados en la empresa.",
       "OS": "Órdenes de Trabajo",
-      "OSDescription": "Permite vincular servicios a los recursos del entorno.",
+      "OSDescription": "Permite vincular servicios a los recursos de la empresa.",
       "Rentals": "Alquileres",
       "RentalsDescription": "Gestione recursos reservables y horarios.",
       "Catalog": "Catálogo y pedidos",
@@ -5322,7 +5322,7 @@
       "exitErrorTitle": "Error",
       "exitFailed": "No se pudo volver a la plataforma.",
       "enterErrorTitle": "Error",
-      "enterFailed": "No se pudo abrir el entorno."
+      "enterFailed": "No se pudo abrir la empresa."
     }
   },
   "rentals": {
