@@ -85,6 +85,12 @@ export function commercialOnly(modules: readonly string[]): string[] {
   return [...new Set(modules.filter((key) => allowed.has(key)))]
 }
 
+/** Active modules the suite does not manage: outside the commercial set and legacy "maintenance". */
+export function unmanagedModules(modules: readonly string[]): string[] {
+  const managed = new Set<string>([...COMMERCIAL_MODULES, "maintenance"])
+  return [...new Set(modules.filter((key) => !managed.has(key)))]
+}
+
 export function ensureAuthDirs(): void {
   fs.mkdirSync(AUTH_DIR, { recursive: true })
   fs.mkdirSync(CACHE_DIR, { recursive: true })

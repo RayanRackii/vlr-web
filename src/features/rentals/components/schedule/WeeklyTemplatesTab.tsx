@@ -1,42 +1,31 @@
-import { CalendarRange, ChevronLeft, ChevronRight, Settings2, SlidersHorizontal } from "lucide-react"
+import { CalendarRange, ChevronDown, ChevronRight } from "lucide-react"
 import { useMemo, useState, type ReactNode } from "react"
 import { useTranslation } from "react-i18next"
 import { useNavigate } from "react-router-dom"
 
 import { Button } from "@/components/ui/button"
-import { LoadingButton } from "@/components/ui/loading-button"
 import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover"
-import { scheduleChipClassName } from "./scheduleChipClassName"
-import { InlineScheduleModule } from "./InlineScheduleModule"
+  BusinessHoursEditor,
+  type BusinessHoursSaveResult,
+} from "@/features/rentals/components/schedule/BusinessHoursEditor"
+import type { BusinessHoursPlan } from "@/features/rentals/components/schedule/businessHoursModel"
 import type { ScheduleBusyAction } from "@/features/rentals/components/schedule/DailyAgendaTab"
 import { DayResourceGrid } from "@/features/rentals/components/schedule/DayResourceGrid"
-import { RentableMultiSelect } from "@/features/rentals/components/schedule/RentableMultiSelect"
 import { ScheduleDaySlotsSkeleton } from "@/features/rentals/components/schedule/ScheduleDaySlotsSkeleton"
 import { ScheduleEmptyState } from "@/features/rentals/components/schedule/ScheduleEmptyState"
-import { SchedulePolicyPanel } from "@/features/rentals/components/schedule/SchedulePolicyPanel"
-import { WeeklyRuleSheet } from "@/features/rentals/components/schedule/WeeklyRuleSheet"
-import type { WeeklyRuleDraft } from "@/features/rentals/components/schedule/WeeklyRuleSheet"
 import {
   buildWeeklyGridOccupancies,
   isOpenHoursOccupancyId,
   resolveScheduleSurface,
-  shiftWeekday,
-  todayWeekdayName,
 } from "@/features/rentals/components/schedule/scheduleGridModel"
+import { scheduleChipClassName } from "./scheduleChipClassName"
 import {
   DAY_NAMES,
   type AdminRentalAsset,
   type DayOfWeekName,
   type OccupancyKind,
   type ScheduleTemplate,
-  type UpdateSchedulePolicyInput,
 } from "@/features/rentals/services/scheduleService"
-
-export type { WeeklyRuleDraft }
 
 export type WeeklyGridCellPayload = {
   rentalAssetId: string
@@ -54,9 +43,10 @@ type WeeklyTemplatesTabProps = {
   weekday: DayOfWeekName
   templates: readonly ScheduleTemplate[]
   scheduleTemplates: readonly ScheduleTemplate[]
+  allScheduleTemplates: readonly ScheduleTemplate[] | null
   loadingScheduleTemplates: boolean
   kinds: readonly OccupancyKind[]
-  defaultKindId: string
+  openKindId: string
   loading: boolean
   showSkeleton: boolean
   busy: boolean
@@ -66,18 +56,14 @@ type WeeklyTemplatesTabProps = {
   onSelectedRentalAssetIdsChange: (ids: string[]) => void
   onWeekdayChange: (weekday: DayOfWeekName) => void
   onCellClick: (payload: WeeklyGridCellPayload) => void
-  onSeedSelected: () => void
-  onSavePolicy: (input: UpdateSchedulePolicyInput) => Promise<void>
+  onSaveBusinessHours: (plan: BusinessHoursPlan) => Promise<BusinessHoursSaveResult>
+  onHoursDirtyChange?: (dirty: boolean) => void
   templateEditor?: ReactNode
-  onApplyWeeklyRule: (draft: WeeklyRuleDraft) => Promise<boolean>
-  ruleOpen?: boolean
-  onRuleOpenChange?: (open: boolean) => void
-  onRuleDirtyChange?: (dirty: boolean) => void
-  onRuleRequestClose?: () => void
-  policyOpen?: boolean
-  onPolicyOpenChange?: (open: boolean) => void
-  onPolicyDirtyChange?: (dirty: boolean) => void
-  onPolicyRequestClose?: () => void
+}
+
+function previewOpenByDefault(): boolean {
+  if (typeof window === "undefined" || typeof window.matchMedia !== "function") return true
+  return window.matchMedia("(min-width: 768px)").matches
 }
 
 export function WeeklyTemplatesTab({
@@ -86,9 +72,10 @@ export function WeeklyTemplatesTab({
   weekday,
   templates,
   scheduleTemplates,
+  allScheduleTemplates,
   loadingScheduleTemplates,
   kinds,
-  defaultKindId,
+  openKindId,
   loading,
   showSkeleton,
   busy,
@@ -98,47 +85,21 @@ export function WeeklyTemplatesTab({
   onSelectedRentalAssetIdsChange,
   onWeekdayChange,
   onCellClick,
-  onSeedSelected,
-  onSavePolicy,
-  onApplyWeeklyRule,
+  onSaveBusinessHours,
+  onHoursDirtyChange,
   templateEditor,
-  ruleOpen: ruleOpenProp,
-  onRuleOpenChange,
-  onRuleDirtyChange,
-  onRuleRequestClose,
-  policyOpen: policyOpenProp,
-  onPolicyOpenChange,
-  onPolicyDirtyChange,
-  onPolicyRequestClose,
 }: WeeklyTemplatesTabProps) {
   const { t } = useTranslation()
   const navigate = useNavigate()
-  const [uncontrolledPolicyOpen, setUncontrolledPolicyOpen] = useState(false)
-  const policyOpen = policyOpenProp ?? uncontrolledPolicyOpen
-  function setPolicyOpen(open: boolean) {
-    if (onPolicyOpenChange) onPolicyOpenChange(open)
-    else setUncontrolledPolicyOpen(open)
-  }
-  function closePolicy() {
-    if (onPolicyRequestClose) onPolicyRequestClose()
-    else setPolicyOpen(false)
-  }
-  const [uncontrolledRuleOpen, setUncontrolledRuleOpen] = useState(false)
-  const ruleOpen = ruleOpenProp ?? uncontrolledRuleOpen
-  function setRuleOpen(open: boolean) {
-    if (onRuleOpenChange) onRuleOpenChange(open)
-    else setUncontrolledRuleOpen(open)
-  }
+  const [previewOpen, setPreviewOpen] = useState(previewOpenByDefault)
 
   const selectedAssets = useMemo(
-    () =>
-      assets.filter((asset) => selectedRentalAssetIds.includes(asset.id)),
+    () => assets.filter((asset) => selectedRentalAssetIds.includes(asset.id)),
     [assets, selectedRentalAssetIds],
   )
 
   const occupancies = useMemo(
-    () =>
-      buildWeeklyGridOccupancies(selectedAssets, templates, kinds, weekday),
+    () => buildWeeklyGridOccupancies(selectedAssets, templates, kinds, weekday),
     [kinds, selectedAssets, templates, weekday],
   )
 
@@ -174,213 +135,107 @@ export function WeeklyTemplatesTab({
 
   const showInlineRefresh = loading && surface === "grid"
   const hasSelection = selectedAssets.length > 0
-  const hasExistingSchedule = loadingScheduleTemplates ||
-    scheduleTemplates.some((template) => template.isActive) ||
-    selectedAssets.some((asset) =>
-      (asset.schedulePolicy ?? "SlotGrid") === "OpenHours" &&
-      Boolean(asset.openTime && asset.closeTime),
-    )
+  const PreviewChevron = previewOpen ? ChevronDown : ChevronRight
 
   return (
-    <div className="w-full space-y-4">
-      <div className="flex flex-wrap items-center gap-2 rounded-xl border border-border bg-card p-2 shadow-sm">
-        <div className="flex items-center divide-x divide-border rounded-lg border border-border">
-          <Button
-            type="button"
-            size="icon-sm"
-            variant="ghost"
-            className="rounded-r-none"
-            aria-label={t("rentals.schedule.toolbar.prevWeekday")}
-            onClick={() => onWeekdayChange(shiftWeekday(weekday, -1))}
-          >
-            <ChevronLeft aria-hidden />
-          </Button>
-          <Button
-            type="button"
-            size="sm"
-            variant="ghost"
-            className="rounded-none"
-            onClick={() => onWeekdayChange(todayWeekdayName())}
-          >
-            {t("rentals.schedule.toolbar.today")}
-          </Button>
-          <Button
-            type="button"
-            size="icon-sm"
-            variant="ghost"
-            className="rounded-l-none"
-            aria-label={t("rentals.schedule.toolbar.nextWeekday")}
-            onClick={() => onWeekdayChange(shiftWeekday(weekday, 1))}
-          >
-            <ChevronRight aria-hidden />
-          </Button>
-        </div>
-        <div role="group" aria-label={t("rentals.schedule.templates.dayOfWeek")} className="flex flex-wrap gap-2">
-          {DAY_NAMES.map((dayName) => (
-            <button key={dayName} type="button" aria-pressed={weekday === dayName} onClick={() => onWeekdayChange(dayName)} className={scheduleChipClassName(weekday === dayName)}>
-              {t(`rentals.schedule.days.${dayName}`)}
-            </button>
-          ))}
-        </div>
-        <Popover>
-          <PopoverTrigger
-            render={<Button type="button" variant="outline" size="sm" />}
-          >
-            <SlidersHorizontal aria-hidden />
-            {t("rentals.schedule.toolbar.resources", {
-              selected: selectedRentalAssetIds.length,
-              total: assets.length,
-            })}
-          </PopoverTrigger>
-          <PopoverContent align="start" className="w-80 p-4">
-            <RentableMultiSelect
-              assets={assets}
-              selectedIds={selectedRentalAssetIds}
-              onChange={onSelectedRentalAssetIdsChange}
-            />
-          </PopoverContent>
-        </Popover>
-        <div className="ml-auto flex flex-wrap gap-2">
-          <Button
-            type="button"
-            size="sm"
-            variant="outline"
-            onClick={() => {
-              if (policyOpen) closePolicy()
-              else setPolicyOpen(true)
-            }}
-          >
-            <Settings2 aria-hidden />
-            {t("rentals.schedule.weekly.configureHours")}
-          </Button>
-          {!hasExistingSchedule && selectedAssets.some(
-            (asset) => (asset.schedulePolicy ?? "SlotGrid") === "SlotGrid",
-          ) ? (
-            <LoadingButton
-              type="button"
-              size="sm"
-              variant="outline"
-              loading={busyAction === "seed"}
-              disabled={busy || readOnly || !hasSelection}
-              onClick={onSeedSelected}
-            >
-              {t("rentals.schedule.seedTemplates")}
-            </LoadingButton>
-          ) : null}
-          <Button
-            type="button"
-            size="sm"
-            disabled={busy || readOnly || !hasSelection}
-            onClick={() => setRuleOpen(true)}
-          >
-            {t("rentals.schedule.weeklyRule.apply")}
-          </Button>
-        </div>
-      </div>
+    <div className="w-full space-y-8">
+      <BusinessHoursEditor
+        assets={assets}
+        selectedRentalAssetIds={selectedRentalAssetIds}
+        scheduleTemplates={scheduleTemplates}
+        allScheduleTemplates={allScheduleTemplates}
+        openKindId={openKindId}
+        loadingTemplates={loadingScheduleTemplates}
+        busy={busy}
+        busyAction={busyAction}
+        readOnly={readOnly}
+        onSelectedRentalAssetIdsChange={onSelectedRentalAssetIdsChange}
+        onSave={onSaveBusinessHours}
+        onDirtyChange={onHoursDirtyChange}
+      />
 
-      <div className="rounded-lg border border-primary/20 bg-primary/5 px-3 py-2 text-xs text-muted-foreground">
-        {t("rentals.schedule.weeklyBanner", {
-          day: t(`rentals.schedule.days.${weekday}`),
-        })}
-      </div>
-
-      <section className="min-w-0">
-        {showInlineRefresh ? (
-          <p className="sr-only" role="status" aria-live="polite">
-            {t("common.refreshing")}
-          </p>
-        ) : null}
-        {!hasSelection || surface === "no-selection" ? (
-          <ScheduleEmptyState
-            icon={CalendarRange}
-            title={t("rentals.schedule.grid.noSelection")}
-          />
-        ) : surface === "grid-skeleton" ? (
-          <div role="status" aria-live="polite">
-            <p className="sr-only">{t("common.loading")}</p>
-            <ScheduleDaySlotsSkeleton columns={Math.min(selectedAssets.length, 5)} />
+      <section className="min-w-0 space-y-3" aria-labelledby="weekly-preview-title">
+        <div className="flex items-center justify-between gap-3">
+          <div className="min-w-0">
+            <h2 id="weekly-preview-title" className="text-base font-semibold">
+              {t("rentals.schedule.hours.preview")}
+            </h2>
+            <p className="text-xs text-muted-foreground">{t("rentals.schedule.hours.previewHint")}</p>
           </div>
-        ) : (
-          <DayResourceGrid
-            assets={selectedAssets}
-            occupancies={occupancies}
-            busyTargetKey={busyTargetId}
-            readOnly={readOnly}
-            onCellClick={(cell) => {
-              const asset = selectedAssets.find(
-                (item) => item.id === cell.rentalAssetId,
-              )
-              const policy = asset?.schedulePolicy ?? "SlotGrid"
-              if (
-                policy === "OpenHours" ||
-                (cell.occupancy && isOpenHoursOccupancyId(cell.occupancy.id))
-              ) {
-                setPolicyOpen(true)
-                return
-              }
-              const template = cell.occupancy
-                ? (templates.find((row) => row.id === cell.occupancy?.id) ?? null)
-                : null
-              onCellClick({
-                rentalAssetId: cell.rentalAssetId,
-                assetName: cell.assetName,
-                dayOfWeek: weekday,
-                startTime: cell.startTime,
-                endTime: cell.endTime,
-                origin: template ? "template" : "empty",
-                template,
-              })
-            }}
-          />
-        )}
-      </section>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            aria-expanded={previewOpen}
+            aria-controls="weekly-preview-body"
+            onClick={() => setPreviewOpen((open) => !open)}
+          >
+            <PreviewChevron aria-hidden />
+            {previewOpen ? t("rentals.schedule.hours.previewHide") : t("rentals.schedule.hours.previewShow")}
+          </Button>
+        </div>
 
-      <div className="grid items-start gap-4 xl:grid-cols-2">
-        <WeeklyRuleSheet
-          open={ruleOpen}
-          onOpenChange={setRuleOpen}
-          onDirtyChange={onRuleDirtyChange}
-          onRequestClose={onRuleRequestClose}
-          selectedRentalAssetIds={selectedRentalAssetIds}
-          weekday={weekday}
-          kinds={kinds}
-          defaultKindId={defaultKindId}
-          busy={busy}
-          busyAction={busyAction}
-          readOnly={readOnly}
-          onApply={onApplyWeeklyRule}
-        />
+        <div id="weekly-preview-body" hidden={!previewOpen} className="min-w-0 space-y-3">
+          {previewOpen ? (
+            <>
+              <div role="group" aria-label={t("rentals.schedule.templates.dayOfWeek")} className="flex flex-wrap gap-2">
+                {DAY_NAMES.map((dayName) => (
+                  <button
+                    key={dayName}
+                    type="button"
+                    aria-pressed={weekday === dayName}
+                    onClick={() => onWeekdayChange(dayName)}
+                    className={scheduleChipClassName(weekday === dayName)}
+                  >
+                    {t(`rentals.schedule.days.${dayName}`)}
+                  </button>
+                ))}
+              </div>
+              {showInlineRefresh ? (
+                <p className="sr-only" role="status" aria-live="polite">
+                  {t("common.refreshing")}
+                </p>
+              ) : null}
+              {!hasSelection || surface === "no-selection" ? (
+                <ScheduleEmptyState icon={CalendarRange} title={t("rentals.schedule.grid.noSelection")} />
+              ) : surface === "grid-skeleton" ? (
+                <div role="status" aria-live="polite">
+                  <p className="sr-only">{t("common.loading")}</p>
+                  <ScheduleDaySlotsSkeleton columns={Math.min(selectedAssets.length, 5)} />
+                </div>
+              ) : (
+                <DayResourceGrid
+                  assets={selectedAssets}
+                  occupancies={occupancies}
+                  busyTargetKey={busyTargetId}
+                  readOnly={readOnly}
+                  onCellClick={(cell) => {
+                    const asset = selectedAssets.find((item) => item.id === cell.rentalAssetId)
+                    const policy = asset?.schedulePolicy ?? "SlotGrid"
+                    // Open-hours resources keep their hours on the resource; the editor above changes them.
+                    if (policy === "OpenHours" || (cell.occupancy && isOpenHoursOccupancyId(cell.occupancy.id))) {
+                      return
+                    }
+                    const template = cell.occupancy
+                      ? (templates.find((row) => row.id === cell.occupancy?.id) ?? null)
+                      : null
+                    onCellClick({
+                      rentalAssetId: cell.rentalAssetId,
+                      assetName: cell.assetName,
+                      dayOfWeek: weekday,
+                      startTime: cell.startTime,
+                      endTime: cell.endTime,
+                      origin: template ? "template" : "empty",
+                      template,
+                    })
+                  }}
+                />
+              )}
+            </>
+          ) : null}
+        </div>
         {templateEditor}
-      </div>
-
-      <InlineScheduleModule
-        title={t("rentals.schedule.policy.title")}
-        description={t("rentals.schedule.policy.description")}
-        icon={Settings2}
-        open={policyOpen}
-        disabled={busy}
-        onOpenChange={(next) => {
-          if (next) setPolicyOpen(true)
-          else closePolicy()
-        }}
-      >
-        {selectedAssets.length > 0 ? (
-          <SchedulePolicyPanel
-            assets={selectedAssets}
-            templates={scheduleTemplates}
-            loadingTemplates={loadingScheduleTemplates}
-            busy={busy}
-            busyAction={busyAction}
-            readOnly={readOnly}
-            embedded
-            onSave={onSavePolicy}
-            onSeedSlotGrid={onSeedSelected}
-            onDirtyChange={onPolicyDirtyChange}
-          />
-        ) : null}
-      </InlineScheduleModule>
-
-
+      </section>
     </div>
   )
 }

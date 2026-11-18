@@ -1,6 +1,6 @@
 import { z } from "zod"
 
-import { api, getAxiosErrorPayload, parseApiError } from "@/lib/api"
+import { api, getAxiosErrorPayload, isAxiosError, parseApiError } from "@/lib/api"
 import {
   formatLocaleCurrency,
   formatLocaleDateTimeRange,
@@ -65,6 +65,7 @@ export function civilReservationDay(value: string | undefined): string | undefin
 
 export async function listAdminReservations(
   query: ListAdminReservationsQuery = {},
+  { signal }: { signal?: AbortSignal } = {},
 ): Promise<AdminReservation[]> {
   try {
     const response = await api.get("/api/reservations", {
@@ -74,6 +75,7 @@ export async function listAdminReservations(
         status: query.status || undefined,
         assetId: query.assetId || undefined,
       },
+      ...(signal ? { signal } : {}),
     })
     const parsed = z.array(reservationSchema).safeParse(response.data)
     if (!parsed.success) {
@@ -83,6 +85,7 @@ export async function listAdminReservations(
   } catch (error) {
     throw new Error(
       parseApiError(getAxiosErrorPayload(error), i18n.t("apiErrors.loadReservations")),
+      { cause: error },
     )
   }
 }
@@ -193,4 +196,66 @@ export function formatReservationRange(
 /** Rentals amounts have no currency on the API; callers pass the tenant currency. */
 export function formatMoney(amount: number, currency = "BRL"): string {
   return formatLocaleCurrency(amount, currency, i18n.language)
+}
+
+export type CreateStaffReservationInput = {
+  /** Exactly one of `customerId` / `newCustomer`. */
+  customerId?: string
+  newCustomer?: { name: string; whatsApp: string; email?: string }
+  /** The API infers the unit from the first item's asset when omitted. */
+  unitId?: string
+  /** yyyy-MM-dd */
+  date: string
+  endDate?: string
+  /** "HH:mm" */
+  startTime: string
+  /** "HH:mm" */
+  endTime: string
+  items: { assetId: string; quantity?: number }[]
+  awaitingDeposit: boolean
+}
+
+/** Failure of POST /api/reservations/staff, with the API code when it sent one. */
+export class StaffReservationError extends Error {
+  readonly code: string | null
+  readonly status: number | null
+  readonly customerId: string | null
+
+  constructor(message: string, code: string | null, status: number | null, customerId: string | null) {
+    super(message)
+    this.name = "StaffReservationError"
+    this.code = code
+    this.status = status
+    this.customerId = customerId
+  }
+}
+
+const staffErrorSchema = z.object({
+  code: z.string().optional(),
+  customerId: z.string().uuid().optional(),
+})
+
+/** A 2xx means the reservation exists: an unexpected body is never reported as a failure. */
+export async function createStaffReservation(
+  input: CreateStaffReservationInput,
+): Promise<{ id?: string }> {
+  let response
+  try {
+    response = await api.post("/api/reservations/staff", input)
+  } catch (error) {
+    const payload = getAxiosErrorPayload(error)
+    const extra = staffErrorSchema.safeParse(payload)
+    const status = isAxiosError(error) ? (error.response?.status ?? null) : null
+    throw new StaffReservationError(
+      parseApiError(payload, i18n.t("apiErrors.createReservation")),
+      extra.success ? (extra.data.code ?? null) : null,
+      status,
+      extra.success ? (extra.data.customerId ?? null) : null,
+    )
+  }
+  const parsed = reservationSchema.safeParse(response.data)
+  if (parsed.success) return parsed.data
+  const raw: unknown = response.data
+  const id = typeof raw === "object" && raw !== null && "id" in raw && typeof raw.id === "string" ? raw.id : undefined
+  return id ? { id } : {}
 }

@@ -1,9 +1,11 @@
 import type { ReactElement } from "react"
+import { lazyPage } from "@/routes/lazyPage"
 import { Navigate } from "react-router-dom"
 
-import { LoginPage } from "@/features/auth/LoginPage"
-import { ResetPasswordPage } from "@/features/auth/ResetPasswordPage"
-import { SetPasswordPage } from "@/features/auth/SetPasswordPage"
+const LoginPage = lazyPage(() => import("@/features/auth/LoginPage"), "LoginPage")
+const ResetPasswordPage = lazyPage(() => import("@/features/auth/ResetPasswordPage"), "ResetPasswordPage")
+const SetPasswordPage = lazyPage(() => import("@/features/auth/SetPasswordPage"), "SetPasswordPage")
+
 
 type FeatureRoute = { path: string; element: ReactElement }
 

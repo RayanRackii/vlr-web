@@ -92,7 +92,8 @@ describe("NotificationsPage", () => {
       { path: "/notificacoes", permission: "core.notifications.read", anyOf: ["catalog.notifications.read"] },
       { path: "/configuracoes/notificacoes", permission: "core.notifications.read", anyOf: ["catalog.notifications.read"] },
     ])
-    expect(notificationsManifest.routes.staff[0]?.element.type).toBe(NotificationsPage)
+    // The route page is lazy-loaded: the manifest holds a React.lazy element.
+    expect((notificationsManifest.routes.staff[0]?.element.type as { $$typeof?: symbol }).$$typeof).toBe(Symbol.for("react.lazy"))
     expect(notificationsManifest.navigationItems[0]?.to).toBe("/notificacoes")
   })
 
@@ -102,7 +103,7 @@ describe("NotificationsPage", () => {
     renderPage(["core.notifications.read", "core.notifications.write"])
     expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1)
     expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent(i18n.t("nav.notifications"))
-    expect(screen.getByText(i18n.t("nav.sections.settings"))).toBeInTheDocument()
+    expect(screen.queryByText(i18n.t("nav.sections.settings"))).not.toBeInTheDocument()
     expect(screen.getByRole("tab", { name: i18n.t("notifications.page.tabs.channels") })).toHaveAttribute("aria-selected", "true")
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument()
     expect(screen.queryByText(/salvar alterações/i)).not.toBeInTheDocument()

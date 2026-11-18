@@ -9,9 +9,22 @@ describe("safeStaffReturnTo", () => {
     ).toBe("/configuracoes/recursos/abc/assistente?passo=rules")
   })
 
+  it("accepts the files step for products but not for resources", () => {
+    expect(safeStaffReturnTo("/catalogo/produtos/abc/cadastro?passo=arquivos")).toBe("/catalogo/produtos/abc/cadastro?passo=arquivos")
+    expect(safeStaffReturnTo("/configuracoes/recursos/abc/cadastro?passo=arquivos")).toBeNull()
+  })
+
   it("keeps the resource list and the resource editor", () => {
     expect(safeStaffReturnTo("/configuracoes/recursos")).toBe("/configuracoes/recursos")
     expect(safeStaffReturnTo("/configuracoes/recursos/abc")).toBe("/configuracoes/recursos/abc")
+  })
+
+  it("keeps the product wizard edit mode, alone or with a step", () => {
+    expect(safeStaffReturnTo("/catalogo/produtos/abc/cadastro?modo=editar&passo=regras")).toBe("/catalogo/produtos/abc/cadastro?modo=editar&passo=regras")
+    expect(safeStaffReturnTo("/catalogo/produtos/abc/cadastro?modo=editar")).toBe("/catalogo/produtos/abc/cadastro?modo=editar")
+    expect(safeStaffReturnTo("/catalogo/produtos/abc/cadastro?modo=outro")).toBeNull()
+    expect(safeStaffReturnTo("/catalogo/produtos/abc/cadastro?modo=editar&passo=nope")).toBeNull()
+    expect(safeStaffReturnTo("/catalogo/produtos/abc/cadastro?modo=editar&x=1")).toBeNull()
   })
 
   it("keeps a product wizard path and its step", () => {

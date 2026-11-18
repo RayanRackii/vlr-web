@@ -20,7 +20,7 @@ vi.mock("@/features/rentals/services/scheduleService", async (importOriginal) =>
 }))
 vi.mock("@/features/rentals/components/schedule/DailyAgendaTab", () => ({ DailyAgendaTab: () => null }))
 vi.mock("@/features/rentals/components/schedule/WeeklyTemplatesTab", () => ({
-  WeeklyTemplatesTab: ({ weekday, onWeekdayChange, onCellClick, templateEditor, selectedRentalAssetIds, onSelectedRentalAssetIdsChange, templates, onApplyWeeklyRule, busy }: ComponentProps<typeof WeeklyTemplatesTab>) => <>
+  WeeklyTemplatesTab: ({ weekday, onWeekdayChange, onCellClick, templateEditor, selectedRentalAssetIds, onSelectedRentalAssetIdsChange, templates, onSaveBusinessHours, busy }: ComponentProps<typeof WeeklyTemplatesTab>) => <>
     {(["Monday", "Tuesday"] as const).map((day) => <button key={day} aria-pressed={weekday === day} onClick={() => onWeekdayChange(day)}>Grade {day}</button>)}
     {["08:00", "10:00"].map((startTime) => <button key={startTime} onClick={() => onCellClick({
       rentalAssetId: "room", assetName: "Sala", dayOfWeek: weekday, startTime,
@@ -34,9 +34,9 @@ vi.mock("@/features/rentals/components/schedule/WeeklyTemplatesTab", () => ({
     <button onClick={() => onSelectedRentalAssetIdsChange([...selectedRentalAssetIds])}>Same filter</button>
     <button onClick={() => onSelectedRentalAssetIdsChange(["other-room"])}>Filter other resource</button>
     <output aria-label="Weekly templates">{templates.map((template) => template.label).join(",")}</output>
-    <button disabled={busy} onClick={() => { void onApplyWeeklyRule({
-      rentalAssetIds: selectedRentalAssetIds, daysOfWeek: [weekday], openTime: "08:00",
-      closeTime: "09:00", slotMinutes: 60, occupancyKindId: "open",
+    <button disabled={busy} onClick={() => { void onSaveBusinessHours({
+      rentalAssetIds: [...selectedRentalAssetIds], groups: [{ days: [weekday], openTime: "08:00", closeTime: "09:00" }],
+      slotMinutes: 60, removals: [], conflicts: [], policyHours: null,
     }) }}>Apply rule</button>
     {templateEditor}
   </>,

@@ -83,11 +83,12 @@
       "fila": "Queue",
       "regras": "Rules",
       "precos": "Prices",
-      "publicacao": "Publishing"
+      "publicacao": "Publishing",
+      "arquivos": "Photos and files"
     },
     "firstSteps": {
       "title": "First steps",
-      "description": "What is left before the first booking. Each badge is calculated now, with no saved progress.",
+      "description": "What is left before the first booking.",
       "preview": "View as customer",
       "company": "Company details",
       "pricedOffer": "Priced offer that reaches a resource",
@@ -95,10 +96,12 @@
       "resource": "Published resource",
       "admin": "Invited admin",
       "previewItem": "View as customer",
+      "remaining_one": "{{count}} step left",
+      "remaining_other": "{{count}} steps left",
       "state": {
-        "published": "Published",
+        "published": "Done",
         "draft": "Draft",
-        "missing": "Still missing"
+        "missing": "Missing"
       },
       "detail": {
         "company": "Name and document shown on the public page.",
@@ -163,7 +166,11 @@
   },
   "app": {
     "name": "Rolvix",
-    "authenticatedArea": "Authenticated area"
+    "authenticatedArea": "Authenticated area",
+    "errorBoundary": {
+      "title": "Something went wrong on this screen",
+      "home": "Back to home"
+    }
   },
   "common": {
     "close": "Close",
@@ -223,19 +230,20 @@
     "invalidResponse": "Invalid API response.",
     "loadUsers": "Could not load users.",
     "deleteUser": "Could not delete user.",
-    "loadTenantUsers": "Could not load tenant users.",
+    "loadTenantUsers": "Could not load company users.",
     "sendInvite": "Could not send invite.",
     "resendInvite": "Could not resend invite.",
     "revokeInvite": "Could not revoke invite.",
     "promoteUser": "Could not update user role.",
-    "loadTenant": "Could not load tenant.",
-    "deleteTenant": "Could not delete tenant.",
-    "enterTenant": "Could not enter tenant environment.",
-    "exitTenant": "Could not leave tenant environment.",
-    "createTenant": "Could not create tenant.",
-    "updateTenant": "Could not update tenant.",
+    "loadTenant": "Could not load the company.",
+    "deleteTenant": "Could not delete the company.",
+    "enterTenant": "Could not open the company.",
+    "exitTenant": "Could not leave the company.",
+    "createTenant": "Could not create the company.",
+    "updateTenant": "Could not update the company.",
     "loadReservations": "Could not load reservations.",
     "confirmReservation": "Could not confirm reservation.",
+    "createReservation": "Could not create reservation.",
     "cancelReservation": "Could not cancel reservation.",
     "completeReservation": "Could not complete reservation.",
     "createOccupancyKind": "Could not create occupancy kind.",
@@ -247,6 +255,7 @@
     "seedTemplates": "Could not create the default grid.",
     "updateSchedulePolicy": "Could not update the schedule policy.",
     "applyDailyOccurrence": "Could not update this day’s time slot.",
+    "upsertSlot": "Could not save the time slot.",
     "applyWeeklyRule": "Could not apply the weekly rule.",
     "noBookableKind": "No bookable occupancy kind found. Create an Open kind first.",
     "register": "Could not complete registration.",
@@ -262,7 +271,6 @@
     "updateMenuItem": "Could not update menu item.",
     "deleteMenuItem": "Could not delete menu item.",
     "checkAvailability": "Could not check availability.",
-    "createReservation": "Could not create reservation.",
     "loadScheduleDay": "Could not load schedule day.",
     "bookSlot": "Could not book a time.",
     "loadBookingPolicy": "Could not load the booking policy.",
@@ -287,7 +295,7 @@
     "loadCustomerProfile": "Could not load the profile.",
     "updateCustomerProfile": "Could not update the profile.",
     "invalidPayload": "Invalid data received from the API.",
-    "moduleInactive": "This module is not active in this workspace.",
+    "moduleInactive": "This module is not active in this company.",
     "loadCatalogProducts": "Could not load products.",
     "loadCatalogProduct": "Could not load the product.",
     "saveCatalogProduct": "Could not save the product.",
@@ -317,7 +325,8 @@
     "loadTaxonomy": "Could not load categories and tags.",
     "saveTaxonomy": "Could not save categories and tags.",
     "deleteTaxonomy": "Could not delete the category or tag.",
-    "loadCatalogAgenda": "Could not load the agenda."
+    "loadCatalogAgenda": "Could not load the agenda.",
+    "timeout": "The connection took too long. Please try again."
   },
   "trial": {
     "banner": {
@@ -413,18 +422,18 @@
         "accountMismatch": "The current session belongs to another account. Sign in with the email on this invite to accept.",
         "identityConflict": "We could not confirm the account on this invite. Nothing was changed. Try again or contact support."
       },
-      "pickerSearch": "Search environments by name or subdomain",
-      "pickerEmpty": "No environments available.",
-      "pickerNoResults": "No environments found. Try another name or subdomain.",
-      "pickerLoading": "Loading your environments...",
+      "pickerSearch": "Search companies by name or subdomain",
+      "pickerEmpty": "No companies available.",
+      "pickerNoResults": "No companies found. Try another name or subdomain.",
+      "pickerLoading": "Loading your companies...",
       "passwordHint": "Use at least 8 characters.",
       "confirmPasswordHint": "Repeat your new password to confirm.",
-      "pickerTitle": "Choose an environment",
-      "pickerBody": "Your account belongs to more than one environment. Choose which one to open now.",
+      "pickerTitle": "Choose a company",
+      "pickerBody": "Your account belongs to more than one company. Choose which one to open now.",
       "pickerSubmit": "Continue",
       "pickerSubmitting": "Opening...",
-      "pickerError": "Could not switch environments. Please try again.",
-      "membershipError": "Could not load your environments. Please try again.",
+      "pickerError": "Could not switch companies. Please try again.",
+      "membershipError": "Could not load your companies. Please try again.",
       "membershipErrorHint": "This may be a temporary connection issue. Try again or sign out and sign back in.",
       "membershipRetry": "Try again",
       "membershipSignOut": "Sign out"
@@ -1087,24 +1096,43 @@
     },
     "products": {
       "title": "Products",
-      "subtitle": "Manage this environment's catalog products.",
+      "subtitle": "Manage this company's catalog products.",
       "create": "New product",
       "createTitle": "New product",
       "editTitle": "Edit product",
       "quickEdit": "Quick edit",
+      "rowMenu": "Actions for {{name}}",
+      "menuAccess": "Manage access",
+      "menuContinue": "Complete setup",
+      "menuEdit": "Edit product",
+      "menuActivate": "Activate product",
+      "menuDeactivate": "Deactivate product",
+      "notReady": {
+        "message": "Cannot activate: missing {{items}}.",
+        "generic": "Cannot activate: setup is incomplete.",
+        "NAME": "a name",
+        "RESOURCE": "a resource on the schedule",
+        "AUDIENCE": "who can see it (customers or groups)",
+        "PRICE": "a price above zero"
+      },
+      "menuActivateHint": "Complete setup to activate",
+      "statusIncomplete": "Setup incomplete · {{count}} missing",
+      "filterActive": "Active",
+      "filterInactive": "Inactive",
+      "filterIncomplete": "Incomplete",
+      "statusFilter": "Filter by status",
+      "moreFilters": "More filters",
       "quickEditTitle": "Quick edit",
       "quickEditDescription": "Change name, price and status. For everything else, open the full editor.",
       "createContinue": "Create and continue →",
       "tabs": {
         "dados": "Details",
         "price": "Price",
+        "agenda": "Schedule",
         "access": "Visibility and access",
         "history": "History"
       },
       "editor": {
-        "createStatusFailed": "Product created, but it is still active because deactivation failed. Try again to finish.",
-        "accessSaveFailed": "Could not save access. Try again.",
-        "breadcrumbRoot": "Catalog",
         "notFound": "Product not found.",
         "back": "Back to products"
       },
@@ -1119,7 +1147,7 @@
       "invalidPrice": "Enter a valid price or leave it empty.",
       "toastCreated": "Product created.",
       "toastUpdated": "Product updated.",
-      "toastActivated": "Product activated.",
+      "toastActivated": "Product active.",
       "toastDeactivated": "Product deactivated.",
       "deactivateConfirmTitle": "Deactivate product?",
       "deactivateConfirmBody": "{{name}} will no longer appear for new orders. Existing orders stay unchanged.",
@@ -1175,8 +1203,10 @@
         "extensionRequired": "{{name}} needs a file extension.",
         "required": "Select a file.",
         "whoSees": "Who sees it",
-        "customerShort": "Customer",
-        "internalShort": "Internal"
+        "customerShort": "Shown in the portal (photos)",
+        "internalShort": "Internal use (documents)",
+        "deleteConfirmTitle": "Delete this file?",
+        "deleteConfirmBody": "{{name}} will be removed from the product. This cannot be undone."
       },
       "gallery": {
         "previous": "Previous image",
@@ -1223,10 +1253,182 @@
       "badges": {
         "restricted": "Restricted · {{count}}"
       },
+      "filterAll": "All",
       "visibilityFilter": {
         "title": "Visibility",
         "public": "Public",
         "restricted": "Restricted"
+      },
+      "view": {
+        "title": "Product details",
+        "edit": "Edit product",
+        "moreActions": "More actions",
+        "duplicate": "Duplicate product",
+        "delete": "Delete product",
+        "toastDuplicated": "Copy created (without photos).",
+        "toastDeleted": "Product deleted.",
+        "deleteTitle": "Delete product?",
+        "deleteBody": "{{name}} will be permanently deleted, with its files, access and categories. This cannot be undone.",
+        "deleteConfirm": "Delete",
+        "statusIncomplete": "Setup incomplete",
+        "bannerInactive": "This product is inactive: customers cannot see it.",
+        "bannerIncomplete": "Setup is incomplete: customers cannot buy this product.",
+        "bannerMissing": "Missing: {{items}}.",
+        "completeSetup": "Finish setup",
+        "code": "Internal code: {{code}}",
+        "priceLabel": "Price",
+        "onRequest": "On request",
+        "seeMore": "Show more",
+        "seeLess": "Show less",
+        "usesAgenda": "Uses schedule",
+        "usesAgendaWith": "Uses schedule: {{resources}}",
+        "noAgenda": "Sold without a schedule",
+        "seeAgenda": "View schedule",
+        "portalAvailable": "Available in the customer portal",
+        "portalRestricted": "Restricted to approved groups and customers",
+        "portalInactive": "Inactive — customers cannot see it",
+        "gallery": {
+          "noPhoto": "No photo added",
+          "addPhotos": "Add photos",
+          "photo": "Photo {{current}} of {{total}}",
+          "thumbnails": "Product photos",
+          "mainImage": "Main image",
+          "lightbox": "Enlarged photo of {{name}}"
+        },
+        "tabs": {
+          "overview": "Overview",
+          "operation": "Operation",
+          "files": "Files",
+          "history": "History"
+        },
+        "overview": {
+          "about": "About the product",
+          "info": "Registration details",
+          "code": "Internal code",
+          "category": "Category",
+          "tags": "Tags",
+          "visibility": "Visibility",
+          "visibilityPublic": "Customer portal",
+          "visibilityRestricted": "Restricted",
+          "created": "Created on",
+          "updated": "Updated on"
+        },
+        "operation": {
+          "agenda": "Schedule",
+          "noResources": "No resource linked.",
+          "notScheduled": "This product is sold without a schedule.",
+          "qty": "Qty {{count}}",
+          "duration": "{{count}} min per unit",
+          "prep": "Prep {{count}} min",
+          "cleanup": "Cleanup {{count}} min",
+          "resourceCategory": "Resource category",
+          "queue": "Queue",
+          "access": "Access rules",
+          "accessPublic": "Public: every customer sees this product.",
+          "accessRestricted": "Restricted: only approved customers see this product.",
+          "groups": "Groups: {{names}}",
+          "customers_one": "{{count}} customer approved",
+          "customers_other": "{{count}} customers approved",
+          "unknownResource": "Resource"
+        },
+        "files": {
+          "title": "Internal documents",
+          "open": "Open"
+        },
+        "history": {
+          "title": "History",
+          "empty": "No changes recorded.",
+          "loadMore": "Load more",
+          "loadError": "Could not load the history.",
+          "system": "System",
+          "yes": "Yes",
+          "no": "No",
+          "meta": "{{actor}} · {{date}}",
+          "actions": {
+            "created": "Product created",
+            "activated": "Product activated",
+            "deactivated": "Product deactivated",
+            "deleted": "Product deleted",
+            "duplicated": "Product duplicated",
+            "copyCreated": "Copy created",
+            "copiedFrom": "Created as a copy of {{name}}",
+            "fileAdded": "File added: {{name}}",
+            "fileRemoved": "File removed: {{name}}",
+            "requirementsChanged": "Schedule resources changed",
+            "changed": "Product changed",
+            "unknownField": "Registration changed"
+          },
+          "fields": {
+            "name": {
+              "changed": "Name changed from {{old}} to {{new}}",
+              "set": "Name set to {{new}}",
+              "cleared": "Name removed (was {{old}})"
+            },
+            "code": {
+              "changed": "Code changed from {{old}} to {{new}}",
+              "set": "Code set to {{new}}",
+              "cleared": "Code removed (was {{old}})"
+            },
+            "description": {
+              "text": "Description changed"
+            },
+            "price": {
+              "changed": "Price changed from {{old}} to {{new}}",
+              "set": "Price set to {{new}}",
+              "cleared": "Price removed (was {{old}})"
+            },
+            "currency": {
+              "changed": "Currency changed from {{old}} to {{new}}",
+              "set": "Currency set to {{new}}",
+              "cleared": "Currency removed (was {{old}})"
+            },
+            "usesSchedule": {
+              "changed": "Schedule use changed from {{old}} to {{new}}",
+              "set": "Schedule use set to {{new}}",
+              "cleared": "Schedule use removed (was {{old}})"
+            },
+            "isActive": {
+              "changed": "Status changed from {{old}} to {{new}}",
+              "set": "Status set to {{new}}",
+              "cleared": "Status removed (was {{old}})"
+            },
+            "categories": {
+              "changed": "Categories changed from {{old}} to {{new}}",
+              "set": "Categories set to {{new}}",
+              "cleared": "Categories removed (was {{old}})"
+            },
+            "tags": {
+              "changed": "Tags changed from {{old}} to {{new}}",
+              "set": "Tags set to {{new}}",
+              "cleared": "Tags removed (was {{old}})"
+            },
+            "visibility": {
+              "changed": "Visibility changed from {{old}} to {{new}}",
+              "set": "Visibility set to {{new}}",
+              "cleared": "Visibility removed (was {{old}})"
+            },
+            "accessCustomers": {
+              "changed": "Customers with access changed from {{old}} to {{new}}",
+              "set": "Customers with access set to {{new}}",
+              "cleared": "Customers with access removed (was {{old}})"
+            },
+            "accessGroups": {
+              "changed": "Groups with access changed from {{old}} to {{new}}",
+              "set": "Groups with access set to {{new}}",
+              "cleared": "Groups with access removed (was {{old}})"
+            },
+            "resourceRequirements": {
+              "changed": "Schedule resources changed from {{old}} to {{new}}",
+              "set": "Schedule resources set to {{new}}",
+              "cleared": "Schedule resources removed (was {{old}})"
+            }
+          }
+        },
+        "errors": {
+          "hasOrders": "This product has orders; deactivate it instead of deleting.",
+          "duplicate": "Could not duplicate the product.",
+          "delete": "Could not delete the product."
+        }
       }
     },
     "customerGroups": {
@@ -1363,6 +1565,13 @@
       "total": "Total",
       "items": "Items",
       "timeline": "History",
+      "summary": "Summary",
+      "moreActions": "More actions",
+      "progressLabel": "Order progress",
+      "resourceUsage": "Resource use",
+      "openInAgenda": "Open in schedule",
+      "customerLabel": "Customer",
+      "estimatedReady": "Estimated completion",
       "customerNote": "Customer note",
       "rejectedReason": "Rejection reason",
       "cancelledReason": "Cancellation reason",
@@ -1536,6 +1745,11 @@
       }
     },
     "policy": {
+      "generalTitle": "Cancellation rules",
+      "ordersBefore": "Customers can cancel orders up to status",
+      "requestsBefore": "Customers can cancel requests while they are",
+      "notAllowed": "do not allow",
+      "addText": "Add cancellation text",
       "title": "Sales",
       "description": "Choose when customers can cancel orders and requests in this catalog.",
       "ordersEnabled": "Customers can cancel orders",
@@ -1552,22 +1766,19 @@
     },
     "resourcePlanning": {
       "title": "Required resources",
-      "description": "Define which specific resources this product consumes when produced, and for how long.",
       "loading": "Loading resources...",
-      "emptyState": "Does not require scheduling",
       "addRequirement": "Add resource",
       "save": "Save resources",
       "saveErrorTitle": "Could not save",
       "toastSaved": "Resources saved successfully.",
-      "requirementLabel": "Resource {{index}}",
-      "calculationHint": "Each unit occupies the resource for {{duration}} min, plus prep and cleanup.",
       "fields": {
         "resource": "Resource",
-        "resourcePlaceholder": "Select a resource",
         "resourceQuantity": "Quantity",
-        "durationMinutesPerUnit": "Duration per unit (min)",
-        "prepMinutes": "Prep (min)",
-        "cleanupMinutes": "Cleanup (min)"
+        "durationMinutesPerUnit": "Duration per unit",
+        "prepMinutes": "Prep",
+        "cleanupMinutes": "Cleanup",
+        "unitSuffix": "un.",
+        "minuteSuffix": "min"
       },
       "errors": {
         "loadRequirements": "Could not load this product's resources.",
@@ -1636,6 +1847,47 @@
           "Blocked": "Blocked",
           "Cancelled": "Cancelled"
         }
+      },
+      "subtitleEmpty": "Add the equipment or spaces this product uses.",
+      "subtitleCount_one": "{{count}} resource configured for this product.",
+      "subtitleCount_other": "{{count}} resources configured for this product.",
+      "breakdown": "{{prep}} min prep + {{duration}} min use + {{cleanup}} min cleanup",
+      "empty": {
+        "title": "Which resources does this product need?",
+        "description": "Pick a resource and set the quantity and occupancy times.",
+        "action": "Select resource"
+      },
+      "dialog": {
+        "addTitle": "Add resource",
+        "editTitle": "Edit resource",
+        "description": "Select a resource and configure how it will be occupied.",
+        "searchLabel": "Search resource",
+        "typeFilter": "Filter by type",
+        "allTypes": "All types",
+        "count_one": "{{count}} resource",
+        "count_other": "{{count}} resources",
+        "noMatches": "No resources found.",
+        "alreadyAdded": "Already added",
+        "pickPrompt": "Select a resource to set its quantity and times.",
+        "selectedHint": "Set the quantity and times for this product.",
+        "summaryTotal": "{{total}} min occupied per unit",
+        "note": "The resource is only included when you confirm below.",
+        "selectedCount_one": "{{count}} resource selected",
+        "selectedCount_other": "{{count}} resources selected",
+        "noneSelected": "No resource selected",
+        "confirmAdd": "Add resource",
+        "confirmEdit": "Save changes"
+      },
+      "card": {
+        "units_one": "{{count}} unit",
+        "units_other": "{{count}} units",
+        "minutes": "{{count}} min",
+        "occupancy": "Occupancy per unit: {{total}} min",
+        "remove": "Remove {{name}}"
+      },
+      "info": {
+        "title": "Time goes beyond the service",
+        "body": "Include prep and cleanup to reserve the interval needed before and after the resource is used."
       }
     },
     "agenda": {
@@ -1709,6 +1961,7 @@
       "subtitle": "{{date}} · resources and products",
       "viewAll": "View agenda",
       "rowLink": "View agenda",
+      "rowLinkOrder": "View order",
       "seeAll": "View all",
       "empty": "Nothing scheduled for today.",
       "reserved": "Reserved",
@@ -1723,20 +1976,29 @@
         "inUse": "Now: {{ref}} · until {{time}}",
         "prep": "Prep: {{ref}} · starts {{time}}",
         "cleaning": "Cleaning: {{ref}} · until {{time}}",
-        "overdue": "{{minutes}} min late",
+        "overdue": "Overdue by {{duration}}",
+        "overdueOrder": "Start of order {{ref}} · overdue by {{duration}}",
         "freeNext": "Next: {{ref}} · {{time}}",
         "freeNone": "No use today"
       }
     }
   },
+  "lateDuration": {
+    "days_one": "{{count}} day",
+    "days_other": "{{count}} days",
+    "hours_one": "{{count}} h",
+    "hours_other": "{{count}} h",
+    "minutes_one": "{{count}} min",
+    "minutes_other": "{{count}} min"
+  },
   "notifications": {
     "settings": {
       "title": "Notifications",
-      "subtitle": "Choose notification channels per event. Only active modules for this workspace are listed.",
-      "subtitleBoth": "Notification channels and the delivery history for this workspace.",
+      "subtitle": "Choose notification channels per event. Only active modules for this company are listed.",
+      "subtitleBoth": "Notification channels and the delivery history for this company.",
       "deliveries": "Deliveries",
       "emailDefault": "Email notifications for customers start on for new organizations. You can turn them off here.",
-      "empty": "No notification modules are active in this workspace.",
+      "empty": "No notification modules are active in this company.",
       "inAppAlwaysOn": "In-app always on",
       "channelUnavailable": "Unavailable",
       "toggleChannel": "Enable {{channel}} for {{event}}",
@@ -1749,7 +2011,10 @@
     },
     "page": {
       "subtitle": "Choose where each notice is sent and follow the deliveries.",
-      "tabs": { "channels": "Channels", "history": "History" },
+      "tabs": {
+        "channels": "Channels",
+        "history": "History"
+      },
       "channelsTitle": "Channels by event",
       "channelsSubtitle": "Choose the channels that notify customers and staff for each event.",
       "historyTitle": "Delivery history",
@@ -1763,7 +2028,7 @@
       "all": "All",
       "clear": "Clear search and filters",
       "emptyChannelsTitle": "No channels to configure",
-      "emptyChannels": "No module with notices is active in this workspace.",
+      "emptyChannels": "No module with notices is active in this company.",
       "emptyHistoryTitle": "No deliveries yet",
       "emptyHistory": "Sent notices show up here, with the channel and the result.",
       "noResultsTitle": "No deliveries found",
@@ -1771,7 +2036,10 @@
       "showing": "Showing {{shown}} of {{total}}",
       "previous": "Previous page",
       "next": "Next page",
-      "modules": { "catalog": "Orders", "rentals": "Bookings" }
+      "modules": {
+        "catalog": "Orders",
+        "rentals": "Bookings"
+      }
     },
     "inbox": {
       "items": {
@@ -2029,7 +2297,7 @@
       "pillars": {
         "isolation": {
           "title": "Your data stays yours",
-          "body": "Every customer runs in an isolated space. No other tenant sees what belongs to your operation."
+          "body": "Every customer runs in an isolated space. No other company sees what belongs to your operation."
         },
         "modular": {
           "title": "Grows at your pace",
@@ -2108,7 +2376,11 @@
     }
   },
   "grupos": {
-    "eyebrow": "Customers",
+    "colGroup": "Group",
+    "colMembers": "Members",
+    "colProducts": "Products",
+    "colActions": "Actions",
+    "rowMenu": "Actions for {{name}}",
     "title": "Customer groups",
     "subtitle": "Group customers to unlock products and exclusive terms.",
     "create": "New group",
@@ -2135,6 +2407,7 @@
     "name": "Name",
     "namePlaceholder": "Ex.: Frequent customers",
     "nameHelp": "Shown to the team when unlocking products.",
+    "sectionDetails": "Group details",
     "nameRequired": "Enter the group name.",
     "description": "Description",
     "descriptionPlaceholder": "What this group is for",
@@ -2191,13 +2464,15 @@
     "notifications": "Notifications",
     "peopleAccess": "People & access",
     "admin": "Super-Admin",
-    "adminTenants": "Clients",
+    "adminTenants": "Companies",
     "adminUsers": "Users",
     "adminAssetFamilies": "Families",
     "menu": "Navigation menu",
     "openMenu": "Open navigation menu",
     "loading": "Loading navigation menu",
     "collapseMenu": "Collapse menu",
+    "workspaceCaption": "Your workspace",
+    "platformWorkspace": "Rolvix platform",
     "expandMenu": "Expand menu",
     "sections": {
       "settings": "Settings",
@@ -2271,10 +2546,10 @@
         "how3": "Plans relate to equipment and work orders in Maintenance."
       },
       "platform": {
-        "summary": "Manage customer environments and shared platform records.",
-        "how1": "Browse customers and open the environment you need to manage.",
+        "summary": "Manage companies and shared platform records.",
+        "how1": "Browse companies and open the one you need to manage.",
         "how2": "Manage platform users and equipment families in the available screens.",
-        "how3": "Inside an environment, the menu shows the areas available to that customer."
+        "how3": "Inside a company, the menu shows the areas available to that company."
       }
     }
   },
@@ -2856,7 +3131,7 @@
           "title": "Manage users and families"
         },
         "learn3": {
-          "title": "Explore the environment menu"
+          "title": "Explore the company menu"
         }
       },
       "visit": {
@@ -2876,7 +3151,7 @@
     "emptyTags": "No tags yet.",
     "emptyTagsHint": "Use tags to label and find items easily.",
     "title": "Categories and tags",
-    "sharedHint": "These definitions are shared by every consumer in this tenant.",
+    "sharedHint": "These definitions are shared by every consumer in this company.",
     "categories": "Categories",
     "tags": "Tags",
     "newCategory": "New category",
@@ -2906,7 +3181,8 @@
   "theme": {
     "toggle": "Toggle theme",
     "light": "Light",
-    "dark": "Dark"
+    "dark": "Dark",
+    "system": "System"
   },
   "language": {
     "label": "Language",
@@ -2916,8 +3192,8 @@
   },
   "pages": {
     "dashboard": {
-      "title": "Command Center",
-      "description": "KPIs based on the modules and asset families active in this environment."
+      "title": "Home",
+      "description": "What is happening today."
     },
     "assets": {
       "title": "Assets Module",
@@ -2947,15 +3223,15 @@
     },
     "limitedTitle": "Information available to your profile",
     "readOnlyNotice": "You can view your data in read-only mode. Your trial has ended. To keep using the platform, choose a subscription before data removal in {{days}} day(s).",
-    "limitedNotice": "Your access lets you view the information available to your profile. To request additional access, contact the person responsible for this workspace.",
-    "emptyDescription": "Indicators will appear here as activity is recorded in this workspace.",
+    "limitedNotice": "Your access lets you view the information available to your profile. To request additional access, contact the person responsible for this company.",
+    "emptyDescription": "Indicators will appear here as activity is recorded in this company.",
     "unavailable": "Indicators are currently unavailable.",
     "workOrdersEmpty": "No work orders to display for this period.",
     "viewOrders": "View work orders",
     "clientEmptyHint": "New activity linked to your profile will appear here.",
     "ordersEmptyHint": "You can view the work order list to follow other activity.",
-    "title": "Command Center",
-    "description": "KPIs based on the modules and asset families active in this environment.",
+    "title": "Home",
+    "description": "What is happening today.",
     "emptyModules": "No operational modules active beyond the customer portal.",
     "rentalsReadiness": {
       "title": "Configure Rentals",
@@ -2983,7 +3259,7 @@
     "sections": {
       "customers": {
         "title": "Portal customers",
-        "description": "Logins on this environment's customer portal."
+        "description": "Logins on this company's customer portal."
       },
       "assets": {
         "title": "Resources",
@@ -3021,7 +3297,7 @@
       },
       "totalCustomers": {
         "title": "Registered customers",
-        "subtitle": "Total on this tenant's portal"
+        "subtitle": "Total on this company's portal"
       },
       "totalAssets": {
         "title": "Total resources",
@@ -3046,6 +3322,10 @@
       "completionRate": {
         "title": "Completion rate",
         "subtitle": "Completed over this month's total"
+      },
+      "openDueWorkOrders": {
+        "title": "Open work orders due today",
+        "subtitle": "Pending and in progress scheduled up to today"
       },
       "pendingWorkOrders": {
         "title": "Pending work orders",
@@ -3121,7 +3401,7 @@
       },
       "families": {
         "title": "By family",
-        "description": "Counts for this tenant's active families.",
+        "description": "Counts for this company's active families.",
         "empty": "No active families."
       }
     },
@@ -3197,6 +3477,12 @@
       "permanentSuccess": "Item permanently deleted."
     },
     "resourceTypes": {
+      "colType": "Type",
+      "colCapabilities": "Capabilities",
+      "colResources": "Resources",
+      "colActions": "Actions",
+      "rowMenu": "Actions for {{name}}",
+      "all": "All",
       "title": "Resource types",
       "subtitle": "Families of what your company books. Behavior comes from capabilities, not from the name.",
       "search": "Search types",
@@ -3278,7 +3564,10 @@
         "cancel": "Cancel",
         "edit": "Edit"
       },
-      "errors": { "load": "Could not load resource types.", "save": "Could not save the resource type." }
+      "errors": {
+        "load": "Could not load resource types.",
+        "save": "Could not save the resource type."
+      }
     },
     "categories": {
       "title": {
@@ -3425,7 +3714,11 @@
         "category": "Type",
         "tag": "Tag",
         "location": "Location",
-        "placeholder": "Filter..."
+        "placeholder": "Filter...",
+        "label": "Assets filters",
+        "searchLabel": "Search assets",
+        "searchPlaceholder": "Search by name or tag",
+        "all": "All"
       },
       "actions": {
         "add": "Add",
@@ -3546,7 +3839,7 @@
         "location": "e.g. Block A, ground floor"
       },
       "help": {
-        "unit": "Physical site for this resource (HQ, branch). Created automatically when the tenant is registered; unit management comes later.",
+        "unit": "Physical site for this resource (HQ, branch). Created automatically when the company is registered; unit management comes later.",
         "category": "Resource type (e.g. Outdoor area). Define types under Assets → Types.",
         "family": "Attribute family (spaces, goods, electrical…). Controls extra form fields.",
         "voltage": "Voltage records the electrical supply this equipment accepts, so it is not connected to the wrong circuit.",
@@ -3734,6 +4027,87 @@
       "intervalInvalid": "Enter a whole number of days from 1 to 3650.",
       "firstDueRequired": "Enter the first due date."
     },
+    "taskInputTypes": {
+      "Checkbox": "Yes/No",
+      "Text": "Text",
+      "Number": "Number",
+      "Image": "Photo",
+      "SingleChoice": "Single choice"
+    },
+    "newPlan": {
+      "choose": {
+        "title": "How do you want to start?",
+        "library": {
+          "title": "Use a Library template (recommended)",
+          "description": "Ready-made PMOC templates with the checklist and frequency already set."
+        },
+        "blank": {
+          "title": "Start blank",
+          "description": "Build the plan and checklist from scratch."
+        }
+      },
+      "form": {
+        "addDescription": "Add description",
+        "frequency": "Frequency",
+        "presets": {
+          "monthly": "Monthly",
+          "quarterly": "Quarterly",
+          "semiannual": "Semiannual",
+          "annual": "Annual",
+          "custom": "Custom"
+        },
+        "customDays": "Interval in days",
+        "appliesTo": "Apply to",
+        "categorySearch": "Search category",
+        "categoryNone": "No category found",
+        "specificAsset": "Or pick a specific piece of equipment",
+        "backToCategory": "Apply to a category",
+        "assetPlaceholder": "Select the equipment",
+        "assetSearch": "Search equipment",
+        "assetNone": "No equipment found",
+        "appliesHelp": "The plan covers every piece of equipment of the category in the unit.",
+        "assetHelp": "The plan covers only this equipment."
+      },
+      "scheduleHelper": "After each completed work order, the next due date counts from the actual completion."
+    },
+    "planDetail": {
+      "badges": {
+        "automatic": "Automatic",
+        "origin": {
+          "Custom": "Custom",
+          "RolvixTemplate": "Library"
+        }
+      },
+      "actions": {
+        "activate": "Activate plan",
+        "enableAuto": "Turn on automatic generation",
+        "disableAuto": "Turn off automatic generation",
+        "more": "More actions",
+        "save": "Save changes"
+      },
+      "toast": {
+        "saved": "Plan saved."
+      },
+      "errors": {
+        "partialSave": "The plan details were saved, but the checklist was not. Try saving again."
+      },
+      "coverage": {
+        "overdue_zero": "No equipment overdue",
+        "overdue_one": "{{count}} equipment overdue",
+        "overdue_other": "{{count}} equipment overdue",
+        "dueToday_zero": "0 due today",
+        "dueToday_one": "{{count}} due today",
+        "dueToday_other": "{{count}} due today",
+        "inactive": "Inactive plan: it does not generate work orders automatically.",
+        "columns": {
+          "asset": "Equipment",
+          "last": "Last maintenance",
+          "nextDue": "Next due",
+          "status": "Status",
+          "openOrder": "Open work order"
+        }
+      }
+    },
     "inputType": {
       "Checkbox": "Checkbox",
       "Text": "Text",
@@ -3865,8 +4239,14 @@
       }
     },
     "library": {
+      "colModel": "Template",
+      "colVersion": "Version",
+      "colCategory": "Category",
+      "colTasks": "Tasks",
+      "colActions": "Actions",
+      "tasksCount": "{{count}} tasks",
       "title": "Rolvix Library",
-      "description": "Standard templates from the platform. Clone into your tenant and customize the checklist.",
+      "description": "Standard templates from the platform. Clone into your company and customize the checklist.",
       "loading": "Loading library...",
       "empty": "No published templates at the moment.",
       "version": "Version {{version}}",
@@ -3977,6 +4357,15 @@
     }
   },
   "workOrders": {
+    "cancel": {
+      "action": "Cancel work order",
+      "title": "Cancel this work order?",
+      "description": "It stays in the history as canceled, and the equipment shows as \"Needs work order\" in the plan again.",
+      "back": "Back",
+      "success": "Work order canceled",
+      "open": "Open work order",
+      "menu": "Actions for {{name}} work order"
+    },
     "viewOpen": "View open work orders",
     "title": "Work Orders",
     "description": "Run field checklists and track each work order status.",
@@ -4037,25 +4426,52 @@
         "notes": "Notes",
         "notesPlaceholder": "Additional context for execution"
       },
+      "sections": {
+        "details": "Work order details"
+      },
+      "mode": {
+        "label": "Work order checklist",
+        "plan": "Use a plan checklist",
+        "adhoc": "Ad hoc"
+      },
+      "plan": {
+        "label": "Maintenance plan",
+        "placeholder": "Select a plan",
+        "hint": "The plan tasks become the work order checklist.",
+        "noTasks": "This plan has no tasks."
+      },
+      "checklist": {
+        "title": "Tasks",
+        "taskN": "Task {{n}}",
+        "taskPlaceholder": "E.g. Inspect equipment",
+        "mandatory": "Mandatory",
+        "add": "Add task",
+        "remove": "Remove task {{n}}",
+        "moveUp": "Move task {{n}} up",
+        "moveDown": "Move task {{n}} down"
+      },
       "validation": {
         "assetRequired": "Select an asset.",
         "dateRequired": "Enter the scheduled date.",
-        "taskRequired": "Enter at least one task."
+        "taskRequired": "Enter at least one task.",
+        "planRequired": "Select a plan."
       },
       "errors": {
         "loadLookupsFailed": "Could not load assets and technicians.",
         "createFailed": "Could not create the work order."
       },
       "emptyAssetsTitle": "No resources available",
-      "emptyAssetsDescription": "There are no resources to open a work order. Resources in this environment come from Super-Admin provisioning.",
+      "emptyAssetsDescription": "There are no resources to open a work order. Resources in this company come from Super-Admin provisioning.",
       "success": "Work order created successfully.",
       "submit": "Create work order",
       "redirecting": "Work order created"
     },
     "execution": {
-      "breadcrumb": "WO {{id}} · {{asset}}",
+      "breadcrumb": "{{title}}",
+      "numberPrefix": "WO",
       "title": "Work Order Execution",
-      "subtitle": "Asset {{tag}} — {{name}}",
+      "subtitle": "{{tag}} · {{code}}",
+      "details": "Work order details",
       "loading": "Loading work order...",
       "back": "Back to list",
       "tasksTitle": "Checklist",
@@ -4092,6 +4508,9 @@
       "startedSuccess": "Work order started successfully.",
       "completedSuccess": "Work order completed successfully.",
       "mandatoryIncomplete": "Fill mandatory tasks: {{tasks}}",
+      "assigneeNoTechniciansLinked": "No one can be a technician yet. Give someone the permission to execute work orders in <link>People and access</link>.",
+      "assigneeNoTechniciansPlain": "No one can be a technician yet. Give someone the permission to execute work orders in People and access.",
+      "moreActions": "Work order actions",
       "mandatoryIncompleteTitle": "Fill the required tasks before completing:",
       "save": {
         "saving": "saving",
@@ -4105,6 +4524,8 @@
       "loadOneFailed": "Could not load the work order.",
       "invalidResponse": "Invalid API response.",
       "updateTaskFailed": "Could not save the task response.",
+      "cancelFailed": "Could not cancel the work order.",
+      "cancelNotAllowed": "This work order can no longer be canceled.",
       "updateStatusFailed": "Could not update the work order status.",
       "mandatoryTasksIncomplete": "Mandatory tasks are still incomplete.",
       "mandatoryTasksIncompleteList": "Mandatory tasks are still incomplete: {{tasks}}",
@@ -4158,12 +4579,12 @@
     "dashboard": "Back to dashboard",
     "login": "Go to login",
     "title": "Page not found",
-    "description": "This address does not exist in this workspace.",
+    "description": "This address does not exist in this company.",
     "home": "Go to the home"
   },
   "staffProfile": {
     "title": "My profile",
-    "description": "Your access details in this workspace.",
+    "description": "Your access details in this company.",
     "name": "Name",
     "email": "Email",
     "roles": "Roles"
@@ -4171,11 +4592,11 @@
   "rbac": {
     "errors": {
       "PRIVILEGE_ESCALATION_BLOCKED": "You cannot assign an access profile with more permissions than your own.",
-      "LAST_ADMIN_PROTECTED": "The last active administrator in this environment cannot be removed.",
+      "LAST_ADMIN_PROTECTED": "The last active administrator in this company cannot be removed.",
       "ROLE_IN_USE": "This access profile is in use and cannot be deleted.",
       "CANNOT_MODIFY_SYSTEM_ROLE": "System access profiles cannot be renamed or reduced this way.",
       "CANNOT_DELETE_SYSTEM_ROLE": "System access profiles cannot be deleted.",
-      "CANNOT_ASSIGN_SUPERADMIN": "The SuperAdmin profile cannot be assigned in this environment.",
+      "CANNOT_ASSIGN_SUPERADMIN": "The SuperAdmin profile cannot be assigned in this company.",
       "FORBIDDEN": "You do not have permission for this action."
     }
   },
@@ -4188,12 +4609,12 @@
       "actions": "Actions"
     },
     "roleSummary": {
-      "description": "Who can do what in this environment.",
+      "description": "Who can do what in this company.",
       "permissions_one": "{{count}} permission",
       "permissions_other": "{{count}} permissions"
     },
     "title": "People and access",
-    "description": "Manage users in this environment and their access profiles.",
+    "description": "Manage users in this company and their access profiles.",
     "tabs": {
       "users": "Team",
       "customers": "Portal customers",
@@ -4202,7 +4623,7 @@
     "role": "Function",
     "permissions": "Permissions",
     "accessProfile": "Access profile",
-    "moduleInactive": "This module is not active in this workspace.",
+    "moduleInactive": "This module is not active in this company.",
     "status": {
       "active": "Active",
       "inactive": "Inactive"
@@ -4317,11 +4738,12 @@
       "email": "Email",
       "sendInvite": "Send invite",
       "assign": "Assign functions",
+      "rowMenu": "Actions for {{name}}",
       "assignTitle": "Assign functions",
       "assignDescription": "Set the functions for {{name}}.",
       "saveRoles": "Save functions",
-      "empty": "No users in this environment.",
-      "emptyDescription": "Invite someone to start configuring access for this environment.",
+      "empty": "No users in this company.",
+      "emptyDescription": "Invite someone to start configuring access for this company.",
       "noRoles": "No function assigned",
       "searchLabel": "Search the team",
       "searchPlaceholder": "Name or email",
@@ -4331,8 +4753,8 @@
     "customers": {
       "customerCount_one": "{{count}} portal customer",
       "customerCount_other": "{{count}} portal customers",
-      "description": "Customers who sign in through this environment's portal.",
-      "empty": "No portal customers in this environment.",
+      "description": "Customers who sign in through this company's portal.",
+      "empty": "No portal customers in this company.",
       "emptyDescription": "When someone creates a portal account, they show up here.",
       "verified": "Verified",
       "unverified": "Not verified",
@@ -4367,17 +4789,17 @@
       "deleteRole": "Only if it is not assigned to anyone"
     },
     "roles": {
-      "description": "System functions and custom access profiles for this environment.",
+      "description": "System functions and custom access profiles for this company.",
       "create": "New function",
       "createTitle": "New function",
       "editTitle": "Access profile",
       "editorDescription": "Set the name and permissions for this function.",
-      "adminReadonly": "The system Admin function is read-only. Permissions follow the tenant catalog.",
+      "adminReadonly": "The system Admin function is read-only. Permissions follow the company catalog.",
       "descriptionLabel": "Description",
       "view": "View permissions",
       "save": "Save",
       "empty": "No visible functions.",
-      "emptyDescription": "Create a custom function to organize access in this environment.",
+      "emptyDescription": "Create a custom function to organize access in this company.",
       "deleteTitle": "Delete function",
       "deleteDescription": "Delete {{name}}? This is only possible if nobody is assigned to it."
     },
@@ -4532,7 +4954,7 @@
       },
       "exploreTitle": "Explore other modules",
       "exploreDescription": "See what the platform offers for the customer portal and for internal operations.",
-      "exploreAllActive": "Every platform module is already active in this environment.",
+      "exploreAllActive": "Every platform module is already active in this company.",
       "categoryCustomer": "For your customers",
       "categoryOperations": "For your operations",
       "stateActive": "Active",
@@ -4540,9 +4962,9 @@
       "exploreDescriptions": {
         "Catalog": "Show products and receive customer requests in the portal.",
         "Rentals": "Manage bookable resources and hours.",
-        "PMOC": "Uses resources registered in the environment.",
+        "PMOC": "Uses resources registered in the company.",
         "Inventory": "Register and track assets and operational resources.",
-        "OS": "Lets you link services to the environment's resources."
+        "OS": "Lets you link services to the company's resources."
       },
       "noEligibleFunctionality": "No other active features are available.",
       "catalogAutoNav": "The module automatically adds:",
@@ -4553,72 +4975,83 @@
     },
     "dashboard": {
       "title": "Super-Admin Panel",
-      "description": "Manage tenants, subdomains, and subscribed modules.",
-      "newClient": "New Client",
+      "description": "Manage companies, subdomains, and subscribed modules.",
+      "newClient": "New Company",
       "statusActive": "Active",
       "statusInactive": "Inactive",
       "taxId": "Document",
       "noSubdomain": "No subdomain",
       "noModules": "No active modules",
-      "emptyTitle": "No clients yet",
-      "emptyDescription": "Provision the first tenant using the onboarding wizard.",
-      "searchLabel": "Search clients",
+      "emptyTitle": "No companies yet",
+      "emptyDescription": "Provision the first company using the onboarding wizard.",
+      "searchLabel": "Search companies",
       "clearSearch": "Clear search",
       "searchPlaceholder": "Search by name or subdomain...",
-      "searchEmptyTitle": "No clients found",
+      "searchEmptyTitle": "No companies found",
       "searchEmptyDescription": "Adjust the search by name or subdomain.",
+      "filterAll": "All",
+      "columns": {
+        "client": "Company",
+        "modules": "Modules",
+        "status": "Status",
+        "actions": "Actions"
+      },
       "metrics": {
-        "totalTenants": "Total tenants",
-        "activeTenants": "Active tenants",
+        "totalTenants": "Total companies",
+        "activeTenants": "Active companies",
         "estimatedRevenue": "Estimated monthly revenue"
       },
       "actions": {
-        "edit": "Edit client",
-        "delete": "Delete client",
+        "edit": "Edit company",
+        "delete": "Delete company",
         "openEnvironment": "Enter",
-        "visualResources": "Visual resources"
+        "visualResources": "Visual resources",
+        "copyUrl": "Copy URL",
+        "copyUrlDone": "URL copied.",
+        "copyUrlFailed": "Could not copy the URL.",
+        "rowMenu": "Actions for {{name}}"
       },
       "delete": {
-        "title": "Delete client",
+        "title": "Delete company",
         "description": "Are you sure? This action is irreversible and will delete the company with all linked units, roles, users, and operational data.",
         "confirm": "Continue",
         "deleting": "Deleting...",
-        "success": "Client deleted successfully.",
-        "failed": "Could not delete the client.",
+        "success": "Company deleted successfully.",
+        "failed": "Could not delete the company.",
         "errors": {
-          "hasUsers": "Cannot delete: this client still has users.",
-          "hasUnits": "Cannot delete: this client still has units.",
-          "hasRoles": "Cannot delete: this client still has roles.",
-          "linkedData": "Cannot delete: this client still has linked data.",
-          "notFound": "Client not found."
+          "hasUsers": "Cannot delete: this company still has users.",
+          "hasUnits": "Cannot delete: this company still has units.",
+          "hasRoles": "Cannot delete: this company still has roles.",
+          "linkedData": "Cannot delete: this company still has linked data.",
+          "notFound": "Company not found."
         }
       }
     },
     "edit": {
-      "title": "Edit client",
+      "title": "Edit company",
       "description": "Update legal details, subdomain, and subscribed modules.",
       "successTitle": "Success",
-      "success": "Client updated!",
+      "success": "Company updated!",
       "errorTitle": "Error",
       "sections": {
         "basic": "Basic Information",
         "basicDescription": "Legal name and tax document for the company.",
         "identity": "Subdomain & Branding",
-        "identityDescription": "Environment address, logo, colors, and portal tagline.",
+        "identityDescription": "Company address, logo, colors, and portal tagline.",
         "modules": "Rolvix Modules",
-        "modulesDescription": "Select the active modules for this client.",
+        "modulesDescription": "Select the active modules for this company.",
         "families": "Asset families",
-        "familiesDescription": "Which resource types this client registers (spaces, electrical, goods…)."
+        "familiesDescription": "Which resource types this company registers (spaces, electrical, goods…)."
       },
       "actions": {
         "save": "Save Changes",
         "saving": "Saving..."
       },
       "errors": {
-        "invalidId": "Invalid client identifier.",
-        "notFound": "Client not found.",
-        "loadFailed": "Could not load the client.",
-        "updateFailed": "Could not update the client."
+        "invalidId": "Invalid company identifier.",
+        "notFound": "Company not found.",
+        "loadFailed": "Could not load the company.",
+        "updateFailed": "Could not update the company."
       }
     },
     "users": {
@@ -4646,18 +5079,18 @@
     },
     "platformUsers": {
       "title": "Platform users",
-      "description": "View and manage all B2B users across every tenant.",
+      "description": "View and manage all B2B users across every company.",
       "filters": {
         "name": "Name",
         "namePlaceholder": "Filter by name...",
-        "tenant": "Client",
-        "tenantPlaceholder": "All clients",
-        "allTenants": "All clients"
+        "tenant": "Company",
+        "tenantPlaceholder": "All companies",
+        "allTenants": "All companies"
       },
       "columns": {
         "name": "Name",
         "email": "Email",
-        "tenant": "Client",
+        "tenant": "Company",
         "roles": "Roles",
         "status": "Status",
         "actions": "Actions"
@@ -4665,7 +5098,7 @@
       "statusActive": "Active",
       "statusInactive": "Inactive",
       "emptyTitle": "No users found",
-      "emptyDescription": "Adjust the filters or invite users from a client.",
+      "emptyDescription": "Adjust the filters or invite users from a company.",
       "actions": {
         "delete": "Delete user",
         "deleteNamed": "Delete user {{email}}"
@@ -4692,6 +5125,13 @@
       "statusInactive": "Inactive",
       "emptyTitle": "No families found",
       "emptyDescription": "Create a family or include inactive ones.",
+      "filters": {
+        "label": "Filter families",
+        "searchLabel": "Search families",
+        "searchPlaceholder": "Search by key or label",
+        "statusLabel": "Status",
+        "all": "All"
+      },
       "columns": {
         "key": "Key",
         "label": "Label",
@@ -4767,9 +5207,9 @@
       "Inventory": "Inventory",
       "InventoryDescription": "Register and control assets.",
       "PMOC": "PMOC",
-      "PMOCDescription": "Uses resources registered in the environment.",
+      "PMOCDescription": "Uses resources registered in the company.",
       "OS": "Work Orders",
-      "OSDescription": "Lets you link services to the environment's resources.",
+      "OSDescription": "Lets you link services to the company's resources.",
       "Rentals": "Rentals",
       "RentalsDescription": "Manage bookable resources and hours.",
       "Catalog": "Catalog & Orders",
@@ -4779,7 +5219,7 @@
       "ResourcePlanningDescription": "Organizes resource availability and use.",
       "loadFailed": "Could not load modules.",
       "retry": "Try again",
-      "legacyMaintenanceNote": "This client still has the legacy Maintenance module. It stays active, but it cannot be selected or turned off here."
+      "legacyMaintenanceNote": "This company still has the legacy Maintenance module. It stays active, but it cannot be selected or turned off here."
     },
     "wizard": {
       "title": "Register a new company",
@@ -4787,7 +5227,7 @@
       "steps": {
         "company": "Enter the company legal details.",
         "identity": "Define the subdomain and brand identity.",
-        "modules": "Select the modules this client subscribed to.",
+        "modules": "Select the modules this company subscribed to.",
         "families": "What kinds of resources do you work with?",
         "admin": "Invite the project’s initial admin (without setting a password).",
         "summary": "Review the provisioning before finishing."
@@ -4843,10 +5283,10 @@
         "finishing": "Provisioning..."
       },
       "successTitle": "Success",
-      "success": "Environment created successfully!",
+      "success": "Company created successfully!",
       "errorTitle": "Error",
       "errors": {
-        "createFailed": "Could not provision the client.",
+        "createFailed": "Could not provision the company.",
         "familiesLoadFailed": "Could not load asset families."
       },
       "stepperAriaLabel": "Company registration steps",
@@ -4869,18 +5309,20 @@
     },
     "errors": {
       "forbidden": "Access restricted to platform Super-Admins.",
-      "loadFailed": "Could not load clients."
+      "loadFailed": "Could not load companies."
     },
     "support": {
-      "banner": "You are in tenant {{tenant}} as a super-admin",
+      "banner": "You are in company {{tenant}} as a super-admin",
       "platformPanel": "Platform panel",
-      "tenantFallback": "client",
-      "exit": "Leave tenant",
+      "bannerSlim": "You are viewing this company as super-admin",
+      "exitShort": "Leave company",
+      "tenantFallback": "company",
+      "exit": "Leave company",
       "exiting": "Leaving...",
       "exitErrorTitle": "Error",
       "exitFailed": "Could not return to the platform.",
       "enterErrorTitle": "Error",
-      "enterFailed": "Could not open the environment."
+      "enterFailed": "Could not open the company."
     }
   },
   "rentals": {
@@ -4951,8 +5393,12 @@
         "empty": "Empty time slot",
         "noSelection": "Select one or more spaces / goods to view the grid.",
         "legendLabel": "Legend",
-        "minimumLeadTime": "Outside the minimum advance notice"
+        "minimumLeadTime": "Outside the minimum advance notice",
+        "addSlot": "Add a time slot to {{name}}",
+        "continues": "continues",
+        "addSlotShort": "Add time slot"
       },
+      "dayOnlyNote": "Changes apply to {{date}} only.",
       "dayOnlyBanner": "Changes in this grid apply only to {{date}}. To change the weekly rule, use Weekly setup.",
       "weeklyBanner": "This grid repeats weekly on {{day}}. Day agenda only changes one date.",
       "weeklyCellHint": "The change applies to this weekday on all future dates.",
@@ -5075,9 +5521,64 @@
         "sheetHint": "Expands the selected spaces, checked weekdays and intervals in a single apply.",
         "success": "Weekly rule applied to {{count}} time slots."
       },
+      "hours": {
+        "title": "Business hours",
+        "description": "Set when you open on each day of the week. Applies to the chosen resources.",
+        "scope": "Apply to",
+        "allResources": "All resources",
+        "someResources": "Choose resources",
+        "scopeNone": "Choose at least one resource.",
+        "appliesTo": "Applies to {{count}} resources.",
+        "open": "Open",
+        "closed": "Closed",
+        "opens": "Opens",
+        "closes": "Closes",
+        "differs": "Varies between resources",
+        "define": "Set hours",
+        "groupResources_one": "{{count}} resource",
+        "groupResources_other": "{{count}} resources",
+        "noHours": "no hours set",
+        "copyToAll": "Copy to all days",
+        "slotLabel": "Length of each time slot",
+        "slotUnit": "{{count}} min",
+        "slotCustom": "Custom",
+        "slotMinutes": "Minutes",
+        "slotDiffers": "Resources use different lengths. Pick one to apply.",
+        "save": "Save hours",
+        "problem": {
+          "invalidTimes": "Check the hours: opening must be before closing.",
+          "slotRequired": "Choose the length of each time slot.",
+          "invalidSlot": "Enter a valid length in minutes."
+        },
+        "confirm": {
+          "title": "Remove existing time slots?",
+          "description": "Saving will remove these time slots from the chosen resources:",
+          "removeClosed_one": "{{day}} closed: {{count}} slot across {{resources}} resource(s)",
+          "removeClosed_other": "{{day}} closed: {{count}} slots across {{resources}} resource(s)",
+          "removeOutside_one": "{{day}}, outside the new hours: {{count}} slot across {{resources}} resource(s)",
+          "removeOutside_other": "{{day}}, outside the new hours: {{count}} slots across {{resources}} resource(s)",
+          "removeReplace_one": "{{day}}: {{count}} slot will be replaced across {{resources}} resource(s)",
+          "removeReplace_other": "{{day}}: {{count}} slots will be replaced across {{resources}} resource(s)",
+          "action": "Remove and save"
+        },
+        "saveSuccess": "Hours saved: {{created}} created, {{updated}} updated, {{removed}} removed.",
+        "saveFailed": "Not everything was saved ({{count}} problems). See the details on screen.",
+        "conflict": "There are time slots of another type on {{days}}. Those days will not be changed.",
+        "errorConflict": "{{days}}: there are time slots of another type on this day, nothing was changed.",
+        "errorRemoveDay": "{{day}}: could not remove {{count}} old slot(s), the day was not changed ({{message}})",
+        "errorsTitle": "Not everything was saved",
+        "errorRule": "{{days}}: {{message}}",
+        "errorRemove": "Could not remove {{count}} slot(s): {{message}}",
+        "errorPolicy": "Overall resource hours: {{message}}",
+        "preview": "Week preview",
+        "previewHint": "For checking only. Click a time slot to edit it.",
+        "previewShow": "Show preview",
+        "previewHide": "Hide preview"
+      },
+      "advanced": "Advanced",
       "tabs": {
-        "daily": "Day agenda",
-        "templates": "Weekly setup",
+        "daily": "Adjust a day",
+        "templates": "Business hours",
         "kinds": "Occupancy kinds",
         "dailyShort": "Day",
         "templatesShort": "Week",
@@ -5094,7 +5595,7 @@
       },
       "kinds": {
         "title": "Occupancy kinds",
-        "description": "Tenant catalog: whether a time cell is bookable (e.g. Open, Lesson, Closed).",
+        "description": "Define whether customers can book a time slot (for example: Open, Lesson, Closed).",
         "empty": "No kinds yet — defaults are created on first load.",
         "emptyTitle": "No occupancy kinds",
         "key": "Key",
@@ -5192,6 +5693,25 @@
       "summarySpaces_many": "{{count}} spaces",
       "summaryItems_zero": "{{count}} items",
       "summaryItems_many": "{{count}} items",
+      "filters": {
+        "label": "Resource filters",
+        "searchLabel": "Search resources",
+        "searchPlaceholder": "Search by name",
+        "all": "All",
+        "spaces": "Spaces",
+        "items": "Items",
+        "kind": "Resource type",
+        "emptyTitle": "No resources found",
+        "emptyDescription": "Adjust the search or the filter."
+      },
+      "columns": {
+        "resource": "Resource",
+        "price": "Price",
+        "durations": "Durations",
+        "capacity": "Capacity",
+        "actions": "Actions"
+      },
+      "rowMenu": "Actions for {{name}}",
       "sheetTabs": {
         "basic": "Basic",
         "pricingRules": "Pricing & rules",
@@ -5239,12 +5759,12 @@
         "location": "Location",
         "locationPlaceholder": "E.g. Building A",
         "horizonLabel": "Horizon",
-        "horizonInherit": "Use tenant default",
+        "horizonInherit": "Use company default",
         "horizonUnlimited": "Unlimited",
         "horizonDaysMode": "A number of days",
         "horizonDays": "Days ahead",
         "horizonHint": "Set how far ahead customers can book this resource.",
-        "horizonTechnicalHelp": "Use tenant default follows the booking policy and clears a number of days stored on this resource. Unlimited does the same with an explicit clear. There is no limit only when the policy itself is unlimited. A number of days replaces the policy for this resource. A start that many days ahead is allowed; the next day is rejected (booking_horizon_exceeded).",
+        "horizonTechnicalHelp": "Use company default follows the booking policy and clears a number of days stored on this resource. Unlimited does the same with an explicit clear. There is no limit only when the policy itself is unlimited. A number of days replaces the policy for this resource. A start that many days ahead is allowed; the next day is rejected (booking_horizon_exceeded).",
         "horizonEffectiveUnlimited": "In effect: unlimited (no limit).",
         "horizonEffectiveDays": "In effect: {{count}} days ahead.",
         "cancelCutoffLabel": "Cancellation cutoff",
@@ -5351,7 +5871,7 @@
       "spaceType": "Bookable space",
       "bookableItemType": "Bookable item",
       "templatesTitle": "Type and visual template",
-      "templatesHelp": "The listed templates match this tenant's enabled segments.",
+      "templatesHelp": "The listed templates match this company's enabled segments.",
       "mapTitle": "Position blocks",
       "mapHelp": "Drag blocks and choose an appropriate size for each space.",
       "reviewSpaces_one": "{{count}} space on the map",
@@ -5362,6 +5882,9 @@
       }
     },
     "reservations": {
+      "assetFilter": "Showing only the resource: {{name}}",
+      "assetFilterClear": "Show all resources",
+      "assetFilterUnknown": "This resource",
       "title": "Reservations",
       "description": "Confirm deposits, complete and cancel reservations made through the portal.",
       "date": "Date",
@@ -5398,6 +5921,11 @@
       "period": "Period",
       "previousDay": "Previous day",
       "nextDay": "Next day",
+      "previousWeek": "Previous week",
+      "nextWeek": "Next week",
+      "previousMonth": "Previous month",
+      "nextMonth": "Next month",
+      "pickDate": "Pick a date",
       "today": "Today",
       "goToday": "Go to today",
       "showWeek": "View the week",
@@ -5418,20 +5946,13 @@
     },
     "bookingPolicy": {
       "title": "Booking policy",
-      "description": "Set the cancellation text, how far ahead customers can book a resource, and the daily cap on active reservations per customer. It applies to every resource in this workspace, except where a resource sets its own value.",
+      "description": "Set the cancellation text, how far ahead customers can book a resource, and the daily cap on active reservations per customer. It applies to every resource in this company, except where a resource sets its own value.",
       "cancellationLabel": "Cancellation text",
-      "cancellationHint": "Plain text only, up to 2000 characters. Leave it blank and the portal shows a neutral note: the time becomes available again and the customer should check the organization's rules.",
       "cancellationPlaceholder": "Plain text shown when a reservation is canceled.",
       "characterCount": "{{count}}/{{max}}",
-      "dailyLimitToggle": "Limit active reservations per customer per day",
-      "dailyLimitHint": "Counts pending-deposit and confirmed reservations that start on the same day. Off means no limit.",
       "dailyLimitValue": "Maximum per day",
-      "horizonLabel": "How far ahead customers can book",
-      "horizonUnlimited": "Unlimited",
-      "horizonDaysMode": "A number of days",
+      "horizonUnlimited": "no limit",
       "horizonDays": "Days ahead",
-      "horizonHintUnlimited": "Unlimited means no limit on how far ahead a customer can book a resource.",
-      "horizonHintDays": "A start this many days ahead is allowed. The next day is outside the booking limit.",
       "save": "Save",
       "saved": "Booking policy saved.",
       "loadError": "Could not load the booking policy.",
@@ -5444,22 +5965,29 @@
         "horizonRange": "Enter an integer from 0 to 3650.",
         "cancelCutoffRange": "Enter a whole number from 0 to 8760 hours."
       },
-      "cancelCutoffLabel": "Cancellation cutoff",
-      "cancelCutoffNone": "No cutoff",
-      "cancelCutoffHoursMode": "N hours before the start",
+      "cancelCutoffNone": "no deadline",
       "cancelCutoffHours": "Hours before the start",
-      "cancelCutoffHint": "Customers can cancel until this many hours before the start.",
       "categories": {
-        "title": "By category",
-        "description": "Applies to resources in the category. Leave blank to use the general value above. A value set on the resource itself wins.",
-        "horizonDays": "Max advance (days)",
-        "cancelCutoffHours": "Cancel up to (hours before)",
-        "inherit": "General",
-        "save": "Save",
-        "saved": "Category policy saved.",
+        "title": "Exceptions by category",
+        "description": "Leave blank to use the general rule.",
+        "category": "Category",
+        "horizonDays": "Book up to (days)",
+        "cancelCutoffHours": "Cancel up to (h before)",
+        "inherit": "{{value}} (general)",
+        "noLimit": "no limit",
+        "saveFailed": "Could not save: {{names}}.",
         "invalid": "Use a whole number or leave blank.",
-        "empty": "No categories with bookable resources."
-      }
+        "empty": "No category with bookable resources."
+      },
+      "generalTitle": "General rules",
+      "horizonBefore": "Customers can book up to",
+      "horizonAfter": "days ahead",
+      "cancelCutoffBefore": "Cancel up to",
+      "cancelCutoffAfter": "h before the start",
+      "dailyLimitBefore": "At most",
+      "dailyLimitAfter": "active bookings per customer per day",
+      "dailyLimitNone": "no limit",
+      "addCancellationText": "Add cancellation text"
     },
     "resourceWizard": {
       "open": "Setup",
@@ -5602,7 +6130,7 @@
     }
   },
   "resourceVisual": {
-    "tenantSegmentsTitle": "Tenant segments: {{tenantName}}",
+    "tenantSegmentsTitle": "Company segments: {{tenantName}}",
     "title": "Resource visual catalog",
     "help": "Manage global templates, published art, and classifications.",
     "newTemplate": "New template",
@@ -5641,7 +6169,7 @@
     "deleteTagDescription": "This action cannot be undone.",
     "deleteTemplateTitle": "Delete template?",
     "deleteTemplateDescription": "Delete \"{{name}}\"? This action cannot be undone.",
-    "segmentsTitle": "Tenant segments",
+    "segmentsTitle": "Company segments",
     "segmentsHelp": "Set the segments shown first when selecting a template.",
     "enabledTemplates": "Enabled templates",
     "noEnabledTemplates": "No template matches the selected segments.",
@@ -5743,7 +6271,8 @@
     "eyebrow": "Operations · Agendas",
     "overview": {
       "title": "Agenda overview",
-      "subtitle": "Resource occupancy in this period: reservations, orders, maintenance and blocks."
+      "subtitle": "All your resources. One day at a glance.",
+      "subtitleWeek": "All your resources. One week at a glance."
     },
     "resources": {
       "title": "Resource agenda",
@@ -5754,10 +6283,128 @@
       "subtitle": "Occupancy of the resources used by the product in this period."
     },
     "chooseProduct": "Choose a product to view its agenda.",
+    "newReservationDialog": {
+      "title": "New reservation",
+      "description": "Reservation created by staff. The customer receives the confirmation message.",
+      "resource": "Resource",
+      "resourcePlaceholder": "Choose a resource",
+      "date": "Date",
+      "start": "Start",
+      "end": "End",
+      "endAfterStart": "The end must be after the start.",
+      "customer": "Customer",
+      "customerSearch": "Search customer by name or e-mail",
+      "customerSearchHint": "Type at least 2 letters.",
+      "customerNone": "No customer found.",
+      "customerSelected": "Selected customer",
+      "customerClear": "Change",
+      "newCustomer": "+ New customer",
+      "existingCustomer": "Search existing customer",
+      "newName": "Name",
+      "newWhatsApp": "WhatsApp",
+      "newEmail": "E-mail (optional)",
+      "awaiting": "Awaiting deposit",
+      "awaitingHelp": "The reservation stays pending until the deposit is paid.",
+      "cancel": "Cancel",
+      "submit": "Create reservation",
+      "saving": "Creating…",
+      "success": "Reservation created",
+      "startInThePast": "The start date and time are in the past.",
+      "slotTaken": "That time slot is already taken.",
+      "customerNotFound": "Customer not found.",
+      "invalidPhone": "Invalid WhatsApp number. Use area code and number.",
+      "customerExists": "Customer already registered — selected",
+      "error": "Could not create the reservation."
+    },
+    "newReservation": "New reservation",
+    "block": {
+      "description": "Slots that overlap the period are blocked whole. If the resource has no slots in it, the period is blocked exactly as entered.",
+      "resource": "Resource",
+      "resourcePlaceholder": "Choose a resource",
+      "date": "Date",
+      "start": "Start",
+      "end": "End",
+      "endAfterStart": "The end must be after the start.",
+      "reason": "Reason",
+      "reasonPlaceholder": "Choose a reason",
+      "noReasons": "No blocking reasons set up.",
+      "note": "Note",
+      "cancel": "Cancel",
+      "submit": "Block",
+      "saving": "Blocking…",
+      "close": "Close",
+      "error": "Could not block the period.",
+      "success_one": "{{count}} slot blocked.",
+      "success_other": "{{count}} slots blocked.",
+      "skipped_one": "{{count}} already booked slot was not blocked: {{ranges}}.",
+      "skipped_other": "{{count}} already booked slots were not blocked: {{ranges}}.",
+      "failed": "Could not block: {{ranges}}."
+    },
+    "nav": {
+      "previousDay": "Previous day",
+      "nextDay": "Next day",
+      "previousWeek": "Previous week",
+      "nextWeek": "Next week",
+      "pickDate": "Pick a date"
+    },
+    "chips": {
+      "pedido": "Orders",
+      "reserva": "Reservations",
+      "manutencao": "Maintenance",
+      "bloqueio": "Blocks"
+    },
+    "filters": {
+      "title": "Filters",
+      "resources": "Resources · {{selected}} of {{total}}",
+      "resourcesList": "Resources",
+      "noCategory": "No category",
+      "group": "All resources in {{name}}",
+      "noResources": "No resources found.",
+      "product": "Product",
+      "allProducts": "All products",
+      "pickProduct": "Choose a product",
+      "options": "Options",
+      "onlyFree": "Only resources with free time",
+      "showClosed": "Show 24 hours",
+      "clear": "Clear filters",
+      "sheetDescription": "Filter the resources and product shown on the agenda.",
+      "selected_one": "{{count}} resource selected",
+      "selected_other": "{{count}} resources selected"
+    },
     "prep": "Preparation",
     "cleanup": "Cleanup",
     "selectedProductOrders": "Product orders: {{count}}",
-    "otherUses": "Other uses · {{kind}}: {{count}}"
+    "otherUses": "Other uses · {{kind}}: {{count}}",
+    "dateLong": "{{month}} {{day}}, {{year}}",
+    "searchPlaceholder": "Search order or customer",
+    "openSearch": "Open order search",
+    "grid": {
+      "available": "Available to book",
+      "reserveOn": "Reserve {{name}}",
+      "reserveHere": "Reserve here",
+      "rowActions": "Actions for {{name}}",
+      "allDay": "All day",
+      "scrollHint": "Scroll to see more hours",
+      "continues": "continues",
+      "outside_one": "{{count}} outside hours",
+      "outside_other": "{{count}} outside hours",
+      "resourceType": {
+        "Location": "Space",
+        "Good": "Equipment"
+      },
+      "businessHours": "Business hours · {{start}} – {{end}}",
+      "variableHours": "Variable hours"
+    },
+    "footer": {
+      "resources_one": "{{count}} resource",
+      "resources_other": "{{count}} resources",
+      "activitiesDay_one": "{{count}} activity this day",
+      "activitiesDay_other": "{{count}} activities this day",
+      "activitiesWeek_one": "{{count}} activity this week",
+      "activitiesWeek_other": "{{count}} activities this week",
+      "updatedNow": "Updated just now",
+      "updatedAgo": "Updated {{minutes}} min ago"
+    }
   },
   "pedidos": {
     "eyebrow": "Operations · Orders",
@@ -5770,6 +6417,8 @@
     "emptyTitle": "Nothing found",
     "emptyDescription": "No orders or requests match your search and filters.",
     "clear": "Clear search/filters",
+    "loadMore": "Load more",
+    "showing": "Showing {{shown}} of {{total}}",
     "loading": "Loading orders…",
     "quantity": "Quantity: {{count}}",
     "detailTitle": "Order details",
@@ -5781,6 +6430,12 @@
     "createdAt": "Created on",
     "files": "Files",
     "customer": "Customer",
+    "columns": {
+      "order": "Order",
+      "customer": "Customer",
+      "total": "Total",
+      "date": "Date"
+    },
     "tabs": {
       "todos": "All",
       "pedidos": "Orders",
@@ -5792,26 +6447,21 @@
     "eyebrow": "Operations · Maintenance",
     "subtitle": "Recurring plans and equipment work orders in one place.",
     "tabs": {
-      "hoje": "Today",
+      "agenda": "Schedule",
       "ordens": "Work orders",
       "planos": "Plans"
     },
     "sections": {
-      "hoje": "Plans whose first date is due and open work orders, including upcoming ones.",
-      "ordens": "Track work orders and their execution.",
-      "planos": "Organize recurring maintenance plans."
+      "overdue": "Overdue",
+      "week": "This week",
+      "upcoming": "Upcoming"
     },
     "newPlan": "New plan",
     "newOrder": "New work order",
     "generate": "Generate work order",
-    "search": "Search plans, work orders or equipment",
+    "search": "Search equipment, plan or technician",
     "filters": "Filters",
     "status": "Status",
-    "type": "Type",
-    "allStatuses": "All statuses",
-    "allTypes": "All types",
-    "due": "First date due",
-    "firstDue": "First due date: {{date}}",
     "emptyTitle": "No items to display",
     "emptyDescription": "Available items will appear here. Adjust the filters or create a new item.",
     "clear": "Clear search/filters",
@@ -5819,7 +6469,41 @@
     "loadError": "Unable to load maintenance.",
     "generateDescription": "Choose eligible equipment and a date. The work order will use the plan checklist.",
     "checklist": "Plan checklist",
-    "sourcePlan": "Source plan: {{name}}"
+    "sourcePlan": "Source plan: {{name}}",
+    "noTechnician": "No technician",
+    "needsOrder": "Needs a WO",
+    "auto": "Automatic",
+    "agendaFilters": {
+      "label": "Filter the schedule",
+      "all": "All",
+      "overdue": "Overdue",
+      "unassigned": "No technician",
+      "mine": "Mine"
+    },
+    "columns": {
+      "equipment": "Equipment",
+      "plan": "Plan",
+      "technician": "Technician",
+      "date": "Date",
+      "status": "Status",
+      "action": "Action",
+      "frequency": "Frequency",
+      "nextDue": "Next due"
+    },
+    "overdueDays_one": "{{count}} day ago",
+    "overdueDays_other": "{{count}} days ago",
+    "overdueDays_many": "{{count}} days ago",
+    "every_one": "Every {{count}} day",
+    "every_other": "Every {{count}} days",
+    "every_many": "Every {{count}} days",
+    "generateOverdue": "Generate overdue WOs ({{count}})",
+    "generating": "Generating {{done}} of {{total}}…",
+    "bulkTitle": "Generate {{count}} overdue WOs?",
+    "bulkDescription": "One work order is created for each overdue equipment, dated today and without a technician. You can assign a technician later.",
+    "bulkSummary": "{{created}} WOs generated, {{skipped}} already existed, {{failed}} failed.",
+    "coverageFailed_one": "Could not compute coverage for {{count}} plan. The schedule may be incomplete.",
+    "coverageFailed_other": "Could not compute coverage for {{count}} plans. The schedule may be incomplete.",
+    "coverageFailed_many": "Could not compute coverage for {{count}} plans. The schedule may be incomplete."
   },
   "cadastro": {
     "saveBeforeContinue": "Save changes or restore the values before changing steps.",
@@ -5829,6 +6513,8 @@
     "productCreate": "New product",
     "resourceCreate": "New resource",
     "subtitle": "Step {{count}} of {{total}} · {{step}}. Save changes before continuing.",
+    "stepOf": "Step {{count}} of {{total}}",
+    "stepCompact": "{{count}} of {{total}}",
     "steps": "Registration steps",
     "back": "Back",
     "next": "Continue",
@@ -5837,9 +6523,150 @@
     "createCategory": "Add category",
     "createTag": "Add tag",
     "noParent": "None",
-    "taxonomyHelp": "Choose categories and tags for this product and save the step.",
+    "taxonomyHelp": "Choose categories and tags for this product.",
     "taxonomyLimit": "The limit is 20 categories and 20 tags.",
     "resourceTaxonomyHelp": "You can create shared categories and tags here, but they are not assigned to this resource. The operational resource type is configured separately.",
-    "taxonomyNoRead": "You need permission to view categories and tags."
+    "taxonomyNoRead": "You need permission to view categories and tags.",
+    "progressCaptionProduct": "Product setup",
+    "progressCaptionResource": "Resource setup",
+    "stage": "Step {{count}} of {{total}}",
+    "optional": "Optional",
+    "doneLabel": "done",
+    "notApplicable": "Not applicable",
+    "timeTitle": "At your own pace",
+    "timeBody": "The product only becomes available to customers after it is published.",
+    "productDescription": "Set up your product and get everything ready to receive bookings.",
+    "saveAndContinue": "Save and continue",
+    "saveAndExit": "Save and exit",
+    "editTitle": "Edit product",
+    "saveChanges": "Save changes",
+    "changesSaved": "Changes saved",
+    "requiredNote": "* Required field",
+    "crumbCatalog": "Catalog",
+    "product": {
+      "nameLabel": "Product name *",
+      "salesMode": {
+        "label": "How is this product sold?",
+        "description": "This defines whether availability needs to be configured.",
+        "titleWith": "With scheduling",
+        "descWith": "The customer books a resource for a date or time.",
+        "titleWithout": "Without scheduling",
+        "descWithout": "The product is sold without booking a date or time.",
+        "helperWith": "Schedule and Queue are available for this product.",
+        "helperWithout": "Schedule and Queue do not apply to this product."
+      },
+      "nameHelp": "This name is shown in the catalog and in bookings.",
+      "codeLabel": "Internal code",
+      "codeHelp": "Use a unique code to find the product in your operation.",
+      "descriptionLabel": "Description",
+      "descriptionPlaceholder": "Describe what is included, the highlights and the main information for the customer.",
+      "descriptionHelp": "Optional. You can add more details later.",
+      "pricingInfo": "Prices and billing conditions are set in the Pricing step."
+    },
+    "productSteps": {
+      "dados": {
+        "title": "Product details",
+        "subtitle": "Name and identification",
+        "description": "Start with the information that identifies your product."
+      },
+      "arquivos": {
+        "title": "Photos and files",
+        "subtitle": "Images and documents",
+        "description": "Optional. Add photos shown in the portal and documents for internal use. Each upload is saved right away."
+      },
+      "categorias": {
+        "title": "Categories and tags",
+        "subtitle": "Catalog organization",
+        "description": "Make search easier and keep your catalog organized."
+      },
+      "agenda": {
+        "title": "Schedule",
+        "subtitle": "Availability and hours",
+        "description": "Choose which resources serve this product and for how long."
+      },
+      "fila": {
+        "title": "Queue",
+        "subtitle": "Service order",
+        "description": "See how the queue of the linked resources works."
+      },
+      "regras": {
+        "title": "Rules",
+        "subtitle": "Terms of use",
+        "description": "Choose who can see and buy this product."
+      },
+      "precos": {
+        "title": "Pricing",
+        "subtitle": "Values and billing",
+        "description": "Set the price and billing conditions."
+      },
+      "publicacao": {
+        "title": "Publishing",
+        "subtitle": "Review and visibility",
+        "description": "Review what is missing and publish to customers."
+      }
+    },
+    "categoriesHelp": "Group similar products to make browsing easier.",
+    "categorySearchPlaceholder": "Search or select categories",
+    "categorySearchLabel": "Search categories",
+    "createNewCategory": "Create new category",
+    "createCategoryButton": "Create category",
+    "noCategorySelected": "No category selected",
+    "noCategorySelectedHint": "Select an existing category or create a new one.",
+    "categoryDialogTitle": "Create category",
+    "categoryDialogDescription": "Organize your catalog without leaving the setup.",
+    "categoryNameLabel": "Category name *",
+    "categoryNameHelp": "Use a short name that is easy to recognize.",
+    "categoryParentLabel": "Parent category (optional)",
+    "categorySubOf": "{{name}} will be a subcategory of {{parent}}.",
+    "categorySlugLabel": "Category address",
+    "categorySlugEdit": "Edit",
+    "categoryScopeNote": "Available across this space's catalog.",
+    "categoryAutoSelectNote": "Once created, the category will be selected for this product.",
+    "createAndSelect": "Create and select",
+    "categoryCreatedSelected": "Category created and selected for this product.",
+    "categorySlugInvalid": "Use only lowercase letters, numbers and hyphens.",
+    "noCategoryMatch": "No category found",
+    "tagsHelp": "Add keywords for more specific searches.",
+    "tagInputPlaceholder": "Type a tag and press Enter",
+    "tagSearchPlaceholder": "Type to search for a tag",
+    "noTagMatch": "No tag found",
+    "tagInvalid": "Use letters or numbers in the tag.",
+    "removeItem": "Remove {{name}}",
+    "differenceTitle": "What is the difference?",
+    "differenceBody": "Categories are the sections of your catalog. Tags describe traits that can appear on products in different categories.",
+    "saveError": "Could not save. Review and try again.",
+    "offerNameHelp": "This name is shown in the catalog and on bookings.",
+    "offerCodeHelp": "Use a unique code to find the product in your operation.",
+    "offerDescriptionHelp": "Optional. You can add more details later.",
+    "offerDescriptionPlaceholder": "Describe what is included, what sets it apart and the key information for the customer.",
+    "offerPricingInfo": "Prices and billing terms are set in the Pricing step.",
+    "productStatusActive": "Active",
+    "stageName": "· {{name}}",
+    "published": {
+      "title": "Product published",
+      "priceOnRequest": "On request",
+      "visibilityPublic": "Visible to all customers (Public).",
+      "visibilityRestricted": "Visible only to released customers and groups (Restricted).",
+      "viewList": "View in the product list",
+      "createAnother": "Create another product",
+      "keepEditing": "Keep editing",
+      "menuFailed": "The product is active, but it did not get into the portal menu."
+    },
+    "review": {
+      "title": "Summary before publishing",
+      "edit": "Edit",
+      "editField": "Edit {{field}}",
+      "name": "Name",
+      "categories": "Categories",
+      "noCategories": "None",
+      "price": "Price",
+      "priceOnRequest": "On request",
+      "agenda": "Schedule",
+      "noAgenda": "Does not use a schedule",
+      "visibility": "Visibility",
+      "visibilityPublic": "Public",
+      "visibilityRestricted": "Restricted",
+      "agendaLinked": "Linked resources"
+    }
   }
 }

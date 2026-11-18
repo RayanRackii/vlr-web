@@ -1,10 +1,14 @@
 import { useEffect, useMemo, useState } from "react"
-import { Link, useNavigate, useParams } from "react-router-dom"
+import { useNavigate, useParams } from "react-router-dom"
 import { useTranslation } from "react-i18next"
 
-import { Button, buttonVariants } from "@/components/ui/button"
+import { Page } from "@/components/layout/Page"
+import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
+import { FormGrid, FormRow, FormSection } from "@/components/ui/form-layout"
 import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Wizard, type WizardStep } from "@/components/wizard/Wizard"
 import { buildResourceTypePreview } from "@/features/assets/resourceTypes/resourceTypePreview"
 import {
   toResourceTypeView,
@@ -22,6 +26,7 @@ import {
 } from "@/features/assets/resourceTypes/resourceTypesService"
 
 const STEPS = ["name", "capabilities", "fields", "review"] as const
+type StepId = (typeof STEPS)[number]
 const STEP_LABEL = {
   name: "assets.resourceTypes.wizard.stepName",
   capabilities: "assets.resourceTypes.wizard.stepCapabilities",
@@ -154,8 +159,9 @@ export function ResourceTypeWizardPage() {
   const [draft, setDraft] = useState<Draft>(emptyDraft)
   const [step, setStep] = useState(0)
   const [missing, setMissing] = useState<string[]>([])
+  const [stepError, setStepError] = useState<string | null>(null)
+  const [focusTick, setFocusTick] = useState(0)
   const [loadError, setLoadError] = useState<string | null>(null)
-  const [saveError, setSaveError] = useState<string | null>(null)
   const [loading, setLoading] = useState(Boolean(typeId))
   const [saving, setSaving] = useState(false)
   const view = useMemo(() => viewFromDraft(draft), [draft])
@@ -177,6 +183,12 @@ export function ResourceTypeWizardPage() {
     return () => controller.abort()
   }, [t, typeId])
 
+  useEffect(() => {
+    if (focusTick === 0) return
+    const frame = requestAnimationFrame(() => document.querySelector<HTMLElement>("[aria-invalid='true']")?.focus())
+    return () => cancelAnimationFrame(frame)
+  }, [focusTick])
+
   function updateField(localId: string, patch: Partial<DraftField>) {
     setDraft((current) => ({
       ...current,
@@ -184,112 +196,107 @@ export function ResourceTypeWizardPage() {
     }))
   }
 
-  function missingNow(): string[] {
+  function gapsFor(stepId: StepId | "all"): string[] {
     const gaps: string[] = []
-    if (step === 0) {
+    if (stepId === "name" || stepId === "all") {
       if (!draft.name.trim()) gaps.push("name")
       if (!draft.singular.trim()) gaps.push("singular")
       if (!draft.plural.trim()) gaps.push("plural")
     }
-    if (step === 2 && draft.fields.some((field) => !field.name.trim())) gaps.push("fieldName")
+    if ((stepId === "fields" || stepId === "all") && draft.fields.some((field) => !field.name.trim())) gaps.push("fieldName")
     return gaps
   }
 
-  function advance() {
-    const gaps = missingNow()
+  const gapLabel = (gap: string) => t(`assets.resourceTypes.wizard.missing${gap[0]?.toUpperCase()}${gap.slice(1)}`)
+
+  function reportGaps(gaps: string[]): string | null {
     setMissing(gaps)
-    if (gaps.length > 0) {
-      queueMicrotask(() => document.querySelector<HTMLElement>("[aria-invalid='true']")?.focus())
-      return
-    }
-    setStep((current) => Math.min(current + 1, STEPS.length - 1))
+    if (gaps.length === 0) return null
+    setFocusTick((tick) => tick + 1)
+    return `${t("assets.resourceTypes.wizard.missingTitle")} ${gaps.map(gapLabel).join(", ")}`
   }
 
   async function save() {
-    const gaps = [
-      !draft.name.trim() ? "name" : "",
-      !draft.singular.trim() ? "singular" : "",
-      !draft.plural.trim() ? "plural" : "",
-      draft.fields.some((field) => !field.name.trim()) ? "fieldName" : "",
-    ].filter(Boolean)
-    setMissing(gaps)
-    if (gaps.length > 0) return
+    const message = reportGaps(gapsFor("all"))
+    if (message) {
+      setStepError(message)
+      setStep(gapsFor("name").length > 0 ? 0 : 2)
+      return
+    }
+    setStepError(null)
     setSaving(true)
-    setSaveError(null)
     try {
       const body = writeFromDraft(draft)
       if (typeId) await updateResourceType(typeId, body)
       else await createResourceType(body)
       void navigate("/ativos/tipos")
     } catch (error: unknown) {
-      setSaveError(error instanceof Error ? error.message : t("assets.resourceTypes.errors.save"))
+      setStepError(error instanceof Error ? error.message : t("assets.resourceTypes.errors.save"))
     } finally {
       setSaving(false)
     }
   }
 
-  if (loading) return <p role="status">{t("common.loading")}</p>
-  if (loadError) return <p role="alert">{loadError}</p>
+  const steps: WizardStep[] = STEPS.map((id) => ({
+    id,
+    label: t(STEP_LABEL[id]),
+    validate: id === "name" || id === "fields" ? () => reportGaps(gapsFor(id)) : undefined,
+  }))
 
-  const stepId = STEPS[step] ?? "name"
-  return (
-    <form
-      className="mx-auto grid w-full max-w-5xl gap-6 px-4 py-6 lg:grid-cols-[minmax(0,1fr)_20rem]"
-      onSubmit={(event) => {
-        event.preventDefault()
-        if (stepId === "review") void save()
-        else advance()
-      }}
-    >
-      <div className="flex flex-col gap-6">
-        <header>
-          <h1 className="text-2xl font-semibold tracking-tight">{draft.name.trim() || t("assets.resourceTypes.wizard.untitled")}</h1>
-        </header>
-        <ol aria-label={t("assets.resourceTypes.wizard.steps")} className="flex flex-wrap gap-3">
-          {STEPS.map((id, index) => (
-            <li key={id}>
-              <button
-                type="button"
-                className="flex items-center gap-2 text-sm"
-                aria-current={index === step ? "step" : undefined}
-                onClick={() => setStep(index)}
-              >
-                <span className="grid size-7 place-items-center rounded-full border">{index + 1}</span>
-                {" "}
-                <span className={index === step ? undefined : "max-sm:sr-only"}>{t(STEP_LABEL[id])}</span>
-              </button>
-            </li>
+  const header = {
+    title: draft.name.trim() || t("assets.resourceTypes.wizard.untitled"),
+    back: { to: "/ativos/tipos", label: t("assets.resourceTypes.wizard.cancel") },
+  }
+
+  if (loading) return <Page header={header} state="loading"><div /></Page>
+  if (loadError) return <Page header={header} state="error" error={loadError} onRetry={() => void navigate(0)}><div /></Page>
+
+  const edit = (index: number, label: string) => (
+    <Button type="button" variant="ghost" aria-label={`${t("assets.resourceTypes.wizard.edit")} ${t(label)}`} onClick={() => setStep(index)}>{t("assets.resourceTypes.wizard.edit")}</Button>
+  )
+
+  const review = (
+    <FormSection title={t(STEP_LABEL.review)}>
+      <div className="grid gap-4 text-sm">
+        <section>
+          <h3 className="font-medium">{draft.name}</h3>
+          <p>{draft.singular} / {draft.plural}</p>
+          {edit(0, STEP_LABEL.name)}
+        </section>
+        <ul>
+          {(["bookable", "deliverable", "maintenance"] as const).map((key) => (
+            <li key={key}>{t(`assets.resourceTypes.wizard.${key}`)} · {draft.capabilities[key] ? t("assets.resourceTypes.wizard.on") : t("assets.resourceTypes.wizard.off")}</li>
           ))}
-        </ol>
+        </ul>
+        {edit(1, STEP_LABEL.capabilities)}
+        {draft.fields.length === 0 ? <p>{t("assets.resourceTypes.wizard.noFields")}</p> : (
+          <ul>
+            {draft.fields.map((field) => <li key={field.localId}>{field.name.trim() || t("assets.resourceTypes.wizard.unnamed")} · {t(`assets.resourceTypes.wizard.${field.visibility}`)}</li>)}
+          </ul>
+        )}
+        {edit(2, STEP_LABEL.fields)}
+      </div>
+    </FormSection>
+  )
 
-        {missing.length > 0 ? (
-          <div role="alert">
-            <p>{t("assets.resourceTypes.wizard.missingTitle")}</p>
-            <ul>
-              {missing.map((gap) => (
-                <li key={gap}>{t(`assets.resourceTypes.wizard.missing${gap[0]?.toUpperCase()}${gap.slice(1)}`)}</li>
-              ))}
-            </ul>
-          </div>
-        ) : null}
-
-        {stepId === "name" ? (
-          <fieldset className="grid gap-4">
-            <label className="grid gap-1 text-sm">
-              {t("assets.resourceTypes.wizard.name")}
+  function body(index: number) {
+    const stepId = STEPS[index] ?? "name"
+    if (stepId === "name") {
+      return (
+        <FormSection title={t(STEP_LABEL.name)}>
+          <FormGrid>
+            <FormRow label={t("assets.resourceTypes.wizard.name")} htmlFor="rt-name">
               <Input aria-invalid={!draft.name.trim() && missing.includes("name")} value={draft.name} onChange={(event) => setDraft({ ...draft, name: event.target.value })} />
-            </label>
-            <label className="grid gap-1 text-sm">
-              {t("assets.resourceTypes.wizard.singular")}
+            </FormRow>
+            <FormRow label={t("assets.resourceTypes.wizard.singular")} htmlFor="rt-singular">
               <Input aria-invalid={!draft.singular.trim() && missing.includes("singular")} value={draft.singular} onChange={(event) => setDraft({ ...draft, singular: event.target.value })} />
-            </label>
-            <label className="grid gap-1 text-sm">
-              {t("assets.resourceTypes.wizard.plural")}
+            </FormRow>
+            <FormRow label={t("assets.resourceTypes.wizard.plural")} htmlFor="rt-plural">
               <Input aria-invalid={!draft.plural.trim() && missing.includes("plural")} value={draft.plural} onChange={(event) => setDraft({ ...draft, plural: event.target.value })} />
-            </label>
+            </FormRow>
             <div role="radiogroup" aria-label={t("assets.resourceTypes.wizard.article")} className="flex gap-4">
               {(["um", "uma"] as const).map((article) => (
-                <label key={article} className="flex items-center gap-2 text-sm">
+                <Label key={article} className="min-h-11 font-normal">
                   <input
                     type="radio"
                     name="article"
@@ -298,111 +305,105 @@ export function ResourceTypeWizardPage() {
                     onChange={() => setDraft({ ...draft, article })}
                   />
                   {t(article === "um" ? "assets.resourceTypes.wizard.articleUm" : "assets.resourceTypes.wizard.articleUma")}
-                </label>
+                </Label>
               ))}
             </div>
             <p>{t("assets.resourceTypes.wizard.choose", { article: draft.article, singular: draft.singular || "…" })}</p>
             <p>{t("assets.resourceTypes.wizard.available", { count: 3, plural: draft.plural || "…" })}</p>
-          </fieldset>
-        ) : null}
-
-        {stepId === "capabilities" ? (
-          <fieldset className="grid gap-3">
+          </FormGrid>
+        </FormSection>
+      )
+    }
+    if (stepId === "capabilities") {
+      return (
+        <FormSection title={t(STEP_LABEL.capabilities)} description={t("assets.resourceTypes.wizard.capabilityHelp")}>
+          <div className="grid gap-1">
             {(["bookable", "deliverable", "maintenance"] as const).map((key) => (
-              <label key={key} className="flex items-center gap-2 text-sm">
+              <Label key={key} className="min-h-11 font-normal">
                 <Checkbox checked={draft.capabilities[key]} onChange={(event) => setDraft({ ...draft, capabilities: { ...draft.capabilities, [key]: event.target.checked } })} />
                 {t(`assets.resourceTypes.wizard.${key}`)}
-              </label>
+              </Label>
             ))}
-            <p className="text-sm text-muted-foreground">{t("assets.resourceTypes.wizard.capabilityHelp")}</p>
-          </fieldset>
-        ) : null}
-
-        {stepId === "fields" ? (
-          <div className="grid gap-4">
-            {draft.fields.map((field) => (
-              <fieldset key={field.localId} className="grid gap-3 rounded-lg border p-3">
-                <label className="grid gap-1 text-sm">
-                  {t("assets.resourceTypes.wizard.fieldName")}
+          </div>
+        </FormSection>
+      )
+    }
+    return (
+      <FormSection title={t(STEP_LABEL.fields)}>
+        <div className="grid gap-4">
+          {draft.fields.map((field) => (
+            <fieldset key={field.localId} className="grid gap-3 rounded-lg border p-3">
+              <FormGrid>
+                <FormRow label={t("assets.resourceTypes.wizard.fieldName")} htmlFor={`rt-field-${field.localId}`}>
                   <Input aria-invalid={!field.name.trim() && missing.includes("fieldName")} value={field.name} onChange={(event) => updateField(field.localId, { name: event.target.value })} />
-                </label>
-                <div role="group" aria-label={t("assets.resourceTypes.wizard.responseType")} className="flex flex-wrap gap-2">
-                  {(["text", "list", "number"] as const).map((responseType) => (
-                    <Button key={responseType} type="button" variant={field.responseType === responseType ? "default" : "outline"} onClick={() => updateField(field.localId, { responseType })}>
-                      {t(`assets.resourceTypes.wizard.${responseType}`)}
-                    </Button>
-                  ))}
-                </div>
+                </FormRow>
                 {field.responseType === "list" ? (
-                  <label className="grid gap-1 text-sm">
-                    {t("assets.resourceTypes.wizard.options")}
+                  <FormRow label={t("assets.resourceTypes.wizard.options")} htmlFor={`rt-options-${field.localId}`}>
                     <Input value={field.options} onChange={(event) => updateField(field.localId, { options: event.target.value })} />
-                  </label>
+                  </FormRow>
                 ) : null}
-                <div className="flex flex-wrap gap-2">
-                  {(["public", "internal"] as const).map((visibility) => (
-                    <Button key={visibility} type="button" variant={field.visibility === visibility ? "default" : "outline"} onClick={() => updateField(field.localId, { visibility, filterable: visibility === "public" && field.filterable, askOnBooking: visibility === "public" && field.askOnBooking })}>
-                      {t(`assets.resourceTypes.wizard.${visibility}`)}
-                    </Button>
-                  ))}
-                </div>
-                <label className="flex items-center gap-2 text-sm">
-                  <Checkbox checked={field.required} onChange={(event) => updateField(field.localId, { required: event.target.checked })} />
-                  {t("assets.resourceTypes.wizard.required")}
-                </label>
-                <label className="flex items-center gap-2 text-sm">
-                  <Checkbox checked={field.filterable} disabled={field.visibility === "internal"} onChange={(event) => updateField(field.localId, { filterable: event.target.checked })} />
-                  {t("assets.resourceTypes.wizard.filter")}
-                </label>
-                <label className="flex items-center gap-2 text-sm">
-                  <Checkbox checked={field.askOnBooking} disabled={field.visibility === "internal"} onChange={(event) => updateField(field.localId, { askOnBooking: event.target.checked })} />
-                  {t("assets.resourceTypes.wizard.ask")}
-                </label>
-                <Button type="button" variant="ghost" onClick={() => setDraft({ ...draft, fields: draft.fields.filter((item) => item.localId !== field.localId) })}>
-                  {t("assets.resourceTypes.wizard.removeField")}
-                </Button>
-              </fieldset>
-            ))}
-            <Button type="button" variant="outline" onClick={() => setDraft({
-              ...draft,
-              fields: [...draft.fields, { localId: crypto.randomUUID(), key: "", name: "", responseType: "text", options: "", visibility: "public", required: false, filterable: false, askOnBooking: false }],
-            })}>
-              {t("assets.resourceTypes.wizard.addField")}
-            </Button>
-          </div>
-        ) : null}
-
-        {stepId === "review" ? (
-          <div className="grid gap-4 text-sm">
-            <section>
-              <h2 className="font-medium">{draft.name}</h2>
-              <p>{draft.singular} / {draft.plural}</p>
-              <Button type="button" variant="ghost" aria-label={`${t("assets.resourceTypes.wizard.edit")} ${t("assets.resourceTypes.wizard.stepName")}`} onClick={() => setStep(0)}>{t("assets.resourceTypes.wizard.edit")}</Button>
-            </section>
-            <ul>
-              {(["bookable", "deliverable", "maintenance"] as const).map((key) => (
-                <li key={key}>{t(`assets.resourceTypes.wizard.${key}`)} · {draft.capabilities[key] ? t("assets.resourceTypes.wizard.on") : t("assets.resourceTypes.wizard.off")}</li>
-              ))}
-            </ul>
-            <Button type="button" variant="ghost" aria-label={`${t("assets.resourceTypes.wizard.edit")} ${t("assets.resourceTypes.wizard.stepCapabilities")}`} onClick={() => setStep(1)}>{t("assets.resourceTypes.wizard.edit")}</Button>
-            {draft.fields.length === 0 ? <p>{t("assets.resourceTypes.wizard.noFields")}</p> : (
-              <ul>
-                {draft.fields.map((field) => <li key={field.localId}>{field.name.trim() || t("assets.resourceTypes.wizard.unnamed")} · {t(`assets.resourceTypes.wizard.${field.visibility}`)}</li>)}
-              </ul>
-            )}
-            <Button type="button" variant="ghost" aria-label={`${t("assets.resourceTypes.wizard.edit")} ${t("assets.resourceTypes.wizard.stepFields")}`} onClick={() => setStep(2)}>{t("assets.resourceTypes.wizard.edit")}</Button>
-          </div>
-        ) : null}
-
-        {saveError ? <p role="alert">{saveError}</p> : null}
-        <div className="flex flex-wrap gap-2">
-          <Link className={buttonVariants({ variant: "outline" })} to="/ativos/tipos">{t("assets.resourceTypes.wizard.cancel")}</Link>
-          {step > 0 ? <Button type="button" variant="outline" onClick={() => setStep((current) => current - 1)}>{t("assets.resourceTypes.wizard.back")}</Button> : null}
-          {stepId === "review"
-            ? <Button type="submit" disabled={saving}>{t("assets.resourceTypes.wizard.save")}</Button>
-            : <Button type="submit">{t("assets.resourceTypes.wizard.continue")}</Button>}
+              </FormGrid>
+              <div role="group" aria-label={t("assets.resourceTypes.wizard.responseType")} className="flex flex-wrap gap-2">
+                {(["text", "list", "number"] as const).map((responseType) => (
+                  <Button key={responseType} type="button" variant={field.responseType === responseType ? "default" : "outline"} onClick={() => updateField(field.localId, { responseType })}>
+                    {t(`assets.resourceTypes.wizard.${responseType}`)}
+                  </Button>
+                ))}
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {(["public", "internal"] as const).map((visibility) => (
+                  <Button key={visibility} type="button" variant={field.visibility === visibility ? "default" : "outline"} onClick={() => updateField(field.localId, { visibility, filterable: visibility === "public" && field.filterable, askOnBooking: visibility === "public" && field.askOnBooking })}>
+                    {t(`assets.resourceTypes.wizard.${visibility}`)}
+                  </Button>
+                ))}
+              </div>
+              <Label className="min-h-11 font-normal">
+                <Checkbox checked={field.required} onChange={(event) => updateField(field.localId, { required: event.target.checked })} />
+                {t("assets.resourceTypes.wizard.required")}
+              </Label>
+              <Label className="min-h-11 font-normal">
+                <Checkbox checked={field.filterable} disabled={field.visibility === "internal"} onChange={(event) => updateField(field.localId, { filterable: event.target.checked })} />
+                {t("assets.resourceTypes.wizard.filter")}
+              </Label>
+              <Label className="min-h-11 font-normal">
+                <Checkbox checked={field.askOnBooking} disabled={field.visibility === "internal"} onChange={(event) => updateField(field.localId, { askOnBooking: event.target.checked })} />
+                {t("assets.resourceTypes.wizard.ask")}
+              </Label>
+              <Button type="button" variant="ghost" onClick={() => setDraft({ ...draft, fields: draft.fields.filter((item) => item.localId !== field.localId) })}>
+                {t("assets.resourceTypes.wizard.removeField")}
+              </Button>
+            </fieldset>
+          ))}
+          <Button type="button" variant="outline" onClick={() => setDraft({
+            ...draft,
+            fields: [...draft.fields, { localId: crypto.randomUUID(), key: "", name: "", responseType: "text", options: "", visibility: "public", required: false, filterable: false, askOnBooking: false }],
+          })}>
+            {t("assets.resourceTypes.wizard.addField")}
+          </Button>
         </div>
-      </div>
+      </FormSection>
+    )
+  }
+
+  return (
+    <Page header={header}>
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
+        <Wizard
+          steps={steps}
+          stepIndex={step}
+          onStepChange={(index) => { setStep(index); setStepError(null) }}
+          ariaLabel={t("assets.resourceTypes.wizard.steps")}
+          backLabel={t("assets.resourceTypes.wizard.back")}
+          nextLabel={t("assets.resourceTypes.wizard.continue")}
+          finishLabel={t("assets.resourceTypes.wizard.save")}
+          onFinish={save}
+          busy={saving}
+          stepError={stepError}
+          advanceOnEnter
+          finalReview={review}
+        >
+          {body}
+        </Wizard>
 
       <aside aria-label={t("assets.resourceTypes.wizard.previewTitle")} className="rounded-lg border p-4">
         <h2 className="font-medium">{t("assets.resourceTypes.wizard.previewTitle")}</h2>
@@ -430,6 +431,7 @@ export function ResourceTypeWizardPage() {
         <p>{preview.action === "book" ? t("assets.resourceTypes.wizard.book") : t("assets.resourceTypes.wizard.request")}</p>
         <p>{preview.hiddenCount > 0 ? t("assets.resourceTypes.wizard.hidden", { count: preview.hiddenCount }) : t("assets.resourceTypes.wizard.hiddenNone")}</p>
       </aside>
-    </form>
+      </div>
+    </Page>
   )
 }

@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react"
-import { Link } from "react-router-dom"
 import { usePermissions } from "@/features/users/permissions/PermissionContext"
 import { BarChart3, Layers } from "lucide-react"
 import { useTranslation } from "react-i18next"
@@ -15,13 +14,15 @@ import { usePlatformTenantSession } from "@/features/admin/hooks/usePlatformTena
 import { ClientDashboard } from "@/features/dashboard/components/ClientDashboard"
 import { SuperAdminDashboard } from "@/features/dashboard/components/SuperAdminDashboard"
 import { TechnicianDashboard } from "@/features/dashboard/components/TechnicianDashboard"
-import { DashboardHero, DashboardQuickAccess, KpiCard, KpiSkeleton, SectionHeading } from "@/features/dashboard/components/DashboardOverview"
+import { openDueWorkOrders } from "@/features/dashboard/lib/openDueWorkOrders"
+import { DashboardHero, KpiCard, KpiSkeleton, SectionHeading } from "@/features/dashboard/components/DashboardOverview"
 import { DashboardCharts } from "@/features/dashboard/components/DashboardCharts"
+import { FirstStepsLink } from "@/features/dashboard/components/FirstStepsLink"
 import { RentalsReadinessCard } from "@/features/rentals/components/RentalsReadinessCard"
 import { TodayAgendaCard } from "@/features/catalog/components/agenda/TodayAgendaCard"
 import type { DashboardMetrics } from "@/features/dashboard/schemas/dashboardSchemas"
 import { getDashboardMetrics } from "@/features/dashboard/services/dashboardService"
-import { hasSlotsToday, reservationsTodayTotal } from "@/features/dashboard/pages/dashboardMetrics"
+import { hasSlotsToday } from "@/features/dashboard/pages/dashboardMetrics"
 import type { CurrentUser } from "@/features/users/schemas/userSchemas"
 import { getCurrentUser } from "@/features/users/services/usersService"
 import { isAxiosError } from "@/lib/api"
@@ -220,11 +221,7 @@ export function TenantAdminDashboard() {
     <div aria-busy={isLoading} className="staff-dashboard">
       <DashboardHero metrics={visibleMetrics} />
       {activeModules.includes("rentals") && can("rentals.assets.read") && can("core.units.read") ? (
-        <p className="text-sm">
-          <Link className="inline-flex min-h-11 items-center font-medium text-primary underline-offset-4 hover:underline" to="/primeiros-passos">
-            {t("assistant.firstSteps.title")}
-          </Link>
-        </p>
+        <FirstStepsLink />
       ) : null}
       <div className="staff-dashboard-readiness"><RentalsReadinessCard /></div>
       {showAgenda ? <div className="staff-dashboard-today-agenda"><TodayAgendaCard /></div> : null}
@@ -232,8 +229,6 @@ export function TenantAdminDashboard() {
       {loadError !== null ? (
         <Alert variant="destructive"><AlertDescription>{loadError}</AlertDescription></Alert>
       ) : null}
-
-      {visibleMetrics && hasModuleSections ? <DashboardQuickAccess /> : null}
 
       {!visibleMetrics || hasModuleSections ? <section className="staff-dashboard-section" aria-labelledby="dashboard-customers">
         <SectionHeading id="dashboard-customers" title={t("dashboard.sections.customers.title")} description={t("dashboard.sections.customers.description")} />
@@ -259,7 +254,6 @@ export function TenantAdminDashboard() {
         <section className="staff-dashboard-section" aria-labelledby="dashboard-rentals">
           <SectionHeading id="dashboard-rentals" title={t("dashboard.sections.rentals.title")} description={t("dashboard.sections.rentals.description")} />
           <div className="staff-dashboard-kpis">
-            <KpiCard title={t("dashboard.kpi.reservationsToday.title")} value={reservationsTodayTotal(visibleMetrics.rentals)} subtitle={t("dashboard.kpi.reservationsToday.subtitle", { pending: visibleMetrics.rentals.reservationsTodayPendingDeposit, confirmed: visibleMetrics.rentals.reservationsTodayConfirmed })} />
             <KpiCard title={t("dashboard.kpi.confirmationRate.title")} value={`${visibleMetrics.rentals.confirmationRateLast7Days}%`} subtitle={t("dashboard.kpi.confirmationRate.subtitle")} />
             {hasSlotsToday(visibleMetrics.rentals) ? <KpiCard title={t("dashboard.kpi.slotsToday.title")} value={`${visibleMetrics.rentals.slotsBookedToday}/${visibleMetrics.rentals.slotsAvailableToday + visibleMetrics.rentals.slotsBookedToday}`} subtitle={t("dashboard.kpi.slotsToday.subtitle", { available: visibleMetrics.rentals.slotsAvailableToday, booked: visibleMetrics.rentals.slotsBookedToday })} /> : null}
             <KpiCard title={t("dashboard.kpi.reservedRevenue.title")} value={formatLocaleCurrency(visibleMetrics.rentals.reservedRevenueThisMonth, "BRL", i18n.language)} subtitle={t("dashboard.kpi.reservedRevenue.subtitle")} />
@@ -273,7 +267,7 @@ export function TenantAdminDashboard() {
           <div className="staff-dashboard-kpis">
             <KpiCard title={t("dashboard.kpi.workOrdersMonth.title")} value={visibleMetrics.workOrders.totalThisMonth} subtitle={t("dashboard.kpi.workOrdersMonth.subtitle")} />
             <KpiCard title={t("dashboard.kpi.completionRate.title")} value={`${completionRate(visibleMetrics.workOrders.totalThisMonth, visibleMetrics.workOrders.completed)}%`} subtitle={t("dashboard.kpi.completionRate.subtitle")} />
-            <KpiCard title={t("dashboard.kpi.pendingWorkOrders.title")} value={visibleMetrics.workOrders.pending} subtitle={t("dashboard.kpi.pendingWorkOrders.subtitle")} highlight={visibleMetrics.workOrders.pending > 0} />
+            <KpiCard title={t("dashboard.kpi.openDueWorkOrders.title")} value={openDueWorkOrders(visibleMetrics.workOrders)} subtitle={t("dashboard.kpi.openDueWorkOrders.subtitle")} highlight={openDueWorkOrders(visibleMetrics.workOrders) > 0} to="/manutencao" />
             <KpiCard title={t("dashboard.kpi.inProgressWorkOrders.title")} value={visibleMetrics.workOrders.inProgress} subtitle={t("dashboard.kpi.inProgressWorkOrders.subtitle")} />
           </div>
         </section>

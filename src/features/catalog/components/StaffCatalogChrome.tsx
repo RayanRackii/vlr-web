@@ -1,14 +1,13 @@
 import type { ReactNode } from "react"
-import { FileText, Package, Search, ShoppingBag, Tag } from "lucide-react"
+import { FileText, Package, Search, ShoppingBag } from "lucide-react"
 import { Link } from "react-router-dom"
 import { useTranslation } from "react-i18next"
-import type { Column } from "@tanstack/react-table"
 
 import { PageHeader } from "@/components/layout/PageHeader"
+import { tabClass, tabCountClass, tabListClass } from "@/components/ui/tabs-style"
 import { EmptyState } from "@/components/ui/empty-state"
-import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { cn } from "@/lib/utils"
 import { usePermissions } from "@/features/users/permissions/PermissionContext"
 import "./staffCatalog.css"
 
@@ -21,21 +20,17 @@ export function CatalogTabs({ active, counts = {} }: {
   const { t } = useTranslation()
   const { can } = usePermissions()
   const tabs = [
-    { key: "products", path: "/catalogo/produtos", permission: "catalog.products.read", icon: Tag },
-    { key: "orders", path: "/pedidos?aba=pedidos", permission: "catalog.orders.read", icon: ShoppingBag },
-    { key: "requests", path: "/pedidos?aba=solicitacoes", permission: "catalog.products.read", icon: FileText },
+    { key: "products", path: "/catalogo/produtos", permission: "catalog.products.read" },
+    { key: "orders", path: "/pedidos?aba=pedidos", permission: "catalog.orders.read" },
+    { key: "requests", path: "/pedidos?aba=solicitacoes", permission: "catalog.products.read" },
   ] as const
 
   return (
-    <nav className="staff-catalog-tabs" aria-label={t("nav.catalog")}>
-      {tabs.filter((tab) => can(tab.permission)).map(({ key, path, icon: Icon }) => (
-        <Link className="touch-target" key={key} to={path} aria-current={active === key ? "page" : undefined}>
-          <Icon size={20} aria-hidden="true" />
-          {key === "requests" ? <>
-            <span className="staff-catalog-tab-long">{t("catalog.requests.title")}</span>
-            <span className="staff-catalog-tab-short">{t("nav.catalogRequests")}</span>
-          </> : t(`catalog.${key}.title`)}
-          {counts[key] !== undefined ? <span className="staff-catalog-tab-count">{counts[key]}</span> : null}
+    <nav className={cn(tabListClass, "my-4")} aria-label={t("nav.catalog")}>
+      {tabs.filter((tab) => can(tab.permission)).map(({ key, path }) => (
+        <Link className={tabClass(active === key)} key={key} to={path} aria-current={active === key ? "page" : undefined}>
+          {key === "requests" ? t("catalog.requests.title") : t(`catalog.${key}.title`)}
+          {counts[key] !== undefined ? <span className={tabCountClass(active === key)}>{counts[key]}</span> : null}
         </Link>
       ))}
     </nav>
@@ -65,34 +60,6 @@ export function CatalogSearch({ value, onChange, label, placeholder }: {
       <Input type="search" aria-label={label} title={label} placeholder={placeholder} className="min-w-0 placeholder:text-ellipsis" value={value}
         onChange={(event) => onChange(event.target.value)} />
     </label>
-  )
-}
-
-export function CatalogColumnFilter<T>({ column, title, options }: {
-  column: Column<T>
-  title: string
-  options?: readonly { value: string; label: string }[]
-}) {
-  const { t } = useTranslation()
-  const value = column.getFilterValue()
-  return (
-    <Popover>
-      <PopoverTrigger render={<Button variant="outline" className="staff-catalog-filter touch-target" data-active={column.getIsFiltered()} />}>
-        {title}
-      </PopoverTrigger>
-      <PopoverContent className="w-64" align="start">
-        <label className="grid gap-2 text-sm font-medium">
-          {title}
-          {options ? <select className="touch-target min-h-11 w-full rounded-lg border border-input bg-background px-3 focus-visible:outline-none"
-            value={typeof value === "string" ? value : ""} onChange={(event) => column.setFilterValue(event.target.value)}>
-            <option value="">{t("catalog.staff.allStatuses")}</option>
-            {options.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
-          </select> : <Input className="min-h-11" autoComplete="off" placeholder={t("common.searchPlaceholder")}
-            value={typeof value === "string" ? value : ""}
-            onChange={(event) => column.setFilterValue(event.target.value)} />}
-        </label>
-      </PopoverContent>
-    </Popover>
   )
 }
 

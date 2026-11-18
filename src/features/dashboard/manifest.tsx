@@ -1,8 +1,10 @@
 import type { ReactElement } from "react"
+import { lazyPage } from "@/routes/lazyPage"
 import { LayoutDashboard } from "lucide-react"
 
 import type { AppNavigationItem } from "@/components/layout/navigation"
-import { DashboardPage } from "@/features/dashboard/pages/DashboardPage"
+
+const DashboardPage = lazyPage(() => import("@/features/dashboard/pages/DashboardPage"), "DashboardPage")
 
 type FeatureRoute = {
   path: string

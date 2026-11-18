@@ -16,7 +16,8 @@ it("supports the account menu keyboard pattern: arrows reach items and Tab exits
   await user.keyboard("{Enter}")
   const profile = await screen.findByRole("menuitem", { name: i18n.t("account.profile") })
   expect(profile).toHaveFocus()
-  await user.keyboard("{ArrowDown}")
+  // Profile, then the three theme items, then sign out.
+  await user.keyboard("{ArrowDown}{ArrowDown}{ArrowDown}{ArrowDown}")
   expect(screen.getByRole("menuitem", { name: i18n.t("account.signOut") })).toHaveFocus()
   await user.tab()
   expect(screen.queryByRole("menu")).not.toBeInTheDocument()

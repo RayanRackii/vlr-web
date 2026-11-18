@@ -154,29 +154,16 @@ describe("CatalogOrderAllocationPanel", () => {
     expect(screen.queryByText(i18n.t("catalog.resourcePlanning.approvalPanel.unitsForbidden"))).not.toBeInTheDocument()
   })
 
-  it("links an allocated order to the resource agenda only with schedule read", async () => {
+  it("renders nothing once the order is allocated; usage actions live in the page header", () => {
     const order: CatalogOrder = {
       ...BASE_ORDER,
       status: "Approved",
       productionSummary: "Scheduled",
       items: [{ ...BASE_ORDER.items[0], productionSummary: "Scheduled", allocation: ALLOCATION }],
     }
-    const agendaName = i18n.t("catalog.resourcePlanning.activeUse.openAgenda")
     renderPanel(order)
-    expect(await screen.findByRole("button", { name: i18n.t("catalog.resourcePlanning.activeUse.release") })).toBeInTheDocument()
-    expect(screen.queryByRole("link", { name: agendaName })).not.toBeInTheDocument()
-
-    renderPanel(order, ["catalog.orders.manage", "catalog.orders.allocate", "rentals.schedule.read"])
-    expect(await screen.findByRole("link", { name: agendaName })).toHaveAttribute(
-      "href",
-      "/agendas/recursos?date=2026-11-02",
-    )
-  })
-
-  it("does not use a locale-sensitive datetime field", async () => {
-    renderPanel(BASE_ORDER)
-    expect(await screen.findByLabelText(i18n.t("catalog.resourcePlanning.approvalPanel.day"))).toBeInTheDocument()
-    expect(document.querySelector('input[type="datetime-local"]')).toBeNull()
+    expect(screen.queryByRole("button")).not.toBeInTheDocument()
+    expect(screen.queryByRole("link")).not.toBeInTheDocument()
   })
 
   it("renders the allocation preview when feasible", async () => {
@@ -267,27 +254,5 @@ describe("CatalogOrderAllocationPanel", () => {
       screen.queryByText(i18n.t("catalog.resourcePlanning.approvalPanel.refusalTitle")),
     ).not.toBeInTheDocument()
     expect(screen.getByRole("button", { name: approveName })).toBeEnabled()
-  })
-
-  it("has no start button; shows release for a cancelled order with a cleaning allocation", async () => {
-    const order: CatalogOrder = {
-      ...BASE_ORDER,
-      status: "Cancelled",
-      cancelledReason: "Customer cancelled",
-      productionSummary: "InProgress",
-      items: [
-        {
-          ...BASE_ORDER.items[0],
-          productionSummary: "InProgress",
-          allocation: { ...ALLOCATION, status: "Cleaning" },
-        },
-      ],
-    }
-    renderPanel(order)
-    expect(await screen.findByRole("button", { name: i18n.t("catalog.resourcePlanning.activeUse.release") })).toBeEnabled()
-    // The "Iniciar" start action was removed; usage advances via work-finished/release only.
-    expect(
-      screen.queryByRole("button", { name: i18n.t("catalog.resourcePlanning.activeUse.workFinished") }),
-    ).toBeDisabled()
   })
 })

@@ -491,6 +491,9 @@ describe("getPageTitleKey", () => {
   it.each([
     ["/admin/users", "nav.adminUsers"],
     ["/admin", "nav.adminTenants"],
+    ["/admin/tenants", "nav.adminTenants"],
+    ["/admin/dashboard", "nav.admin"],
+    ["/admin/recursos-visuais", "resourceVisual.title"],
   ])("preserves the admin title for %s", (path, titleKey) => {
     expect(getPageTitleKey(path)).toBe(titleKey)
   })

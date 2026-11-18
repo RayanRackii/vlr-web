@@ -1,9 +1,9 @@
-import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { useTranslation } from "react-i18next"
-import { LocaleDateInput } from "@/components/LocaleDateInput"
 import { toast } from "sonner"
+import { useSearchParams } from "react-router-dom"
 
-import { AlertTriangle, CalendarDays, CalendarRange, ChevronLeft, ChevronRight } from "lucide-react"
+import { AlertTriangle, CalendarRange } from "lucide-react"
 
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import {
@@ -16,12 +16,13 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { Button } from "@/components/ui/button"
-import { EmptyState } from "@/components/ui/empty-state"
+import { StatusChips } from "@/components/data-table/StatusChips"
+import { DateNavigator } from "@/components/ui/date-navigator"
 import { useModuleIntroLink } from "@/hooks/useModuleIntroLink"
 import { LoadingButton } from "@/components/ui/loading-button"
-import { Skeleton } from "@/components/ui/skeleton"
 import { ReservationsHeader } from "@/features/rentals/components/ReservationsHeader"
 import { ReservationsList } from "@/features/rentals/components/ReservationsList"
+import { reservationStatusTone } from "@/features/rentals/lib/reservationStatusTone"
 import "./reservations.css"
 import { useTrialStatus } from "@/features/users/hooks/useTrialStatus"
 import { usePermissions } from "@/features/users/permissions/PermissionContext"
@@ -38,6 +39,7 @@ import {
   type AdminReservation,
   type ReservationStatus,
 } from "@/features/rentals/services/reservationsService"
+import { civilDateParam } from "@/features/catalog/components/agenda/agendaLayout"
 import { tenantTodayIsoDate } from "@/lib/tenantTimeZone"
 import { cn } from "@/lib/utils"
 
@@ -76,6 +78,33 @@ function endOfMonth(iso: string): string {
   return toIso(date)
 }
 
+function countByStatus(rows: readonly AdminReservation[]): Record<ReservationStatus, number> {
+  const counts = Object.fromEntries(reservationStatuses.map((value) => [value, 0])) as Record<ReservationStatus, number>
+  for (const row of rows) counts[row.status] += 1
+  return counts
+}
+
+function addDays(iso: string, delta: number): string {
+  const date = new Date(`${iso}T12:00:00`)
+  date.setDate(date.getDate() + delta)
+  return toIso(date)
+}
+
+/** Adds months clamping the day to the target month length (31 Jan + 1 month = 28/29 Feb). */
+function addMonths(iso: string, delta: number): string {
+  const [year, month, day] = iso.split("-").map(Number)
+  const target = new Date(year, month - 1 + delta, 1, 12)
+  const lastDay = new Date(target.getFullYear(), target.getMonth() + 1, 0, 12).getDate()
+  target.setDate(Math.min(day, lastDay))
+  return toIso(target)
+}
+
+function stepDate(iso: string, view: ReservationsView, direction: -1 | 1): string {
+  if (view === "week") return addDays(iso, 7 * direction)
+  if (view === "month") return addMonths(iso, direction)
+  return addDays(iso, direction)
+}
+
 type ReservationsPageProps = {
   showHeader?: boolean
   onDateChange?: (date: string) => void
@@ -87,7 +116,10 @@ export function ReservationsPage({ showHeader = true, onDateChange }: Reservatio
   const { can } = usePermissions()
   const timeZoneId = useTenantTimeZone()
   const { isTrialReadOnly } = useTrialStatus()
-  const [date, setDate] = useState(() => tenantTodayIsoDate(timeZoneId))
+  // The agenda links here with `date` and `rentalAssetId` (an empty slot or a row's menu).
+  const [params] = useSearchParams()
+  const [date, setDate] = useState(() => civilDateParam(params.get("date")) ?? tenantTodayIsoDate(timeZoneId))
+  const [assetId, setAssetId] = useState(() => params.get("rentalAssetId")?.trim() || null)
   const [view, setView] = useState<ReservationsView>("day")
   const [status, setStatus] = useState<ReservationStatus | "">("")
   const [rows, setRows] = useState<AdminReservation[]>([])
@@ -96,17 +128,10 @@ export function ReservationsPage({ showHeader = true, onDateChange }: Reservatio
   const [cancelTarget, setCancelTarget] = useState<AdminReservation | null>(null)
 
   const requestSeq = useRef(0)
-  const dateId = useId()
   const [loadError, setLoadError] = useState(false)
-  const sortedRows = useMemo(() => [...rows].sort((a, b) => Date.parse(a.startDateTime) - Date.parse(b.startDateTime)), [rows])
+  const sortedRows = useMemo(() => [...rows].filter((row) => (!status || row.status === status) && (!assetId || row.items.some((item) => item.rentalAssetId === assetId))).sort((a, b) => Date.parse(a.startDateTime) - Date.parse(b.startDateTime)), [rows, status, assetId])
 
   useEffect(() => { onDateChange?.(date) }, [date, onDateChange])
-
-  function shiftDay(delta: number) {
-    const anchor = new Date(`${date || tenantTodayIsoDate(timeZoneId)}T12:00:00`)
-    anchor.setDate(anchor.getDate() + delta)
-    setDate(toIso(anchor))
-  }
 
   const range = useMemo(() => {
     if (!date) {
@@ -132,7 +157,6 @@ export function ReservationsPage({ showHeader = true, onDateChange }: Reservatio
       const items = await listAdminReservations({
         from: range.from,
         to: range.to,
-        status,
       })
       if (seq !== requestSeq.current) return
       setRows(items)
@@ -147,7 +171,7 @@ export function ReservationsPage({ showHeader = true, onDateChange }: Reservatio
     } finally {
       if (seq === requestSeq.current) setLoading(false)
     }
-  }, [range.from, range.to, status, t])
+  }, [range.from, range.to, t])
 
   useEffect(() => {
     void load()
@@ -235,10 +259,72 @@ export function ReservationsPage({ showHeader = true, onDateChange }: Reservatio
   const dateLabel = date ? new Intl.DateTimeFormat(i18n.language, {
     weekday: "long", day: "numeric", month: "long", year: "numeric",
   }).format(new Date(`${date}T12:00:00`)) : ""
-  const hasActiveFilters = Boolean(status || date !== tenantTodayIsoDate(timeZoneId) || view !== "day")
+  const hasActiveFilters = Boolean(status || assetId || date !== tenantTodayIsoDate(timeZoneId) || view !== "day")
   const listDateLabel = view === "day" ? dateLabel : range.from && range.to
     ? `${new Intl.DateTimeFormat(i18n.language).format(new Date(`${range.from}T12:00:00`))} – ${new Intl.DateTimeFormat(i18n.language).format(new Date(`${range.to}T12:00:00`))}`
     : ""
+
+  const today = tenantTodayIsoDate(timeZoneId)
+  const navigatorLabel = !date
+    ? ""
+    : view === "day"
+      ? dateLabel
+      : view === "month"
+        ? new Intl.DateTimeFormat(i18n.language, { month: "long", year: "numeric" }).format(new Date(`${date}T12:00:00`))
+        : listDateLabel
+  // The range is loaded unfiltered and the status filter applies client-side, so counts are always complete.
+  const statusCounts = countByStatus(rows)
+
+  const assetName = assetId ? rows.flatMap((row) => row.items).find((item) => item.rentalAssetId === assetId)?.assetName ?? t("rentals.reservations.assetFilterUnknown") : null
+  const filterBar = (
+    <>
+      <div role="group" aria-label={t("rentals.reservations.filters")}>
+          <DateNavigator
+            layout="toolbar"
+            date={date}
+            onDateChange={setDate}
+            view={view}
+            views={[
+              { value: "day", label: t("rentals.reservations.viewDay") },
+              { value: "week", label: t("rentals.reservations.viewWeek") },
+              { value: "month", label: t("rentals.reservations.viewMonth") },
+            ]}
+            onViewChange={setView}
+            step={stepDate}
+            today={today}
+            label={navigatorLabel}
+            labels={{
+              previous: {
+                day: t("rentals.reservations.previousDay"),
+                week: t("rentals.reservations.previousWeek"),
+                month: t("rentals.reservations.previousMonth"),
+              },
+              next: {
+                day: t("rentals.reservations.nextDay"),
+                week: t("rentals.reservations.nextWeek"),
+                month: t("rentals.reservations.nextMonth"),
+              },
+              today: t("rentals.reservations.today"),
+              view: t("rentals.reservations.period"),
+              pickDate: t("rentals.reservations.pickDate"),
+            }}
+          />
+      </div>
+          <StatusChips
+            label={t("rentals.reservations.status")}
+            allLabel={t("rentals.reservations.statusAll")}
+            value={status === "" ? null : status}
+            onChange={(value) => setStatus(value ?? "")}
+            allCount={rows.length}
+            options={reservationStatuses.map((value) => ({
+              value,
+              label: t(`rentals.reservations.statuses.${value}`),
+              tone: reservationStatusTone[value],
+              count: statusCounts[value],
+            }))}
+          />
+    </>
+  )
 
   return (
     <div className={cn("reservations-page", showHeader && "reservations-layout")}>
@@ -250,77 +336,45 @@ export function ReservationsPage({ showHeader = true, onDateChange }: Reservatio
         </Alert>
       )}
 
-      <section className="reservations-surface reservations-filters" aria-label={t("rentals.reservations.filters")}>
-        <div className="reservations-filter-bar">
-          <div role="group" aria-label={t("rentals.reservations.period")} className="reservations-segment">
-            {(["day", "week", "month"] as const).map((value) => (
-              <button className="touch-target" key={value} type="button" aria-pressed={view === value} onClick={() => setView(value)}>
-                {t(`rentals.reservations.view${value[0].toUpperCase()}${value.slice(1)}`)}
-              </button>
-            ))}
-          </div>
-          <div className="reservations-date">
-            <Button variant="ghost" size="icon" aria-label={t("rentals.reservations.previousDay")} onClick={() => shiftDay(-1)}>
-              <ChevronLeft aria-hidden="true" />
-            </Button>
-            <CalendarDays size={20} aria-hidden="true" className="reservations-date-icon" />
-            <label htmlFor={dateId} className="sr-only">{t("rentals.reservations.date")}</label>
-            <LocaleDateInput id={dateId} value={date} locale={i18n.language} today={tenantTodayIsoDate(timeZoneId)} className="reservations-date-input tabular-nums" onChange={setDate} />
-            <Button variant="ghost" size="icon" aria-label={t("rentals.reservations.nextDay")} onClick={() => shiftDay(1)}>
-              <ChevronRight aria-hidden="true" />
-            </Button>
-          </div>
-          <Button variant="outline" className="reservations-today" onClick={() => setDate(tenantTodayIsoDate(timeZoneId))}>
-            {t("rentals.reservations.today")}
-          </Button>
+      {filterBar}
+      {assetId && (
+        <div role="status" className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+          <span>{t("rentals.reservations.assetFilter", { name: assetName })}</span>
+          <Button type="button" variant="outline" className="touch-target min-h-11" onClick={() => setAssetId(null)}>{t("rentals.reservations.assetFilterClear")}</Button>
         </div>
-        <fieldset className="reservations-chips">
-          <legend className="sr-only">{t("rentals.reservations.status")}</legend>
-          {[
-            { value: "" as const, label: t("rentals.reservations.statusAll") },
-            ...reservationStatuses.map((value) => ({ value, label: t(`rentals.reservations.statuses.${value}`) })),
-          ].map((option) => (
-            <button className="touch-target" key={option.value || "all"} type="button" aria-pressed={status === option.value} onClick={() => setStatus(option.value)}>
-              {option.value && <span className="reservation-filter-dot" data-status={option.value} aria-hidden="true" />}
-              {option.label}
-            </button>
-          ))}
-        </fieldset>
-      </section>
+      )}
 
       <div aria-busy={loading} className="reservations-results">
-        {loadError && !loading && (
+        {loadError && !loading && sortedRows.length > 0 && (
           <Alert variant="destructive" role="alert" className="reservations-error">
             <AlertTriangle size={20} aria-hidden="true" />
             <AlertDescription>{t("rentals.reservations.loadError")}</AlertDescription>
           </Alert>
         )}
-        {loading ? (
-          <section className="reservations-surface reservations-loading" role="status" aria-label={t("rentals.reservations.loading")}>
-            <div className="reservations-list-heading">{t("rentals.reservations.loading")}</div>
-            {[0, 1, 2].map((row) => (
-              <div key={row} className="reservations-skeleton-row" aria-hidden="true">
-                <Skeleton /><Skeleton /><Skeleton /><Skeleton />
-              </div>
-            ))}
-          </section>
-        ) : loadError && sortedRows.length === 0 ? null : sortedRows.length === 0 ? (
-          <EmptyState
-            icon={CalendarRange}
-            className="reservations-surface reservations-empty"
-            title={t("rentals.reservations.empty")}
-            description={t(hasActiveFilters ? "emptyStates.filterDescription" : "rentals.reservations.emptyDescription")}
-            example={hasActiveFilters ? undefined : t("emptyStates.examples.bookings")}
-            learnMore={hasActiveFilters ? undefined : learnMore}
-            action={hasActiveFilters ? (
-              <Button onClick={() => { setDate(tenantTodayIsoDate(timeZoneId)); setStatus(""); setView("day") }}>{t("emptyStates.clearFilters")}</Button>
+        <ReservationsList
+          rows={sortedRows}
+          dateLabel={listDateLabel}
+          showDates={view !== "day" || !date}
+          actions={rowActions}
+          loadingLabel={t("rentals.reservations.loading")}
+          {...(loading
+            ? { state: "loading" as const }
+            : loadError && sortedRows.length === 0
+              ? { state: "error" as const, error: t("rentals.reservations.loadError"), onRetry: () => { void load() } }
+              : {})}
+          empty={{
+            icon: CalendarRange,
+            title: t("rentals.reservations.empty"),
+            description: t(hasActiveFilters ? "emptyStates.filterDescription" : "rentals.reservations.emptyDescription"),
+            example: hasActiveFilters ? undefined : t("emptyStates.examples.bookings"),
+            learnMore: hasActiveFilters ? undefined : learnMore,
+            action: hasActiveFilters ? (
+              <Button onClick={() => { setDate(tenantTodayIsoDate(timeZoneId)); setStatus(""); setAssetId(null); setView("day") }}>{t("emptyStates.clearFilters")}</Button>
             ) : (
-              <Button className="reservations-today" onClick={() => setView("week")}>{t("rentals.reservations.showWeek")}</Button>
-            )}
-          />
-        ) : (
-          <ReservationsList rows={sortedRows} dateLabel={listDateLabel} showDates={view !== "day" || !date} actions={rowActions} />
-        )}
+              <Button className="min-h-11" onClick={() => setView("week")}>{t("rentals.reservations.showWeek")}</Button>
+            ),
+          }}
+        />
       </div>
 
       <AlertDialog

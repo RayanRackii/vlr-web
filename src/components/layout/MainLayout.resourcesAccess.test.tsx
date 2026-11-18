@@ -162,7 +162,9 @@ describe("Recursos permission before layout", () => {
       await screen.findByRole("heading", { name: "Recursos" }),
     ).toBeInTheDocument()
     expect(screen.getByRole("navigation", { name: i18n.t("nav.menu") })).toBeInTheDocument()
-    expect(screen.queryByRole("navigation", { name: i18n.t("nav.breadcrumbLabel") })).not.toBeInTheDocument()
+    // The top-bar breadcrumb completes the trail with the section title as parent.
+    const crumbs = screen.getByRole("navigation", { name: i18n.t("nav.breadcrumbLabel") })
+    expect(crumbs).toHaveTextContent(`${i18n.t("nav.sections.registration")}/Recursos`)
     expect(
       screen.queryByRole("heading", { name: i18n.t("accessDenied.title") }),
     ).not.toBeInTheDocument()

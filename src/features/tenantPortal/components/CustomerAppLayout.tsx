@@ -1,7 +1,7 @@
 import "./portal/portal.css"
 
 import { X } from "lucide-react"
-import { useEffect, useMemo, useState, useSyncExternalStore } from "react"
+import { Suspense, useEffect, useMemo, useState, useSyncExternalStore } from "react"
 import { Navigate, Outlet, useLocation, useNavigate, useParams } from "react-router-dom"
 import { useTranslation } from "react-i18next"
 
@@ -248,16 +248,18 @@ export function CustomerAppLayout() {
         }}
       >
         <TenantTimeZoneProvider timeZoneId={branding.timeZoneId}>
-          <Outlet
-            context={
-              {
-                subdomain,
-                branding,
-                primary: tokens.primary,
-                menu,
-              } satisfies CustomerAppOutletContext
-            }
-          />
+          <Suspense fallback={<PageContentSkeleton rows={3} />}>
+            <Outlet
+              context={
+                {
+                  subdomain,
+                  branding,
+                  primary: tokens.primary,
+                  menu,
+                } satisfies CustomerAppOutletContext
+              }
+            />
+          </Suspense>
         </TenantTimeZoneProvider>
       </AppShell>
     </div>

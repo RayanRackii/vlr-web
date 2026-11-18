@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next"
 
 import { AccessDeniedPage } from "@/components/layout/AccessDeniedPage"
 import { filterNavigationTabs, type NavigationTab } from "@/components/layout/navigationTabs"
+import { RouteTabsContext } from "@/components/layout/RouteTabsContext"
 import { PageContentSkeleton } from "@/components/loading/PageContentSkeleton"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { usePermissions } from "@/features/users/permissions/PermissionContext"
@@ -12,6 +13,7 @@ type FeatureRouteTabsProps = {
   labelKey: string
   tabs: readonly NavigationTab[]
   content: Readonly<Record<string, ReactNode>>
+  /** Feature header (its own `PageHeader`), rendered above the tabs as the page h1. */
   header?: ReactNode
 }
 
@@ -28,20 +30,24 @@ export function FeatureRouteTabs({ labelKey, tabs, content, header }: FeatureRou
   if (!visible.some((tab) => tab.to === tabPath)) return <AccessDeniedPage />
 
   return (
-    <Tabs value={tabPath} onValueChange={(value) => { void navigate(String(value)) }} className="space-y-4">
+    <div className="space-y-4">
+      {/* The feature header is the page's only h1; it sits outside the route-tabs context. */}
       {header}
-      <TabsList variant="line" aria-label={t(labelKey)} className="max-w-full justify-start overflow-x-auto overflow-y-hidden px-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-        {visible.map((tab) => {
-          const Icon = tab.icon
-          return (
-            <TabsTrigger key={tab.to} value={tab.to} className="first:pl-0">
-              {Icon && <Icon size={20} aria-hidden="true" />}
-              {t(tab.labelKey)}
-            </TabsTrigger>
-          )
-        })}
-      </TabsList>
-      <TabsContent value={tabPath}>{content[tabPath]}</TabsContent>
-    </Tabs>
+      <RouteTabsContext.Provider value>
+        <Tabs value={tabPath} onValueChange={(value) => {
+          const tab = visible.find((candidate) => candidate.to === value)
+          void navigate(`${String(value)}${tab?.search ?? ""}`)
+        }} className="space-y-4">
+          <TabsList variant="line" aria-label={t(labelKey)}>
+            {visible.map((tab) => (
+              <TabsTrigger key={tab.to} value={tab.to}>
+                {t(tab.labelKey)}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+          <TabsContent value={tabPath}>{content[tabPath]}</TabsContent>
+        </Tabs>
+      </RouteTabsContext.Provider>
+    </div>
   )
 }

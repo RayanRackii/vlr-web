@@ -1,5 +1,6 @@
 import type { AxiosProgressEvent } from "axios"
 
+import { API_UPLOAD_TIMEOUT_MS } from "@/lib/apiTimeouts"
 import i18n from "@/lib/i18n"
 import { localizeMaintenancePlanApiError } from "@/features/pmoc/lib/localizeMaintenancePlanError"
 import { api, getAxiosErrorPayload, isAxiosError, parseApiError } from "@/lib/api"
@@ -346,6 +347,7 @@ export async function uploadWorkOrderTaskFile(
       formData,
       {
         headers: { "Content-Type": "multipart/form-data" },
+        timeout: API_UPLOAD_TIMEOUT_MS,
         onUploadProgress: (event: AxiosProgressEvent) => {
           if (!onProgress) {
             return
@@ -499,6 +501,59 @@ export async function updateWorkOrderStatus(
     throw errorForWorkOrderStatus(
       getAxiosErrorPayload(error),
       i18n.t("workOrders.errors.updateStatusFailed"),
+    )
+  }
+}
+
+export async function cancelWorkOrder(workOrderId: string): Promise<WorkOrder> {
+  if (typeof navigator !== "undefined" && !navigator.onLine) {
+    throw new Error(i18n.t("workOrders.offline.statusFailed"))
+  }
+
+  try {
+    const response = await api.post<unknown>(
+      `${WORK_ORDERS_PATH}/${workOrderId}/cancel`,
+    )
+    const parsed = workOrderSchema.safeParse(response.data)
+
+    if (!parsed.success) {
+      console.error("cancelWorkOrder Zod validation failed", {
+        data: response.data,
+        error: parsed.error.flatten(),
+      })
+      throw new Error(i18n.t("workOrders.errors.invalidResponse"))
+    }
+
+    return parsed.data
+  } catch (error: unknown) {
+    if (isNetworkConnectivityError(error)) {
+      throw new Error(i18n.t("workOrders.offline.statusFailed"), { cause: error })
+    }
+
+    if (error instanceof Error && !isAxiosError(error)) {
+      throw error
+    }
+
+    if (isAxiosError(error)) {
+      const status = error.response?.status
+      if (status === 409) {
+        throw new Error(i18n.t("workOrders.errors.cancelNotAllowed"), {
+          cause: error,
+        })
+      }
+      if (status === 404) {
+        throw new Error(i18n.t("workOrders.errors.notAssignedOrForbidden"), {
+          cause: error,
+        })
+      }
+    }
+
+    throw new Error(
+      localizeWorkOrderApiError(
+        getAxiosErrorPayload(error),
+        i18n.t("workOrders.errors.cancelFailed"),
+      ),
+      { cause: error },
     )
   }
 }

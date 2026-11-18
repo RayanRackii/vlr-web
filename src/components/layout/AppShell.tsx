@@ -1,10 +1,13 @@
-import { type ReactNode, useCallback, useEffect, useState } from "react"
+import { type ReactNode, useCallback, useEffect, useMemo, useState } from "react"
 import { CircleUser, LogOut, Menu } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { Link } from "react-router-dom"
 
+import { CONTENT_WIDTH_CLASS } from "@/components/layout/contentWidth"
 import { headerTouchTargetClassName } from "@/components/layout/headerTouchTarget"
 import { LanguageSwitcher } from "@/components/layout/LanguageSwitcher"
+import { ShellContext } from "@/components/layout/ShellContext"
+import { SidebarAccount } from "@/components/layout/SidebarAccount"
 import { ThemeToggle } from "@/components/layout/ThemeToggle"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
@@ -37,6 +40,8 @@ export type SidebarRenderOptions = {
   onToggleCollapsed?: () => void
   /** Render larger (≥44px) hit areas — set in the mobile drawer. */
   touchTargets?: boolean
+  /** Staff only: the user card (account menu) pinned at the bottom of the sidebar. */
+  account?: ReactNode
 }
 
 export type AppShellProps = {
@@ -55,6 +60,12 @@ export type AppShellProps = {
   showLanguageCode?: boolean
   /** Subtitle under the page title. Staff shell passes the tenant name. */
   contextLabel?: string
+  /** Staff only: the user's email, shown in the account menu. */
+  userEmail?: string
+  /** Staff only: second line of the sidebar user card (role). */
+  userRoleLabel?: string
+  /** Staff only: top-bar start slot (the breadcrumb). */
+  headerStart?: ReactNode
   /** Enable the desktop collapse rail (persisted). B2B opts in; B2C stays fixed. */
   collapsible?: boolean
   /** Center and cap the content width for a steady reading measure. */
@@ -88,6 +99,9 @@ export function AppShell({
   enlargeHeaderTargets = false,
   showLanguageCode = false,
   contextLabel,
+  userEmail,
+  userRoleLabel,
+  headerStart,
   collapsible = false,
   constrainContent = false,
   headerActions,
@@ -138,20 +152,45 @@ export function AppShell({
   )
 
   const collapsed = collapsible && isCollapsed
+  const shellContext = useMemo(
+    () => ({ breadcrumbInHeader: variant === "staff" && headerStart != null }),
+    [variant, headerStart],
+  )
+
+  function renderAccount(opts: { collapsed?: boolean; touchTargets?: boolean; side?: "top" | "bottom" }) {
+    return (
+      <SidebarAccount
+        userLabel={userLabel}
+        email={userEmail}
+        initials={initials}
+        roleLabel={userRoleLabel}
+        profileTo={profileTo}
+        isSigningOut={isSigningOut}
+        onSignOut={() => {
+          void handleSignOut()
+        }}
+        collapsed={opts.collapsed}
+        touchTargets={opts.touchTargets}
+        side={opts.side}
+      />
+    )
+  }
 
   return (
+    <ShellContext.Provider value={shellContext}>
     <div data-shell-part="root" data-shell-variant={variant} className="flex min-h-screen max-w-full bg-background text-foreground">
       {variant === "staff" && <aside
         data-shell-part="sidebar"
         className={cn(
           "hidden shrink-0 border-r border-sidebar-border bg-sidebar text-sidebar-foreground lg:block",
           "transition-[width] duration-200 ease-out motion-reduce:transition-none",
-          collapsed ? "w-[4.25rem]" : "w-64",
+          collapsed ? "w-[4.25rem]" : "w-56",
         )}
       >
         {sidebar({
           collapsed,
           onToggleCollapsed: collapsible ? toggleCollapsed : undefined,
+          account: renderAccount({ collapsed }),
         })}
       </aside>}
 
@@ -162,6 +201,7 @@ export function AppShell({
           </SheetHeader>
           {sidebar({
             touchTargets: true,
+            account: renderAccount({ touchTargets: true }),
             onNavigate: () => {
               setIsMobileMenuOpen(false)
             },
@@ -170,7 +210,7 @@ export function AppShell({
       </Sheet>}
 
       <div data-shell-part="body" className="flex min-w-0 flex-1 flex-col">
-        <header data-shell-part="header" className="sticky top-0 z-20 flex h-14 min-w-0 max-w-full items-center justify-between gap-2 border-b border-border bg-background/80 px-4 backdrop-blur-md supports-[backdrop-filter]:bg-background/65">
+        <header data-shell-part="header" className={cn("sticky top-0 z-20 flex min-w-0 max-w-full items-center justify-between gap-2 border-b border-border bg-background/80 px-4 backdrop-blur-md supports-[backdrop-filter]:bg-background/65", variant === "staff" ? "h-16 lg:px-8" : "h-14")}>
           <div className="flex min-w-0 flex-1 items-center gap-2">
             <Button
               data-shell-part="menu-toggle"
@@ -195,9 +235,15 @@ export function AppShell({
               <p className="min-w-0 break-words text-sm font-semibold tracking-tight [overflow-wrap:anywhere] lg:hidden">
                 {pageTitle}
               </p>
-              <p className="hidden truncate text-xs text-muted-foreground sm:block lg:text-sm lg:font-medium lg:text-foreground">
-                {contextLabel ?? t("app.authenticatedArea")}
-              </p>
+              {variant === "staff" ? (
+                <div data-shell-part="header-start" className="hidden min-w-0 lg:block">
+                  {headerStart}
+                </div>
+              ) : (
+                <p className="hidden truncate text-xs text-muted-foreground sm:block lg:text-sm lg:font-medium lg:text-foreground">
+                  {contextLabel ?? t("app.authenticatedArea")}
+                </p>
+              )}
             </div>
           </div>
 
@@ -206,14 +252,32 @@ export function AppShell({
           <div className="flex shrink-0 items-center gap-0.5">
             <LanguageSwitcher
               className={headerIconClassName}
-              showShortLabel={showLanguageCode}
+              showShortLabel={showLanguageCode || variant === "staff"}
             />
-            <ThemeToggle className={headerIconClassName} />
+            {variant === "portal" ? <ThemeToggle className={headerIconClassName} /> : null}
 
             {variant === "staff" ? (
               <NotificationBell className={headerIconClassName} />
             ) : headerActions}
 
+            {variant === "staff" ? (
+              <div className="lg:hidden">
+                <SidebarAccount
+                  userLabel={userLabel}
+                  email={userEmail}
+                  initials={initials}
+                  roleLabel={userRoleLabel}
+                  profileTo={profileTo}
+                  isSigningOut={isSigningOut}
+                  onSignOut={() => {
+                    void handleSignOut()
+                  }}
+                  collapsed
+                  side="bottom"
+                  className={headerIconClassName}
+                />
+              </div>
+            ) : (
             <DropdownMenu>
               <DropdownMenuTrigger
                 render={
@@ -279,6 +343,7 @@ export function AppShell({
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
+            )}
           </div>
         </header>
 
@@ -286,12 +351,13 @@ export function AppShell({
 
         <main data-shell-part="main" className="min-w-0 max-w-full flex-1 overflow-x-auto overflow-y-auto p-4 md:p-6 lg:p-8">
           {constrainContent ? (
-            <div className="mx-auto min-w-0 w-full max-w-7xl">{children}</div>
+            <div className={cn("mx-auto min-w-0 w-full", CONTENT_WIDTH_CLASS)}>{children}</div>
           ) : (
             children
           )}
         </main>
       </div>
     </div>
+    </ShellContext.Provider>
   )
 }

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest"
-import { productItemStatus, resourceItemStatus, statusFromServer, type ResourceStatusInput } from "./itemStatus"
+import { productItemStatus, productMissingSteps, productSetupSteps, resourceItemStatus, statusFromServer, type ResourceStatusInput } from "./itemStatus"
 
 const readyResource: ResourceStatusInput = {
   name: "Estúdio A",
@@ -89,6 +89,20 @@ describe("product item status", () => {
   it("follows the same three outcomes", () => {
     expect(productItemStatus(ready)).toEqual({ kind: "published" })
     expect(productItemStatus({ ...ready, menuPublished: false })).toEqual({ kind: "draft" })
-    expect(productItemStatus({ ...ready, price: null, agendaReady: false })).toEqual({ kind: "missing", count: 3 })
+    expect(productItemStatus({ ...ready, price: 0, agendaReady: false })).toEqual({ kind: "missing", count: 2 })
+  })
+
+  it("treats a null price (Sob consulta) as valid and only a price of zero or less as missing", () => {
+    expect(productItemStatus({ ...ready, price: null })).toEqual({ kind: "published" })
+    expect(productSetupSteps({ ...ready, price: null }).precos).toBe(true)
+    expect(productSetupSteps({ ...ready, price: 0 }).precos).toBe(false)
+    expect(productSetupSteps({ ...ready, price: -5 }).precos).toBe(false)
+  })
+
+  it("does not count Fila twice when Agenda is missing", () => {
+    const steps = productSetupSteps({ ...ready, agendaReady: false })
+    expect(steps.fila).toBe(false)
+    expect(productMissingSteps(steps)).toEqual(["agenda"])
+    expect(productItemStatus({ ...ready, agendaReady: false })).toEqual({ kind: "missing", count: 1 })
   })
 })

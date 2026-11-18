@@ -1,5 +1,5 @@
 import { displayEndClock } from "@/lib/tenantTimeZone"
-import { Ban, CalendarCheck2, CircleCheck } from "lucide-react"
+import { Ban, CalendarCheck2, ChevronDown, ChevronUp, CircleCheck, Plus } from "lucide-react"
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react"
 import { useTranslation } from "react-i18next"
 
@@ -31,6 +31,10 @@ const MIN_RESOURCE_COLUMN_WIDTH = 160
 const HEADER_HEIGHT = 48
 const ROW_HEIGHT = 54
 const SINGLE_COLUMN_ROW_HEIGHT = 64
+const COMPACT_ROW_HEIGHT = 40
+const COMPACT_SINGLE_COLUMN_ROW_HEIGHT = 48
+const DEFAULT_OPEN_MINUTES = 8 * 60
+const DEFAULT_CLOSE_MINUTES = 20 * 60
 
 const STATUS_ICON: Record<ScheduleGridOccupancy["status"], typeof CircleCheck> = {
   available: CircleCheck,
@@ -71,6 +75,13 @@ type DayResourceGridProps = {
   nowMinutes?: number | null
   isStartClosed?: (startTime: string) => boolean
   onCellClick: (payload: ScheduleGridCellPayload) => void
+  /**
+   * Day-adjust rendering: business-hours axis, compact rows, one state per slot, free slots
+   * and empty cells are click targets (not focusable buttons) plus one "add" button per column.
+   */
+  compact?: boolean
+  /** Compact only: show the whole 00:00-24:00 axis instead of the business hours. */
+  showFullDay?: boolean
 }
 
 const TABLET_QUERY = "(min-width: 768px) and (max-width: 1023px)"
@@ -108,6 +119,8 @@ function ResourceGrid({
   nowMinutes = null,
   isStartClosed,
   onCellClick,
+  compact = false,
+  showFullDay = false,
 }: DayResourceGridProps) {
   const { t } = useTranslation()
   const scrollRef = useRef<HTMLDivElement>(null)
@@ -139,24 +152,44 @@ function ResourceGrid({
     const assetEnds = assets
       .map((asset) => asset.closeTime && timeToMinutes(asset.closeTime))
       .filter((value): value is number => typeof value === "number")
-    const durations = [
-      ...occupancies.map(
-        (item) => timeToMinutes(item.endTime) - timeToMinutes(item.startTime),
-      ),
-      ...assets.flatMap(durationValues),
-    ].filter((value) => value > 0)
+    const assetDurations = assets.flatMap(durationValues).filter((value) => value > 0)
+    // Compact: the row step comes from the resources' slot durations, so a long block
+    // (e.g. a full-day closure) cannot shrink every row to 15 minutes.
+    const durations =
+      compact && assetDurations.length > 0
+        ? assetDurations
+        : [
+            ...occupancies.map(
+              (item) => timeToMinutes(item.endTime) - timeToMinutes(item.startTime),
+            ),
+            ...assets.flatMap(durationValues),
+          ].filter((value) => value > 0)
     const rawStep = durations.reduce((current, value) => gcd(current, value), 0)
     const step = Math.min(60, Math.max(15, rawStep || 60))
-    const observedStarts = [...starts, ...assetStarts]
-    const observedEnds = [...ends, ...assetEnds]
-    const start =
-      Math.floor(
-        (observedStarts.length > 0 ? Math.min(...observedStarts) : 8 * 60) / step,
-      ) * step
-    const end =
-      Math.ceil(
-        (observedEnds.length > 0 ? Math.max(...observedEnds) : 22 * 60) / step,
-      ) * step
+    // Compact axis: business hours of the visible resources (08:00-20:00 when unknown).
+    // Never widened by slots: long ones are clipped to the axis (see RowCells), and
+    // "show 24 hours" reveals everything.
+    const observedStarts = compact
+      ? assetStarts.length > 0
+        ? assetStarts
+        : [DEFAULT_OPEN_MINUTES]
+      : [...starts, ...assetStarts]
+    const observedEnds = compact
+      ? assetEnds.length > 0
+        ? assetEnds
+        : [DEFAULT_CLOSE_MINUTES]
+      : [...ends, ...assetEnds]
+    const fullDay = compact && showFullDay
+    const start = fullDay
+      ? 0
+      : Math.floor(
+          (observedStarts.length > 0 ? Math.min(...observedStarts) : 8 * 60) / step,
+        ) * step
+    const end = fullDay
+      ? 24 * 60
+      : Math.ceil(
+          (observedEnds.length > 0 ? Math.max(...observedEnds) : 22 * 60) / step,
+        ) * step
     return {
       start,
       end,
@@ -166,7 +199,7 @@ function ResourceGrid({
         (_, index) => start + index * step,
       ),
     }
-  }, [assets, occupancies])
+  }, [assets, occupancies, compact, showFullDay])
 
   const occupanciesByAsset = useMemo(() => {
     const grouped = new Map<string, ScheduleGridOccupancy[]>()
@@ -201,7 +234,9 @@ function ResourceGrid({
     )
   }
 
-  const rowHeight = assets.length <= 1 ? SINGLE_COLUMN_ROW_HEIGHT : ROW_HEIGHT
+  const singleHeight = compact ? COMPACT_SINGLE_COLUMN_ROW_HEIGHT : SINGLE_COLUMN_ROW_HEIGHT
+  const multiHeight = compact ? COMPACT_ROW_HEIGHT : ROW_HEIGHT
+  const rowHeight = assets.length <= 1 ? singleHeight : multiHeight
   const columns = `${TIME_COLUMN_WIDTH}px repeat(${assets.length}, minmax(${MIN_RESOURCE_COLUMN_WIDTH}px, 1fr))`
   const showNowLine =
     typeof nowMinutes === "number" &&
@@ -213,7 +248,25 @@ function ResourceGrid({
 
   return (
     <div className="min-w-0 space-y-2">
-      <ScheduleGridLegend />
+      <ScheduleGridLegend
+        statuses={
+          compact
+            ? LEGEND_STATUSES.filter((status) =>
+                assets.some((asset) =>
+                  (occupanciesByAsset.get(asset.id) ?? []).some((item) => item.status === status),
+                ),
+              )
+            : LEGEND_STATUSES
+        }
+        showLeadTime={
+          !compact ||
+          assets.some((asset) =>
+            (occupanciesByAsset.get(asset.id) ?? []).some(
+              (item) => item.status !== "booked" && isStartClosed?.(item.startTime) === true,
+            ),
+          )
+        }
+      />
       <div className="relative min-w-0">
         <div
           ref={scrollRef}
@@ -242,7 +295,17 @@ function ResourceGrid({
                 className="sticky top-0 z-20 flex items-center border-b border-r border-border bg-background px-3 text-sm font-medium"
                 style={{ height: HEADER_HEIGHT }}
               >
-                <span className="truncate">{asset.name}</span>
+                <span className="min-w-0 flex-1 truncate">{asset.name}</span>
+                {compact ? (
+                  <AddSlotButton
+                    asset={asset}
+                    items={occupanciesByAsset.get(asset.id) ?? []}
+                    axis={axis}
+                    readOnly={readOnly}
+                    isStartClosed={isStartClosed}
+                    onCellClick={onCellClick}
+                  />
+                ) : null}
               </div>
             ))}
 
@@ -258,11 +321,13 @@ function ResourceGrid({
                   rowIndex={rowIndex}
                   axisStart={axis.start}
                   axisStep={axis.step}
+                  axisEnd={axis.end}
                   rowHeight={rowHeight}
                   busyTargetKey={busyTargetKey}
                   readOnly={readOnly}
                   isStartClosed={isStartClosed}
                   onCellClick={onCellClick}
+                  compact={compact}
                 />
               )
             })}
@@ -299,14 +364,21 @@ function ResourceGrid({
 
 const LEGEND_STATUSES = ["available", "booked", "unavailable"] as const
 
-function ScheduleGridLegend() {
+function ScheduleGridLegend({
+  statuses,
+  showLeadTime,
+}: {
+  statuses: readonly (typeof LEGEND_STATUSES)[number][]
+  showLeadTime: boolean
+}) {
   const { t } = useTranslation()
+  if (statuses.length === 0 && !showLeadTime) return null
   return (
     <ul
       aria-label={t("rentals.schedule.grid.legendLabel")}
       className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground"
     >
-      {LEGEND_STATUSES.map((status) => {
+      {statuses.map((status) => {
         const Icon = STATUS_ICON[status]
         return (
           <li key={status} className="flex items-center gap-1.5">
@@ -315,11 +387,80 @@ function ScheduleGridLegend() {
           </li>
         )
       })}
-      <li className="flex items-center gap-1.5">
-        <Ban className="size-4 text-muted-foreground" aria-hidden />
-        <span>{t("rentals.schedule.grid.minimumLeadTime")}</span>
-      </li>
+      {showLeadTime ? (
+        <li className="flex items-center gap-1.5">
+          <Ban className="size-4 text-muted-foreground" aria-hidden />
+          <span>{t("rentals.schedule.grid.minimumLeadTime")}</span>
+        </li>
+      ) : null}
     </ul>
+  )
+}
+
+/**
+ * Keyboard/screen-reader entry point of a compact column: opens the slot sheet at the first
+ * free start (or, when the column is full, at the first editable free slot).
+ */
+function AddSlotButton({
+  asset,
+  items,
+  axis,
+  readOnly,
+  isStartClosed,
+  onCellClick,
+}: {
+  asset: AdminRentalAsset
+  items: readonly ScheduleGridOccupancy[]
+  axis: { start: number; end: number; step: number; rows: number[] }
+  readOnly: boolean
+  isStartClosed?: (startTime: string) => boolean
+  onCellClick: (payload: ScheduleGridCellPayload) => void
+}) {
+  const { t } = useTranslation()
+  return (
+    <button
+      type="button"
+      disabled={readOnly}
+      aria-label={t("rentals.schedule.grid.addSlot", { name: asset.name })}
+      title={t("rentals.schedule.grid.addSlotShort")}
+      className="touch-target ml-1 inline-flex size-11 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+      onClick={() => {
+        const covered = (rowStart: number) =>
+          items.some(
+            (item) =>
+              timeToMinutes(item.startTime) < rowStart + axis.step &&
+              timeToMinutes(item.endTime) > rowStart,
+          )
+        const open = (rowStart: number) =>
+          isStartClosed?.(formatMinutesAsTime(rowStart)) !== true
+        const freeRow = axis.rows.find((rowStart) => !covered(rowStart) && open(rowStart))
+        if (freeRow !== undefined) {
+          onCellClick({
+            rentalAssetId: asset.id,
+            assetName: asset.name,
+            startTime: formatMinutesAsTime(freeRow),
+            endTime: formatMinutesAsTime(freeRow + axis.step),
+            occupancy: null,
+          })
+          return
+        }
+        const target =
+          items.find(
+            (item) => item.status === "available" && open(timeToMinutes(item.startTime)),
+          ) ?? items[0]
+        if (target) {
+          onCellClick({
+            rentalAssetId: asset.id,
+            assetName: asset.name,
+            startTime: target.startTime,
+            endTime: target.endTime,
+            occupancy: target,
+          })
+        }
+      }}
+    >
+      <Plus className="size-4" aria-hidden />
+    </button>
   )
 }
 
@@ -331,12 +472,15 @@ function RowCells({
   rowIndex,
   axisStart,
   axisStep,
+  axisEnd,
   rowHeight,
   busyTargetKey,
   readOnly,
   isStartClosed,
   onCellClick,
+  compact,
 }: {
+  compact: boolean
   assets: readonly AdminRentalAsset[]
   occupanciesByAsset: ReadonlyMap<string, ScheduleGridOccupancy[]>
   rowStart: number
@@ -344,6 +488,7 @@ function RowCells({
   rowIndex: number
   axisStart: number
   axisStep: number
+  axisEnd: number
   rowHeight: number
   busyTargetKey: string | null
   readOnly: boolean
@@ -358,10 +503,13 @@ function RowCells({
     <>
       <div
         role="rowheader"
-        className="sticky left-0 z-10 flex items-start justify-end border-b border-r border-border bg-background px-2 pt-2 text-xs tabular-nums text-muted-foreground"
+        className={cn(
+          "sticky left-0 z-10 flex items-start justify-end border-b border-r border-border bg-background px-2 text-xs tabular-nums text-muted-foreground",
+          compact ? "pt-1" : "pt-2",
+        )}
         style={{ height: rowHeight }}
       >
-        {formatMinutesAsTime(rowStart)}
+        {compact && rowStart % 60 !== 0 ? null : formatMinutesAsTime(rowStart)}
       </div>
       {assets.map((asset) => {
         const assetItems = occupanciesByAsset.get(asset.id) ?? []
@@ -370,10 +518,14 @@ function RowCells({
           const end = timeToMinutes(item.endTime)
           return start < rowEnd && end > rowStart
         })
+        // Compact mode clips long slots to the axis: a slot that begins before it is drawn
+        // from the first row, and one that ends after it stops at the last row.
+        const clippedStart = (item: ScheduleGridOccupancy) =>
+          compact
+            ? Math.max(timeToMinutes(item.startTime), axisStart)
+            : timeToMinutes(item.startTime)
         const starting = covering.filter(
-          (item) =>
-            Math.floor((timeToMinutes(item.startTime) - axisStart) / axisStep) ===
-            rowIndex,
+          (item) => Math.floor((clippedStart(item) - axisStart) / axisStep) === rowIndex,
         )
         const isCovered = covering.length > 0
         return (
@@ -383,7 +535,29 @@ function RowCells({
             className="relative overflow-visible border-b border-r border-border/70 p-1"
             style={{ height: rowHeight }}
           >
-            {!isCovered ? (
+            {!isCovered && compact ? (
+              <div
+                data-slot-target={`${asset.id}|${formatMinutesAsTime(rowStart)}`}
+                title={rowClosed ? minimumLeadTime : undefined}
+                className={cn(
+                  "h-full w-full rounded-md border border-dashed border-transparent transition-colors",
+                  rowClosed || readOnly
+                    ? "cursor-not-allowed"
+                    : "cursor-pointer hover:border-primary/40 hover:bg-primary/5",
+                )}
+                onClick={() => {
+                  if (readOnly || rowClosed) return
+                  onCellClick({
+                    rentalAssetId: asset.id,
+                    assetName: asset.name,
+                    startTime: formatMinutesAsTime(rowStart),
+                    endTime: formatMinutesAsTime(rowEnd),
+                    occupancy: null,
+                  })
+                }}
+              />
+            ) : null}
+            {!isCovered && !compact ? (
               <button
                 type="button"
                 disabled={readOnly || rowClosed}
@@ -406,18 +580,23 @@ function RowCells({
               </button>
             ) : null}
             {starting.map((item, stackIndex) => {
-              const itemStart = timeToMinutes(item.startTime)
+              const itemStart = clippedStart(item)
+              const continuesBefore = compact && timeToMinutes(item.startTime) < axisStart
+              const continuesAfter = compact && timeToMinutes(item.endTime) > axisEnd
               const overlapIndex =
                 assetItems.filter(
                   (other) =>
                     other.id !== item.id &&
-                    timeToMinutes(other.startTime) < itemStart &&
+                    clippedStart(other) < itemStart &&
                     timeToMinutes(other.endTime) > itemStart,
                 ).length + stackIndex
               const rows = Math.max(
                 1,
                 Math.ceil(
-                  (timeToMinutes(item.endTime) - timeToMinutes(item.startTime)) /
+                  ((compact
+                    ? Math.min(timeToMinutes(item.endTime), axisEnd)
+                    : timeToMinutes(item.endTime)) -
+                    itemStart) /
                     axisStep,
                 ),
               )
@@ -485,6 +664,12 @@ function RowCells({
                 "absolute top-1 overflow-hidden rounded-md border px-2 py-1 text-left shadow-sm transition hover:brightness-95 focus-visible:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60",
                 overlapIndex > 0 && "translate-x-2",
               )
+              // Compact: a plain free slot is a visual state (success tint + time), not a
+              // focusable button; the column's add button and cell clicks reach it instead.
+              const isFreeCard = compact && item.status === "available" && !hasChooser
+              const showKindLabel =
+                item.status !== "booked" &&
+                !(compact && kindLabel === t("rentals.schedule.occupancyKinds.open"))
               const cardStyle = {
                 left: 4,
                 right: 4 + overlapIndex * 8,
@@ -493,13 +678,17 @@ function RowCells({
                 borderColor:
                   item.status === "booked"
                     ? "var(--info)"
-                    : (item.occupancyKindColorHex ?? "var(--border)"),
+                    : compact && item.status === "available"
+                      ? "color-mix(in oklab, var(--success) 45%, transparent)"
+                      : (item.occupancyKindColorHex ?? "var(--border)"),
                 backgroundColor:
                   item.status === "booked"
                     ? "color-mix(in oklab, var(--info) 12%, transparent)"
-                    : item.occupancyKindColorHex
-                      ? `${item.occupancyKindColorHex}20`
-                      : "var(--muted)",
+                    : compact && item.status === "available"
+                      ? "color-mix(in oklab, var(--success) 10%, transparent)"
+                      : item.occupancyKindColorHex
+                        ? `${item.occupancyKindColorHex}20`
+                        : "var(--muted)",
                 // Status isn't colour-only: unavailable cards also get a hatch pattern on top of the tint.
                 backgroundImage:
                   item.status === "unavailable"
@@ -509,6 +698,24 @@ function RowCells({
               const singleColumn = rowHeight === SINGLE_COLUMN_ROW_HEIGHT
               const cardContent = (
                 <>
+                  {continuesBefore ? (
+                    <span
+                      data-continues="before"
+                      className="pointer-events-none absolute inset-x-0 top-0 z-10 flex items-center justify-end gap-0.5 bg-background/70 px-1.5 text-[10px] font-medium leading-4 text-muted-foreground"
+                    >
+                      <ChevronUp className="size-3" aria-hidden />
+                      {t("rentals.schedule.grid.continues")}
+                    </span>
+                  ) : null}
+                  {continuesAfter ? (
+                    <span
+                      data-continues="after"
+                      className="pointer-events-none absolute inset-x-0 bottom-0 z-10 flex items-center justify-end gap-0.5 bg-background/70 px-1.5 text-[10px] font-medium leading-4 text-muted-foreground"
+                    >
+                      <ChevronDown className="size-3" aria-hidden />
+                      {t("rentals.schedule.grid.continues")}
+                    </span>
+                  ) : null}
                   {prepPct > 0 ? (
                     <span
                       aria-hidden
@@ -524,6 +731,50 @@ function RowCells({
                     />
                   ) : null}
                   {/* Content sits above the absolutely-positioned buffer shades. */}
+                  {compact ? (
+                    <span className="relative flex min-w-0 flex-wrap items-center gap-x-1.5 text-xs">
+                      <span className="font-medium tabular-nums text-foreground">
+                        {timeRangeLabel}
+                      </span>
+                      {itemLabel ? (
+                        <span className="truncate text-muted-foreground">{itemLabel}</span>
+                      ) : null}
+                      {item.status === "available" ? null : (
+                        <span
+                          className={cn(
+                            "inline-flex items-center gap-1 whitespace-nowrap font-semibold",
+                            STATUS_TEXT_CLASS[item.status],
+                          )}
+                        >
+                          <StatusIcon className="size-3" aria-hidden />
+                          {statusLabel}
+                        </span>
+                      )}
+                      {showKindLabel ? (
+                        <span className="truncate text-muted-foreground">{kindLabel}</span>
+                      ) : null}
+                      {isInternalUse ? (
+                        <span className="whitespace-nowrap rounded-full bg-muted px-1.5 py-0.5 text-[11px] font-medium text-foreground/80">
+                          {t("rentals.schedule.occurrence.internalUse")}
+                        </span>
+                      ) : null}
+                      {freeUnitsLabel ? (
+                        <span className="whitespace-nowrap rounded-full bg-success/10 px-1.5 py-0.5 text-[11px] font-semibold text-success">
+                          {freeUnitsLabel}
+                        </span>
+                      ) : null}
+                      {item.badge === "dailyOverride" ? (
+                        <span className="whitespace-nowrap rounded-full bg-primary/10 px-1.5 py-0.5 text-[11px] text-primary">
+                          {t("rentals.schedule.occurrence.source.dailyOverride")}
+                        </span>
+                      ) : null}
+                      {item.badge === "inactive" ? (
+                        <span className="whitespace-nowrap rounded-full bg-muted px-1.5 py-0.5 text-[11px] text-muted-foreground">
+                          {t("rentals.schedule.inactive")}
+                        </span>
+                      ) : null}
+                    </span>
+                  ) : (
                   <span className="relative block">
                   {/* Booked cards: the occupancy kind of a derived row is the open-hours kind
                       ("Aberto"), which reads like a free slot; show the time range instead so the
@@ -576,6 +827,7 @@ function RowCells({
                     </span>
                   ) : null}
                   </span>
+                  )}
                 </>
               )
 
@@ -637,6 +889,25 @@ function RowCells({
                       </ul>
                     </PopoverContent>
                   </Popover>
+                )
+              }
+
+              if (isFreeCard) {
+                return (
+                  <div
+                    key={item.id}
+                    data-slot-target={`${asset.id}|${item.startTime}`}
+                    data-state={item.status}
+                    title={unavailableForLeadTime ? minimumLeadTime : undefined}
+                    className={cn(
+                      cardClassName,
+                      disabled ? "cursor-not-allowed opacity-60" : "cursor-pointer",
+                    )}
+                    style={cardStyle}
+                    onClick={disabled ? undefined : () => dispatch(item)}
+                  >
+                    {cardContent}
+                  </div>
                 )
               }
 

@@ -1,4 +1,5 @@
 import { catalogPolicySchema, type CatalogPolicy } from "@/features/catalog/schemas/catalogPolicySchemas"
+import { API_UPLOAD_TIMEOUT_MS } from "@/lib/apiTimeouts"
 import i18n from "@/lib/i18n"
 import { api, getAxiosErrorPayload, isAxiosError } from "@/lib/api"
 import { localizeCatalogApiError } from "@/features/catalog/lib/catalogApiErrors"
@@ -13,6 +14,7 @@ import {
   catalogOrderListSchema,
   catalogOrderSchema,
   catalogProductFileSchema,
+  catalogProductHistoryListSchema,
   catalogProductListSchema,
   catalogProductResourceRequirementsResponseSchema,
   catalogProductSchema,
@@ -37,6 +39,7 @@ import {
   type CatalogOrderAllocationPreview,
   type CatalogOrderStatus,
   type CatalogProduct,
+  type CatalogProductHistoryEntry,
   type CatalogProductFile,
   type CatalogProductResourceRequirement,
   type CatalogProductResourceRequirementsResponse,
@@ -59,6 +62,8 @@ export type CatalogProductWriteRequest = {
   price?: number | null
   currency?: string
   taxonomy?: { categoryIds: string[]; tagIds: string[] }
+  /** Absent = true on create, unchanged on update. */
+  usesSchedule?: boolean
   /** Create-only: initial status. Omitting it defaults to Active on the API. */
   status?: "Active" | "Inactive"
 }
@@ -225,6 +230,51 @@ export async function activateCatalogProduct(
   }
 }
 
+export type CatalogProductHistoryCursor = { before: string; beforeId: string }
+
+/** Newest first. Page with the last entry's `createdAt` + `id` as the cursor. */
+export async function getCatalogProductHistory(
+  productId: string,
+  options?: { limit?: number; cursor?: CatalogProductHistoryCursor },
+): Promise<CatalogProductHistoryEntry[]> {
+  try {
+    const response = await api.get(`/api/catalog/products/${productId}/history`, {
+      params: {
+        limit: options?.limit ?? 50,
+        ...(options?.cursor ? { before: options.cursor.before, beforeId: options.cursor.beforeId } : {}),
+      },
+    })
+    return parseOrThrow(catalogProductHistoryListSchema.safeParse(response.data))
+  } catch (error) {
+    if (error instanceof Error && error.message === i18n.t("apiErrors.invalidPayload")) {
+      throw error
+    }
+    throwCatalogError(error, "catalog.products.view.history.loadError")
+  }
+}
+
+/** Creates an inactive copy. Files are not copied. */
+export async function duplicateCatalogProduct(id: string): Promise<CatalogProduct> {
+  try {
+    const response = await api.post(`/api/catalog/products/${id}/duplicate`)
+    return parseOrThrow(catalogProductSchema.safeParse(response.data))
+  } catch (error) {
+    if (error instanceof Error && error.message === i18n.t("apiErrors.invalidPayload")) {
+      throw error
+    }
+    throwCatalogError(error, "catalog.products.view.errors.duplicate")
+  }
+}
+
+/** 409 PRODUCT_HAS_ORDERS (orders keep their product) is mapped to a message that suggests deactivating. */
+export async function deleteCatalogProduct(id: string): Promise<void> {
+  try {
+    await api.delete(`/api/catalog/products/${id}`)
+  } catch (error) {
+    throwCatalogError(error, "catalog.products.view.errors.delete")
+  }
+}
+
 export async function uploadCatalogProductFile(
   productId: string,
   file: File,
@@ -238,7 +288,7 @@ export async function uploadCatalogProductFile(
     const response = await api.post(
       `/api/catalog/products/${productId}/files`,
       formData,
-      { headers: { "Content-Type": "multipart/form-data" } },
+      { headers: { "Content-Type": "multipart/form-data" }, timeout: API_UPLOAD_TIMEOUT_MS },
     )
     return parseOrThrow(catalogProductFileSchema.safeParse(response.data))
   } catch (error) {
@@ -344,9 +394,9 @@ export async function listCatalogOrders(query?: {
   customerId?: string
   from?: string
   to?: string
-}): Promise<CatalogOrder[]> {
+}, { signal }: { signal?: AbortSignal } = {}): Promise<CatalogOrder[]> {
   try {
-    const response = await api.get("/api/catalog/orders", { params: query })
+    const response = await api.get("/api/catalog/orders", { params: query, ...(signal ? { signal } : {}) })
     return parseOrThrow(catalogOrderListSchema.safeParse(response.data))
   } catch (error) {
     if (error instanceof Error && error.message === i18n.t("apiErrors.invalidPayload")) {
@@ -772,22 +822,6 @@ export async function putCatalogProductAccess(
       throw error
     }
     throwCatalogError(error, "catalog.customerGroups.errors.saveAccess")
-  }
-}
-
-export async function getCatalogProductAccessHistory(
-  productId: string,
-): Promise<CatalogAuditEntry[]> {
-  try {
-    const response = await api.get(
-      `/api/catalog/products/${productId}/access/history`,
-    )
-    return parseOrThrow(catalogAuditEntryListSchema.safeParse(response.data))
-  } catch (error) {
-    if (error instanceof Error && error.message === i18n.t("apiErrors.invalidPayload")) {
-      throw error
-    }
-    throwCatalogError(error, "catalog.customerGroups.errors.loadHistory")
   }
 }
 

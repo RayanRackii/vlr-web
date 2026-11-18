@@ -1,14 +1,16 @@
 import { TestPermissionProvider } from "@/features/users/permissions/PermissionContext"
-import { render, screen, within } from "@testing-library/react"
+import { render, screen, waitFor, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
-import { MemoryRouter, Route, Routes } from "react-router-dom"
+import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom"
 import { beforeEach, expect, it, vi } from "vitest"
 import { ProductAssistantPage } from "./ProductAssistantPage"
 import { useProductWizard } from "@/features/catalog/components/productWizard/useProductWizard"
 import { listAdminRentalAssets } from "@/features/rentals/services/scheduleService"
+import { activateCatalogProduct } from "@/features/catalog/services/catalogService"
 
 vi.mock("@/features/catalog/components/productWizard/useProductWizard", () => ({ useProductWizard: vi.fn() }))
 vi.mock("@/features/rentals/services/scheduleService", () => ({ listAdminRentalAssets: vi.fn() }))
+vi.mock("@/features/catalog/services/catalogService", async (importOriginal) => ({ ...(await importOriginal<typeof import("@/features/catalog/services/catalogService")>()), activateCatalogProduct: vi.fn() }))
 
 vi.mock("@/features/taxonomy/services/taxonomyService", () => ({
   listTaxonomyCategories: vi.fn().mockResolvedValue([{ id: "cccccccc-cccc-4ccc-8ccc-cccccccccccc", name: "Hospedagem", slug: "hospedagem", parentId: null, icon: null, sortOrder: 0 }]),
@@ -32,8 +34,9 @@ beforeEach(() => {
     wizardPath: `/catalogo/produtos/${productId}/assistente`,
     reload: vi.fn(),
     publishMenu: vi.fn(),
+    modelRef: { current: null },
     model: {
-      product: { id: productId, name: "Diária", isActive: true, price: null, visibility: "Public" },
+      product: { id: productId, name: "Diária", isActive: false, usesSchedule: true, currency: "BRL", price: 0, visibility: "Public", files: [] },
       access: { visibility: "Public", customerIds: [], groupIds: [] },
       groups: [],
       menuItems: [],
@@ -43,35 +46,31 @@ beforeEach(() => {
   } as never)
 })
 
-function setup() {
+function setup(entry = `/catalogo/produtos/${productId}/passos`) {
   return render(
-    <MemoryRouter initialEntries={[`/catalogo/produtos/${productId}/passos`]}>
-      <Routes><Route path="/catalogo/produtos/:id/passos" element={<ProductAssistantPage />} /></Routes>
+    <MemoryRouter initialEntries={[entry]}>
+      <Routes>
+        <Route path="/catalogo/produtos/:id/passos" element={<ProductAssistantPage />} />
+        <Route path="/catalogo/produtos/:id/cadastro" element={<LocationProbe />} />
+      </Routes>
     </MemoryRouter>,
   )
 }
 
-it("shows the same unfinished steps in the badge and the rows", () => {
+function LocationProbe() {
+  const location = useLocation()
+  return <p data-testid="editor-location">{location.pathname}{location.search}</p>
+}
+
+it("sends the non-cadastro assistant to the wizard in edit mode", () => {
   setup()
-  expect(screen.getByText("Falta 1 passo")).toBeInTheDocument()
-  expect(screen.getAllByText("Pendente")).toHaveLength(1)
-  expect(within(screen.getByRole("region", { name: "Preços" })).getByText("Pendente")).toBeInTheDocument()
-  expect(screen.getAllByText("Completo")).toHaveLength(4)
+  expect(screen.getByTestId("editor-location")).toHaveTextContent(`/catalogo/produtos/${productId}/cadastro?modo=editar`)
+  expect(screen.queryByRole("region", { name: "Preços" })).not.toBeInTheDocument()
 })
 
-it("links the used resource and does not invent a deposit or a lead time", async () => {
-  const user = userEvent.setup()
-  setup()
-  expect(screen.getByRole("heading", { name: "Diária" })).toBeInTheDocument()
-  for (const name of ["Dados", "Agenda", "Fila", "Regras", "Preços", "Publicação"]) {
-    expect(screen.getByRole("heading", { name: new RegExp(name) })).toBeInTheDocument()
-  }
-  expect(screen.queryByText(/antecedência|sinal|30%/i)).not.toBeInTheDocument()
-  await user.click(within(screen.getByRole("region", { name: "Publicação" })).getByRole("button", { name: "Editar" }))
-  const link = await screen.findByRole("link", { name: "Abrir recurso" })
-  expect(link).toHaveAttribute("href", `/configuracoes/recursos/${assetId}/cadastro`)
-  expect(screen.queryByRole("dialog")).not.toBeInTheDocument()
-  expect(screen.getByRole("button", { name: "Continuar em Preços" })).toHaveClass("w-full")
+it("opens the Agenda step when the old link targeted the agenda step", () => {
+  setup(`/catalogo/produtos/${productId}/passos?passo=agenda`)
+  expect(screen.getByTestId("editor-location")).toHaveTextContent(`/catalogo/produtos/${productId}/cadastro?modo=editar&passo=agenda`)
 })
 
 function renderCadastro(query = "") {
@@ -88,42 +87,102 @@ it("opens cadastro as one full page with a horizontal rail and query-controlled 
   expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1)
   expect(screen.queryByRole("dialog")).not.toBeInTheDocument()
   expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument()
-  expect(screen.getByRole("button", { name: "Fila" })).toHaveAttribute("aria-current", "step")
-  await user.click(screen.getByRole("button", { name: "Continuar" }))
-  expect(screen.getByRole("button", { name: "Regras" })).toHaveAttribute("aria-current", "step")
+  expect(screen.getByRole("button", { name: /^Fila/ })).toHaveAttribute("aria-current", "step")
+  await user.click(screen.getByRole("button", { name: "Salvar e continuar" }))
+  expect(screen.getByRole("button", { name: /^Regras/ })).toHaveAttribute("aria-current", "step")
   await user.click(screen.getByRole("button", { name: "Voltar" }))
-  expect(screen.getByRole("button", { name: "Fila" })).toHaveAttribute("aria-current", "step")
+  expect(screen.getByRole("button", { name: /^Fila/ })).toHaveAttribute("aria-current", "step")
 })
 it("defaults an unknown cadastro step to Dados", () => {
   
   renderCadastro("?passo=unknown")
-  expect(screen.getByRole("button", { name: "Dados" })).toHaveAttribute("aria-current", "step")
+  expect(screen.getByRole("button", { name: /^Dados do produto/ })).toHaveAttribute("aria-current", "step")
   expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1)
 })
-it("publishes from the last cadastro step through the existing assistant action", async () => {
-  vi.mocked(useProductWizard).mockReturnValue({
+function mockReadyProduct(overrides: { isActive: boolean; menuItems: unknown[]; taxonomy?: unknown; files?: unknown[] }) {
+  const publishMenu = vi.fn().mockResolvedValue(true)
+  const reload = vi.fn()
+  const wizard = {
     loading: false,
     error: null,
     busy: false,
+    readOnly: false,
     rentalsActive: true,
     canManage: true,
     canSearchCustomers: false,
     wizardPath: `/catalogo/produtos/${productId}/assistente`,
-    reload: vi.fn(),
-    publishMenu: vi.fn(),
+    reload,
+    publishMenu,
+    modelRef: { current: null },
     model: {
-      product: { id: productId, name: "Diária", isActive: true, price: 10, visibility: "Public" },
+      product: { id: productId, name: "Diária", isActive: overrides.isActive, usesSchedule: true, currency: "BRL", price: 10, visibility: "Public", files: overrides.files ?? [], taxonomy: overrides.taxonomy },
       access: { visibility: "Public", customerIds: [], groupIds: [] },
       groups: [],
-      menuItems: [],
+      menuItems: overrides.menuItems,
       requirements: [{ rentalAssetId: assetId }],
       resourceCapability: "ready",
     },
-  } as never)
+  }
+  vi.mocked(useProductWizard).mockReturnValue(wizard as never)
+  return { publishMenu, reload, wizard }
+}
+
+const activeCatalogMenu = [{ id: "m", moduleName: "catalog", label: "Catálogo", sortOrder: 1, isActive: true }]
+
+it("Publicar activates the draft product and publishes the catalog menu when it is not active", async () => {
+  vi.mocked(activateCatalogProduct).mockResolvedValue({} as never)
+  const { publishMenu } = mockReadyProduct({ isActive: false, menuItems: [] })
   const user = userEvent.setup()
   renderCadastro("?passo=publicacao")
   await user.click(screen.getByRole("button", { name: "Publicar" }))
-  expect(vi.mocked(useProductWizard).mock.results.at(-1)?.value.publishMenu).toHaveBeenCalled()
+  await waitFor(() => expect(publishMenu).toHaveBeenCalledTimes(1))
+  expect(activateCatalogProduct).toHaveBeenCalledWith(productId)
+})
+
+it("an active product that is not on the portal menu still publishes the menu without activating again", async () => {
+  const { publishMenu } = mockReadyProduct({ isActive: true, menuItems: [] })
+  const user = userEvent.setup()
+  renderCadastro("?passo=publicacao")
+  await user.click(screen.getByRole("button", { name: "Publicar" }))
+  await waitFor(() => expect(publishMenu).toHaveBeenCalledTimes(1))
+  expect(activateCatalogProduct).not.toHaveBeenCalled()
+})
+
+it("does not publish the menu when activating fails", async () => {
+  vi.mocked(activateCatalogProduct).mockRejectedValue(new Error("falhou"))
+  const { publishMenu } = mockReadyProduct({ isActive: false, menuItems: [] })
+  const user = userEvent.setup()
+  renderCadastro("?passo=publicacao")
+  await user.click(screen.getByRole("button", { name: "Publicar" }))
+  await waitFor(() => expect(activateCatalogProduct).toHaveBeenCalled())
+  expect(publishMenu).not.toHaveBeenCalled()
+})
+
+it("shows Rascunho and marks steps from the saved data, not from visits", async () => {
+  mockReadyProduct({ isActive: false, menuItems: [] })
+  const user = userEvent.setup()
+  renderCadastro("?passo=dados")
+  const nav = screen.getByRole("navigation", { name: "Etapas do cadastro" })
+  expect(screen.getByText("Rascunho")).toBeInTheDocument()
+  for (const done of ["Dados do produto", "Agenda", "Fila", "Regras", "Preços"]) {
+    expect(within(nav).getByRole("button", { name: `${done}, concluída` })).toBeInTheDocument()
+  }
+  expect(within(nav).getByRole("button", { name: "Categorias e tags" })).toBeInTheDocument()
+  expect(within(nav).getAllByText("Opcional")).toHaveLength(2)
+  expect(within(nav).getByRole("button", { name: "Publicação" })).toBeInTheDocument()
+  await user.click(within(nav).getByRole("button", { name: "Publicação" }))
+  expect(within(nav).getByRole("button", { name: "Publicação" })).toHaveAttribute("aria-current", "step")
+})
+
+it("completes Categorias when the product has taxonomy, in the edit mode of an active product", () => {
+  mockReadyProduct({ isActive: true, menuItems: activeCatalogMenu, taxonomy: { categories: [{ id: "c", name: "Hospedagem" }], tags: [] } })
+  renderCadastro("?passo=dados")
+  const nav = screen.getByRole("navigation", { name: "Etapas do cadastro" })
+  expect(screen.getByRole("heading", { level: 1, name: "Editar produto" })).toBeInTheDocument()
+  expect(screen.queryByText("Ativo")).not.toBeInTheDocument()
+  expect(within(nav).getByRole("button", { name: "Categorias e tags, concluída" })).toBeInTheDocument()
+  expect(within(nav).getByRole("button", { name: "Publicação, concluída" })).toBeInTheDocument()
+  expect(within(nav).getAllByText("Opcional")).toHaveLength(1)
 })
 
 it("keeps Publicar disabled while a setup step is missing", () => {
@@ -134,19 +193,220 @@ it("keeps Publicar disabled while a setup step is missing", () => {
 it("keeps taxonomy chips on the page until their assignment has been saved", async () => {
   const user = userEvent.setup()
   renderCadastro("?passo=categorias")
-  await user.click(await screen.findByRole("button", { name: "Hospedagem" }))
-  expect(screen.getByRole("button", { name: "Hospedagem" })).toHaveAttribute("aria-pressed", "true")
-  expect(screen.getByRole("button", { name: "Hospedagem" })).toHaveClass("w-fit")
-  expect(screen.getByRole("button", { name: "Continuar" })).toBeDisabled()
-  expect(screen.getByRole("button", { name: "Agenda" })).toBeDisabled()
-  expect(screen.getByRole("button", { name: "Voltar" })).toBeDisabled()
-  await user.click(screen.getByRole("button", { name: "Hospedagem" }))
-  expect(screen.getByRole("button", { name: "Continuar" })).toBeEnabled()
+  await user.click(await screen.findByRole("combobox", { name: "Buscar ou selecionar categorias" }))
+  await user.click(await screen.findByRole("option", { name: "Hospedagem" }))
+  expect(screen.getByRole("button", { name: "Remover Hospedagem" })).toBeInTheDocument()
+  expect(screen.getByRole("button", { name: "Salvar e continuar" })).toBeEnabled()
+  await user.click(screen.getByRole("button", { name: "Remover Hospedagem" }))
+  expect(screen.queryByRole("button", { name: "Remover Hospedagem" })).not.toBeInTheDocument()
 })
-it("keeps unsaved offer changes in Dados until saved or restored", async () => {
+it("keeps unsaved offer changes in Dados and does not block the footer", async () => {
   const user = userEvent.setup()
   renderCadastro()
-  await user.type(screen.getByRole("textbox", { name: "Nome" }), " nova")
-  expect(screen.getByRole("button", { name: "Continuar" })).toBeDisabled()
-  expect(screen.getByRole("button", { name: "Categorias e tags" })).toBeDisabled()
+  await user.type(screen.getByRole("textbox", { name: "Nome do produto *" }), " nova")
+  expect(screen.getByRole("textbox", { name: "Nome do produto *" })).toHaveValue("Diária nova")
+  expect(screen.getByRole("button", { name: "Salvar e continuar" })).toBeEnabled()
+  expect(screen.getByRole("button", { name: "Categorias e tags" })).toBeEnabled()
+})
+
+it("shows Agenda and Fila as not applicable for a product without schedule and skips them", async () => {
+  vi.mocked(useProductWizard).mockReturnValue({
+    loading: false, error: null, busy: false, readOnly: false, rentalsActive: true, canManage: true, canSearchCustomers: false,
+    wizardPath: "", reload: vi.fn(), publishMenu: vi.fn(), modelRef: { current: null },
+    model: {
+      product: { id: productId, name: "Diária", isActive: false, usesSchedule: false, currency: "BRL", price: 10, visibility: "Public", files: [] },
+      access: { visibility: "Public", customerIds: [], groupIds: [] }, groups: [], menuItems: [],
+      requirements: [], resourceCapability: "ready",
+    },
+  } as never)
+  const user = userEvent.setup()
+  renderCadastro("?passo=categorias")
+  const nav = screen.getByRole("navigation", { name: "Etapas do cadastro" })
+  expect(within(nav).getByRole("group", { name: "Agenda, Não se aplica" })).toBeInTheDocument()
+  expect(within(nav).getByRole("group", { name: "Fila, Não se aplica" })).toBeInTheDocument()
+  expect(within(nav).queryByRole("button", { name: /^Agenda/ })).not.toBeInTheDocument()
+  expect(screen.getByText("Etapa 3 de 6")).toBeInTheDocument()
+  await user.click(screen.getByRole("button", { name: "Salvar e continuar" }))
+  await waitFor(() => expect(screen.getByRole("button", { name: /^Regras/ })).toHaveAttribute("aria-current", "step"))
+})
+
+function renderCadastroWithRoutes(query: string) {
+  return render(<MemoryRouter initialEntries={[`/catalogo/produtos/${productId}/cadastro${query}`]}>
+    <TestPermissionProvider permissions={["core.taxonomy.read", "core.taxonomy.manage", "core.module_menu.write"]}>
+      <Routes>
+        <Route path="/catalogo/produtos/:id/cadastro" element={<ProductAssistantPage cadastro />} />
+        <Route path="*" element={<LocationProbe />} />
+      </Routes>
+    </TestPermissionProvider>
+  </MemoryRouter>)
+}
+
+it("summarizes the product before publishing, with Sob consulta and an Editar link per step", async () => {
+  const user = userEvent.setup()
+  vi.mocked(useProductWizard).mockReturnValue({
+    loading: false, error: null, busy: false, readOnly: false, rentalsActive: true, canManage: true, canSearchCustomers: false,
+    wizardPath: "", reload: vi.fn(), publishMenu: vi.fn(), modelRef: { current: null },
+    model: {
+      product: { id: productId, name: "Diária", isActive: false, usesSchedule: false, currency: "BRL", price: null, visibility: "Restricted", files: [], taxonomy: { categories: [{ id: "c", name: "Hospedagem" }], tags: [] } },
+      access: { visibility: "Restricted", customerIds: [], groupIds: [] }, groups: [], menuItems: [],
+      requirements: [], resourceCapability: "ready",
+    },
+  } as never)
+  renderCadastro("?passo=publicacao")
+  expect(screen.getByTestId("review-name")).toHaveTextContent("Diária")
+  expect(screen.getByTestId("review-categories")).toHaveTextContent("Hospedagem")
+  expect(screen.getByTestId("review-price")).toHaveTextContent("Sob consulta")
+  expect(screen.getByTestId("review-agenda")).toHaveTextContent("Não usa agenda")
+  expect(screen.getByTestId("review-visibility")).toHaveTextContent("Restrito")
+  await user.click(screen.getByRole("button", { name: "Editar Preço" }))
+  expect(screen.getByRole("button", { name: /^Preços/ })).toHaveAttribute("aria-current", "step")
+})
+
+it("lists the linked resources and the formatted price in the summary", () => {
+  mockReadyProduct({ isActive: false, menuItems: [] })
+  renderCadastro("?passo=publicacao")
+  return waitFor(() => expect(screen.getByTestId("review-agenda")).toHaveTextContent("Estúdio A")).then(() => {
+    expect(screen.getByTestId("review-price")).toHaveTextContent("R$ 10,00")
+  })
+})
+
+it("replaces the step with a success state after Publicar and offers the next actions", async () => {
+  vi.mocked(activateCatalogProduct).mockResolvedValue({} as never)
+  mockReadyProduct({ isActive: false, menuItems: [] })
+  const user = userEvent.setup()
+  renderCadastroWithRoutes("?passo=publicacao")
+  await user.click(screen.getByRole("button", { name: "Publicar" }))
+  expect(await screen.findByText("Produto publicado")).toBeInTheDocument()
+  expect(screen.getByText(/Diária · R\$ 10,00/)).toBeInTheDocument()
+  expect(screen.getByText(/\(Público\)/)).toBeInTheDocument()
+  expect(screen.queryByText("Revise o que falta e publique para os clientes.")).not.toBeInTheDocument()
+  expect(screen.queryByRole("button", { name: "Publicar" })).not.toBeInTheDocument()
+  expect(screen.getByRole("link", { name: "Ver na lista de produtos" })).toHaveAttribute("href", "/catalogo/produtos")
+  expect(screen.getByRole("link", { name: "Criar outro produto" })).toHaveAttribute("href", "/catalogo/produtos/cadastro")
+  await user.click(screen.getByRole("link", { name: "Continuar editando" }))
+  expect(screen.getByTestId("editor-location")).toHaveTextContent(`/catalogo/produtos/${productId}`)
+})
+
+it("announces Produto ativo and stays on the step when the publish is refused", async () => {
+  const { toast } = await import("sonner")
+  const success = vi.spyOn(toast, "success").mockReturnValue(1)
+  const error = vi.spyOn(toast, "error").mockReturnValue(1)
+  vi.mocked(activateCatalogProduct).mockRejectedValueOnce(new Error("Não dá para ativar: falta o preço."))
+  mockReadyProduct({ isActive: false, menuItems: [] })
+  const user = userEvent.setup()
+  renderCadastro("?passo=publicacao")
+  await user.click(screen.getByRole("button", { name: "Publicar" }))
+  await waitFor(() => expect(error).toHaveBeenCalledWith("Não dá para ativar: falta o preço."))
+  expect(screen.queryByText("Produto publicado")).not.toBeInTheDocument()
+  expect(screen.getByRole("button", { name: "Publicar" })).toBeEnabled()
+  vi.mocked(activateCatalogProduct).mockResolvedValueOnce({} as never)
+  await user.click(screen.getByRole("button", { name: "Publicar" }))
+  await screen.findByText("Produto publicado")
+  expect(success).toHaveBeenCalledWith("Produto ativo.")
+})
+
+it("stays on the step with a muted note when the product is active but the menu step failed", async () => {
+  vi.mocked(activateCatalogProduct).mockResolvedValue({} as never)
+  const { publishMenu } = mockReadyProduct({ isActive: false, menuItems: [] })
+  publishMenu.mockResolvedValue(false)
+  const user = userEvent.setup()
+  renderCadastro("?passo=publicacao")
+  await user.click(screen.getByRole("button", { name: "Publicar" }))
+  expect(await screen.findByText("O produto está ativo, mas não entrou no menu do portal.")).toBeInTheDocument()
+  expect(screen.queryByText("Produto publicado")).not.toBeInTheDocument()
+  expect(screen.getByRole("button", { name: "Publicar" })).toBeEnabled()
+})
+
+it("shows Fotos e arquivos right after Dados, never counts it as missing and saves nothing on continue", async () => {
+  const user = userEvent.setup()
+  mockReadyProduct({ isActive: false, menuItems: [] })
+  renderCadastro("?passo=dados")
+  const nav = screen.getByRole("navigation", { name: "Etapas do cadastro" })
+  const labels = within(nav).getAllByRole("button").map((button) => button.getAttribute("aria-label"))
+  expect(labels.slice(0, 3)).toEqual(["Dados do produto, concluída", "Fotos e arquivos", "Categorias e tags"])
+  await user.click(within(nav).getByRole("button", { name: "Fotos e arquivos" }))
+  expect(await screen.findByTestId("product-files-manager")).toBeInTheDocument()
+  expect(screen.getByText("Etapa 2 de 8")).toBeInTheDocument()
+  // Optional with no files: not done, not missing.
+  expect(within(nav).getByRole("button", { name: "Fotos e arquivos" })).toHaveAttribute("aria-current", "step")
+  await user.click(screen.getByRole("button", { name: "Salvar e continuar" }))
+  await waitFor(() => expect(screen.getByRole("button", { name: /^Categorias e tags/ })).toHaveAttribute("aria-current", "step"))
+})
+
+it("marks Fotos e arquivos done only for a Ready file, not for Pending or Failed ones", () => {
+  const file = (status: string) => ({ id: status, fileName: `${status}.png`, mimeType: "image/png", sizeBytes: 1, visibility: "CustomerVisible", status, url: null })
+  mockReadyProduct({ isActive: false, menuItems: [], files: [file("Pending"), file("Failed")] })
+  const view = renderCadastro("?passo=dados")
+  expect(within(screen.getByRole("navigation", { name: "Etapas do cadastro" })).getByRole("button", { name: "Fotos e arquivos" })).toBeInTheDocument()
+  view.unmount()
+  mockReadyProduct({ isActive: false, menuItems: [], files: [file("Ready")] })
+  renderCadastro("?passo=dados")
+  expect(within(screen.getByRole("navigation", { name: "Etapas do cadastro" })).getByRole("button", { name: "Fotos e arquivos, concluída" })).toBeInTheDocument()
+})
+
+function renderEdit(query: string) {
+  return render(<MemoryRouter initialEntries={[`/catalogo/produtos/${productId}/cadastro${query}`]}>
+    <TestPermissionProvider permissions={["core.taxonomy.read", "core.taxonomy.manage", "core.module_menu.write"]}>
+      <Routes>
+        <Route path="/catalogo/produtos/:id/cadastro" element={<ProductAssistantPage cadastro />} />
+        <Route path="/catalogo/produtos/:id" element={<LocationProbe />} />
+        <Route path="/catalogo/produtos" element={<LocationProbe />} />
+      </Routes>
+    </TestPermissionProvider>
+  </MemoryRouter>)
+}
+
+it("edit mode (?modo=editar) shows Editar produto with the product name and no creation footer, even for an inactive product", () => {
+  mockReadyProduct({ isActive: false, menuItems: [] })
+  renderEdit("?modo=editar&passo=precos")
+  expect(screen.getByRole("heading", { level: 1, name: "Editar produto" })).toBeInTheDocument()
+  expect(screen.getByText("Diária")).toBeInTheDocument()
+  expect(screen.getByRole("button", { name: "Salvar alterações" })).toBeInTheDocument()
+  expect(screen.queryByRole("button", { name: "Salvar e continuar" })).not.toBeInTheDocument()
+})
+
+it("an active product opens in edit mode without ?modo=editar (list menu link)", () => {
+  mockReadyProduct({ isActive: true, menuItems: activeCatalogMenu })
+  renderEdit("")
+  expect(screen.getByRole("heading", { level: 1, name: "Editar produto" })).toBeInTheDocument()
+  expect(screen.queryByText("Rascunho")).not.toBeInTheDocument()
+  expect(screen.queryByText(/Etapa \d+ de \d+/)).not.toBeInTheDocument()
+})
+
+it("Salvar alterações shows the toast and returns to the product view", async () => {
+  const { toast } = await import("sonner")
+  const success = vi.spyOn(toast, "success").mockReturnValue(1)
+  mockReadyProduct({ isActive: true, menuItems: activeCatalogMenu })
+  const user = userEvent.setup()
+  renderEdit("?modo=editar&passo=arquivos")
+  await user.click(screen.getByRole("button", { name: "Salvar alterações" }))
+  await waitFor(() => expect(screen.getByTestId("editor-location").textContent).toBe(`/catalogo/produtos/${productId}`))
+  expect(success).toHaveBeenCalledWith("Alterações salvas")
+})
+
+it("Cancelar goes to the product view, not the list", async () => {
+  mockReadyProduct({ isActive: true, menuItems: activeCatalogMenu })
+  const user = userEvent.setup()
+  renderEdit("?modo=editar&passo=arquivos")
+  await user.click(screen.getByRole("button", { name: "Cancelar" }))
+  await waitFor(() => expect(screen.getByTestId("editor-location").textContent).toBe(`/catalogo/produtos/${productId}`))
+})
+
+it("publishing a draft shows the publish success, not edit mode, even though the product becomes active", async () => {
+  vi.mocked(activateCatalogProduct).mockResolvedValue({} as never)
+  const { publishMenu, wizard: draftValue } = mockReadyProduct({ isActive: false, menuItems: [] })
+  publishMenu.mockImplementation(async () => {
+    vi.mocked(useProductWizard).mockReturnValue({
+      ...draftValue,
+      model: { ...draftValue.model, product: { ...draftValue.model.product, isActive: true }, menuItems: activeCatalogMenu },
+    } as never)
+    return true
+  })
+  const user = userEvent.setup()
+  renderCadastro("?passo=publicacao")
+  expect(screen.queryByRole("heading", { level: 1, name: "Editar produto" })).not.toBeInTheDocument()
+  await user.click(screen.getByRole("button", { name: "Publicar" }))
+  expect(await screen.findByText("Produto publicado")).toBeInTheDocument()
+  expect(screen.queryByRole("heading", { level: 1, name: "Editar produto" })).not.toBeInTheDocument()
+  expect(screen.queryByRole("button", { name: "Salvar alterações" })).not.toBeInTheDocument()
 })

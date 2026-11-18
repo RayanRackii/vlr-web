@@ -3,7 +3,7 @@ import { ModuleIntroLinksProvider } from "@/components/layout/ModuleIntroLinksCo
 import { AuthProvider } from "@/contexts/AuthContext"
 import { fireEvent, render as testingRender, screen, waitFor, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
-import { beforeEach, describe, expect, it, vi } from "vitest"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { MemoryRouter } from "react-router-dom"
 
 import { TestPermissionProvider } from "@/features/users/permissions/PermissionContext"
@@ -66,6 +66,8 @@ const cancelMock = vi.mocked(cancelAdminReservation)
 const completeMock = vi.mocked(completeAdminReservation)
 const toastSuccess = vi.mocked(toast.success)
 
+afterEach(() => { vi.useRealTimers() })
+
 beforeEach(() => { trialState.readOnly = false })
 
 function makeReservation(
@@ -110,8 +112,20 @@ function renderPage(permissions: readonly string[] = [COMPLETE_PERM]) {
   )
 }
 
+/** The table and the mobile cards both render (CSS picks one), so scope queries to the table. */
+const tableQuery = () => screen.getByRole("table", { name: "Reservas" })
+const findTable = () => screen.findByRole("table", { name: "Reservas" })
+function inTable() {
+  return {
+    findByText: async (text: string) => within(await findTable()).findByText(text),
+    findByRole: async (role: string, options?: object) => within(await findTable()).findByRole(role, options),
+    getByRole: (role: string, options?: object) => within(tableQuery()).getByRole(role, options),
+    queryByRole: (role: string, options?: object) => within(tableQuery()).queryByRole(role, options),
+  }
+}
+
 function completeButton() {
-  return screen.queryByRole("button", {
+  return inTable().queryByRole("button", {
     name: i18n.t("rentals.reservations.complete"),
   })
 }
@@ -148,17 +162,17 @@ describe("ReservationsPage", () => {
     listMock.mockResolvedValue([makeReservation("Confirmed")])
     renderPage([COMPLETE_PERM])
 
-    expect(await screen.findByText("Ana Souza")).toBeInTheDocument()
+    expect(await inTable().findByText("Ana Souza")).toBeInTheDocument()
     expect(completeButton()).toBeInTheDocument()
-    expect(screen.getByText(/10:00/)).toBeInTheDocument()
-    expect(screen.getByText(/11:00/)).toBeInTheDocument()
+    expect(within(tableQuery()).getByText(/10:00/)).toBeInTheDocument()
+    expect(within(tableQuery()).getByText(/11:00/)).toBeInTheDocument()
   })
 
   it("hides Concluir when the reservation is Confirmed but the permission is missing", async () => {
     listMock.mockResolvedValue([makeReservation("Confirmed")])
     renderPage(["rentals.reservations.read", "rentals.reservations.confirm"])
 
-    expect(await screen.findByText("Ana Souza")).toBeInTheDocument()
+    expect(await inTable().findByText("Ana Souza")).toBeInTheDocument()
     expect(completeButton()).not.toBeInTheDocument()
   })
 
@@ -168,7 +182,7 @@ describe("ReservationsPage", () => {
       listMock.mockResolvedValue([makeReservation(status)])
       renderPage([COMPLETE_PERM])
 
-      expect(await screen.findByText("Ana Souza")).toBeInTheDocument()
+      expect(await inTable().findByText("Ana Souza")).toBeInTheDocument()
       expect(completeButton()).not.toBeInTheDocument()
     },
   )
@@ -186,11 +200,11 @@ describe("ReservationsPage", () => {
     })
 
     renderPage([COMPLETE_PERM])
-    expect(await screen.findByText("Ana Souza")).toBeInTheDocument()
+    expect(await inTable().findByText("Ana Souza")).toBeInTheDocument()
     expect(completeButton()).toBeInTheDocument()
 
     await user.click(
-      screen.getByRole("button", {
+      inTable().getByRole("button", {
         name: i18n.t("rentals.reservations.complete"),
       }),
     )
@@ -205,7 +219,7 @@ describe("ReservationsPage", () => {
     await waitFor(() => {
       expect(listMock.mock.calls.length).toBeGreaterThanOrEqual(2)
     })
-    expect(await screen.findByText("Ana Souza")).toBeInTheDocument()
+    expect(await inTable().findByText("Ana Souza")).toBeInTheDocument()
     expect(completeButton()).not.toBeInTheDocument()
   })
 })
@@ -225,9 +239,9 @@ describe("ReservationsPage Cancel confirmation", () => {
     listMock.mockResolvedValue([makeReservation("Confirmed")])
     renderPage([COMPLETE_PERM])
 
-    expect(await screen.findByText("Ana Souza")).toBeInTheDocument()
+    expect(await inTable().findByText("Ana Souza")).toBeInTheDocument()
     await user.click(
-      screen.getByRole("button", { name: i18n.t("rentals.reservations.cancel") }),
+      inTable().getByRole("button", { name: i18n.t("rentals.reservations.cancel") }),
     )
 
     expect(cancelMock).not.toHaveBeenCalled()
@@ -255,10 +269,10 @@ describe("ReservationsPage Cancel confirmation", () => {
     })
 
     renderPage([COMPLETE_PERM])
-    expect(await screen.findByText("Ana Souza")).toBeInTheDocument()
+    expect(await inTable().findByText("Ana Souza")).toBeInTheDocument()
 
     await user.click(
-      screen.getByRole("button", { name: i18n.t("rentals.reservations.cancel") }),
+      inTable().getByRole("button", { name: i18n.t("rentals.reservations.cancel") }),
     )
     await screen.findByRole("alertdialog")
 
@@ -284,9 +298,9 @@ describe("ReservationsPage Cancel confirmation", () => {
     listMock.mockResolvedValue([makeReservation("Confirmed")])
     renderPage([COMPLETE_PERM])
 
-    expect(await screen.findByText("Ana Souza")).toBeInTheDocument()
+    expect(await inTable().findByText("Ana Souza")).toBeInTheDocument()
     await user.click(
-      screen.getByRole("button", { name: i18n.t("rentals.reservations.cancel") }),
+      inTable().getByRole("button", { name: i18n.t("rentals.reservations.cancel") }),
     )
     await screen.findByRole("alertdialog")
 
@@ -322,9 +336,9 @@ describe("ReservationsPage Cancel confirmation", () => {
     ])
     renderPage([COMPLETE_PERM])
 
-    expect(await screen.findByText("Ana Souza")).toBeInTheDocument()
+    expect(await inTable().findByText("Ana Souza")).toBeInTheDocument()
     await user.click(
-      screen.getByRole("button", { name: i18n.t("rentals.reservations.cancel") }),
+      inTable().getByRole("button", { name: i18n.t("rentals.reservations.cancel") }),
     )
 
     const dialog = await screen.findByRole("alertdialog")
@@ -351,7 +365,7 @@ describe("ReservationsPage filters and states", () => {
     const user = userEvent.setup()
     renderPage()
     await user.click(await screen.findByRole("button", { name: "Ver a semana" }))
-    expect(screen.getByRole("button", { name: "Semana" })).toHaveAttribute("aria-pressed", "true")
+    expect(screen.getByRole("radio", { name: "Semana" })).toBeChecked()
     await waitFor(() => {
       const query = listMock.mock.lastCall?.[0]
       expect(query?.from).not.toBe(query?.to)
@@ -359,27 +373,61 @@ describe("ReservationsPage filters and states", () => {
   })
 
   it("moves between civil days, keeps the existing week/month/status queries and returns to today", async () => {
+    vi.useFakeTimers({ toFake: ["Date"] })
+    vi.setSystemTime(new Date("2026-10-31T15:00:00Z"))
     const user = userEvent.setup()
     renderPage()
     await screen.findByText("Nenhuma reserva neste filtro.")
-    const date = screen.getByLabelText("Data")
-    const today = (date as HTMLInputElement).value
-    fireEvent.change(date, { target: { value: "2026-10-31" } })
-    await waitFor(() => expect(listMock).toHaveBeenLastCalledWith({ from: "2026-10-31", to: "2026-10-31", status: "" }))
+    const q = (from: string, to: string) => ({ from, to })
+    fireEvent.change(document.querySelector("input[type='date']") as HTMLInputElement, { target: { value: "2026-10-30" } })
+    await waitFor(() => expect(listMock).toHaveBeenLastCalledWith(q("2026-10-30", "2026-10-30")))
     await user.click(screen.getByRole("button", { name: "Próximo dia" }))
-    await waitFor(() => expect(listMock).toHaveBeenLastCalledWith({ from: "2026-11-01", to: "2026-11-01", status: "" }))
+    await waitFor(() => expect(listMock).toHaveBeenLastCalledWith(q("2026-10-31", "2026-10-31")))
+    await user.click(screen.getByRole("button", { name: "Próximo dia" }))
+    await waitFor(() => expect(listMock).toHaveBeenLastCalledWith(q("2026-11-01", "2026-11-01")))
     await user.click(screen.getByRole("button", { name: "Dia anterior" }))
-    expect(date).toHaveValue("2026-10-31")
-    await user.click(screen.getByRole("button", { name: "Semana" }))
-    await waitFor(() => expect(listMock).toHaveBeenLastCalledWith({ from: "2026-10-26", to: "2026-11-01", status: "" }))
-    await user.click(screen.getByRole("button", { name: "Mês" }))
-    await waitFor(() => expect(listMock).toHaveBeenLastCalledWith({ from: "2026-10-01", to: "2026-10-31", status: "" }))
-    await user.click(within(screen.getByRole("group", { name: "Status" })).getByRole("button", { name: "Confirmada" }))
-    await waitFor(() => expect(listMock).toHaveBeenLastCalledWith({ from: "2026-10-01", to: "2026-10-31", status: "Confirmed" }))
-    expect(screen.getByRole("button", { name: "Confirmada" })).toHaveAttribute("aria-pressed", "true")
+    await waitFor(() => expect(listMock).toHaveBeenLastCalledWith(q("2026-10-31", "2026-10-31")))
+    await user.click(screen.getByRole("radio", { name: "Semana" }))
+    await waitFor(() => expect(listMock).toHaveBeenLastCalledWith(q("2026-10-26", "2026-11-01")))
+    await user.click(screen.getByRole("button", { name: "Próxima semana" }))
+    await waitFor(() => expect(listMock).toHaveBeenLastCalledWith(q("2026-11-02", "2026-11-08")))
+    await user.click(screen.getByRole("radio", { name: "Mês" }))
+    await waitFor(() => expect(listMock).toHaveBeenLastCalledWith(q("2026-11-01", "2026-11-30")))
+    await user.click(screen.getByRole("button", { name: "Mês anterior" }))
+    await waitFor(() => expect(listMock).toHaveBeenLastCalledWith(q("2026-10-01", "2026-10-31")))
+    await user.click(within(screen.getByRole("group", { name: "Status" })).getByRole("button", { name: /Confirmada/ }))
+    await waitFor(() => expect(screen.getByRole("button", { name: /Confirmada/ })).toHaveAttribute("aria-pressed", "true"))
+    expect(listMock).toHaveBeenLastCalledWith(q("2026-10-01", "2026-10-31"))
+    await user.click(screen.getByRole("button", { name: "Próximo mês" }))
+    await waitFor(() => expect(listMock).toHaveBeenLastCalledWith(q("2026-11-01", "2026-11-30")))
     await user.click(screen.getByRole("button", { name: "Hoje" }))
-    expect(date).toHaveValue(today)
-    expect(screen.getByRole("button", { name: "Mês" })).toHaveAttribute("aria-pressed", "true")
+    await waitFor(() => expect(listMock).toHaveBeenLastCalledWith(q("2026-10-01", "2026-10-31")))
+    expect(screen.getByRole("radio", { name: "Mês" })).toBeChecked()
+  })
+
+  it("shows per-status counts from the loaded rows on the status chips", async () => {
+    listMock.mockResolvedValue([makeReservation("PendingDeposit"), makeReservation("Confirmed"), makeReservation("Confirmed")])
+    renderPage()
+    const group = await screen.findByRole("group", { name: "Status" })
+    await waitFor(() => expect(within(group).getByRole("button", { name: /^Todos/ })).toHaveTextContent("3"))
+    expect(within(group).getByRole("button", { name: /Confirmada/ })).toHaveTextContent("2")
+    expect(within(group).getAllByRole("button")[0]).toHaveTextContent("Todos")
+    await userEvent.click(within(group).getByRole("button", { name: /Confirmada/ }))
+    expect(within(group).getByRole("button", { name: /^Todos/ })).toHaveTextContent("3")
+    expect(within(group).getByRole("button", { name: /Confirmada/ })).toHaveTextContent("2")
+    expect(listMock).toHaveBeenCalledTimes(1)
+  })
+
+  it("shows the filtered empty state with counts when the selected status has no rows", async () => {
+    listMock.mockResolvedValue([makeReservation("PendingDeposit"), makeReservation("PendingDeposit")])
+    const user = userEvent.setup()
+    renderPage()
+    const group = await screen.findByRole("group", { name: "Status" })
+    await waitFor(() => expect(within(group).getByRole("button", { name: /^Todos/ })).toHaveTextContent("2"))
+    await user.click(within(group).getByRole("button", { name: /Concluída/ }))
+    expect(await screen.findByRole("button", { name: i18n.t("emptyStates.clearFilters") })).toBeInTheDocument()
+    expect(within(group).getByRole("button", { name: /^Todos/ })).toHaveTextContent("2")
+    expect(within(group).getByRole("button", { name: /Concluída/ })).toHaveTextContent("0")
   })
 
   it("clears an empty filtered view and restores the example", async () => {
@@ -387,14 +435,14 @@ describe("ReservationsPage filters and states", () => {
     renderPage(["rentals.reservations.read"])
     expect(await screen.findByText(i18n.t("emptyStates.examples.bookings"))).toBeVisible()
     expect(screen.getByRole("link", { name: i18n.t("emptyStates.learnMore") })).toHaveAttribute("href", "/modulos/bookings")
-    await user.click(screen.getByRole("button", { name: "Semana" }))
-    await user.click(screen.getByRole("button", { name: "Confirmada" }))
+    await user.click(screen.getByRole("radio", { name: "Semana" }))
+    await user.click(screen.getByRole("button", { name: /Confirmada/ }))
     const clear = await screen.findByRole("button", { name: i18n.t("emptyStates.clearFilters") })
     expect(screen.queryByText(i18n.t("emptyStates.examples.bookings"))).not.toBeInTheDocument()
     await user.click(clear)
     expect(await screen.findByText(i18n.t("emptyStates.examples.bookings"))).toBeVisible()
-    expect(screen.getByRole("button", { name: "Dia" })).toHaveAttribute("aria-pressed", "true")
-    expect(screen.getByRole("button", { name: "Todos" })).toHaveAttribute("aria-pressed", "true")
+    expect(screen.getByRole("radio", { name: "Dia" })).toBeChecked()
+    expect(screen.getByRole("button", { name: /^Todos/ })).toHaveAttribute("aria-pressed", "true")
   })
 
   it("confirms a pending deposit and refreshes the existing list", async () => {
@@ -402,9 +450,9 @@ describe("ReservationsPage filters and states", () => {
     listMock.mockResolvedValueOnce([makeReservation("PendingDeposit")]).mockResolvedValue([makeReservation("Confirmed")])
     confirmMock.mockResolvedValue(makeReservation("Confirmed"))
     renderPage()
-    await user.click(await screen.findByRole("button", { name: "Confirmar" }))
+    await user.click(await inTable().findByRole("button", { name: "Confirmar" }))
     expect(confirmMock).toHaveBeenCalledWith(RESERVATION_ID)
-    await waitFor(() => expect(screen.queryByRole("button", { name: "Confirmar" })).not.toBeInTheDocument())
+    await waitFor(() => expect(inTable().queryByRole("button", { name: "Confirmar" })).not.toBeInTheDocument())
     expect(completeButton()).toBeInTheDocument()
   })
 
@@ -415,7 +463,7 @@ describe("ReservationsPage filters and states", () => {
     const table = await screen.findByRole("table")
     expect(screen.getByText(i18n.t("trial.readOnlyHint"))).toBeInTheDocument()
     for (const action of within(table).getAllByRole("button")) expect(action).toBeDisabled()
-    expect(screen.getByRole("button", { name: "Semana" })).toBeEnabled()
+    expect(screen.getByRole("radio", { name: "Semana" })).toBeEnabled()
     expect(confirmMock).not.toHaveBeenCalled()
     expect(cancelMock).not.toHaveBeenCalled()
     expect(completeMock).not.toHaveBeenCalled()
@@ -430,7 +478,7 @@ describe("ReservationsPage filters and states", () => {
     rejectLoad(new Error("Network unavailable"))
     expect(await screen.findByRole("alert")).toHaveTextContent("Não foi possível carregar as reservas.")
     expect(screen.queryByText("Nenhuma reserva neste filtro.")).not.toBeInTheDocument()
-    await userEvent.click(screen.getByRole("button", { name: "Semana" }))
+    await userEvent.click(screen.getByRole("radio", { name: "Semana" }))
     expect(await screen.findByText("Nenhuma reserva neste filtro.")).toBeInTheDocument()
     expect(screen.getByText(i18n.t("emptyStates.filterDescription"))).toBeInTheDocument()
     expect(screen.queryByRole("alert")).not.toBeInTheDocument()
@@ -443,18 +491,32 @@ describe("ReservationsPage filters and states", () => {
     ])
     renderPage()
     await screen.findByRole("table")
-    await userEvent.click(screen.getByRole("button", { name: "Semana" }))
+    await userEvent.click(screen.getByRole("radio", { name: "Semana" }))
     const table = await screen.findByRole("table")
     expect(within(table).getByText("06/09/2026")).toBeInTheDocument()
     expect(within(table).getByText(/07\/09.*08\/09.*2 dias/)).toBeInTheDocument()
     expect(within(table).queryByRole("button")).not.toBeInTheDocument()
   })
 
+  it("shows one error state with Retry when the load fails with no rows, then recovers", async () => {
+    listMock.mockRejectedValueOnce(new Error("Network unavailable")).mockResolvedValue([makeReservation("Confirmed")])
+    renderPage()
+    const alerts = await screen.findAllByRole("alert")
+    expect(alerts).toHaveLength(1)
+    expect(alerts[0]).toHaveTextContent("Não foi possível carregar as reservas.")
+    expect(screen.queryByRole("table")).not.toBeInTheDocument()
+    const calls = listMock.mock.calls.length
+    await userEvent.click(within(alerts[0]).getByRole("button", { name: i18n.t("common.retry") }))
+    expect(await inTable().findByText("Ana Souza")).toBeInTheDocument()
+    expect(listMock.mock.calls.length).toBeGreaterThan(calls)
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument()
+  })
+
   it("keeps the visible reservation after an action succeeds but reloading fails", async () => {
     listMock.mockResolvedValueOnce([makeReservation("PendingDeposit")]).mockRejectedValue(new Error("Offline"))
     confirmMock.mockResolvedValue(makeReservation("Confirmed"))
     renderPage()
-    await userEvent.click(await screen.findByRole("button", { name: "Confirmar" }))
+    await userEvent.click(await inTable().findByRole("button", { name: "Confirmar" }))
     expect(await screen.findByRole("alert")).toBeInTheDocument()
     expect(screen.getByRole("table")).toHaveTextContent("Ana Souza")
     expect(screen.queryByText("Nenhuma reserva neste filtro.")).not.toBeInTheDocument()
@@ -474,7 +536,87 @@ describe("ReservationsPage filters and states", () => {
     expect(screen.getByRole("tablist", { name: "Reservas" })).toBeInTheDocument()
     expect(screen.getByRole("tab", { name: "Reservas" })).toHaveAttribute("aria-selected", "true")
     expect(screen.queryByRole("tab", { name: "Regras de reserva" })).not.toBeInTheDocument()
-    expect(screen.getByLabelText("Data")).toBeInTheDocument()
+    expect(screen.getByRole("radiogroup", { name: "Período" })).toBeInTheDocument()
     expect(screen.getAllByTestId("tenant-tz-label")).toHaveLength(1)
+  })
+
+  it("orders the screen as h1, tabs, date toolbar, status chips, then the list", async () => {
+    render(
+      <MemoryRouter initialEntries={["/configuracoes/reservas"]}>
+        <TestPermissionProvider permissions={["rentals.reservations.read"]} activeModules={["rentals"]}>
+          <ReservationsScreen />
+        </TestPermissionProvider>
+      </MemoryRouter>,
+    )
+    await screen.findByText("Nenhuma reserva neste filtro.")
+    const follows = (a: Element, b: Element) => Boolean(a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING)
+    const h1 = screen.getByRole("heading", { level: 1 })
+    const tablist = screen.getByRole("tablist", { name: "Reservas" })
+    const today = screen.getByRole("button", { name: "Hoje" })
+    const view = screen.getByRole("radiogroup", { name: "Período" })
+    const chips = screen.getByRole("group", { name: i18n.t("rentals.reservations.status") })
+    const empty = screen.getByText("Nenhuma reserva neste filtro.")
+    expect(follows(h1, tablist)).toBe(true)
+    expect(follows(tablist, today)).toBe(true)
+    expect(follows(today, view)).toBe(true)
+    expect(follows(view, chips)).toBe(true)
+    expect(follows(chips, empty)).toBe(true)
+    // toolbar layout sits outside any card (no FilterBar section wraps the navigator)
+    expect(today.closest("section")).toBeNull()
+  })
+
+  it("keeps the Reservas header above the tabs on the booking policy tab, whose content header is an h2", async () => {
+    render(
+      <MemoryRouter initialEntries={["/configuracoes/politica-reservas"]}>
+        <TestPermissionProvider permissions={["rentals.reservations.read", "rentals.booking_policy.read"]} activeModules={["rentals"]}>
+          <ReservationsScreen />
+        </TestPermissionProvider>
+      </MemoryRouter>,
+    )
+    expect(await screen.findByRole("heading", { level: 2, name: "Regras de reserva" })).toBeInTheDocument()
+    const h1s = screen.getAllByRole("heading", { level: 1 })
+    expect(h1s).toHaveLength(1)
+    expect(h1s[0]).toHaveTextContent("Reservas")
+  })
+})
+
+describe("ReservationsPage opened from the agenda", () => {
+  const other = makeReservation("Confirmed", {
+    id: "99999999-9999-4999-8999-999999999999",
+    customerName: "Bruno Lima",
+    items: [{ ...makeReservation("Confirmed").items[0], id: "88888888-8888-4888-8888-888888888888", rentalAssetId: "22222222-2222-4222-8222-222222222222", assetName: "Quadra 2" }],
+  })
+  function renderFromAgenda(search: string) {
+    return render(
+      <MemoryRouter initialEntries={[`/configuracoes/reservas${search}`]}>
+        <TestPermissionProvider permissions={[COMPLETE_PERM]} activeModules={["rentals"]}>
+          <ModuleIntroLinksProvider keys={["bookings"]}><ReservationsPage /></ModuleIntroLinksProvider>
+        </TestPermissionProvider>
+      </MemoryRouter>,
+    )
+  }
+
+  beforeEach(() => {
+    listMock.mockReset()
+    listMock.mockResolvedValue([makeReservation("Confirmed"), other])
+  })
+
+  it("opens on the date of the link and keeps only the chosen resource, with a way to clear it", async () => {
+    renderFromAgenda("?date=2026-09-06&rentalAssetId=11111111-1111-4111-8111-111111111111&startTime=14:00")
+    expect(await screen.findByText("Mostrando só o recurso: Quadra 1")).toBeInTheDocument()
+    expect(listMock).toHaveBeenCalledWith({ from: "2026-09-06", to: "2026-09-06" })
+    const table = await findTable()
+    expect(within(table).getByText("Ana Souza")).toBeInTheDocument()
+    expect(within(table).queryByText("Bruno Lima")).not.toBeInTheDocument()
+    await userEvent.click(screen.getByRole("button", { name: "Mostrar todos os recursos" }))
+    expect(within(await findTable()).getByText("Bruno Lima")).toBeInTheDocument()
+    expect(screen.queryByText(/Mostrando só o recurso/)).not.toBeInTheDocument()
+  })
+
+  it("ignores an invalid date and shows no resource notice without the param", async () => {
+    renderFromAgenda("?date=nope")
+    await findTable()
+    expect(screen.queryByText(/Mostrando só o recurso/)).not.toBeInTheDocument()
+    expect(listMock).not.toHaveBeenCalledWith({ from: "nope", to: "nope" })
   })
 })

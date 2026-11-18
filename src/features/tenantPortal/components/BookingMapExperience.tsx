@@ -1,6 +1,6 @@
 import { bookingEndClock, displayEndClock } from "@/lib/tenantTimeZone"
 /* eslint-disable react-hooks/set-state-in-effect */
-import { List, Map as MapIcon, XIcon } from "lucide-react"
+import { List, Map as MapIcon, MapPin, XIcon } from "lucide-react"
 import { type CSSProperties, useEffect, useMemo, useRef, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
@@ -8,6 +8,7 @@ import { useTenantTimeZone } from "@/contexts/TenantTimeZoneContext"
 import { Button } from "@/components/ui/button"
 import { LayoutCanvasBoard } from "@/features/rentals/components/layout/LayoutCanvasBoard"
 import { Input } from "@/components/ui/input"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Sheet, SheetClose, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet"
 import { VISUAL_ICON_MAP } from "@/features/rentals/components/layout/resourceVisualIconMap"
 import { fetchDailyAvailability, fetchPublicBookingMap, fetchPublicBookingMaps, visualArtUrl, type DailyAvailability, type PublicMap } from "@/features/rentals/services/resourceVisualService"
@@ -128,18 +129,14 @@ export function BookingMapExperience({ subdomain, locale, onUnavailable, scopedA
       {!availabilityLoading && !availability ? <p className="mb-3 text-sm text-muted-foreground" role="status">{t("tenantPortal.agenda.slotsError")}</p> : null}
 
       {list.maps.length > 1 ? (
-        <select
-          aria-label={t("bookingMap.area")}
-          value={map.id}
-          onChange={(event) => void fetchPublicBookingMap(subdomain, event.target.value).then(setMap)}
-          className="h-11 rounded-lg border border-input bg-background px-3 text-sm focus-visible:outline-none"
-        >
-          {list.maps.map((entry) => (
-            <option key={entry.id} value={entry.id}>
-              {entry.name}
-            </option>
-          ))}
-        </select>
+        <Select modal={false} value={map.id} items={list.maps.map((entry) => ({ value: entry.id, label: entry.name }))} onValueChange={(value) => { if (value) void fetchPublicBookingMap(subdomain, value).then(setMap) }}>
+          <SelectTrigger icon={MapPin} aria-label={t("bookingMap.area")}>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {list.maps.map((entry) => <SelectItem key={entry.id} value={entry.id}>{entry.name}</SelectItem>)}
+          </SelectContent>
+        </Select>
       ) : null}
 
       <div id="portal-booking-spaces" role="group" aria-label={t("tenantPortal.agenda.chooseSpaceFirst")} tabIndex={-1}>

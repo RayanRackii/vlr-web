@@ -435,6 +435,7 @@ export function getPageTitleKey(
   | "account.profile"
   | "nav.rentalsResourceWizard"
   | "nav.catalogProductWizard"
+  | "resourceVisual.title"
   | "cadastro.title"
   | "cadastro.productCreate"
   | "cadastro.resourceCreate"
@@ -492,6 +493,8 @@ export function getPageTitleKey(
   if (pathname === "/admin/users" || pathname.startsWith("/admin/users/")) {
     return "nav.adminUsers"
   }
+  if (pathname === "/admin/dashboard") return "nav.admin"
+  if (pathname === "/admin/recursos-visuais") return "resourceVisual.title"
   if (pathname === "/admin" || pathname.startsWith("/admin/")) return "nav.adminTenants"
 
   return "app.name"

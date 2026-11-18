@@ -29,15 +29,15 @@ function renderDashboard(permissions: string[] = [], activeModules: string[] = [
 describe("staff dashboard states", () => {
   beforeEach(() => { vi.mocked(getDashboardMetrics).mockReset() })
 
-  it("presents one command center heading and quick links using existing navigation access", async () => {
+  it("presents one plain heading and no redundant quick-access card", async () => {
     vi.mocked(getDashboardMetrics).mockResolvedValue(emptyMetrics)
     renderDashboard(["os.work_orders.read", "inventory.assets.read"], ["os", "inventory"])
-    expect(await screen.findByRole("heading", { level: 1, name: "Centro de Comando" })).toBeInTheDocument()
+    expect(await screen.findByRole("heading", { level: 1, name: "Início" })).toBeInTheDocument()
     expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1)
-    const quickAccess = await screen.findByRole("navigation", { name: "Acesso rápido" })
-    expect(quickAccess).toBeInTheDocument()
-    expect(screen.getByRole("link", { name: /Equipamentos.*Abrir/ })).toHaveAttribute("href", "/ativos")
-    expect(screen.getByRole("link", { name: /Manutenção.*Abrir/ })).toHaveAttribute("href", "/manutencao")
+    expect(screen.getByText("O que está acontecendo hoje.")).toBeInTheDocument()
+    expect(screen.queryByText("Centro de Comando")).not.toBeInTheDocument()
+    expect(screen.queryByRole("navigation", { name: "Acesso rápido" })).not.toBeInTheDocument()
+    expect(within(screen.getByRole("banner")).getByRole("link", { name: "Manutenção" })).toHaveAttribute("href", "/manutencao")
     expect(screen.queryByRole("link", { name: /Reservas/ })).not.toBeInTheDocument()
     expect(screen.getByRole("heading", { level: 2, name: "Clientes no portal" })).toBeInTheDocument()
   })
@@ -97,6 +97,8 @@ describe("staff dashboard states", () => {
     expect(within(hero).getByText("12", { selector: "strong" })).toBeInTheDocument()
     expect(within(hero).getByText("3 aguardando · 8 confirmadas")).toBeInTheDocument()
     expect(within(hero).getByRole("link", { name: "Reservas" })).toHaveAttribute("href", "/configuracoes/reservas")
+    // "Reservas hoje" appears once on the screen (hero pulse), not repeated in the rentals section.
+    expect(screen.getAllByText("Reservas hoje")).toHaveLength(1)
     const orders = screen.getByRole("region", { name: "Status das ordens de serviço" })
     expect(within(orders).getByText("23")).toBeInTheDocument()
     expect(within(orders).getByText("Em andamento")).toBeInTheDocument()
@@ -105,6 +107,31 @@ describe("staff dashboard states", () => {
     expect(within(assets).getByText("Inativos")).toBeInTheDocument()
     expect(screen.getByRole("region", { name: "Por família" })).toHaveTextContent("Espaços18")
     expect(screen.getByRole("region", { name: "Manutenção" })).toHaveTextContent("OS abertas7")
+  })
+
+  it("shows open orders due today from openDue and links to Manutenção, falling back to pending", async () => {
+    vi.mocked(getDashboardMetrics).mockResolvedValue({
+      ...emptyMetrics,
+      workOrders: { totalThisMonth: 36, pending: 5, inProgress: 8, completed: 23, canceled: 0, openDue: 9 },
+    })
+    renderDashboard(["os.work_orders.read"], ["os"])
+    const hero = screen.getByRole("banner")
+    const link = await within(hero).findByRole("link", { name: "OS em aberto até hoje" })
+    expect(link).toHaveAttribute("href", "/manutencao")
+    expect(within(hero).getByText("9", { selector: "strong" })).toBeInTheDocument()
+    expect(within(hero).getByText("Pendentes e em andamento com data até hoje")).toBeInTheDocument()
+    expect(screen.queryByText("OS pendentes")).not.toBeInTheDocument()
+  })
+
+  it("falls back to pending when the API does not send openDue", async () => {
+    vi.mocked(getDashboardMetrics).mockResolvedValue({
+      ...emptyMetrics,
+      workOrders: { totalThisMonth: 36, pending: 5, inProgress: 8, completed: 23, canceled: 0 },
+    })
+    renderDashboard(["os.work_orders.read"], ["os"])
+    const hero = screen.getByRole("banner")
+    await within(hero).findByRole("link", { name: "OS em aberto até hoje" })
+    expect(within(hero).getByText("5", { selector: "strong" })).toBeInTheDocument()
   })
 
   it("omits slot occupancy for OpenHours data and retains zero-valued supported indicators", async () => {

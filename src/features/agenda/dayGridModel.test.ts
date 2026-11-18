@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest"
-import { buildAgendaDay, buildAgendaWeek } from "./dayGridModel"
+import { buildAgendaDay, buildAgendaWeek, clipBlock, layoutLanes } from "./dayGridModel"
 import { parseAgendaState } from "./urlState"
 import { asset, order, slot, sources } from "./agendaFixtures"
 
@@ -29,11 +29,64 @@ it("applies category, product, order and type filters while retaining empty reso
   expect(buildAgendaDay(data, state(`produto=${order.productId}&pedido=${order.orderId}&tipo=pedido`), "America/Sao_Paulo").rows[0].blocks).toHaveLength(1)
 })
 
-it("clips overnight instants in the tenant timezone and derives hours from slots when the roster has none", () => {
+it("clips overnight instants in the tenant timezone and derives hours from open slots when the roster has none", () => {
   const day = buildAgendaDay(sources({ assets: [{ ...asset, openTime: null, closeTime: null }], catalog: { resources: [], items: [{ ...order, occupiedStart: "2026-11-11T01:00:00Z", occupiedEnd: "2026-11-11T04:00:00Z" }] }, slots: [slot({ startTime: "05:30:00", endTime: "07:00:00", occupancyKindKey: "open" })] }), state(), "America/Sao_Paulo")
   expect(day.rows[0].blocks[0]).toMatchObject({ start: 1320, end: 1440 })
+  expect(day.businessHours).toEqual({ open: 330, close: 420 })
   expect(day.start).toBe(300)
-  expect(day.end).toBe(1440)
+  expect(day.end).toBe(420)
+})
+
+describe("hour axis", () => {
+  const long = { ...order, occupiedStart: "2026-11-09T12:00:00Z", occupiedEnd: "2026-11-12T12:00:00Z" }
+  const hours = { ...asset, openTime: "08:00:00", closeTime: "20:00:00" }
+
+  it("is the business hours of the visible resources and is not widened by a long block", () => {
+    const day = buildAgendaDay(sources({ assets: [hours], catalog: { resources: [], items: [long] } }), state(), "America/Sao_Paulo")
+    expect(day.rows[0].blocks[0]).toMatchObject({ start: 0, end: 1440 })
+    expect(day.start).toBe(480)
+    expect(day.end).toBe(1200)
+    expect(day.businessHours).toEqual({ open: 480, close: 1200 })
+  })
+
+  it("spans the earliest open to the latest close of the visible resources only", () => {
+    const other = { ...asset, id: "other", name: "B", categoryId: null, openTime: "06:30:00", closeTime: "22:00:00" }
+    const data = sources({ assets: [hours, other] })
+    expect(buildAgendaDay(data, state(), "America/Sao_Paulo")).toMatchObject({ start: 360, end: 1320, businessHours: { open: 390, close: 1320 } })
+    expect(buildAgendaDay(data, state("recursos=" + asset.id), "America/Sao_Paulo")).toMatchObject({ start: 480, end: 1200 })
+  })
+
+  it("shows the full day with fechadas=1 and keeps the business hours", () => {
+    const day = buildAgendaDay(sources({ assets: [hours] }), state("fechadas=1"), "America/Sao_Paulo")
+    expect(day).toMatchObject({ start: 0, end: 1440, businessHours: { open: 480, close: 1200 } })
+  })
+
+  it("falls back to the blocks, then to a default day, when no hours are known", () => {
+    const bare = { ...asset, openTime: null, closeTime: null }
+    const withBlock = buildAgendaDay(sources({ assets: [bare], catalog: { resources: [], items: [order] } }), state(), "America/Sao_Paulo")
+    expect(withBlock).toMatchObject({ start: 540, end: 720, businessHours: null })
+    expect(buildAgendaDay(sources({ assets: [bare] }), state(), "America/Sao_Paulo")).toMatchObject({ start: 480, end: 1200, businessHours: null })
+  })
+})
+
+describe("clipBlock", () => {
+  it("clips to the axis and flags the cut edges", () => {
+    expect(clipBlock({ start: 0, end: 600 }, 480, 1200)).toEqual({ start: 480, end: 600, clippedStart: true, clippedEnd: false, allDay: false })
+    expect(clipBlock({ start: 900, end: 1440 }, 480, 1200)).toMatchObject({ start: 900, end: 1200, clippedEnd: true })
+  })
+  it("marks a block covering the axis as all day and drops one outside it", () => {
+    expect(clipBlock({ start: 0, end: 1440 }, 480, 1200)).toMatchObject({ allDay: true, clippedStart: true, clippedEnd: true })
+    expect(clipBlock({ start: 480, end: 1200 }, 480, 1200)).toMatchObject({ allDay: true, clippedStart: false, clippedEnd: false })
+    expect(clipBlock({ start: 60, end: 480 }, 480, 1200)).toBeNull()
+  })
+})
+
+describe("layoutLanes", () => {
+  const block = (key: string, start: number, end: number) => ({ key, resourceId: "r", kind: "pedido" as const, start, end })
+  it("stacks overlapping blocks and reuses a lane once it is free", () => {
+    const lanes = layoutLanes([block("c", 730, 800), block("a", 480, 720), block("b", 600, 660)])
+    expect(Object.fromEntries(lanes.map(({ block: b, lane }) => [b.key, lane]))).toEqual({ a: 0, b: 1, c: 0 })
+  })
 })
 
 it("counts each kind on the civil days of the week that contains the date", () => {
@@ -53,4 +106,32 @@ it("copies the order onto a slot block instead of keeping the raw slot label", (
   }), state(), "America/Sao_Paulo")
   expect(day.rows[0].blocks).toHaveLength(1)
   expect(day.rows[0].blocks[0]).toMatchObject({ kind: "pedido", productName: "Podcast", orderStatus: "Approved", label: null })
+})
+
+it("filters by selected resource ids and by free time", () => {
+  const busy = { ...asset, id: "busy", name: "Estúdio B", openTime: "09:00:00", closeTime: "12:00:00" }
+  const data = sources({ assets: [asset, busy], slots: [slot({ id: "all-day", rentalAssetId: "busy", startTime: "09:00:00", endTime: "12:00:00", occupancyKindKey: "maintenance" })] })
+  expect(buildAgendaDay(data, state("recursos=busy"), "America/Sao_Paulo").rows.map((r) => r.id)).toEqual(["busy"])
+  expect(buildAgendaDay(data, state(`recursos=${asset.id},busy`), "America/Sao_Paulo").rows.map((r) => r.id)).toEqual([asset.id, "busy"])
+  expect(buildAgendaDay(data, state("livres=1"), "America/Sao_Paulo").rows.map((r) => r.id)).toEqual([asset.id])
+  // A tipo filter must not change what counts as free time.
+  expect(buildAgendaDay(data, state("livres=1&tipo=reserva"), "America/Sao_Paulo").rows.map((r) => r.id)).toEqual([asset.id])
+})
+
+it("decides the free-time filter once for the whole week and keeps every block of kept resources", () => {
+  const busy = { ...asset, id: "busy", name: "Estúdio B", openTime: "09:00:00", closeTime: "12:00:00" }
+  const full = { ...asset, id: "full", name: "Estúdio C", openTime: "09:00:00", closeTime: "12:00:00" }
+  const days = ["2026-11-09", "2026-11-10", "2026-11-11", "2026-11-12", "2026-11-13", "2026-11-14", "2026-11-15"]
+  const slots = [
+    slot({ id: "busy-tue", date: "2026-11-10", rentalAssetId: "busy", startTime: "09:00:00", endTime: "12:00:00", occupancyKindKey: "maintenance" }),
+    ...days.map((date) => slot({ id: `full-${date}`, date, rentalAssetId: "full", startTime: "09:00:00", endTime: "12:00:00", occupancyKindKey: "maintenance" })),
+  ]
+  const week = buildAgendaWeek(sources({ assets: [busy, full], slots }), state("livres=1"), "America/Sao_Paulo")
+  expect(week.rows.map((row) => row.id)).toEqual(["busy"])
+  expect(week.rows[0].cells.map((cell) => cell.counts.manutencao)).toEqual([0, 1, 0, 0, 0, 0, 0])
+})
+
+it("ignores recursos ids that match no resource or category", () => {
+  const data = sources({ assets: [asset] })
+  expect(buildAgendaDay(data, state("recurso=unknown"), "America/Sao_Paulo").rows.map((r) => r.id)).toEqual([asset.id])
 })

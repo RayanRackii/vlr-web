@@ -80,6 +80,15 @@ describe("DailyAgendaTab no-assets empty state", () => {
 
 const ASSET_ID = "11111111-1111-4111-8111-111111111111"
 
+/** Plain free slots are click targets, not focusable buttons (see DayResourceGrid compact). */
+function freeSlot(start: string): HTMLElement {
+  const element = document.querySelector<HTMLElement>(
+    `[data-slot-target="${ASSET_ID}|${start}:00"][data-state="available"]`,
+  )
+  if (!element) throw new Error(`missing free slot ${start}`)
+  return element
+}
+
 function agendaAsset(): AdminRentalAsset {
   return {
     id: ASSET_ID,
@@ -170,10 +179,8 @@ describe("DailyAgendaTab past starts", () => {
       }),
     ).toBeDisabled()
     expect(
-      screen.getByRole("button", {
-        name: "Sala 1, 13:00–14:00, Disponível, Tipo: Aberto",
-      }),
-    ).toBeEnabled()
+      freeSlot("13:00"),
+    ).not.toHaveClass("cursor-not-allowed")
   })
 
   it("closes a start when the window regains focus or the tab becomes visible", () => {
@@ -182,10 +189,8 @@ describe("DailyAgendaTab past starts", () => {
     const view = renderDay("2026-10-16")
 
     expect(
-      screen.getByRole("button", {
-        name: "Sala 1, 13:00–14:00, Disponível, Tipo: Aberto",
-      }),
-    ).toBeEnabled()
+      freeSlot("13:00"),
+    ).not.toHaveClass("cursor-not-allowed")
 
     act(() => {
       vi.setSystemTime(new Date("2026-10-16T16:00:00.000Z"))
@@ -203,10 +208,8 @@ describe("DailyAgendaTab past starts", () => {
     renderDay("2026-10-16")
 
     expect(
-      screen.getByRole("button", {
-        name: "Sala 1, 13:00–14:00, Disponível, Tipo: Aberto",
-      }),
-    ).toBeEnabled()
+      freeSlot("13:00"),
+    ).not.toHaveClass("cursor-not-allowed")
 
     act(() => {
       vi.setSystemTime(new Date("2026-10-16T16:00:00.000Z"))
@@ -237,10 +240,8 @@ describe("DailyAgendaTab past starts", () => {
     ).toHaveAttribute("title", i18n.t("rentals.schedule.grid.minimumLeadTime"))
     expect(screen.getByText(i18n.t("rentals.schedule.grid.minimumLeadTime"))).toBeInTheDocument()
     expect(
-      screen.getByRole("button", {
-        name: "Sala 1, 13:00–14:00, Disponível, Tipo: Aberto",
-      }),
-    ).toBeEnabled()
+      freeSlot("13:00"),
+    ).not.toHaveClass("cursor-not-allowed")
 
     act(() => {
       vi.advanceTimersByTime(60_000)
@@ -277,10 +278,8 @@ describe("DailyAgendaTab past starts", () => {
     expect(bookedCard).toHaveTextContent("Reservado")
     expect(bookedCard).not.toHaveTextContent("Tipo: Aberto")
     expect(
-      screen.getByRole("button", {
-        name: "Sala 1, 13:00–14:00, Disponível, Tipo: Aberto",
-      }),
-    ).toBeEnabled()
+      freeSlot("13:00"),
+    ).not.toHaveClass("cursor-not-allowed")
   })
 
   it("still offers a morning start on a later date", () => {
@@ -289,15 +288,10 @@ describe("DailyAgendaTab past starts", () => {
     renderDay("2026-10-17")
 
     expect(
-      screen.getByRole("button", {
-        name: "Sala 1, 08:00–09:00, Disponível, Tipo: Aberto",
-      }),
-    ).toBeEnabled()
+      freeSlot("08:00")).not.toHaveClass("cursor-not-allowed")
     expect(
-      screen.getByRole("button", {
-        name: "Sala 1, 13:00–14:00, Disponível, Tipo: Aberto",
-      }),
-    ).toBeEnabled()
+      freeSlot("13:00"),
+    ).not.toHaveClass("cursor-not-allowed")
   })
 })
 
@@ -320,7 +314,11 @@ describe("DailyAgendaTab occupancy labels", () => {
     renderDay("2026-10-17", day)
 
     const grid = screen.getByRole("grid")
-    expect(await within(grid).findAllByText(expectedName)).not.toHaveLength(0)
+    // One state per slot: the stock open kind is not repeated as a second label on the card,
+    // but stays localized in the accessible name.
+    const card = await within(grid).findByRole("button", { name: /Sala 1, 08:00/ })
+    expect(card).toHaveAccessibleName(new RegExp(`: ${expectedName}$`))
+    expect(within(card).queryByText(expectedName)).not.toBeInTheDocument()
     expect(
       within(grid).getByText(i18n.t("rentals.schedule.occurrence.status.unavailable")),
     ).toHaveClass("font-semibold")
@@ -545,10 +543,10 @@ describe("DailyAgendaTab OpenHours overlapping windows", () => {
 
     const grid = screen.getByRole("grid")
     expect(
-      within(grid).getByRole("button", { name: "Sala 1, 08:00–09:00, Disponível, Tipo: Aberto" }),
+      freeSlot("08:00"),
     ).toBeInTheDocument()
     expect(
-      within(grid).getByRole("button", { name: "Sala 1, 09:00–10:00, Disponível, Tipo: Aberto" }),
+      freeSlot("09:00"),
     ).toBeInTheDocument()
 
     // The 10:00-12:00 booking should render as a single two-row span, not
@@ -595,10 +593,10 @@ describe("DailyAgendaTab OpenHours overlapping windows", () => {
     )
 
     expect(
-      screen.getByRole("button", { name: "Sala 1, 08:00–10:00, Disponível, Tipo: Aberto" }),
+      freeSlot("08:00"),
     ).toBeInTheDocument()
     expect(
-      screen.getByRole("button", { name: "Sala 1, 10:00–12:00, Disponível, Tipo: Aberto" }),
+      freeSlot("10:00"),
     ).toBeInTheDocument()
   })
 })
@@ -756,5 +754,169 @@ describe("DailyAgendaTab multi-unit resource", () => {
     const payload = onSlotOrCellClick.mock.calls[0]?.[0]
     expect(payload.occupancy?.reservationId).toBe("r1")
     expect(payload.slot?.reservationId).toBe("r1")
+  })
+})
+
+describe("DayResourceGrid compact day adjust", () => {
+  const free = (id: string, startTime: string, endTime: string, rentalAssetId: string) => ({
+    id,
+    rentalAssetId,
+    startTime,
+    endTime,
+    status: "available" as const,
+    occupancyKindKey: "open",
+    occupancyKindLabel: "Aberto",
+  })
+
+  function tenAssets() {
+    return Array.from({ length: 10 }, (_, index) => ({
+      ...agendaAsset(),
+      id: `resource-${index}`,
+      name: `Sala ${index + 1}`,
+      openTime: "08:00:00",
+      closeTime: "20:00:00",
+    }))
+  }
+
+  it("keeps free slots out of the tab order: only booked cards and one add button per resource are buttons", () => {
+    const assets = tenAssets()
+    const occupancies = assets.flatMap((asset) =>
+      Array.from({ length: 12 }, (_, hour) =>
+        free(`${asset.id}-${hour}`, `${String(8 + hour).padStart(2, "0")}:00:00`, `${String(9 + hour).padStart(2, "0")}:00:00`, asset.id),
+      ),
+    )
+    occupancies[0] = { ...occupancies[0], status: "booked" as never }
+    render(<DayResourceGrid compact assets={assets} occupancies={occupancies} busyTargetKey={null} readOnly={false} onCellClick={() => undefined} />)
+
+    const buttons = within(screen.getByRole("grid")).getAllByRole("button")
+    expect(buttons).toHaveLength(11)
+    expect(screen.getAllByRole("button", { name: /Adicionar horário em/ })).toHaveLength(10)
+  })
+
+  it("uses the business hours of the visible resources as the axis, with hour labels only on full hours", () => {
+    render(<DayResourceGrid compact assets={[{ ...agendaAsset(), openTime: "09:00:00", closeTime: "12:00:00", allowedDurationMinutes: "30" }]} occupancies={[]} busyTargetKey={null} readOnly={false} onCellClick={() => undefined} />)
+
+    const labels = screen.getAllByRole("rowheader").map((node) => node.textContent)
+    expect(labels).toEqual(["09:00", "", "10:00", "", "11:00", ""])
+  })
+
+  it("falls back to 08:00-20:00 when no resource declares hours and shows 24 hours on request", () => {
+    const unknown = { ...agendaAsset(), openTime: null, closeTime: null } as unknown as AdminRentalAsset
+    const view = render(<DayResourceGrid compact assets={[unknown]} occupancies={[]} busyTargetKey={null} readOnly={false} onCellClick={() => undefined} />)
+    const rows = screen.getAllByRole("rowheader").map((node) => node.textContent).filter(Boolean)
+    expect(rows[0]).toBe("08:00")
+    expect(rows[rows.length - 1]).toBe("19:00")
+    view.unmount()
+
+    render(<DayResourceGrid compact showFullDay assets={[unknown]} occupancies={[]} busyTargetKey={null} readOnly={false} onCellClick={() => undefined} />)
+    const full = screen.getAllByRole("rowheader").map((node) => node.textContent).filter(Boolean)
+    expect(full[0]).toBe("00:00")
+    expect(full[full.length - 1]).toBe("23:00")
+  })
+
+  it("opens an empty cell, a free slot and the add button at the right time", async () => {
+    const user = userEvent.setup()
+    const onCellClick = vi.fn()
+    const asset = { ...agendaAsset(), allowedDurationMinutes: "60" }
+    render(
+      <DayResourceGrid
+        compact
+        assets={[asset]}
+        occupancies={[free("a", "08:00:00", "09:00:00", ASSET_ID)]}
+        busyTargetKey={null}
+        readOnly={false}
+        onCellClick={onCellClick}
+      />,
+    )
+
+    await user.click(freeSlot("08:00"))
+    expect(onCellClick).toHaveBeenLastCalledWith(expect.objectContaining({ startTime: "08:00:00", occupancy: expect.objectContaining({ id: "a" }) }))
+
+    await user.click(document.querySelector(`[data-slot-target="${ASSET_ID}|10:00"]`) as HTMLElement)
+    expect(onCellClick).toHaveBeenLastCalledWith(expect.objectContaining({ startTime: "10:00", endTime: "11:00", occupancy: null }))
+
+    await user.click(screen.getByRole("button", { name: "Adicionar horário em Sala 1" }))
+    expect(onCellClick).toHaveBeenLastCalledWith(expect.objectContaining({ startTime: "09:00", occupancy: null }))
+  })
+
+  it("does not open free cells that are read-only or past the minimum lead time", async () => {
+    const user = userEvent.setup()
+    const onCellClick = vi.fn()
+    render(
+      <DayResourceGrid
+        compact
+        assets={[agendaAsset()]}
+        occupancies={[free("a", "08:00:00", "09:00:00", ASSET_ID)]}
+        busyTargetKey={null}
+        readOnly={false}
+        isStartClosed={() => true}
+        onCellClick={onCellClick}
+      />,
+    )
+    await user.click(freeSlot("08:00"))
+    expect(onCellClick).not.toHaveBeenCalled()
+  })
+
+  it("shows one state per slot and a legend with only the states on screen", () => {
+    render(
+      <DayResourceGrid
+        compact
+        assets={[agendaAsset()]}
+        occupancies={[free("a", "08:00:00", "09:00:00", ASSET_ID)]}
+        busyTargetKey={null}
+        readOnly={false}
+        onCellClick={() => undefined}
+      />,
+    )
+    const slot = freeSlot("08:00")
+    expect(slot).toHaveTextContent("08:00–09:00")
+    expect(slot).not.toHaveTextContent("Aberto")
+    expect(slot).not.toHaveTextContent("Disponível")
+    const legend = screen.getByRole("list", { name: i18n.t("rentals.schedule.grid.legendLabel") })
+    expect(within(legend).getAllByRole("listitem")).toHaveLength(1)
+    expect(within(legend).getByText("Disponível")).toBeInTheDocument()
+  })
+
+  it("DailyAgendaTab toggles the 24-hour axis", async () => {
+    const user = userEvent.setup()
+    renderDay("2026-10-17")
+    const hours = () => screen.getAllByRole("rowheader").map((node) => node.textContent).filter(Boolean)
+    expect(hours()[0]).toBe("08:00")
+    await user.click(screen.getByRole("checkbox", { name: "Mostrar 24 horas" }))
+    expect(hours()[0]).toBe("00:00")
+  })
+})
+
+describe("DayResourceGrid compact clipping", () => {
+  const block = {
+    id: "full-day",
+    rentalAssetId: ASSET_ID,
+    startTime: "00:00:00",
+    endTime: "23:59:00",
+    status: "unavailable" as const,
+    occupancyKindKey: "closed",
+    occupancyKindLabel: "Fechado",
+  }
+  const asset = { ...agendaAsset(), openTime: "08:00:00", closeTime: "12:00:00", allowedDurationMinutes: "60" }
+  const hours = () => screen.getAllByRole("rowheader").map((node) => node.textContent).filter(Boolean)
+
+  it("keeps the axis at business hours and draws a full-day block clipped with continues markers", () => {
+    const { container } = render(<DayResourceGrid compact assets={[asset]} occupancies={[block]} busyTargetKey={null} readOnly={false} onCellClick={() => undefined} />)
+
+    expect(hours()).toEqual(["08:00", "09:00", "10:00", "11:00"])
+    const card = screen.getByRole("button", { name: /Sala 1, 00:00–/ })
+    // 4 rows of 48px minus the 8px inset: clipped to the axis, not 24h tall.
+    expect(card).toHaveStyle({ height: "184px" })
+    expect(container.querySelector('[data-continues="before"]')).toBeInTheDocument()
+    expect(container.querySelector('[data-continues="after"]')).toBeInTheDocument()
+  })
+
+  it("shows the whole day, without markers, when 24 hours is requested", () => {
+    const { container } = render(<DayResourceGrid compact showFullDay assets={[asset]} occupancies={[block]} busyTargetKey={null} readOnly={false} onCellClick={() => undefined} />)
+
+    const all = hours()
+    expect(all[0]).toBe("00:00")
+    expect(all[all.length - 1]).toBe("23:00")
+    expect(container.querySelector("[data-continues]")).not.toBeInTheDocument()
   })
 })

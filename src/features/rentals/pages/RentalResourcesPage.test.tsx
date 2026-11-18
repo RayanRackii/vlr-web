@@ -1,4 +1,4 @@
-import { act, render, screen, waitFor } from "@testing-library/react"
+import { act, render, screen, waitFor, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import { createMemoryRouter, RouterProvider, Routes, Route, Link, useNavigate } from "react-router-dom"
@@ -319,7 +319,7 @@ describe("RentalResourcesPage", () => {
       await act(async () => { await vi.advanceTimersByTimeAsync(3000) })
     } finally { vi.useRealTimers() }
     expect(await screen.findByRole("heading", { name: i18n.t("rentals.resources.title"), level: 1 })).toBeVisible()
-    expect(await screen.findByText("Sala nova")).toBeVisible()
+    expect((await screen.findAllByText("Sala nova")).length).toBeGreaterThan(0)
   })
 
   it("does not turn a missing edit ID into resource creation", async () => {
@@ -345,7 +345,7 @@ describe("RentalResourcesPage", () => {
 
     expect(await screen.findByText("3 recursos")).toBeInTheDocument()
     expect(screen.getByText("3 recursos").parentElement).toHaveTextContent("3 recursos · 2 espaços, 1 item")
-    expect(screen.getByRole("button", { name: /Projetor/ })).toHaveTextContent("Exclusão Pendente")
+    expect(screen.getAllByRole("link", { name: "Projetor" })[0]!.parentElement).toHaveTextContent("Exclusão Pendente")
   })
 
   it("lists rentables and offers create without inventory endpoints", async () => {
@@ -369,7 +369,7 @@ describe("RentalResourcesPage", () => {
 
     const { container } = renderPage()
 
-    expect(await screen.findByText("Quadra 1")).toBeInTheDocument()
+    expect((await screen.findAllByText("Quadra 1")).length).toBeGreaterThan(0)
     expect(listAssetsMock).toHaveBeenCalled()
     expectNoForbiddenCopy(container)
   })
@@ -387,7 +387,7 @@ describe("RentalResourcesPage", () => {
     }])
     const { unmount } = renderPage()
     try {
-      await screen.findByRole("button", { name: /Projetor/ })
+      await screen.findAllByRole("link", { name: "Projetor" })
       expect(screen.getByText(/1 recurso$|1 resource$/).parentElement).toHaveTextContent(summary)
     } finally {
       unmount()
@@ -457,16 +457,55 @@ describe("RentalResourcesPage", () => {
     const user = userEvent.setup()
     renderPage()
 
-    expect(await screen.findByRole("link", { name: i18n.t("rentals.resourceWizard.open") })).toHaveAttribute(
-      "href",
-      `/configuracoes/recursos/${RENTAL_ID}/cadastro`,
-    )
-    const details = await screen.findByText(/A partir de: R\$ 45,00 por horário/)
-    expect(details.parentElement).toHaveTextContent("Durações: 1 h, 90 min")
-    expect(details.parentElement).toHaveTextContent("Capacidade: 8 pessoas")
+    const table = await screen.findByRole("table", { name: i18n.t("rentals.resources.title") })
+    const row = within(table).getByRole("link", { name: "Quadra 1" }).closest("tr")!
+    expect(within(row).getByText("A partir de: R$ 45,00 por horário")).toBeInTheDocument()
+    expect(within(row).getByText("1 h, 90 min")).toBeInTheDocument()
+    expect(within(row).getByText("8")).toBeInTheDocument()
+    expect(within(row).getByRole("link", { name: "Quadra 1" })).toHaveAttribute("href", `/configuracoes/recursos/${RENTAL_ID}`)
 
-    await user.click(screen.getByRole("button", { name: /Quadra 1/ }))
-    expect(await screen.findAllByText(/A partir de: R\$ 45,00 por horário/)).toHaveLength(1)
+    await user.click(within(row).getByRole("button", { name: /Ações de Quadra 1/ }))
+    expect(await screen.findByRole("menuitem", { name: i18n.t("rentals.resourceWizard.open") })).toBeInTheDocument()
+    expect(screen.getByRole("menuitem", { name: i18n.t("common.edit") })).toBeInTheDocument()
+    await user.click(screen.getByRole("menuitem", { name: i18n.t("rentals.resourceWizard.open") }))
+    expect(await screen.findByRole("heading", { name: "Cadastro salvo" })).toBeVisible()
+  })
+
+  it("renders the list structure without any class from rentalResources.css", async () => {
+    listAssetsMock.mockResolvedValue([{
+      id: RENTAL_ID, assetId: ASSET_ID, name: "Quadra 1", unitId: UNIT_ID, isActive: true,
+      requiresDeposit: true, schedulePolicy: "SlotGrid", type: "Location", totalQuantity: 1,
+      queueEnabled: false, queueOpeningTime: null,
+    }])
+    const { container } = renderPage()
+    await screen.findByRole("table", { name: i18n.t("rentals.resources.title") })
+    expect(container.querySelector('[class*="resource-"], [class*="resources-"], [class*="rental-resources"]')).toBeNull()
+  })
+
+  it("filters rows by search and by space/item chips", async () => {
+    const user = userEvent.setup()
+    const base = {
+      id: RENTAL_ID, assetId: ASSET_ID, name: "Quadra 1", unitId: UNIT_ID, isActive: true,
+      requiresDeposit: true, schedulePolicy: "SlotGrid", type: "Location", totalQuantity: 1,
+      queueEnabled: false, queueOpeningTime: null,
+    } as const
+    listAssetsMock.mockResolvedValue([
+      base,
+      { ...base, id: "good-1", assetId: "asset-2", name: "Projetor", type: "Good", totalQuantity: 4 },
+    ])
+    renderPage()
+    const table = await screen.findByRole("table", { name: i18n.t("rentals.resources.title") })
+    expect(within(table).getAllByRole("row")).toHaveLength(3)
+
+    await user.click(screen.getByRole("button", { name: /^Itens/ }))
+    expect(within(table).queryByRole("link", { name: "Quadra 1" })).not.toBeInTheDocument()
+    expect(within(table).getByRole("link", { name: "Projetor" })).toBeInTheDocument()
+    expect(screen.getByText("1 recurso")).toBeInTheDocument()
+
+    await user.click(screen.getByRole("button", { name: /^Todos/ }))
+    await user.type(screen.getByRole("searchbox", { name: i18n.t("rentals.resources.filters.searchLabel") }), "quad")
+    expect(within(table).getByRole("link", { name: "Quadra 1" })).toBeInTheDocument()
+    expect(within(table).queryByRole("link", { name: "Projetor" })).not.toBeInTheDocument()
   })
 
   it("shows empty rentables CTA when categories exist", async () => {
@@ -536,7 +575,7 @@ describe("RentalResourcesPage", () => {
     const user = userEvent.setup()
     renderPage()
 
-    await user.click(await screen.findByRole("button", { name: /Projetor Horario/ }))
+    await user.click((await screen.findAllByRole("link", { name: /Projetor Horario/ }))[0]!)
     await openPricingTab(user)
     await user.click(screen.getByRole("radio", { name: i18n.t("rentals.resources.form.cancelCutoffHours") }))
     await user.type(screen.getByRole("textbox", { name: i18n.t("rentals.resources.form.cancelCutoffHours") }), "1")
@@ -703,7 +742,7 @@ describe("RentalResourcesPage", () => {
     ])
 
     renderPage()
-    await user.click(await screen.findByText("Quadra 1"))
+    await user.click((await screen.findAllByRole("link", { name: "Quadra 1" }))[0]!)
     await screen.findByLabelText(i18n.t("rentals.resources.form.tag"))
     await user.type(
       screen.getByLabelText(i18n.t("rentals.resources.form.tag")),
@@ -829,7 +868,7 @@ describe("RentalResourcesPage", () => {
     ])
 
     const { unmount } = renderPage()
-    await user.click(await screen.findByRole("button", { name: /Quadra 1/ }))
+    await user.click((await screen.findAllByRole("link", { name: /Quadra 1/ }))[0]!)
     await user.type(
       screen.getByLabelText(i18n.t("rentals.resources.form.tag")),
       "Q-01",
@@ -855,7 +894,7 @@ describe("RentalResourcesPage", () => {
     unmount()
     updateMock.mockClear()
     renderPage()
-    await user.click(await screen.findByRole("button", { name: /Quadra 1/ }))
+    await user.click((await screen.findAllByRole("link", { name: /Quadra 1/ }))[0]!)
     await user.type(
       screen.getByLabelText(i18n.t("rentals.resources.form.tag")),
       "Q-01",
@@ -895,7 +934,7 @@ describe("RentalResourcesPage", () => {
     ])
 
     renderPage()
-    await user.click(await screen.findByRole("button", { name: /Quadra 1/ }))
+    await user.click((await screen.findAllByRole("link", { name: /Quadra 1/ }))[0]!)
     await openPricingTab(user)
 
     expect(
@@ -930,7 +969,7 @@ describe("RentalResourcesPage", () => {
     ])
     renderPage(["rentals.assets.read"])
 
-    await user.click(await screen.findByRole("button", { name: /Quadra 1/ }))
+    await user.click((await screen.findAllByRole("link", { name: /Quadra 1/ }))[0]!)
     await openPricingTab(user)
     expect(
       screen.getByRole("radio", {
@@ -1058,7 +1097,7 @@ describe("RentalResourcesPage", () => {
     ])
 
     const { unmount } = renderPage()
-    await user.click(await screen.findByRole("button", { name: /Quadra 1/ }))
+    await user.click((await screen.findAllByRole("link", { name: /Quadra 1/ }))[0]!)
     await user.type(
       screen.getByLabelText(i18n.t("rentals.resources.form.tag")),
       "Q-01",
@@ -1082,7 +1121,7 @@ describe("RentalResourcesPage", () => {
     unmount()
     updateMock.mockClear()
     renderPage()
-    await user.click(await screen.findByRole("button", { name: /Quadra 1/ }))
+    await user.click((await screen.findAllByRole("link", { name: /Quadra 1/ }))[0]!)
     await user.type(
       screen.getByLabelText(i18n.t("rentals.resources.form.tag")),
       "Q-01",
@@ -1122,7 +1161,7 @@ describe("RentalResourcesPage", () => {
     ])
     renderPage(["rentals.assets.read"])
 
-    await user.click(await screen.findByRole("button", { name: /Quadra 1/ }))
+    await user.click((await screen.findAllByRole("link", { name: /Quadra 1/ }))[0]!)
     await openPricingTab(user)
     expect(
       screen.getByRole("radio", {
@@ -1161,7 +1200,7 @@ describe("RentalResourcesPage", () => {
     ])
     renderPage()
 
-    await user.click(await screen.findByRole("button", { name: /Quadra 1/ }))
+    await user.click((await screen.findAllByRole("link", { name: /Quadra 1/ }))[0]!)
     await openPricingTab(user)
     expect(
       screen.getByText(

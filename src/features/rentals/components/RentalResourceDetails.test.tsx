@@ -1,7 +1,12 @@
 import { render, screen } from "@testing-library/react"
 import { describe, expect, it } from "vitest"
 
-import { RentalResourceDetails } from "@/features/rentals/components/RentalResourceDetails"
+import {
+  RentalResourceCapacity,
+  RentalResourceDetails,
+  RentalResourceDurations,
+  RentalResourcePrice,
+} from "@/features/rentals/components/RentalResourceDetails"
 import type { AdminRentalAsset } from "@/features/rentals/services/scheduleService"
 import i18n from "@/lib/i18n"
 
@@ -39,20 +44,28 @@ describe("RentalResourceDetails", () => {
   })
 
   it.each([
-    ["Hour", "a partir de · por hora"],
-    ["Slot", "a partir de · por horário"],
-    ["Day", "a partir de · por dia"],
-    ["Fixed", "a partir de · fixo"],
-  ] as const)("presents the %s price with its unit and real metadata in a resource row", (pricingUnit, caption) => {
-    render(<RentalResourceDetails asset={{ ...asset, allowedDurationMinutes: "60,90", capacityPeople: 8 }} pricePerHour={45} pricingUnit={pricingUnit} compact />)
-    expect(screen.getByText("R$ 45,00")).toBeInTheDocument()
-    expect(screen.getByText(caption)).toBeInTheDocument()
+    ["Hour", "A partir de: R$ 45,00 por hora"],
+    ["Slot", "A partir de: R$ 45,00 por horário"],
+    ["Day", "A partir de: R$ 45,00 por dia"],
+    ["Fixed", "A partir de: R$ 45,00 fixo"],
+  ] as const)("presents the %s price with its unit as a list cell", (pricingUnit, label) => {
+    render(<RentalResourcePrice pricePerHour={45} pricingUnit={pricingUnit} />)
+    expect(screen.getByText(label)).toBeInTheDocument()
+  })
+
+  it("shows durations and capacity as plain values in table cells and labelled in cards", () => {
+    const withMeta = { ...asset, allowedDurationMinutes: "60,90", capacityPeople: 8 }
+    const { unmount } = render(<><RentalResourceDurations asset={withMeta} /><RentalResourceCapacity asset={withMeta} /></>)
+    expect(screen.getByText("1 h, 90 min")).toBeInTheDocument()
+    expect(screen.getByText("8")).toBeInTheDocument()
+    unmount()
+    render(<><RentalResourceDurations asset={withMeta} withLabel /><RentalResourceCapacity asset={withMeta} withLabel /></>)
     expect(screen.getByText("Durações: 1 h, 90 min")).toBeInTheDocument()
     expect(screen.getByText("Capacidade: 8 pessoas")).toBeInTheDocument()
   })
 
   it("uses neutral labels for a resource without price or capacity", () => {
-    render(<RentalResourceDetails asset={asset} pricePerHour={null} compact showUnpriced />)
+    render(<><RentalResourcePrice pricePerHour={null} showUnpriced /><RentalResourceCapacity asset={asset} withLabel /></>)
     expect(screen.getByText("sem preço")).toBeInTheDocument()
     expect(screen.getByText("Capacidade não informada")).toBeInTheDocument()
     expect(screen.queryByText(/R\$/)).not.toBeInTheDocument()

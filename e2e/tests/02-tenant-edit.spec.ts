@@ -30,7 +30,7 @@ test.describe("Tenant Edit regression", () => {
     await page.goto(`/admin/tenants/${context.tenantId}/edit`)
 
     await expect(
-      page.getByRole("heading", { name: "Editar cliente" }),
+      page.getByRole("heading", { name: "Editar empresa" }),
     ).toBeVisible({ timeout: 30_000 })
     await expect(page.getByText("Informações Básicas")).toBeVisible()
     await expect(page.getByText("Subdomínio e Identidade")).toBeVisible()

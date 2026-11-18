@@ -5,6 +5,8 @@ import { renderToStaticMarkup } from "react-dom/server"
 import { describe, expect, it } from "vitest"
 
 import tailwindConfig from "../../../tailwind.config"
+import { FilterTabs } from "@/components/data-table/FilterTabs"
+import { tabBaseClass, tabLineStateClass, tabListClass } from "@/components/ui/tabs-style"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./tabs"
 
 function markup() {
@@ -41,20 +43,57 @@ describe("Tabs styling hooks", () => {
     expect(screen.getByRole("tab", { name: "A" })).toHaveAttribute("data-active")
     expect(screen.getByRole("tab", { name: "B" })).not.toHaveAttribute("data-active")
     const active = screen.getByRole("tab", { name: "A" })
-    expect(active.className).toContain("before:inset-x-0")
-    expect(active.className).not.toContain("after:inset-x-0")
+    // The line is a real border-b-2 on the trigger (no pseudo-element that a clipped list can hide).
+    expect(active.className).toContain("border-b-2")
+    expect(active.className).toContain("data-active:border-primary")
+    expect(active.className).not.toContain("before:")
   })
 
   it("compiles the orientation and active variants to real selectors", async () => {
     const css = await compile(markup())
     // horizontal tabs stack the list above the panel (not a side column)
     expect(css).toMatch(/\[data-orientation="horizontal"\] ?\{ ?flex-direction: column/)
-    // horizontal list keeps its bar height
-    expect(css).toMatch(/\.group\\\/tabs\[data-orientation="horizontal"\] \.group-data-horizontal\\\/tabs\\:h-8/)
-    // The line sits on ::before. ::after is reserved for the touch-target hit area.
-    expect(css).toMatch(/\[data-active\]::before ?\{ ?content: var\(--tw-content\); ?opacity: 1/)
-    expect(css).toMatch(/::before ?\{ ?content: var\(--tw-content\); ?bottom: 0px/)
-    expect(css).not.toMatch(/\[data-active\]::after[^{]*\{[^}]*opacity: 1/)
-    expect(css).not.toContain("bottom: -5px")
+    // The active line is a bottom border selected by Base UI's data-active attribute.
+    expect(css).toMatch(/\.data-active\\:border-primary\[data-active\] ?\{[^}]*border-color/)
+    expect(css).toMatch(/\.data-active\\:text-primary\[data-active\] ?\{/)
+  })
+})
+
+function lineTabs() {
+  render(
+    <Tabs value="a">
+      <TabsList variant="line" aria-label="Views">
+        <TabsTrigger value="a">Alpha</TabsTrigger>
+        <TabsTrigger value="b">Beta</TabsTrigger>
+      </TabsList>
+    </Tabs>,
+  )
+}
+
+describe("line Tabs", () => {
+  it("styles the selected trigger with the primary bottom border and the others transparent", () => {
+    lineTabs()
+    const active = screen.getByRole("tab", { name: "Alpha" })
+    const inactive = screen.getByRole("tab", { name: "Beta" })
+    expect(active).toHaveAttribute("data-active")
+    expect(inactive).not.toHaveAttribute("data-active")
+    for (const tab of [active, inactive]) expect(tab).toHaveClass("border-b-2", "min-h-11", "px-1", "text-sm")
+    expect(active).toHaveClass("data-active:border-primary", "data-active:text-primary")
+    expect(inactive).toHaveClass("border-transparent", "text-muted-foreground")
+    expect(active).not.toHaveClass("before:bg-foreground")
+  })
+
+  it("shares its list and trigger classes with FilterTabs", () => {
+    lineTabs()
+    expect(screen.getByRole("tablist")).toHaveClass(...tabListClass.split(" ").filter((c) => !c.includes("[")))
+    render(<FilterTabs label="Tipo" allLabel="Todos" value={null} onChange={() => {}} options={[{ value: "x", label: "X" }]} />)
+    const all = screen.getByRole("button", { name: "Todos" })
+    const other = screen.getByRole("button", { name: "X" })
+    const baseTokens = tabBaseClass.split(" ")
+    expect(all).toHaveClass(...baseTokens)
+    expect(screen.getByRole("tab", { name: "Alpha" })).toHaveClass(...baseTokens)
+    expect(all).toHaveClass("border-primary", "font-medium", "text-primary")
+    expect(other).toHaveClass("border-transparent", "text-muted-foreground")
+    expect(tabLineStateClass).toContain("data-active:border-primary")
   })
 })

@@ -29,6 +29,7 @@ const MESSAGE_KEYS: Record<string, string> = {
 const CODE_KEYS: Record<string, string> = {
   "catalog.visibility.filesPresent": "catalog.products.access.filesPresent",
   DUPLICATE_PRODUCT_CODE: "catalog.products.errors.duplicateCode",
+  PRODUCT_HAS_ORDERS: "catalog.products.view.errors.hasOrders",
   CUSTOMER_GROUP_IN_USE: "catalog.customerGroups.errors.inUse",
   GROUP_IN_USE: "catalog.customerGroups.errors.inUse",
   FILE_TOO_LARGE: "catalog.products.files.tooLarge",
@@ -40,10 +41,35 @@ const CODE_KEYS: Record<string, string> = {
   not_supported_yet: "catalog.resourcePlanning.errors.notSupportedYet",
 }
 
+const READINESS_KEYS: Record<string, string> = {
+  NAME: "catalog.products.notReady.NAME",
+  RESOURCE: "catalog.products.notReady.RESOURCE",
+  AUDIENCE: "catalog.products.notReady.AUDIENCE",
+  PRICE: "catalog.products.notReady.PRICE",
+}
+
+/** Localized names of the open sale requirements, in the order the API sent them. Unknown codes are skipped. */
+export function saleMissingLabels(missing: readonly string[]): string[] {
+  return missing.flatMap((item) => (READINESS_KEYS[item] != null ? [i18n.t(READINESS_KEYS[item])] : []))
+}
+
+/** "Não dá para ativar: falta …" for a 409 PRODUCT_NOT_READY. Null when the payload is another error. */
+export function productNotReadyMessage(payload: unknown): string | null {
+  if (readApiErrorBody(payload).code !== "PRODUCT_NOT_READY") return null
+  const raw = (payload as { missing?: unknown }).missing
+  const labels = saleMissingLabels(Array.isArray(raw) ? raw.filter((item): item is string => typeof item === "string") : [])
+  return labels.length > 0
+    ? i18n.t("catalog.products.notReady.message", { items: labels.join(", ") })
+    : i18n.t("catalog.products.notReady.generic")
+}
+
 export function localizeCatalogApiError(
   payload: unknown,
   fallback: string,
 ): string {
+  const notReady = productNotReadyMessage(payload)
+  if (notReady != null) return notReady
+
   const { code, error } = readApiErrorBody(payload)
 
   if (isModuleInactiveValue(code) || isModuleInactiveValue(error)) {

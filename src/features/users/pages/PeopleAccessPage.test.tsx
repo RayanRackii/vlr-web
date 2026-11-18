@@ -191,14 +191,25 @@ function renderPageWithRoutes(
   )
 }
 
+async function chooseAssign(user: ReturnType<typeof userEvent.setup>, scope: HTMLElement, input: "pointer" | "keyboard" = "pointer") {
+  const trigger = within(scope).getByRole("button", { name: i18n.t("peopleAccess.users.rowMenu", { name: MEMBER.fullName }) })
+  if (input === "pointer") {
+    await user.click(trigger)
+  } else {
+    trigger.focus()
+    await user.keyboard("{Enter}")
+  }
+  await user.click(await screen.findByRole("menuitem", { name: i18n.t("peopleAccess.users.assign") }))
+}
+
 async function waitForUsersLoaded() {
   await waitFor(() => {
     expect(listTenantMembersMock).toHaveBeenCalled()
   })
   await waitFor(() => {
     expect(
-      screen.queryByText(i18n.t("peopleAccess.users.description")),
-    ).toBeInTheDocument()
+      screen.queryByRole("status", { name: i18n.t("peopleAccess.tabs.users") }),
+    ).not.toBeInTheDocument()
   })
 }
 
@@ -235,10 +246,34 @@ describe("PeopleAccessPage", () => {
   it("keeps the four permitted tabs and links to the existing registration route", async () => {
     renderPage([...READ_ROLES, "core.customers.read", "core.registration_fields.read"], ["rentals"])
     await waitForUsersLoaded()
-    const tabs = screen.getByRole("navigation", { name: i18n.t("peopleAccess.title") })
-    expect(within(tabs).getAllByRole("button")).toHaveLength(3)
-    expect(within(tabs).getByRole("button", { name: i18n.t("peopleAccess.tabs.users") })).toHaveAttribute("aria-current", "page")
-    expect(within(tabs).getByRole("link", { name: i18n.t("nav.registrationFields") })).toHaveAttribute("href", "/configuracoes/cadastro")
+    const tabs = screen.getByRole("tablist", { name: i18n.t("peopleAccess.title") })
+    expect(within(tabs).getAllByRole("tab")).toHaveLength(4)
+    expect(within(tabs).getByRole("tab", { name: i18n.t("peopleAccess.tabs.users") })).toHaveAttribute("aria-selected", "true")
+    expect(within(tabs).getByRole("tab", { name: i18n.t("nav.registrationFields") })).toHaveAttribute("aria-selected", "false")
+  })
+
+  it("puts the invite action in the page header on the team tab only, with no eyebrow or bottom bar", async () => {
+    const user = userEvent.setup()
+    listTenantMembersMock.mockResolvedValue(memberPage([MEMBER]))
+    renderPage([...INVITE_PERMS, "core.customers.read"])
+    await waitForUsersLoaded()
+
+    const heading = screen.getByRole("heading", { level: 1, name: i18n.t("peopleAccess.title") })
+    const header = heading.parentElement?.parentElement?.parentElement as HTMLElement
+    expect(within(header).getByRole("button", { name: i18n.t("peopleAccess.users.invite") })).toBeInTheDocument()
+    expect(screen.queryByText(i18n.t("peopleAccess.eyebrow"))).not.toBeInTheDocument()
+    expect(screen.queryByRole("navigation", { name: i18n.t("peopleAccess.mobileNavigation") })).not.toBeInTheDocument()
+
+    await user.click(screen.getByRole("tab", { name: i18n.t("peopleAccess.tabs.customers") }))
+    await waitFor(() => { expect(listTenantCustomersMock).toHaveBeenCalled() })
+    expect(screen.queryByRole("button", { name: i18n.t("peopleAccess.users.invite") })).not.toBeInTheDocument()
+  })
+
+  it("renders the team and the customer lists without the old people-access classes", async () => {
+    listTenantMembersMock.mockResolvedValue(memberPage([MEMBER]))
+    const { container } = renderPage(ASSIGN_PERMS)
+    await waitForUsersLoaded()
+    expect(container.querySelector('[class*="people-"]')).toBeNull()
   })
 
   it.each(["pointer", "keyboard"] as const)("opens the existing assignment dialog from the card action via %s", async (input) => {
@@ -248,45 +283,18 @@ describe("PeopleAccessPage", () => {
     const table = await screen.findByRole("table", { name: i18n.t("peopleAccess.tabs.users") })
     expect(within(table).getAllByRole("columnheader")).toHaveLength(4)
     expect(within(table).getByRole("columnheader", { name: i18n.t("peopleAccess.users.fullName") })).toBeInTheDocument()
-    const action = within(table).getByRole("button", { name: i18n.t("peopleAccess.users.assign") })
-    expect(action).toHaveClass("people-card-action")
-    if (input === "pointer") {
-      await user.click(action)
-    } else {
-      action.focus()
-      await user.keyboard("{Enter}")
-    }
+    await chooseAssign(user, table, input)
     const dialog = await screen.findByRole("dialog")
     expect(within(dialog).getByText(i18n.t("peopleAccess.users.assignDescription", { name: MEMBER.fullName }))).toBeInTheDocument()
     expect(within(dialog).getByRole("checkbox", { name: "Admin" })).toBeChecked()
     expect(assignUserRolesMock).not.toHaveBeenCalled()
   })
 
-  it("uses only the already loaded roles in the QHD summary", async () => {
-    listTenantMembersMock.mockResolvedValue(memberPage([MEMBER]))
-    renderPage(READ_ROLES)
-    const summary = await screen.findByRole("complementary", { name: i18n.t("peopleAccess.tabs.roles") })
-    expect(within(summary).getByText(ADMIN_ROLE.name)).toBeInTheDocument()
-    expect(listRolesMock).toHaveBeenCalledTimes(1)
-    expect(listPermissionsMock).toHaveBeenCalledTimes(1)
-  })
-
-  it("omits the QHD summary if the existing roles request fails", async () => {
-    listRolesMock.mockRejectedValue(new Error("Roles unavailable"))
-    renderPage(READ_ROLES)
-    await screen.findByText("Roles unavailable")
-    await waitForUsersLoaded()
-    expect(screen.queryByRole("complementary")).not.toBeInTheDocument()
-    expect(listRolesMock).toHaveBeenCalledTimes(1)
-    expect(listPermissionsMock).toHaveBeenCalledTimes(1)
-  })
-
-  it("omits the QHD summary and card assignment action without their existing permissions", async () => {
+  it("omits the row assignment menu without its existing permission", async () => {
     listTenantMembersMock.mockResolvedValue(memberPage([MEMBER]))
     renderPage(READ_USERS)
-    await screen.findByText(MEMBER.fullName)
-    expect(screen.queryByRole("complementary")).not.toBeInTheDocument()
-    expect(screen.queryByRole("button", { name: i18n.t("peopleAccess.users.assign") })).not.toBeInTheDocument()
+    await screen.findByRole("table", { name: i18n.t("peopleAccess.tabs.users") })
+    expect(screen.queryByRole("button", { name: i18n.t("peopleAccess.users.rowMenu", { name: MEMBER.fullName }) })).not.toBeInTheDocument()
     expect(listRolesMock).not.toHaveBeenCalled()
     expect(listPermissionsMock).not.toHaveBeenCalled()
   })
@@ -312,17 +320,17 @@ describe("PeopleAccessPage", () => {
     await waitForUsersLoaded()
 
     expect(
-      screen.getByRole("button", { name: i18n.t("peopleAccess.tabs.users") }),
+      screen.getByRole("tab", { name: i18n.t("peopleAccess.tabs.users") }),
     ).toBeInTheDocument()
     expect(
-      screen.getByRole("button", { name: i18n.t("peopleAccess.tabs.roles") }),
+      screen.getByRole("tab", { name: i18n.t("peopleAccess.tabs.roles") }),
     ).toBeInTheDocument()
     expect(
-      screen.getByText(i18n.t("peopleAccess.users.description")),
+      screen.getByText(i18n.t("peopleAccess.users.empty")),
     ).toBeInTheDocument()
 
     await user.click(
-      screen.getByRole("button", { name: i18n.t("peopleAccess.tabs.roles") }),
+      screen.getByRole("tab", { name: i18n.t("peopleAccess.tabs.roles") }),
     )
 
     expect(
@@ -336,10 +344,10 @@ describe("PeopleAccessPage", () => {
     await waitForUsersLoaded()
 
     expect(
-      screen.getByRole("button", { name: i18n.t("peopleAccess.tabs.users") }),
+      screen.getByRole("tab", { name: i18n.t("peopleAccess.tabs.users") }),
     ).toBeInTheDocument()
     expect(
-      screen.queryByRole("button", { name: i18n.t("peopleAccess.tabs.roles") }),
+      screen.queryByRole("tab", { name: i18n.t("peopleAccess.tabs.roles") }),
     ).not.toBeInTheDocument()
     expect(listRolesMock).not.toHaveBeenCalled()
     expect(listPermissionsMock).not.toHaveBeenCalled()
@@ -378,14 +386,15 @@ describe("PeopleAccessPage", () => {
     listTenantMembersMock.mockResolvedValue(memberPage([MEMBER]))
     renderPage(ASSIGN_PERMS)
 
-    expect(await screen.findByText(MEMBER.fullName)).toBeInTheDocument()
-    expect(screen.getByText(MEMBER.email)).toBeInTheDocument()
-    expect(within(screen.getByRole("table", { name: i18n.t("peopleAccess.tabs.users") })).getByText("Admin")).toBeInTheDocument()
+    const table = await screen.findByRole("table", { name: i18n.t("peopleAccess.tabs.users") })
+    expect(within(table).getByText(MEMBER.fullName)).toBeInTheDocument()
+    expect(within(table).getByText(MEMBER.email)).toBeInTheDocument()
+    expect(within(table).getByText("Admin")).toBeInTheDocument()
     expect(
-      screen.getByText(i18n.t("peopleAccess.status.active")),
+      within(table).getByText(i18n.t("peopleAccess.status.active")),
     ).toBeInTheDocument()
     expect(
-      screen.getByRole("button", { name: i18n.t("peopleAccess.users.assign") }),
+      within(table).getByRole("button", { name: i18n.t("peopleAccess.users.rowMenu", { name: MEMBER.fullName }) }),
     ).toBeInTheDocument()
   })
 
@@ -507,9 +516,10 @@ describe("PeopleAccessPage", () => {
     listTenantCustomersMock.mockResolvedValue(customerPage([CUSTOMER]))
     renderPage(["core.customers.read"])
 
-    expect(await screen.findByRole("button", { name: i18n.t("peopleAccess.tabs.customers") })).toBeInTheDocument()
-    expect(screen.queryByRole("button", { name: i18n.t("peopleAccess.tabs.users") })).not.toBeInTheDocument()
-    expect(await screen.findByText(CUSTOMER.name)).toBeInTheDocument()
+    expect(await screen.findByRole("tab", { name: i18n.t("peopleAccess.tabs.customers") })).toBeInTheDocument()
+    expect(screen.queryByRole("tab", { name: i18n.t("peopleAccess.tabs.users") })).not.toBeInTheDocument()
+    const table = await screen.findByRole("table", { name: i18n.t("peopleAccess.tabs.customers") })
+    expect(within(table).getByText(CUSTOMER.name)).toBeInTheDocument()
     expect(listTenantMembersMock).not.toHaveBeenCalled()
   })
 
@@ -519,7 +529,7 @@ describe("PeopleAccessPage", () => {
     await waitForUsersLoaded()
 
     expect(
-      screen.queryByRole("button", {
+      screen.queryByRole("tab", {
         name: i18n.t("peopleAccess.tabs.customers"),
       }),
     ).not.toBeInTheDocument()
@@ -536,17 +546,18 @@ describe("PeopleAccessPage", () => {
     ).toBeInTheDocument()
 
     await user.click(
-      screen.getByRole("button", {
+      screen.getByRole("tab", {
         name: i18n.t("peopleAccess.tabs.customers"),
       }),
     )
 
-    expect(await screen.findByText(CUSTOMER.name)).toBeInTheDocument()
-    expect(screen.getByText(CUSTOMER.email ?? "")).toBeInTheDocument()
+    const table = await screen.findByRole("table", { name: i18n.t("peopleAccess.tabs.customers") })
+    expect(within(table).getByText(CUSTOMER.name)).toBeInTheDocument()
+    expect(within(table).getByText(CUSTOMER.email ?? "")).toBeInTheDocument()
     expect(
-      screen.getByText(i18n.t("peopleAccess.customers.verified")),
+      within(table).getByText(i18n.t("peopleAccess.customers.verified")),
     ).toBeInTheDocument()
-    expect(screen.getByText(/13\/10\/2026/)).toBeInTheDocument()
+    expect(within(table).getByText(/13\/10\/2026/)).toBeInTheDocument()
     expect(
       screen.queryByText(i18n.t("peopleAccess.users.empty")),
     ).not.toBeInTheDocument()
@@ -771,9 +782,7 @@ describe("People users and roles validity gate", () => {
     renderPage(ASSIGN_PERMS)
     await waitForUsersLoaded()
 
-    await user.click(
-      screen.getByRole("button", { name: i18n.t("peopleAccess.users.assign") }),
-    )
+    await chooseAssign(user, screen.getByRole("table", { name: i18n.t("peopleAccess.tabs.users") }))
     const dialog = await screen.findByRole("dialog")
     const submit = within(dialog).getByRole("button", {
       name: i18n.t("peopleAccess.users.saveRoles"),
@@ -812,9 +821,7 @@ describe("People users and roles validity gate", () => {
     )
     renderPage(ASSIGN_PERMS)
     await waitForUsersLoaded()
-    await user.click(
-      screen.getByRole("button", { name: i18n.t("peopleAccess.users.assign") }),
-    )
+    await chooseAssign(user, screen.getByRole("table", { name: i18n.t("peopleAccess.tabs.users") }))
     const dialog = await screen.findByRole("dialog")
     const submit = within(dialog).getByRole("button", {
       name: i18n.t("peopleAccess.users.saveRoles"),
@@ -841,7 +848,7 @@ describe("People users and roles validity gate", () => {
       within(dialog).getByRole("button", { name: i18n.t("common.close") }),
     ).toBeEnabled()
     expect(toastSuccess).not.toHaveBeenCalled()
-    expect(screen.getByText(MEMBER.fullName)).toBeInTheDocument()
+    expect(within(screen.getByRole("table", { name: i18n.t("peopleAccess.tabs.users"), hidden: true })).getByText(MEMBER.fullName)).toBeInTheDocument()
     expect(assignUserRolesMock).toHaveBeenCalledTimes(1)
 
     assignUserRolesMock.mockResolvedValueOnce(undefined)
@@ -864,7 +871,7 @@ describe("People users and roles validity gate", () => {
   async function openRolesTab(user: ReturnType<typeof userEvent.setup>) {
     await waitForUsersLoaded()
     await user.click(
-      screen.getByRole("button", { name: i18n.t("peopleAccess.tabs.roles") }),
+      screen.getByRole("tab", { name: i18n.t("peopleAccess.tabs.roles") }),
     )
     expect(
       await screen.findByText(i18n.t("peopleAccess.roles.description")),

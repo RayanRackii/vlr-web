@@ -77,6 +77,13 @@ function renderShell(pathname = "/dashboard") {
   )
 }
 
+// The staff shell shows the account menu twice: sidebar user card and the narrow top-bar avatar.
+async function findHeaderAvatar() {
+  return within(screen.getAllByRole("banner")[0]).findByRole("button", {
+    name: i18n.t("account.openMenu"),
+  })
+}
+
 describe("MainLayout header identity", () => {
   afterEach(async () => { await i18n.changeLanguage("pt-BR") })
 
@@ -103,7 +110,12 @@ describe("MainLayout header identity", () => {
     renderShell("/modulos/bookings")
 
     expect(await screen.findByRole("heading", { level: 1, name: title })).toBeInTheDocument()
-    expect(within(screen.getAllByRole("banner")[0]).getByText(title)).toHaveClass("lg:hidden")
+    expect(document.querySelector('[data-shell-part="content-breadcrumb"]')).toHaveClass("lg:hidden")
+    expect(
+      within(screen.getAllByRole("banner")[0])
+        .getAllByText(title)
+        .some((element) => element.classList.contains("lg:hidden")),
+    ).toBe(true)
   })
 
   it("Sair in the admin header ends a leftover customer session too, in one click", async () => {
@@ -117,9 +129,7 @@ describe("MainLayout header identity", () => {
     const user = userEvent.setup()
     renderShell()
 
-    await user.click(
-      await screen.findByRole("button", { name: i18n.t("account.openMenu") }),
-    )
+    await user.click(await findHeaderAvatar())
     await user.click(await screen.findByText(i18n.t("account.signOut")))
 
     await waitFor(() => {
@@ -140,15 +150,13 @@ describe("MainLayout header identity", () => {
 
     expect(await screen.findByRole("heading", { name: "Dashboard" })).toBeInTheDocument()
 
-    const menuButton = await screen.findByRole("button", {
-      name: i18n.t("account.openMenu"),
-    })
+    const menuButton = await findHeaderAvatar()
     await waitFor(() => {
       expect(menuButton).toHaveAttribute("title", "Ana Professora")
     })
 
     await user.click(menuButton)
-    const label = await screen.findByText("Ana Professora")
+    const label = await within(await screen.findByRole("menu")).findByText("Ana Professora")
     expect(label).toHaveClass("truncate")
   })
 
@@ -164,14 +172,12 @@ describe("MainLayout header identity", () => {
 
     expect(await screen.findByRole("heading", { name: "Dashboard" })).toBeInTheDocument()
 
-    const menuButton = await screen.findByRole("button", {
-      name: i18n.t("account.openMenu"),
-    })
+    const menuButton = await findHeaderAvatar()
     await waitFor(() => {
       expect(menuButton).toHaveAttribute("title", "admin-a@example.com")
     })
 
     await user.click(menuButton)
-    expect(await screen.findByText("admin-a@example.com")).toBeInTheDocument()
+    expect(await within(await screen.findByRole("menu")).findAllByText("admin-a@example.com")).not.toHaveLength(0)
   })
 })

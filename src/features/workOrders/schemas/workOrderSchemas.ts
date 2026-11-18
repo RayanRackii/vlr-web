@@ -86,6 +86,8 @@ export type WorkOrderTask = z.infer<typeof workOrderTaskSchema>
 
 export const workOrderSchema = z.object({
   id: z.string().uuid(),
+  /** Sequential per-tenant OS number; absent on older payloads. */
+  number: z.number().int().positive().nullish(),
   tenantId: z.string().uuid(),
   assetId: z.string().uuid(),
   maintenancePlanId: z.string().uuid().nullish(),
@@ -169,7 +171,8 @@ type CreateWorkOrderFormMessages = {
   assetRequired: string
   dateRequired: string
   dateInvalid: string
-  taskRequired: string
+  /** Kept for callers; tasks are validated by the page (plan checklist or ad hoc rows). */
+  taskRequired?: string
 }
 
 export function createWorkOrderFormSchema(
@@ -180,7 +183,6 @@ export function createWorkOrderFormSchema(
     assignedUserId: z.string().uuid().optional(),
     scheduledDate: civilDateFormSchema(messages.dateRequired, messages.dateInvalid),
     notes: z.string(),
-    taskTitle: z.string().trim().min(1, messages.taskRequired),
   })
 }
 

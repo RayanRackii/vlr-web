@@ -11,6 +11,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import {
+  changeLanguage,
   languageNativeNames,
   supportedLanguages,
   type SupportedLanguage,
@@ -79,7 +80,7 @@ export function LanguageSwitcher({
             key={option.code}
             className="min-h-11 md:min-h-9"
             onClick={() => {
-              void i18n.changeLanguage(option.code)
+              void changeLanguage(option.code)
             }}
           >
             <span className="w-8 font-medium">{option.shortLabel}</span>

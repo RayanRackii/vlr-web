@@ -54,6 +54,8 @@ export function useProductWizard(productId: string) {
   const [error, setError] = useState<string | null>(null)
   const [busyAction, setBusyAction] = useState<string | null>(null)
   const active = useRef(true)
+  /** Latest loaded model, updated before the state so a save-then-navigate flow never reads a stale one. */
+  const modelRef = useRef<ProductWizardModel | null>(null)
 
   const load = useCallback(async (silent = false) => {
     if (!silent) {
@@ -91,23 +93,27 @@ export function useProductWizard(productId: string) {
       if (!active.current) {
         return
       }
-      setModel({
+      const nextModel: ProductWizardModel = {
         product,
         access: accessResult.failed ? null : {
           visibility: accessResult.access?.visibility ?? "Public",
           customerIds: accessResult.access?.customerIds ?? [],
           groupIds: accessResult.access?.groupIds ?? [],
+          customerNames: accessResult.access?.customerNames ?? {},
         },
         groups: groupsResult.failed ? null : groupsResult.groups,
         menuItems: menuResult.failed ? null : menuResult.items,
         requirements: resourceResult.requirements,
         resourceCapability: resourceResult.capability,
-      })
+      }
+      modelRef.current = nextModel
+      setModel(nextModel)
       setError(null)
     } catch (loadError) {
       if (!active.current) {
         return
       }
+      modelRef.current = null
       setModel(null)
       setError(loadError instanceof Error ? loadError.message : t("apiErrors.loadCatalogProduct"))
     } finally {
@@ -158,9 +164,10 @@ export function useProductWizard(productId: string) {
     ? sellableSummary(model.product.isActive, checklist)
     : "unknown"
 
-  async function publishMenu() {
+  /** Resolves true when the portal menu item is on, false when it was not (the error is toasted). */
+  async function publishMenu(): Promise<boolean> {
     if (!model || busyAction) {
-      return
+      return false
     }
     setBusyAction("menu")
     try {
@@ -184,8 +191,10 @@ export function useProductWizard(productId: string) {
       }
       toast.success(t("catalog.productWizard.menuPublished"))
       await load(true)
+      return true
     } catch (publishError) {
       toast.error(publishError instanceof Error ? publishError.message : t("apiErrors.createMenuItem"))
+      return false
     } finally {
       setBusyAction(null)
     }
@@ -193,6 +202,7 @@ export function useProductWizard(productId: string) {
 
   return {
     model,
+    modelRef,
     loading,
     error,
     checklist,

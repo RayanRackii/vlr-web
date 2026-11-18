@@ -58,6 +58,8 @@ describe("feature manifests", () => {
       "/catalogo/produtos/novo",
       "/catalogo/produtos/:id/assistente",
       "/catalogo/produtos/:id/passos",
+      // Legacy editor: retired by slice W3; this path only redirects to the view or the wizard edit mode.
+      "/catalogo/produtos/:id/editar-legado",
       "/catalogo/produtos/:id",
       "/catalogo/produtos",
       "/catalogo/solicitacoes",

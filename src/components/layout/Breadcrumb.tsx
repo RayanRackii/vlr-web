@@ -1,4 +1,4 @@
-import { useContext, useSyncExternalStore } from "react"
+import { useContext, useSyncExternalStore, type ReactNode } from "react"
 import { Link, useLocation } from "react-router-dom"
 import { useTranslation } from "react-i18next"
 import { ArrowLeft, ChevronRight } from "lucide-react"
@@ -13,6 +13,7 @@ const createTitleKey: Record<string, string> = {
   "/ativos/novo": "nav.createEquipment",
   "/ativos/tipos/novo": "assets.resourceTypes.new",
   "/catalogo/grupos/novo": "catalog.customerGroups.createTitle",
+  "/grupos/novo": "catalog.customerGroups.createTitle",
   "/catalogo/produtos/novo": "catalog.products.createTitle",
   "/configuracoes/recursos/novo": "nav.createResource",
   "/os/nova": "workOrders.create.title",
@@ -30,10 +31,19 @@ function isNarrowViewport() {
   return window.matchMedia?.(narrowQuery).matches ?? false
 }
 
-export function Breadcrumb() {
+type BreadcrumbProps = {
+  /** Top-bar styling: no bottom margin, "/" separators. */
+  variant?: "page" | "header"
+  /** Rendered when there is no breadcrumb to show (fewer than two crumbs). */
+  fallback?: ReactNode
+}
+
+export function Breadcrumb({ variant = "page", fallback = null }: BreadcrumbProps = {}) {
+  const inHeader = variant === "header"
   const { t } = useTranslation()
   const { pathname } = useLocation()
   const { sections } = useAppNavigationSections("module-intros")
+  const { sections: shellSections } = useAppNavigationSections("shell")
   const { title } = useContext(BreadcrumbTitleContext)
   const narrow = useSyncExternalStore(subscribeToViewport, isNarrowViewport, () => false)
   const match = matchNavigationPath(sections.flatMap((section) => section.items), pathname)
@@ -41,12 +51,21 @@ export function Breadcrumb() {
   const intro = matchModuleIntro(sections, pathname)
 
   const normalized = pathname.replace(/\/+$/, "") || "/"
-  if (/^\/(?:catalogo\/produtos|configuracoes\/recursos)\/(?:[^/]+\/)?cadastro$/.test(normalized)) return null
-  if (/^\/grupos\/[^/]+$/.test(normalized)) return null
+  if (/^\/(?:catalogo\/produtos|configuracoes\/recursos)\/(?:[^/]+\/)?cadastro$/.test(normalized)) return <>{fallback}</>
+  if (/^\/grupos\/[^/]+$/.test(normalized) && !(inHeader && normalized === "/grupos/novo")) return <>{fallback}</>
 
   const maintenanceChild = pathname.startsWith("/manutencao/")
   const pedidosChild = pathname.startsWith("/pedidos/")
-  if (maintenanceChild) {
+  // PMOC plan pages live under the Manutenção nav: "Manutenção / Planos / <nome>" and "Manutenção / Novo plano".
+  const pmocPlanDetail = /^\/pmoc\/(?!biblioteca$|novo$)[^/]+$/.test(normalized)
+  if (normalized === "/pmoc/novo") {
+    crumbs.push({ label: t("nav.manutencao"), to: "/manutencao" })
+    crumbs.push({ label: t("maintenance.newPlan") })
+  } else if (pmocPlanDetail) {
+    crumbs.push({ label: t("nav.manutencao"), to: "/manutencao" })
+    crumbs.push({ label: t("maintenance.tabs.planos"), to: "/manutencao?aba=planos" })
+    crumbs.push({ label: title?.pathname === pathname ? title.value : t("nav.details") })
+  } else if (maintenanceChild) {
     crumbs.push({ label: t("nav.manutencao"), to: "/manutencao" })
     crumbs.push({ label: t(pathname === "/manutencao/planos/novo" ? "maintenance.newPlan" : "maintenance.newOrder") })
   } else if (pedidosChild) {
@@ -78,16 +97,39 @@ export function Breadcrumb() {
     crumbs.push({ label: t(getPageTitleKey(pathname)) })
   }
 
+  // Header only: the module-intro sections above do not know child routes such as
+  // /agendas or the settings pages, so complete the trail from the shell navigation.
+  if (inHeader && crumbs.length < 2) {
+    const shellMatch = matchNavigationPath(shellSections.flatMap((section) => section.items), pathname)
+    const shellCreateKey = createTitleKey[normalized]
+    if (shellMatch && shellMatch.isDetail && shellCreateKey && !shellMatch.child && !shellMatch.tab) {
+      // Create routes of a top-level item (e.g. /grupos/novo): item crumb plus the create title.
+      crumbs.splice(0, crumbs.length, { label: t(shellMatch.item.labelKey), to: shellMatch.item.to }, { label: t(shellCreateKey) })
+    } else if (shellMatch && !shellMatch.isDetail) {
+      const { item, child, tab } = shellMatch
+      const section = shellSections.find((candidate) => candidate.items.includes(item))
+      const current = t((tab ?? child ?? item).labelKey)
+      if (child) {
+        crumbs.splice(0, crumbs.length, { label: t(item.labelKey), to: undefined }, { label: current })
+      } else if (section && !section.standalone) {
+        const sectionLabel = t(section.titleKey)
+        if (sectionLabel !== current) {
+          crumbs.splice(0, crumbs.length, { label: sectionLabel }, { label: current })
+        }
+      }
+    }
+  }
+
   const visibleCrumbs = narrow ? crumbs.slice(-2) : crumbs
-  if (visibleCrumbs.length < 2) return null
+  if (visibleCrumbs.length < 2) return <>{fallback}</>
   return (
-    <nav aria-label={t("nav.breadcrumbLabel")} className={pedidosChild || maintenanceChild ? "mx-auto mb-4 max-w-[1240px] text-sm text-muted-foreground" : "mb-4 text-sm text-muted-foreground"}>
+    <nav aria-label={t("nav.breadcrumbLabel")} className={inHeader ? "min-w-0 text-sm text-muted-foreground" : pedidosChild || maintenanceChild ? "mx-auto mb-4 max-w-[1240px] text-sm text-muted-foreground" : "mb-4 text-sm text-muted-foreground"}>
       <ol className="flex min-w-0 items-center gap-2">
         {visibleCrumbs.map((crumb, index) => {
           const current = index === visibleCrumbs.length - 1
           return (
             <li key={`${index}-${crumb.label}`} className="flex min-w-0 items-center gap-2">
-              {index > 0 && (pedidosChild || maintenanceChild ? <span aria-hidden="true">/</span> : <ChevronRight className="size-4 shrink-0" strokeWidth={ICON_STROKE_WIDTH} aria-hidden="true" />)}
+              {index > 0 && (inHeader || pedidosChild || maintenanceChild ? <span aria-hidden="true">/</span> : <ChevronRight className="size-4 shrink-0" strokeWidth={ICON_STROKE_WIDTH} aria-hidden="true" />)}
               {current ? (
                 <span aria-current="page" className="truncate font-medium text-foreground">{crumb.label}</span>
               ) : crumb.to ? (

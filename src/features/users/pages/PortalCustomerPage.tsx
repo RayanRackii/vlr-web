@@ -16,6 +16,7 @@ import type { CatalogOrder, CustomerGroup } from "@/features/catalog/schemas/cat
 import { exclusiveProductsForCustomer, type ExclusiveProduct } from "@/features/users/lib/exclusiveProducts"
 import type { TenantCustomer } from "@/features/users/schemas/userSchemas"
 import { listTenantCustomers } from "@/features/users/services/usersService"
+import { productViewPath } from "@/features/catalog/lib/productEditorPath"
 
 const CUSTOMER_DIRECTORY_PAGE_SIZE = 50
 
@@ -194,7 +195,7 @@ export function PortalCustomerPage() {
           <ul className="divide-y divide-border rounded-xl border border-border">
             {products.map((product) => (
               <li key={product.id}>
-                <Link className="flex min-h-11 items-center px-3 text-sm" to={`/catalogo/produtos/${product.id}`}>
+                <Link className="flex min-h-11 items-center px-3 text-sm" to={productViewPath(product.id)}>
                   {product.name}
                 </Link>
               </li>

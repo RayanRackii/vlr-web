@@ -182,7 +182,7 @@ describe("ResourceVisualCatalogPage tag creation", () => {
     vi.mocked(replaceTenantSegments).mockResolvedValue([segment])
     render(<MemoryRouter initialEntries={["/admin/tenants/tenant-1/recursos-visuais"]}><Routes><Route path="/admin/tenants/:id/recursos-visuais" element={<ResourceVisualCatalogPage />} /></Routes></MemoryRouter>)
 
-    expect(await screen.findByRole("heading", { name: "Segmentos do tenant: FICC" })).toBeInTheDocument()
+    expect(await screen.findByRole("heading", { name: "Segmentos da empresa: FICC" })).toBeInTheDocument()
     await user.click(await screen.findByLabelText("Esporte"))
     await user.click(screen.getByRole("button", { name: "Salvar" }))
     await waitFor(() => expect(replaceTenantSegments).toHaveBeenCalledWith("tenant-1", [segment.id]))

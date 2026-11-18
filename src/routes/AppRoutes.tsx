@@ -1,8 +1,8 @@
-import { MaintenancePage } from "@/features/maintenance/MaintenancePage"
 import { MaintenanceRoute, MaintenanceCreatePlanPage, MaintenanceCreateOrderPage } from "@/features/maintenance/MaintenanceRoutes"
-import { useMemo } from "react"
+import { Suspense, useMemo } from "react"
 import { Navigate, Route, Routes, useLocation, useParams } from "react-router-dom"
 
+import { FullPageFallback } from "@/components/loading/FullPageFallback"
 import { DashboardHomeRoute } from "@/components/layout/DashboardHomeRoute"
 import { MainLayout } from "@/components/layout/MainLayout"
 import { ModuleIntroPage } from "@/components/layout/ModuleIntroPage"
@@ -35,6 +35,9 @@ import { hasActiveStaffSession } from "@/lib/sessionRestoreGuard"
 import { usersManifest } from "@/features/users/manifest"
 import { workOrdersManifest } from "@/features/workOrders/manifest"
 import { UnknownPathRoute } from "@/routes/UnknownPathRoute"
+import { lazyPage } from "@/routes/lazyPage"
+
+const MaintenancePage = lazyPage(() => import("@/features/maintenance/MaintenancePage"), "MaintenancePage")
 
 function RedirectVerifyPhoneToEmail() {
   const location = useLocation()
@@ -100,7 +103,7 @@ export function HostTenantPrefixRedirect({ hostSubdomain }: { hostSubdomain: str
   return <Navigate to={`${rest}${location.search}${location.hash}`} replace />
 }
 
-export function AppRoutes() {
+function AppRoutesTree() {
   const hostSubdomain = useMemo(() => getHostTenantSubdomain(), [])
 
   // Host mode: ficc.rolvix.com.br → portal branded (sem landing).
@@ -257,5 +260,13 @@ export function AppRoutes() {
 
       <Route path="*" element={<UnknownPathRoute />} />
     </Routes>
+  )
+}
+
+export function AppRoutes() {
+  return (
+    <Suspense fallback={<FullPageFallback />}>
+      <AppRoutesTree />
+    </Suspense>
   )
 }

@@ -73,6 +73,14 @@ export type CatalogProductVisibility = z.infer<
   typeof catalogProductVisibilitySchema
 >
 
+/** Sale readiness computed by the API (codes NAME, RESOURCE, AUDIENCE, PRICE). Absent on older responses. */
+export const catalogSaleReadinessSchema = z.object({
+  ready: z.boolean(),
+  missing: z.array(z.string()).nullish().transform((value) => value ?? []),
+})
+
+export type CatalogSaleReadiness = z.infer<typeof catalogSaleReadinessSchema>
+
 export const catalogProductSchema = z.object({
   id: z.string().uuid(),
   name: z.string(),
@@ -81,7 +89,11 @@ export const catalogProductSchema = z.object({
   price: z.number().nullable(),
   currency: z.string(),
   isActive: z.boolean(),
+  /** Whether Agenda and Fila apply to this product. Absent on older responses: true. */
+  usesSchedule: z.boolean().optional().default(true),
   createdAt: z.string(),
+  /** Last change of the product row. Absent on older responses. */
+  updatedAt: z.string().nullish(),
   files: z.array(catalogProductFileSchema),
   hasFiles: z.boolean().optional(),
   taxonomy: taxonomyAssignmentSchema.optional(),
@@ -89,6 +101,7 @@ export const catalogProductSchema = z.object({
   visibility: catalogProductVisibilitySchema.optional().default("Public"),
   grantedCustomerCount: z.number().int().optional().default(0),
   grantedGroupCount: z.number().int().optional().default(0),
+  saleReadiness: catalogSaleReadinessSchema.optional(),
 })
 
 export type CatalogProduct = z.infer<typeof catalogProductSchema>
@@ -112,6 +125,7 @@ export const catalogProductFormSchema = z.object({
     categoryIds: z.array(z.string().uuid()).max(20),
     tagIds: z.array(z.string().uuid()).max(20),
   }).optional(),
+  usesSchedule: z.boolean().optional(),
 })
 
 export type CatalogProductFormValues = z.infer<typeof catalogProductFormSchema>
@@ -565,6 +579,28 @@ export const catalogAuditEntrySchema = z.object({
 export type CatalogAuditEntry = z.infer<typeof catalogAuditEntrySchema>
 
 export const catalogAuditEntryListSchema = z.array(catalogAuditEntrySchema)
+
+/** One field of a product history entry; values are display strings from the API (price as "45.00"). */
+export const catalogProductHistoryChangeSchema = z.object({
+  field: z.string().nullish().transform((value) => value ?? ""),
+  old: z.string().nullish().transform((value) => value ?? null),
+  new: z.string().nullish().transform((value) => value ?? null),
+})
+
+export type CatalogProductHistoryChange = z.infer<typeof catalogProductHistoryChangeSchema>
+
+export const catalogProductHistoryEntrySchema = z.object({
+  id: z.string().uuid(),
+  action: z.string().nullish().transform((value) => value ?? ""),
+  changes: z.array(catalogProductHistoryChangeSchema).nullish().transform((value) => value ?? []),
+  /** Null = done by the system (no user). */
+  actorName: z.string().nullish().transform((value) => value ?? null),
+  createdAt: z.string(),
+})
+
+export type CatalogProductHistoryEntry = z.infer<typeof catalogProductHistoryEntrySchema>
+
+export const catalogProductHistoryListSchema = z.array(catalogProductHistoryEntrySchema)
 
 const CATALOG_AUDIT_ACTION_I18N_KEYS: Record<string, string> = {
   "group.created": "catalog.customerGroups.history.actions.created",

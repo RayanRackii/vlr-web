@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react"
-import { ChevronDown, ChevronUp, ListPlus, Monitor, Smartphone } from "lucide-react"
+import { Box, ChevronDown, ChevronUp, ListPlus, Monitor, Shapes, Smartphone } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 import { z } from "zod"
@@ -63,7 +63,7 @@ import {
   listTenantModuleMenuItems,
   updateModuleMenuItem,
 } from "@/features/tenantPortal/services/tenantPortalService"
-import { PeopleEmptyState } from "@/features/users/components/PeopleEmptyState"
+import { EmptyState } from "@/components/ui/empty-state"
 import { api } from "@/lib/api"
 
 const CREATE_DRAFT_ID = "00000000-0000-4000-8000-000000000001"
@@ -536,7 +536,7 @@ export function ModuleMenuItemsManager({
           <PageContentSkeleton rows={3} />
         ) : items.length === 0 ? (
           <div className="space-y-4">
-            <PeopleEmptyState
+            <EmptyState
               icon={ListPlus}
               title={t("admin.moduleMenu.empty")}
               description={t("admin.moduleMenu.emptyDescription")}
@@ -762,7 +762,7 @@ export function ModuleMenuItemsManager({
                         : t("admin.modules.Catalog"),
                   }))}
                 >
-                  <SelectTrigger
+                  <SelectTrigger icon={Shapes}
                     id="module-menu-functionality"
                     className="w-full"
                   >
@@ -815,7 +815,7 @@ export function ModuleMenuItemsManager({
                     })),
                   ]}
                 >
-                  <SelectTrigger
+                  <SelectTrigger icon={Box}
                     id="module-menu-destination"
                     className="w-full"
                   >

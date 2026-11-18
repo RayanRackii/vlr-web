@@ -1,13 +1,5 @@
 [data-shell-part="main"]:has(.notifications-page) > div { max-width: none; }
 .notifications-page { width: 100%; max-width: min(1240px, 100%); min-width: 0; margin-inline: auto; overflow-wrap: anywhere; }
-.notifications-eyebrow { color: var(--primary); font-size: .8125rem; font-weight: 600; letter-spacing: .025em; }
-.notifications-tabs { display: flex; gap: 8px; min-width: 0; max-width: 100%; overflow-x: auto; border-bottom: 1px solid var(--border); }
-.notifications-tabs button {
-  flex: none; display: inline-flex; align-items: center; gap: 8px; min-height: 46px; padding: 0 14px;
-  border-bottom: 2px solid transparent; color: var(--muted-foreground); font-size: .875rem; font-weight: 500; white-space: nowrap;
-}
-.notifications-tabs svg { width: 20px; height: 20px; }
-.notifications-tabs button[aria-selected="true"] { color: var(--primary); border-bottom-color: var(--primary); }
 .notifications-card {
   min-width: 0; overflow: hidden; border: 1px solid var(--border); border-radius: 16px; background: var(--card); color: var(--card-foreground);
   box-shadow: 0 1px 2px color-mix(in oklch, var(--foreground) 8%, transparent);

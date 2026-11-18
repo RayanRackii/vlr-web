@@ -28,7 +28,7 @@ describe("SchedulePage occupancy kind draft", () => {
   it("opens a blank kind form after Cancel", async () => {
     const user = userEvent.setup()
     renderAgenda()
-    await user.click(screen.getByRole("button", { name: new RegExp(i18n.t("rentals.schedule.tabs.kinds")) }))
+    await user.click(screen.getByRole("button", { name: i18n.t("rentals.schedule.advanced") }))
     const createName = i18n.t("rentals.schedule.kinds.saveCreate")
     const openNew = () => user.click(screen.getAllByRole("button", { name: createName })[0])
     await openNew()

@@ -1,38 +1,55 @@
-import { useOptionalPermissions } from "@/features/users/permissions/PermissionContext"
 import { CadastroShell } from "./CadastroShell"
-import { useCadastroStep } from "./useCadastroStep"
+import { ProductPublishSuccess, ProductPublishSummary } from "./ProductPublishPanels"
+import { useBreadcrumbTitle } from "@/components/layout/useBreadcrumbTitle"
+import { toast } from "sonner"
+import { activateCatalogProduct } from "@/features/catalog/services/catalogService"
+import type { CadastroStep } from "./useCadastroStep"
+import { cadastroSteps, useCadastroStep } from "./useCadastroStep"
 import { CadastroTaxonomyStep } from "./CadastroTaxonomyStep"
 import { useEffect, useState } from "react"
-import { Link, useNavigate, useParams } from "react-router-dom"
+import { useOptionalPermissions } from "@/features/users/permissions/PermissionContext"
+import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom"
 import { useTranslation } from "react-i18next"
 
 import { ErrorState } from "@/components/ErrorState"
-import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
-import { ItemStatusBadge } from "@/features/assistant/ItemStatusBadge"
-import { itemStatus, productSetupSteps, type SetupStepId } from "@/features/assistant/itemStatus"
-import { resourceAssistantPath } from "@/features/assistant/paths"
+import { type SetupStepId } from "@/features/assistant/itemStatus"
 import { CatalogProductResourceRequirements } from "@/features/catalog/components/CatalogProductResourceRequirements"
+import { ProductEditorRedirect } from "@/features/catalog/components/ProductEditorRedirect"
+import { QueueSummary, ResourceLinks } from "@/features/catalog/components/ProductScheduleSection"
 import { ProductWizardAccessStep } from "@/features/catalog/components/productWizard/ProductWizardAccessStep"
+import { ProductWizardFilesStep } from "@/features/catalog/components/productWizard/ProductWizardFilesStep"
 import { ProductWizardOfferStep } from "@/features/catalog/components/productWizard/ProductWizardOfferStep"
-import { audienceBlocksSale, catalogMenuIsActive } from "@/features/catalog/components/productWizard/sellableChecklist"
 import { useProductWizard } from "@/features/catalog/components/productWizard/useProductWizard"
+import { catalogMenuIsActive } from "@/features/catalog/components/productWizard/sellableChecklist"
+import { productNotApplicableSteps, productSetupFromModel } from "@/features/catalog/lib/productSetupStatus"
 import { listAdminRentalAssets, type AdminRentalAsset } from "@/features/rentals/services/scheduleService"
+import { productEditPath, productViewPath } from "@/features/catalog/lib/productEditorPath"
 
-const STEPS = ["dados", "agenda", "fila", "regras", "precos", "publicacao"] as const
-type StepId = (typeof STEPS)[number]
-
+/** The cadastro wizard, for creating and (`?modo=editar`, or an active product) editing a product. Old assistant links redirect. */
 export function ProductAssistantPage({ cadastro = false }: { cadastro?: boolean } = {}) {
-  const { step: cadastroStep, go } = useCadastroStep()
+  if (!cadastro) return <ProductEditorRedirect />
+  return <ProductCadastroPage />
+}
+
+function ProductCadastroPage() {
+  const { step: cadastroStep, go } = useCadastroStep("product")
+  const [searchParams] = useSearchParams()
+  const editRequested = searchParams.get("modo") === "editar"
   const navigate = useNavigate()
+  const permissions = useOptionalPermissions()
   const [stepDirty, setStepDirty] = useState(false)
   const [stepSaving, setStepSaving] = useState(false)
-  const permissions = useOptionalPermissions()
+  const [justPublished, setJustPublished] = useState(false)
+  const [menuFailed, setMenuFailed] = useState(false)
   const { id = "" } = useParams()
   const { t } = useTranslation()
   const wizard = useProductWizard(id)
-  const [open, setOpen] = useState<StepId | null>("dados")
   const [assets, setAssets] = useState<AdminRentalAsset[]>([])
+  useBreadcrumbTitle(wizard.model?.product.name)
+  // Frozen on the first load: publishing a draft activates it, which must not flip the page into edit mode.
+  const [startedActive, setStartedActive] = useState<boolean | null>(null)
+  if (startedActive === null && wizard.model) setStartedActive(wizard.model.product.isActive)
 
   useEffect(() => {
     let active = true
@@ -54,130 +71,103 @@ export function ProductAssistantPage({ cadastro = false }: { cadastro?: boolean 
 
   const model = wizard.model
   const { product } = model
-  const linkedIds = (model.requirements ?? []).flatMap((row) => row.rentalAssetId ? [row.rentalAssetId] : [])
+  // Editing an existing product: asked for explicitly, or implied by a product that was already active on arrival.
+  const editing = editRequested || startedActive === true
+  const wizardPath = editing ? productEditPath(product.id, "regras") : wizard.wizardPath
+  const { steps, status, firstMissing, linkedAssetIds: linkedIds } = productSetupFromModel(model, wizard.rentalsActive)
   const linkedAssets = assets.filter((asset) => linkedIds.includes(asset.id))
-  const audienceReady = (model.access?.visibility ?? product.visibility) !== "Restricted"
-    || (model.access !== null && model.groups !== null && !audienceBlocksSale(model.access, model.groups))
-  const agendaReady = !wizard.rentalsActive || linkedIds.length > 0
-  const steps = productSetupSteps({
-    name: product.name,
-    isActive: product.isActive,
-    price: product.price,
-    audienceReady,
-    agendaReady,
-    menuPublished: model.menuItems === null ? null : catalogMenuIsActive(model.menuItems),
-  })
-  const status = itemStatus(product.isActive && model.menuItems !== null && catalogMenuIsActive(model.menuItems), steps)
-  const firstMissing = (Object.keys(steps) as SetupStepId[]).find((step) => !steps[step])
+  const missingStep: SetupStepId | undefined = firstMissing
+  const notApplicable = productNotApplicableSteps(product.usesSchedule, wizard.rentalsActive)
+
+  /** Moves to a step, skipping the ones that do not apply under the freshly saved product (not the render's stale one). */
+  function goSkipping(target: CadastroStep) {
+    const latest = wizard.modelRef.current?.product.usesSchedule ?? product.usesSchedule
+    const skipped = productNotApplicableSteps(latest, wizard.rentalsActive)
+    const direction = cadastroSteps.indexOf(target) >= cadastroSteps.indexOf(cadastroStep) ? 1 : -1
+    let index = cadastroSteps.indexOf(target)
+    while (skipped.includes(cadastroSteps[index]) && index + direction >= 0 && index + direction < cadastroSteps.length) index += direction
+    go(cadastroSteps[index])
+  }
+
+  const taxonomy = product.taxonomy
+  const done: CadastroStep[] = [
+    ...(Object.entries(steps) as [SetupStepId, boolean][]).filter(([, ok]) => ok).map(([id]) => id),
+    ...(product.files.some((file) => file.status === "Ready") ? ["arquivos" as const] : []),
+    ...((taxonomy?.categories.length ?? 0) + (taxonomy?.tags.length ?? 0) > 0 ? ["categorias" as const] : []),
+    ...(status.kind === "published" ? ["publicacao" as const] : []),
+  ]
+
+  /** Publicar: activates the product (the list's Ativar call) and, when it is not on the portal menu yet, publishes the menu. */
+  async function publish() {
+    if (!product.isActive) {
+      try {
+        await activateCatalogProduct(product.id)
+        toast.success(t("catalog.products.toastActivated"))
+      } catch (error) {
+        toast.error(error instanceof Error ? error.message : t("apiErrors.updateCatalogProductStatus"))
+        return
+      }
+    }
+    if (model.menuItems !== null && !catalogMenuIsActive(model.menuItems) && permissions?.can("core.module_menu.write") && !wizard.readOnly) {
+      const menuOk = await wizard.publishMenu()
+      setMenuFailed(!menuOk)
+      if (!menuOk) return
+    } else {
+      await wizard.reload()
+    }
+    setMenuFailed(false)
+    setJustPublished(true)
+  }
+
+  const visibility = model.access?.visibility ?? product.visibility ?? "Public"
 
   const body = (
-      <div className="space-y-3">
-        {STEPS.filter((step) => !cadastro || step === cadastroStep).map((step, index) => (
-          <section key={step} aria-label={t(`assistant.steps.${step}`)} className="rounded-xl border bg-card p-4 text-card-foreground">
-            {cadastro ? <h2 className="text-base font-semibold">{t(`assistant.steps.${step}`)}</h2> : (
-            <div className="flex flex-wrap items-start justify-between gap-3">
-              <div>
-                <h2 className="text-base font-semibold">{index + 1}. {t(`assistant.steps.${step}`)}</h2>
-                {step !== "publicacao" ? (
-                  <p className="text-sm text-muted-foreground">{steps[step] ? t("assistant.complete") : t("assistant.pending")}</p>
-                ) : null}
-              </div>
-              <Button type="button" variant="outline" className="min-h-11" aria-expanded={open === step} onClick={() => setOpen((current) => current === step ? null : step)}>
-                {open === step ? t("assistant.close") : t("assistant.edit")}
-              </Button>
-            </div>
-            )}
-            {cadastro || open === step ? (
-              <div className="mt-4 space-y-4">
-                {step === "dados" || step === "precos" ? (
-                  <ProductWizardOfferStep product={product} readOnly={!wizard.canManage} onDirtyChange={cadastro ? setStepDirty : undefined} onSavingChange={cadastro ? setStepSaving : undefined} onSaved={() => wizard.reload()} />
-                ) : null}
-                {step === "agenda" ? (
-                  <>
-                    <CatalogProductResourceRequirements productId={product.id} readOnly={!wizard.canManage} onDirtyChange={cadastro ? setStepDirty : undefined} onSavingChange={cadastro ? setStepSaving : undefined} onSaved={() => wizard.reload()} />
-                    <ResourceLinks assets={linkedAssets.length > 0 ? linkedAssets : linkedIds.map((assetId) => ({ id: assetId, name: assetId, queueEnabled: false, queueOpeningTime: null }))} />
-                  </>
-                ) : null}
-                {step === "fila" ? <QueueSummary assets={linkedAssets} /> : null}
-                {step === "regras" && model.access && model.groups ? (
-                  <ProductWizardAccessStep
-                    productId={product.id}
-                    visibility={model.access.visibility}
-                    customerIds={model.access.customerIds}
-                    groupIds={model.access.groupIds}
-                    groups={model.groups}
-                    wizardPath={wizard.wizardPath}
-                    readOnly={!wizard.canManage}
-                    canSearchCustomers={wizard.canSearchCustomers}
-                    onDirtyChange={cadastro ? setStepDirty : undefined}
-                    onSavingChange={cadastro ? setStepSaving : undefined}
-                    onSaved={() => wizard.reload()}
-                  />
-                ) : null}
-                {step === "publicacao" ? (
-                  <div className="space-y-3">
-                    <p className="text-sm text-muted-foreground">{t(`assistant.publication.${status.kind}`, { count: status.kind === "missing" ? status.count : 0 })}</p>
-                    <ResourceLinks assets={linkedAssets} />
-                  </div>
-                ) : null}
-              </div>
-            ) : null}
-          </section>
-        ))}
+      <div className="space-y-4">
+        {cadastroStep === "dados" || cadastroStep === "precos" ? (
+          <ProductWizardOfferStep product={product} mode={cadastroStep === "precos" ? "precos" : "dados"} showUsesSchedule={wizard.rentalsActive} readOnly={!wizard.canManage} onDirtyChange={setStepDirty} onSavingChange={setStepSaving} onSaved={() => wizard.reload()} />
+        ) : null}
+        {cadastroStep === "arquivos" ? (
+          <ProductWizardFilesStep product={product} canManage={wizard.canManage} onBusyChange={setStepSaving} onReload={() => wizard.reload()} />
+        ) : null}
+        {cadastroStep === "agenda" ? (
+          <CatalogProductResourceRequirements productId={product.id} readOnly={!wizard.canManage} onDirtyChange={setStepDirty} onSavingChange={setStepSaving} onSaved={() => wizard.reload()} />
+        ) : null}
+        {cadastroStep === "fila" ? <QueueSummary assets={linkedAssets} /> : null}
+        {cadastroStep === "regras" && model.access && model.groups ? (
+          <ProductWizardAccessStep
+            productId={product.id}
+            visibility={model.access.visibility}
+            customerIds={model.access.customerIds}
+            customerNames={model.access.customerNames}
+            groupIds={model.access.groupIds}
+            groups={model.groups}
+            wizardPath={wizardPath}
+            readOnly={!wizard.canManage}
+            canSearchCustomers={wizard.canSearchCustomers}
+            onDirtyChange={setStepDirty}
+            onSavingChange={setStepSaving}
+            onSaved={() => wizard.reload()}
+          />
+        ) : null}
+        {cadastroStep === "publicacao" ? (
+          <div className="space-y-4">
+            <p className="text-sm text-muted-foreground">{t(`assistant.publication.${status.kind}`, { count: status.kind === "missing" ? status.count : 0 })}</p>
+            {menuFailed ? <p className="text-sm text-muted-foreground" role="status">{t("cadastro.published.menuFailed")}</p> : null}
+            <ProductPublishSummary
+              product={product}
+              categoryNames={taxonomy?.categories.map((category) => category.name) ?? []}
+              usesAgenda={product.usesSchedule && wizard.rentalsActive}
+              resourceNames={linkedAssets.map((asset) => asset.name)}
+              visibility={visibility}
+              go={goSkipping}
+            />
+            <ResourceLinks assets={linkedAssets} />
+          </div>
+        ) : null}
       </div>
   )
 
-  if (cadastro) return <CadastroShell area="products" title={product.name} step={cadastroStep} go={go} dirty={stepDirty} busy={wizard.busy || stepSaving} canPublish={firstMissing == null && Boolean(permissions?.can("core.module_menu.write")) && !wizard.readOnly && model.menuItems !== null} onPublish={() => void wizard.publishMenu()} onBack={() => navigate("/catalogo/produtos")}>
-    {cadastroStep === "categorias" ? <CadastroTaxonomyStep onDirtyChange={setStepDirty} onSavingChange={setStepSaving} product={product} canAssign={wizard.canManage} onSaved={() => wizard.reload()} /> : body}
+  return <CadastroShell kind="product" edit={editing ? { active: product.isActive, onCancel: () => navigate(productViewPath(product.id)), onSaved: () => { toast.success(t("cadastro.changesSaved")); navigate(productViewPath(product.id)) } } : undefined} title={product.name} status={status} step={cadastroStep} go={goSkipping} notApplicable={notApplicable} dirty={stepDirty} busy={wizard.busy || stepSaving} done={done} optional={["categorias", "arquivos"]} canPublish={missingStep == null && wizard.canManage && !justPublished} completed={justPublished && cadastroStep === "publicacao"} onPublish={publish} onBack={() => navigate(editing ? productViewPath(product.id) : "/catalogo/produtos")}>
+    {justPublished && cadastroStep === "publicacao" ? <ProductPublishSuccess product={product} visibility={visibility} editorPath={productViewPath(product.id)} /> : cadastroStep === "categorias" ? <CadastroTaxonomyStep onDirtyChange={setStepDirty} onSavingChange={setStepSaving} product={product} canAssign={wizard.canManage} onSaved={() => wizard.reload()} /> : body}
   </CadastroShell>
-
-  return (
-    <div className="mx-auto w-full min-w-0 max-w-3xl space-y-4 pb-8">
-      <header className="space-y-3">
-        <p className="text-sm text-muted-foreground">{t("catalog.products.title")}</p>
-        <div className="flex flex-wrap items-center gap-2">
-          <h1 className="text-2xl font-semibold tracking-tight">{product.name}</h1>
-          <ItemStatusBadge status={status} />
-        </div>
-        {firstMissing ? (
-          <Button type="button" className="min-h-11 w-full sm:w-auto" onClick={() => setOpen(firstMissing)}>{t("assistant.continue", { step: t(`assistant.steps.${firstMissing}`) })}</Button>
-        ) : (
-          <Button type="button" className="min-h-11 w-full sm:w-auto" disabled={wizard.busy} onClick={() => void wizard.publishMenu()}>{t("assistant.publish")}</Button>
-        )}
-      </header>
-      {body}
-    </div>
-  )
-}
-
-function ResourceLinks({ assets }: { assets: readonly { id: string; name: string }[] }) {
-  const { t } = useTranslation()
-  return (
-    <section aria-label={t("assistant.resourceTitle")} className="space-y-2">
-      <h3 className="text-sm font-semibold">{t("assistant.resourceTitle")}</h3>
-      {assets.length === 0 ? <p className="text-sm text-muted-foreground">{t("assistant.audienceEmpty")}</p> : assets.map((asset) => (
-        <div key={asset.id} className="flex flex-wrap items-center justify-between gap-2 rounded-lg border px-3 py-2">
-          <p className="text-sm font-medium">{asset.name}</p>
-          <Link className="inline-flex min-h-11 items-center text-sm font-medium text-primary underline-offset-4 hover:underline" to={resourceAssistantPath(asset.id)}>{t("assistant.openResource")}</Link>
-        </div>
-      ))}
-    </section>
-  )
-}
-
-function QueueSummary({ assets }: { assets: readonly Pick<AdminRentalAsset, "id" | "name" | "queueEnabled" | "queueOpeningTime">[] }) {
-  const { t } = useTranslation()
-  if (assets.length === 0) {
-    return <p className="text-sm text-muted-foreground">{t("assistant.followsQueue")}</p>
-  }
-  return (
-    <ul className="space-y-2">
-      {assets.map((asset) => (
-        <li key={asset.id} className="text-sm">
-          {asset.name}: {asset.queueEnabled ? t("assistant.queueOnSummary") : t("assistant.queueOffSummary")}
-          {asset.queueEnabled && asset.queueOpeningTime ? ` · ${asset.queueOpeningTime.slice(0, 5)}` : ""}
-        </li>
-      ))}
-    </ul>
-  )
 }

@@ -5,9 +5,26 @@ import { beforeEach, describe, expect, it, vi } from "vitest"
 
 import { AdminDashboardPage } from "@/features/admin/pages/AdminDashboardPage"
 import type { TenantAdmin } from "@/features/admin/schemas/adminTenantSchemas"
-import { listAdminTenants } from "@/features/admin/services/adminTenantsService"
+import {
+  deleteAdminTenant,
+  enterTenantEnvironment,
+  listAdminTenants,
+} from "@/features/admin/services/adminTenantsService"
 import i18n from "@/lib/i18n"
 
+const navigateMock = vi.hoisted(() => vi.fn())
+const sessionMocks = vi.hoisted(() => ({
+  clearPlatformTenantExited: vi.fn(),
+  refreshAuthSession: vi.fn().mockResolvedValue(undefined),
+  writeActiveTenantLabel: vi.fn(),
+}))
+
+vi.mock("react-router-dom", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("react-router-dom")>()),
+  useNavigate: () => navigateMock,
+}))
+vi.mock("@/features/admin/hooks/usePlatformTenantSession", () => sessionMocks)
+vi.mock("sonner", () => ({ toast: { success: vi.fn(), error: vi.fn() } }))
 vi.mock("@/features/admin/services/adminTenantsService", () => ({
   listAdminTenants: vi.fn(),
   deleteAdminTenant: vi.fn(),
@@ -22,7 +39,10 @@ const tenants: TenantAdmin[] = [
     taxId: "123456789",
     isActive: true,
     createdAt: "2026-10-28T12:00:00Z",
-    activeModules: [],
+    activeModules: ["Rentals", "Catalog", "Inventory", "Pmoc", "Assets"].map((moduleName) => ({
+      moduleName,
+      isActive: true,
+    })) as TenantAdmin["activeModules"],
     assetFamilyKeys: [],
   },
   {
@@ -47,6 +67,18 @@ const tenants: TenantAdmin[] = [
   },
 ]
 
+function table() {
+  return screen.getByRole("table", { name: i18n.t("admin.dashboard.title") })
+}
+
+function tableRow(name: string) {
+  return within(table()).getByRole("row", { name: new RegExp(name) })
+}
+
+function queryTableRow(name: string) {
+  return within(table()).queryByRole("row", { name: new RegExp(name) })
+}
+
 function renderPage() {
   return render(<MemoryRouter><AdminDashboardPage /></MemoryRouter>)
 }
@@ -54,37 +86,40 @@ function renderPage() {
 describe("AdminDashboardPage", () => {
   beforeEach(() => {
     vi.mocked(listAdminTenants).mockReset().mockResolvedValue(tenants)
+    vi.mocked(deleteAdminTenant).mockReset().mockResolvedValue(undefined)
+    vi.mocked(enterTenantEnvironment)
+      .mockReset()
+      .mockResolvedValue({ legalName: "Estúdio Aurora" } as never)
+    navigateMock.mockReset()
+    Object.values(sessionMocks).forEach((mock) => mock.mockClear())
   })
 
   it("filters loaded tenants by name or subdomain and clears an empty search without fetching again", async () => {
     const user = userEvent.setup()
     renderPage()
-    await screen.findByText("Estúdio Aurora")
+    await screen.findByRole("table")
     const search = screen.getByRole("searchbox", { name: i18n.t("admin.dashboard.searchLabel") })
 
     await user.type(search, "  AURORA  ")
-    expect(screen.getByText("Estúdio Aurora")).toBeInTheDocument()
-    expect(screen.queryByText("Espaço Horizonte")).not.toBeInTheDocument()
-    expect(screen.queryByText("Consultoria Central")).not.toBeInTheDocument()
+    expect(tableRow("Estúdio Aurora")).toBeInTheDocument()
+    expect(queryTableRow("Espaço Horizonte")).not.toBeInTheDocument()
+    expect(queryTableRow("Consultoria Central")).not.toBeInTheDocument()
 
     await user.clear(search)
     await user.type(search, "STUDIO-")
-    expect(screen.getByText("Estúdio Aurora")).toBeInTheDocument()
-    expect(screen.queryByText("Espaço Horizonte")).not.toBeInTheDocument()
+    expect(tableRow("Estúdio Aurora")).toBeInTheDocument()
+    expect(queryTableRow("Espaço Horizonte")).not.toBeInTheDocument()
 
     await user.clear(search)
     await user.type(search, "inexistente")
-    const empty = screen.getByRole("status")
-    expect(within(empty).getByText(i18n.t("admin.dashboard.searchEmptyTitle"))).toBeInTheDocument()
-    // The Clear button sits outside the live region so it is not announced as status text.
-    expect(within(empty).queryByRole("button")).not.toBeInTheDocument()
-    expect(screen.queryByText("Estúdio Aurora")).not.toBeInTheDocument()
+    expect(screen.getByText(i18n.t("admin.dashboard.searchEmptyTitle"))).toBeInTheDocument()
+    expect(screen.queryByRole("table")).not.toBeInTheDocument()
     await user.click(screen.getByRole("button", { name: i18n.t("admin.dashboard.clearSearch") }))
 
     expect(search).toHaveValue("")
-    expect(screen.getByText("Estúdio Aurora")).toBeInTheDocument()
-    expect(screen.getByText("Espaço Horizonte")).toBeInTheDocument()
-    expect(screen.getByText("Consultoria Central")).toBeInTheDocument()
+    expect(tableRow("Estúdio Aurora")).toBeInTheDocument()
+    expect(tableRow("Espaço Horizonte")).toBeInTheDocument()
+    expect(tableRow("Consultoria Central")).toBeInTheDocument()
     expect(listAdminTenants).toHaveBeenCalledTimes(1)
   })
 
@@ -98,7 +133,105 @@ describe("AdminDashboardPage", () => {
     expect(screen.queryByText(i18n.t("admin.dashboard.emptyTitle"))).not.toBeInTheDocument()
     await user.click(within(error).getByRole("button", { name: i18n.t("common.retry") }))
 
-    await screen.findByText("Estúdio Aurora")
+    await screen.findByRole("table")
     expect(screen.queryByRole("alert")).not.toBeInTheDocument()
+  })
+
+  it("lists tenants with the client, modules, document and status columns", async () => {
+    renderPage()
+    await screen.findByRole("table")
+
+    const headers = within(table()).getAllByRole("columnheader").map((header) => header.textContent)
+    expect(headers).toEqual([
+      i18n.t("admin.dashboard.columns.client"),
+      i18n.t("admin.dashboard.columns.modules"),
+      i18n.t("admin.dashboard.taxId"),
+      i18n.t("admin.dashboard.columns.status"),
+      i18n.t("admin.dashboard.columns.actions"),
+    ])
+
+    const aurora = tableRow("Estúdio Aurora")
+    expect(within(aurora).getByText("studio-aurora")).toBeInTheDocument()
+    expect(within(aurora).getByText("123456789")).toBeInTheDocument()
+    expect(within(aurora).getByText(i18n.t("admin.dashboard.statusActive"))).toBeInTheDocument()
+    // Three module badges at most, then "+N" for the rest.
+    expect(within(aurora).getByText("+2")).toBeInTheDocument()
+    expect(
+      within(tableRow("Consultoria Central")).getByText(i18n.t("admin.dashboard.noSubdomain")),
+    ).toBeInTheDocument()
+  })
+
+  it("renders a card list for small screens", async () => {
+    renderPage()
+    const list = await screen.findByRole("list", { name: i18n.t("admin.dashboard.title") })
+    expect(within(list).getAllByRole("listitem")).toHaveLength(3)
+  })
+
+  it("filters by status chips", async () => {
+    const user = userEvent.setup()
+    renderPage()
+    await screen.findByRole("table")
+
+    await user.click(screen.getByRole("button", { name: new RegExp(i18n.t("admin.dashboard.statusInactive")) }))
+    expect(tableRow("Espaço Horizonte")).toBeInTheDocument()
+    expect(queryTableRow("Estúdio Aurora")).not.toBeInTheDocument()
+
+    await user.click(screen.getByRole("button", { name: new RegExp(i18n.t("admin.dashboard.filterAll")) }))
+    expect(tableRow("Estúdio Aurora")).toBeInTheDocument()
+  })
+
+  it("enters the tenant environment with the same flow as before", async () => {
+    const user = userEvent.setup()
+    renderPage()
+    await screen.findByRole("table")
+
+    const enterName = i18n.t("admin.dashboard.actions.openEnvironment")
+    await user.click(within(tableRow("Estúdio Aurora")).getByRole("button", { name: enterName }))
+
+    expect(enterTenantEnvironment).toHaveBeenCalledWith(tenants[0].id)
+    await vi.waitFor(() =>
+      expect(navigateMock).toHaveBeenCalledWith("/dashboard", { replace: true }),
+    )
+    expect(sessionMocks.clearPlatformTenantExited).toHaveBeenCalled()
+    expect(sessionMocks.writeActiveTenantLabel).toHaveBeenCalledWith("Estúdio Aurora")
+    expect(sessionMocks.refreshAuthSession).toHaveBeenCalled()
+    expect(
+      within(tableRow("Espaço Horizonte")).getByRole("button", { name: enterName }),
+    ).toBeDisabled()
+  })
+
+  it("routes edit and visual resources from the row menu", async () => {
+    const user = userEvent.setup()
+    renderPage()
+    await screen.findByRole("table")
+
+    const menuName = i18n.t("admin.dashboard.actions.rowMenu", { name: "Estúdio Aurora" })
+    await user.click(within(table()).getByRole("button", { name: menuName }))
+    await user.click(await screen.findByRole("menuitem", { name: i18n.t("admin.dashboard.actions.edit") }))
+    expect(navigateMock).toHaveBeenCalledWith(`/admin/tenants/${tenants[0].id}/edit`)
+
+    await user.click(within(table()).getByRole("button", { name: menuName }))
+    await user.click(
+      await screen.findByRole("menuitem", { name: i18n.t("admin.dashboard.actions.visualResources") }),
+    )
+    expect(navigateMock).toHaveBeenCalledWith(`/admin/tenants/${tenants[0].id}/recursos-visuais`)
+  })
+
+  it("keeps the delete confirmation before deleting from the row menu", async () => {
+    const user = userEvent.setup()
+    renderPage()
+    await screen.findByRole("table")
+
+    const menuName = i18n.t("admin.dashboard.actions.rowMenu", { name: "Estúdio Aurora" })
+    await user.click(within(table()).getByRole("button", { name: menuName }))
+    await user.click(await screen.findByRole("menuitem", { name: i18n.t("admin.dashboard.actions.delete") }))
+
+    const dialog = await screen.findByRole("alertdialog")
+    expect(deleteAdminTenant).not.toHaveBeenCalled()
+    await user.click(within(dialog).getByRole("button", { name: i18n.t("admin.dashboard.delete.confirm") }))
+
+    await vi.waitFor(() => expect(deleteAdminTenant).toHaveBeenCalledWith(tenants[0].id))
+    await screen.findByText(i18n.t("admin.dashboard.delete.success"))
+    expect(queryTableRow("Estúdio Aurora")).not.toBeInTheDocument()
   })
 })

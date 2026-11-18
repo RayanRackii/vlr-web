@@ -19,6 +19,18 @@ export type CatalogProductImageCandidate = {
   mimeType: string
 }
 
+/**
+ * First Ready renderable image file (jpeg/png/webp), regardless of visibility and of whether it already has a
+ * URL. For staff screens that sign the file themselves when `url` is empty.
+ */
+export function selectFirstReadyImageFile<T extends CatalogProductImageCandidate & { status: string }>(
+  files: readonly T[] | null | undefined,
+): T | undefined {
+  return files?.find(
+    (file) => file.status === "Ready" && RENDERABLE_IMAGE_MIME_SET.has(file.mimeType.trim().toLowerCase()),
+  )
+}
+
 export function selectCatalogProductImages(
   files: readonly CatalogProductImageCandidate[] | null | undefined,
 ): CatalogProductGalleryImage[] {

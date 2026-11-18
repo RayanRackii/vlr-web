@@ -16,6 +16,7 @@ import {
   tenantPortalPathMode,
 } from "@/features/tenantPortal/services/tenantPortalService"
 import { CUSTOMER_TOKEN_STORAGE_KEY } from "@/features/tenantPortal/lib/customerSessionIdentity"
+import { clearQueryCache } from "@/lib/queryClient"
 import { invalidateCurrentUserCache } from "@/features/users/services/currentUserCache"
 import { replaceBrowserLocation } from "@/lib/browserLocation"
 import { staffLoginPath } from "@/lib/safeStaffNextPath"
@@ -202,6 +203,7 @@ export function isAuthenticatedRestoreBlocked(): boolean {
 }
 
 export function clearAuthenticatedQueryCaches(): void {
+  clearQueryCache()
   invalidateCurrentUserCache()
   clearAgendaQueryClient()
 }

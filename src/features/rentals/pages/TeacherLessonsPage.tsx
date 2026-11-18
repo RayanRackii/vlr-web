@@ -30,6 +30,7 @@ import {
   FormMessage,
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
+import { Box, Clock } from "lucide-react"
 import {
   Select,
   SelectContent,
@@ -241,7 +242,7 @@ export function TeacherLessonsPage() {
             <FormItem>
               <FormLabel>{t("rentals.teacherLessons.court")}</FormLabel>
               <Select value={selectedAssetId.length > 0 ? selectedAssetId : null} onValueChange={field.onChange} items={assets.map((asset) => ({ value: asset.id, label: asset.name }))} disabled={resourcesPending || busy || assets.length === 0}>
-                <FormControl><SelectTrigger aria-label={t("rentals.teacherLessons.court")}><SelectValue placeholder={resourcesPending ? t("rentals.teacherLessons.loadingResources") : t("rentals.teacherLessons.court")} /></SelectTrigger></FormControl>
+                <FormControl><SelectTrigger icon={Box} aria-label={t("rentals.teacherLessons.court")}><SelectValue placeholder={resourcesPending ? t("rentals.teacherLessons.loadingResources") : t("rentals.teacherLessons.court")} /></SelectTrigger></FormControl>
                 <SelectContent>{assets.map((asset) => <SelectItem key={asset.id} value={asset.id}>{asset.name}</SelectItem>)}</SelectContent>
               </Select>
             </FormItem>
@@ -268,7 +269,7 @@ export function TeacherLessonsPage() {
                 items={available.map((slot) => ({ value: slotKeyFor(slot), label: `${slot.startTime.slice(0, 5)}–${displayEndClock(slot.endTime)}` }))}
                 disabled={busy || resourcesPending || !timeSelectable}
               >
-                <FormControl><SelectTrigger aria-describedby={timeReason === "ready" && !pastSlotsHidden ? undefined : "available-time-state"} aria-label={t("rentals.teacherLessons.availableTime")}><SelectValue placeholder={timePlaceholder} /></SelectTrigger></FormControl>
+                <FormControl><SelectTrigger icon={Clock} aria-describedby={timeReason === "ready" && !pastSlotsHidden ? undefined : "available-time-state"} aria-label={t("rentals.teacherLessons.availableTime")}><SelectValue placeholder={timePlaceholder} /></SelectTrigger></FormControl>
                 <SelectContent>{available.map((slot) => <SelectItem key={slotKeyFor(slot)} value={slotKeyFor(slot)}>{slot.startTime.slice(0, 5)}–{displayEndClock(slot.endTime)}</SelectItem>)}</SelectContent>
               </Select>
               <FormMessage />

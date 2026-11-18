@@ -25,7 +25,7 @@ describe("authManifest public routes", () => {
       await screen.findByRole("heading", { name: i18n.t("auth.login.title") }),
     ).toBeInTheDocument()
     expect(
-      screen.getByRole("button", { name: i18n.t("auth.login.forgotPassword") }),
+      await screen.findByRole("button", { name: i18n.t("auth.login.forgotPassword") }),
     ).toBeInTheDocument()
   })
 })

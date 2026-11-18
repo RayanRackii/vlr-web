@@ -16,6 +16,7 @@ const permissions = [
   "pmoc.plans.read", "pmoc.plans.write", "pmoc.templates.read", "os.work_orders.read",
   "inventory.assets.read", "inventory.categories.read", "core.users.read",
   "core.registration_fields.read", "rentals.reservations.read", "rentals.booking_policy.read",
+  "rentals.schedule.read", "rentals.assets.read", "core.units.read",
 ]
 
 function Detail({ title }: { title?: string }) {
@@ -23,12 +24,12 @@ function Detail({ title }: { title?: string }) {
   return <Link to="/os/another">Another detail</Link>
 }
 
-function renderBreadcrumb(path: string, title?: string) {
+function renderBreadcrumb(path: string, title?: string, variant?: "page" | "header") {
   return render(
     <MemoryRouter initialEntries={[path]}>
       <TestPermissionProvider permissions={permissions} activeModules={["pmoc", "os", "inventory", "rentals"]}>
         <BreadcrumbTitleProvider>
-          <Breadcrumb />
+          <Breadcrumb variant={variant} />
           <Routes>
             <Route path="/pedidos/:orderId" element={<Detail title={title} />} />
             <Route path="/pmoc/:id" element={<Detail title={title} />} />
@@ -54,8 +55,20 @@ describe("staff breadcrumb", () => {
   it.each([undefined, "Plano de climatização"])("renders a detail with title %s", (title) => {
     renderBreadcrumb("/pmoc/plan-1", title)
     const nav = screen.getByRole("navigation", { name: "Caminho de navegação" })
-    expect(within(nav).getByRole("link", { name: "Meus planos" })).toHaveAttribute("href", "/pmoc")
+    expect(within(nav).getByRole("link", { name: "Manutenção" })).toHaveAttribute("href", "/manutencao")
+    expect(within(nav).getByRole("link", { name: "Planos" })).toHaveAttribute("href", "/manutencao?aba=planos")
     expect(within(nav).getByText(title ?? "Detalhes")).toHaveAttribute("aria-current", "page")
+    expect(within(nav).queryByText("Meus planos")).not.toBeInTheDocument()
+  })
+
+  it.each(["page", "header"] as const)("matches the Manutenção nav on the plan detail and the new plan page (%s variant)", (variant) => {
+    const view = renderBreadcrumb("/pmoc/plan-1", "P3 E", variant)
+    let items = within(screen.getByRole("navigation", { name: "Caminho de navegação" })).getAllByRole("listitem")
+    expect(items.map((item) => item.textContent?.replace("/", "").trim())).toEqual(["Manutenção", "Planos", "P3 E"])
+    view.unmount()
+    renderBreadcrumb("/pmoc/novo", undefined, variant)
+    items = within(screen.getByRole("navigation", { name: "Caminho de navegação" })).getAllByRole("listitem")
+    expect(items.map((item) => item.textContent?.replace("/", "").trim())).toEqual(["Manutenção", "Novo plano"])
   })
 
   it.each([
@@ -90,9 +103,9 @@ describe("staff breadcrumb", () => {
     renderBreadcrumb("/pmoc/plan-1", "Plano A")
     const nav = screen.getByRole("navigation", { name: "Caminho de navegação" })
     expect(within(nav).getAllByRole("listitem")).toHaveLength(2)
-    expect(within(nav).getByRole("link", { name: "Voltar para Meus planos" })).toHaveAttribute("href", "/pmoc")
+    expect(within(nav).getByRole("link", { name: "Voltar para Planos" })).toHaveAttribute("href", "/manutencao?aba=planos")
     expect(within(nav).getByText("Plano A")).toHaveAttribute("aria-current", "page")
-    expect(within(nav).queryByText("Planos de manutenção")).not.toBeInTheDocument()
+    expect(within(nav).queryByText("Manutenção")).not.toBeInTheDocument()
   })
 
   it("clears the entity title when leaving the detail page", async () => {
@@ -148,7 +161,7 @@ describe("staff breadcrumb", () => {
     ["/catalogo/produtos/novo", "Produtos", "/catalogo/produtos", "Novo produto", ["catalog.products.read"], ["catalog"]],
     ["/configuracoes/recursos/novo", "Recursos", "/configuracoes/recursos", "Novo recurso", ["rentals.assets.read", "core.units.read"], []],
     ["/os/nova", "Ordens de serviço", "/os", "Nova Ordem de Serviço", [], []],
-    ["/pmoc/novo", "Planos de manutenção", "", "Novo plano", [], []],
+    ["/pmoc/novo", "Manutenção", "/manutencao", "Novo plano", [], []],
     ["/pessoas-e-acesso/funcoes/nova", "Pessoas e acesso", "/pessoas-e-acesso", "Nova função", [], []],
     ["/ativos/novo", "Equipamentos", "/ativos", "Novo equipamento", [], []],
     ["/ativos/tipos/novo", "Tipos de recurso", "/ativos/tipos", "Novo tipo", [], []],
@@ -180,13 +193,60 @@ describe("staff breadcrumb", () => {
 
 it("gives breadcrumb links 44px tap targets without increasing the line height", () => {
   renderBreadcrumb("/pmoc/plan-1", "Plano A")
-  expect(screen.getByRole("link", { name: "Meus planos" })).toHaveClass("min-h-[44px]", "-my-3")
+  expect(screen.getByRole("link", { name: "Planos" })).toHaveClass("min-h-[44px]", "-my-3")
 })
 
 
 it.each(["/agendas", "/agendas/recursos", "/agendas/produto"])("does not repeat the top-level agenda heading in a breadcrumb at %s", (path) => {
   renderBreadcrumb(path)
   expect(screen.queryByRole("navigation", { name: "Caminho de navegação" })).not.toBeInTheDocument()
+})
+
+describe("header breadcrumb parent crumb", () => {
+  const crumbItems = () => within(screen.getByRole("navigation", { name: "Caminho de navegação" })).getAllByRole("listitem")
+
+  it("prepends the parent nav item at /agendas", () => {
+    renderBreadcrumb("/agendas", undefined, "header")
+    const items = crumbItems()
+    expect(items).toHaveLength(2)
+    expect(items[0]).toHaveTextContent("Agendas")
+    expect(within(items[1]).getByText("Visão geral")).toHaveAttribute("aria-current", "page")
+  })
+
+  it.each([
+    ["/configuracoes/agenda", "Configurações", "Horários"],
+    ["/configuracoes/recursos", "Cadastro", "Recursos"],
+  ])("prepends the section title at %s", (path, section, page) => {
+    renderBreadcrumb(path, undefined, "header")
+    const items = crumbItems()
+    expect(items[0]).toHaveTextContent(section)
+    expect(within(items[items.length - 1]).getByText(page)).toHaveAttribute("aria-current", "page")
+  })
+
+  it("shows the create title for a new customer group", () => {
+    render(
+      <MemoryRouter initialEntries={["/grupos/novo"]}>
+        <TestPermissionProvider permissions={[...permissions, "catalog.products.read"]} activeModules={["catalog"]}>
+          <BreadcrumbTitleProvider>
+            <Breadcrumb variant="header" />
+          </BreadcrumbTitleProvider>
+        </TestPermissionProvider>
+      </MemoryRouter>,
+    )
+    const items = crumbItems()
+    expect(items[0]).toHaveTextContent("Grupos")
+    expect(within(items[items.length - 1]).getByText("Novo grupo")).toHaveAttribute("aria-current", "page")
+  })
+
+  it("keeps the overview as a single title", () => {
+    renderBreadcrumb("/", undefined, "header")
+    expect(screen.queryByRole("navigation", { name: "Caminho de navegação" })).not.toBeInTheDocument()
+  })
+
+  it.each(["/agendas", "/configuracoes/agenda"])("leaves the page variant unchanged at %s", (path) => {
+    renderBreadcrumb(path)
+    expect(screen.queryByRole("navigation", { name: "Caminho de navegação" })).not.toBeInTheDocument()
+  })
 })
 
 describe("Pedidos child breadcrumb", () => {
@@ -206,7 +266,7 @@ describe("Pedidos child breadcrumb", () => {
 
 it.each([
   ["/manutencao/planos/novo", "Novo plano"],
-  ["/manutencao/ordens/nova", "Nova ordem"],
+  ["/manutencao/ordens/nova", "Nova OS"],
 ])("links the new child breadcrumb back to maintenance at %s", (path, title) => {
   renderBreadcrumb(path)
   const nav = screen.getByRole("navigation", { name: i18n.t("nav.breadcrumbLabel") })

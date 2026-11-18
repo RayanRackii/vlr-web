@@ -1,15 +1,7 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react"
-import {
-  flexRender,
-  getCoreRowModel,
-  getFilteredRowModel,
-  useReactTable,
-  type CellContext,
-  type ColumnDef,
-  type ColumnFiltersState,
-} from "@tanstack/react-table"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { Link, useNavigate, useSearchParams } from "react-router-dom"
-import { Package, Pencil, Plus, Power, SlidersHorizontal } from "lucide-react"
+import { Folder, Lock, Package, Pencil, Plus, Power, Settings, SlidersHorizontal } from "lucide-react"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 
@@ -17,8 +9,14 @@ import { TableRowsSkeleton } from "@/components/loading/PageContentSkeleton"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
 import { Button, buttonVariants } from "@/components/ui/button"
-import { cn } from "@/lib/utils"
 import { Checkbox } from "@/components/ui/checkbox"
+import { DataList, type DataListColumn } from "@/components/data-table/DataList"
+import { RowActionsMenu, type RowActionItem } from "@/components/data-table/RowActionsMenu"
+import { FilterBar } from "@/components/data-table/FilterBar"
+import { StatusChips } from "@/components/data-table/StatusChips"
+import { StatusBadge } from "@/components/ui/status"
+import type { EmptyStateProps } from "@/components/ui/empty-state"
+import { SegmentedControl } from "@/components/ui/segmented-control"
 import {
   Dialog,
   DialogContent,
@@ -28,7 +26,6 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { LoadingButton } from "@/components/ui/loading-button"
 import {
   Table,
   TableBody,
@@ -46,9 +43,13 @@ import {
 } from "@/features/catalog/schemas/catalogSchemas"
 import { catalogMenuIsActive } from "@/features/catalog/components/productWizard/sellableChecklist"
 import { productWizardPath } from "@/features/catalog/components/productWizard/wizardSteps"
-import { ItemStatusBadge } from "@/features/assistant/ItemStatusBadge"
+import { selectFirstReadyImageFile } from "@/features/catalog/lib/selectCatalogProductImages"
+import { getSignedProductFileUrl } from "@/features/catalog/lib/signedFileUrlCache"
+import { productEditPath, productViewPath } from "@/features/catalog/lib/productEditorPath"
 import { productItemStatus } from "@/features/assistant/itemStatus"
-import { CatalogColumnFilter, CatalogEmptyState, CatalogHeading, CatalogSearch, CatalogTabs } from "@/features/catalog/components/StaffCatalogChrome"
+import { saleMissingLabels } from "@/features/catalog/lib/catalogApiErrors"
+import { productAgendaReady } from "@/features/catalog/lib/productSetupStatus"
+import { CatalogEmptyState, CatalogHeading } from "@/features/catalog/components/StaffCatalogChrome"
 import {
   activateCatalogProduct,
   deactivateCatalogProduct,
@@ -60,12 +61,6 @@ import { listTenantModuleMenuItems } from "@/features/tenantPortal/services/tena
 import { taxonomyQueryFromSearch, setTaxonomySearchParams } from "@/features/taxonomy/lib/taxonomyQuery"
 import type { TaxonomyOptions } from "@/features/taxonomy/schemas/taxonomySchemas"
 import { getCatalogTaxonomyOptions } from "@/features/taxonomy/services/taxonomyService"
-
-const ProductSetupContext = createContext<{
-  menuPublished: boolean | null
-  linked: Readonly<Record<string, boolean>>
-  rentals: boolean
-}>({ menuPublished: null, linked: {}, rentals: false })
 
 export function CatalogProductsPage({ view = "products" }: { view?: "products" | "requests" }) {
   const { t, i18n } = useTranslation()
@@ -81,7 +76,8 @@ export function CatalogProductsPage({ view = "products" }: { view?: "products" |
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState<string | null>(null)
   const [search, setSearch] = useState("")
-  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
+  const [statusFilter, setStatusFilter] = useState<StatusFilter | null>(null)
+  const [visibilityFilter, setVisibilityFilter] = useState<VisibilityFilter>("all")
   const [taxonomyOptions, setTaxonomyOptions] = useState<TaxonomyOptions>({ categories: [], tags: [] })
   const [searchParams, setSearchParams] = useSearchParams()
   const categoryParam = searchParams.get("category")
@@ -156,6 +152,7 @@ export function CatalogProductsPage({ view = "products" }: { view?: "products" |
   }, [canReadMenu, rentals, t, taxonomyFilter.categoryId, taxonomyFilter.tagIds])
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- request lifecycle owns loading state
     void reload()
     return () => loadAbortControllerRef.current?.abort()
   }, [reload])
@@ -174,7 +171,7 @@ export function CatalogProductsPage({ view = "products" }: { view?: "products" |
   }, [])
 
   function openEdit(product: CatalogProduct) {
-    void navigate(`/catalogo/produtos/${product.id}`)
+    void navigate(productViewPath(product.id))
   }
 
   function requestToggleActive(product: CatalogProduct) {
@@ -208,172 +205,195 @@ export function CatalogProductsPage({ view = "products" }: { view?: "products" |
     }
   }
 
-  const columns = useMemo<ColumnDef<CatalogProduct>[]>(
-    () => [
-      {
-        accessorKey: "name",
-        header: t("catalog.products.columns.name"),
-        cell: CatalogProductNameCell,
-      },
-      {
-        accessorKey: "code",
-        header: t("catalog.products.columns.code"),
-        cell: ({ row }) => row.original.code ?? "—",
-      },
-      {
-        id: "visibility",
-        accessorFn: (row) => row.visibility ?? "Public",
-        header: t("catalog.products.access.title"),
-        cell: ({ row }) => {
-          const product = row.original
-          if ((product.visibility ?? "Public") !== "Restricted") {
-            return <span className="text-muted-foreground">{t("catalog.products.visibilityFilter.public")}</span>
-          }
-          return (
-            <Badge variant="outline">
-              {t("catalog.products.badges.restricted", {
-                count: (product.grantedCustomerCount ?? 0) + (product.grantedGroupCount ?? 0),
-              })}
-            </Badge>
-          )
-        },
-        filterFn: (row, _columnId, filterValue) =>
-          typeof filterValue !== "string" || filterValue.trim() === ""
-            ? true
-            : (row.original.visibility ?? "Public") === filterValue,
-      },
-      {
-        id: "price",
-        accessorFn: (row) =>
-          formatCatalogMoney(row.price, row.currency, i18n.language) ??
-          t("catalog.priceOnRequest"),
-        header: t("catalog.products.columns.price"),
-        cell: ({ row, getValue }) => <div className="staff-catalog-mobile-price">
-          <span>{String(getValue())}</span>
-          <div className="staff-catalog-mobile-product-tags staff-catalog-tags">
-            {row.original.taxonomy?.categories.map((item) => <span key={`category-${item.id}`}>{item.name}</span>)}
-            {row.original.taxonomy?.tags.map((item) => <span key={`tag-${item.id}`}>{item.name}</span>)}
-          </div>
-        </div>,
-      },
-      {
-        accessorKey: "isActive",
-        header: t("catalog.products.columns.status"),
-        cell: CatalogProductStatusCell,
-        filterFn: (row, _columnId, filterValue) => {
-          if (typeof filterValue !== "string" || filterValue.trim() === "") {
-            return true
-          }
-          if (filterValue === "true" || filterValue === "false") {
-            return row.original.isActive === (filterValue === "true")
-          }
-          const label = row.original.isActive
-            ? t("catalog.products.active")
-            : t("catalog.products.inactive")
-          return label.toLowerCase().includes(filterValue.trim().toLowerCase())
-        },
-      },
-      {
-        id: "categories",
-        accessorFn: (row) => row.taxonomy?.categories.map((item) => item.name).join(", ") ?? "",
-        header: t("taxonomy.categories"),
-        cell: ({ row }) => <div className="staff-catalog-tags">{row.original.taxonomy?.categories.length ? row.original.taxonomy.categories.map((item) => <span key={item.id}>{item.name}</span>) : "—"}</div>,
-      },
-      {
-        id: "tags",
-        accessorFn: (row) => row.taxonomy?.tags.map((item) => item.name).join(", ") ?? "",
-        header: t("taxonomy.tags"),
-        cell: ({ row }) => <div className="staff-catalog-tags">{row.original.taxonomy?.tags.length ? row.original.taxonomy.tags.map((item) => <span key={item.id}>{item.name}</span>) : "—"}</div>,
-      },
-      {
-        id: "actions",
-        enableColumnFilter: false,
-        header: t("catalog.products.columns.actions"),
-        cell: CatalogProductActionsCell,
-      },
-    ],
-    [i18n.language, t],
+  const states = useMemo(() => {
+    const setup = { menuPublished: catalogMenu, linked, rentals }
+    return new Map(products.map((product) => [product.id, productState(product, setup)] as const))
+  }, [catalogMenu, linked, products, rentals])
+  const stateOf = useCallback(
+    (product: CatalogProduct): ProductState => states.get(product.id) ?? { kind: product.isActive ? "active" : "inactive", missing: 0 },
+    [states],
+  )
+  const statusCounts = useMemo(() => {
+    const counts: Record<StatusFilter, number> = { active: 0, inactive: 0, incomplete: 0 }
+    for (const state of states.values()) counts[state.kind] += 1
+    return counts
+  }, [states])
+
+  const visibleProducts = useMemo(() => {
+    const needle = search.trim().toLocaleLowerCase(i18n.language)
+    return products.filter((product) => {
+      if (statusFilter !== null && stateOf(product).kind !== statusFilter) return false
+      if (visibilityFilter !== "all" && (product.visibility ?? "Public") !== visibilityFilter) return false
+      return needle === "" || `${product.name} ${product.code ?? ""}`.toLocaleLowerCase(i18n.language).includes(needle)
+    })
+  }, [i18n.language, products, search, statusFilter, stateOf, visibilityFilter])
+
+  const taxonomyFilterActive = !!taxonomyFilter.categoryId || taxonomyFilter.tagIds.length > 0
+  const filtered = products.length > 0 || search.trim() !== "" || statusFilter !== null || visibilityFilter !== "all" || taxonomyFilterActive
+  const showCategories = visibleProducts.some((product) => (product.taxonomy?.categories?.length ?? 0) > 0)
+  const showTags = visibleProducts.some((product) => (product.taxonomy?.tags?.length ?? 0) > 0)
+
+  function productPrice(product: CatalogProduct) {
+    return formatCatalogMoney(product.price, product.currency, i18n.language) ?? t("catalog.priceOnRequest")
+  }
+
+  const menuFor = (product: CatalogProduct) => (
+    <ProductMenu product={product} state={stateOf(product)} onToggle={requestToggleActive} busyId={statusBusyId} />
   )
 
-  const table = useReactTable({
-    data: products,
-    columns,
-    state: { columnFilters, globalFilter: search },
-    onColumnFiltersChange: setColumnFilters,
-    onGlobalFilterChange: setSearch,
-    globalFilterFn: (row, _columnId, value: string) =>
-      `${row.original.name} ${row.original.code ?? ""}`.toLocaleLowerCase(i18n.language).includes(value.toLocaleLowerCase(i18n.language)),
-    meta: {
-      onEdit: openEdit,
-      onToggleActive: requestToggleActive,
-      statusBusyId,
+  const columns: DataListColumn<CatalogProduct>[] = [
+    {
+      id: "name",
+      header: t("catalog.products.columns.name"),
+      cell: (product) => <ProductNameBlock product={product} onEdit={openEdit} />,
     },
-    getCoreRowModel: getCoreRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
-  })
+    {
+      id: "code",
+      header: t("catalog.products.columns.code"),
+      hideBelow: "lg",
+      className: "font-mono text-xs text-muted-foreground whitespace-nowrap",
+      cell: (product) => product.code ?? "—",
+    },
+    {
+      id: "price",
+      header: t("catalog.products.columns.price"),
+      align: "end",
+      className: "whitespace-nowrap tabular-nums",
+      cell: (product) => productPrice(product),
+    },
+    {
+      id: "status",
+      header: t("catalog.products.columns.status"),
+      cell: (product) => <ProductStatus state={stateOf(product)} />,
+    },
+    ...(showCategories ? [{
+      id: "categories",
+      header: t("taxonomy.categories"),
+      hideBelow: "lg" as const,
+      cell: (product: CatalogProduct) => <TaxonomyChips items={product.taxonomy?.categories} />,
+    }] : []),
+    ...(showTags ? [{
+      id: "tags",
+      header: t("taxonomy.tags"),
+      hideBelow: "lg" as const,
+      cell: (product: CatalogProduct) => <TaxonomyChips items={product.taxonomy?.tags} />,
+    }] : []),
+    {
+      id: "actions",
+      header: <span className="sr-only">{t("catalog.products.columns.actions")}</span>,
+      align: "end",
+      cell: menuFor,
+    },
+  ]
 
-  const requestColumns = useMemo<ColumnDef<ProductRequest>[]>(
-    () => [
-      {
-        accessorKey: "description",
-        header: t("catalog.requests.columns.description"),
-      },
-      {
-        accessorKey: "quantity",
-        header: t("catalog.requests.columns.quantity"),
-        enableColumnFilter: false,
-      },
-      {
-        accessorKey: "note",
-        header: t("catalog.requests.columns.note"),
-        cell: ({ row }) => row.original.note ?? <><span className="staff-catalog-desktop-note">—</span><span className="staff-catalog-mobile-note">{t("catalog.staff.noNote")}</span></>,
-      },
-      {
-        accessorKey: "createdAt",
-        header: t("catalog.requests.columns.createdAt"),
-        enableColumnFilter: false,
-        cell: ({ row }) =>
-          new Intl.DateTimeFormat(i18n.language, {
-            day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit",
-          }).format(new Date(row.original.createdAt)),
-      },
-    ],
-    [i18n.language, t],
+  const emptyProducts: EmptyStateProps = {
+    icon: Package,
+    title: t(filtered ? "catalog.staff.noResults" : "catalog.products.empty"),
+    description: t(filtered ? "catalog.staff.adjustFilters" : "catalog.staff.empty.products"),
+    action: filtered ? undefined : (
+      <Can permission="catalog.products.manage">
+        <Link className={buttonVariants()} to="/catalogo/produtos/cadastro">
+          <Plus data-icon="inline-start" />
+          {t("catalog.products.create")}
+        </Link>
+      </Can>
+    ),
+  }
+
+  const filterChips: { label: string; onRemove: () => void }[] = []
+  if (visibilityFilter !== "all") {
+    filterChips.push({
+      label: `${t("catalog.products.visibilityFilter.title")}: ${t(`catalog.products.visibilityFilter.${visibilityFilter === "Public" ? "public" : "restricted"}`)}`,
+      onRemove: () => setVisibilityFilter("all"),
+    })
+  }
+  const activeCategory = taxonomyOptions.categories.find((item) => item.id === taxonomyFilter.categoryId)
+  if (activeCategory) {
+    filterChips.push({
+      label: `${t("taxonomy.categories")}: ${activeCategory.name}`,
+      onRemove: () => updateTaxonomyFilter({ ...taxonomyFilter, categoryId: null }),
+    })
+  }
+  for (const tag of taxonomyOptions.tags.filter((item) => taxonomyFilter.tagIds.includes(item.id))) {
+    filterChips.push({
+      label: `${t("taxonomy.tags")}: ${tag.name}`,
+      onRemove: () => updateTaxonomyFilter({ ...taxonomyFilter, tagIds: taxonomyFilter.tagIds.filter((id) => id !== tag.id) }),
+    })
+  }
+
+  const filterBar = (
+    <FilterBar
+      label={t("catalog.staff.productsSearch")}
+      search={{ value: search, onChange: setSearch, label: t("catalog.staff.productsSearch"), placeholder: t("catalog.staff.productsSearchShort") }}
+      filters={
+        <>
+          <StatusChips<StatusFilter>
+            label={t("catalog.products.statusFilter")}
+            allLabel={t("catalog.products.filterAll")}
+            allCount={products.length}
+            value={statusFilter}
+            onChange={setStatusFilter}
+            options={[
+              { value: "active", label: t("catalog.products.filterActive"), tone: "success", count: statusCounts.active },
+              { value: "inactive", label: t("catalog.products.filterInactive"), tone: "neutral", count: statusCounts.inactive },
+              { value: "incomplete", label: t("catalog.products.filterIncomplete"), tone: "warning", count: statusCounts.incomplete },
+            ]}
+          />
+          <MoreFilters
+            options={taxonomyOptions}
+            taxonomy={taxonomyFilter}
+            onTaxonomyChange={updateTaxonomyFilter}
+            visibility={visibilityFilter}
+            onVisibilityChange={setVisibilityFilter}
+          />
+        </>
+      }
+      chips={filterChips}
+    />
   )
 
-  const [requestFilters, setRequestFilters] = useState<ColumnFiltersState>([])
-  const requestTable = useReactTable({
-    data: requests,
-    columns: requestColumns,
-    state: { columnFilters: requestFilters },
-    onColumnFiltersChange: setRequestFilters,
-    getCoreRowModel: getCoreRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
-  })
+  const requestColumns = [
+    { id: "description", header: t("catalog.requests.columns.description") },
+    { id: "quantity", header: t("catalog.requests.columns.quantity") },
+    { id: "note", header: t("catalog.requests.columns.note") },
+    { id: "createdAt", header: t("catalog.requests.columns.createdAt") },
+  ] as const
+
+  function requestCell(request: ProductRequest, id: (typeof requestColumns)[number]["id"]) {
+    switch (id) {
+      case "description":
+        return request.description
+      case "quantity":
+        return request.quantity
+      case "note":
+        return request.note ?? <><span className="staff-catalog-desktop-note">—</span><span className="staff-catalog-mobile-note">{t("catalog.staff.noNote")}</span></>
+      case "createdAt":
+        return new Intl.DateTimeFormat(i18n.language, {
+          day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit",
+        }).format(new Date(request.createdAt))
+    }
+  }
 
   if (view === "requests") {
     return (
       <div className="staff-catalog">
         <CatalogHeading title={t("catalog.requests.title")} description={t("catalog.requests.subtitle")} />
-        <CatalogTabs active="requests" counts={loading || loadError ? {} : { products: products.length, requests: requests.length }} />
         {loadError ? <Alert variant="destructive" className="staff-catalog-error"><AlertDescription>{loadError}</AlertDescription></Alert> : null}
         <div className="staff-catalog-card" aria-busy={loading}>
           {loading ? <span role="status" className="sr-only">{t("catalog.staff.loading")}</span> : null}
           {!loading && !loadError && requests.length === 0 ? <CatalogEmptyState kind="requests" /> : (
             <Table role="table" className="staff-catalog-table staff-catalog-requests-table" aria-label={t("catalog.requests.title")}>
-              <TableHeader role="rowgroup">{requestTable.getHeaderGroups().map((group) => (
-                <TableRow role="row" key={group.id}>{group.headers.map((header) => (
-                  <TableHead role="columnheader" key={header.id} data-column={header.column.id}>
-                    {flexRender(header.column.columnDef.header, header.getContext())}
-                  </TableHead>
+              <TableHeader role="rowgroup">
+                <TableRow role="row">{requestColumns.map((column) => (
+                  <TableHead role="columnheader" key={column.id} data-column={column.id}>{column.header}</TableHead>
                 ))}</TableRow>
-              ))}</TableHeader>
+              </TableHeader>
               <TableBody role="rowgroup">
-                {loading ? <TableRowsSkeleton columns={4} rows={3} /> : loadError ? null : requestTable.getRowModel().rows.map((row) => (
-                  <TableRow role="row" key={row.id}>{row.getVisibleCells().map((cell) => (
-                    <TableCell role="cell" key={cell.id} data-column={cell.column.id}>
-                      {cell.column.id === "quantity" ? <span className="staff-catalog-mobile-label">{t("catalog.requests.columns.quantity")} </span> : null}
-                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                {loading ? <TableRowsSkeleton columns={4} rows={3} /> : loadError ? null : requests.map((request) => (
+                  <TableRow role="row" key={request.id}>{requestColumns.map((column) => (
+                    <TableCell role="cell" key={column.id} data-column={column.id}>
+                      {column.id === "quantity" ? <span className="staff-catalog-mobile-label">{t("catalog.requests.columns.quantity")} </span> : null}
+                      {requestCell(request, column.id)}
                     </TableCell>
                   ))}</TableRow>
                 ))}
@@ -386,7 +406,6 @@ export function CatalogProductsPage({ view = "products" }: { view?: "products" |
   }
 
   return (
-    <ProductSetupContext.Provider value={{ menuPublished: catalogMenu, linked, rentals }}>
     <div className="staff-catalog">
       <CatalogHeading
         title={t("catalog.products.title")}
@@ -400,41 +419,33 @@ export function CatalogProductsPage({ view = "products" }: { view?: "products" |
           </Can>
         }
       />
-      <CatalogTabs active="products" counts={loading || loadError ? {} : { products: products.length, requests: requests.length }} />
-      {loadError ? <Alert variant="destructive" className="staff-catalog-error"><AlertDescription>{loadError}</AlertDescription></Alert> : null}
-      <div className="staff-catalog-card" aria-busy={loading}>
-        <div className="staff-catalog-toolbar">
-          <CatalogSearch value={search} onChange={setSearch} label={t("catalog.staff.productsSearch")} placeholder={t("catalog.staff.productsSearchShort")} />
-          <CatalogColumnFilter column={table.getColumn("isActive")!} title={t("catalog.products.columns.status")}
-            options={[{ value: "true", label: t("catalog.products.active") }, { value: "false", label: t("catalog.products.inactive") }]} />
-          <CatalogColumnFilter column={table.getColumn("visibility")!} title={t("catalog.products.visibilityFilter.title")}
-            options={[{ value: "Public", label: t("catalog.products.visibilityFilter.public") }, { value: "Restricted", label: t("catalog.products.visibilityFilter.restricted") }]} />
-          <TaxonomyFilterHeader kind="categories" title={t("taxonomy.categories")} options={taxonomyOptions} filter={taxonomyFilter} onChange={updateTaxonomyFilter} />
-          <TaxonomyFilterHeader kind="tags" title={t("taxonomy.tags")} options={taxonomyOptions} filter={taxonomyFilter} onChange={updateTaxonomyFilter} />
-        </div>
-        {loading ? <span role="status" className="sr-only">{t("catalog.staff.loading")}</span> : null}
-        {!loading && !loadError && table.getRowModel().rows.length === 0 ? <CatalogEmptyState kind="products" action={<Can permission="catalog.products.manage"><Link className={buttonVariants()} to="/catalogo/produtos/cadastro"><Plus data-icon="inline-start" />{t("catalog.products.create")}</Link></Can>} filtered={products.length > 0 || !!search || columnFilters.length > 0 || !!taxonomyFilter.categoryId || taxonomyFilter.tagIds.length > 0} /> : (
-          <Table role="table" className="staff-catalog-table staff-catalog-products-table" aria-label={t("catalog.products.title")}>
-            <TableHeader role="rowgroup">{table.getHeaderGroups().map((group) => (
-              <TableRow role="row" key={group.id}>{group.headers.map((header) => (
-                <TableHead role="columnheader" key={header.id} data-column={header.column.id} className={header.column.id === "actions" ? "md:max-lg:right-0" : undefined}>
-                  {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
-                </TableHead>
-              ))}</TableRow>
-            ))}</TableHeader>
-            <TableBody role="rowgroup">
-              {loading ? <TableRowsSkeleton columns={7} rows={4} /> : loadError ? null : table.getRowModel().rows.map((row) => (
-                <TableRow role="row" key={row.id}>{row.getVisibleCells().map((cell) => (
-                  <TableCell role="cell" key={cell.id} data-column={cell.column.id} className={cell.column.id === "actions" ? "md:max-lg:sticky md:max-lg:right-0 md:max-lg:z-[1] md:max-lg:bg-card" : undefined}>
-                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                  </TableCell>
-                ))}</TableRow>
-              ))}
-            </TableBody>
-          </Table>
+      <DataList<CatalogProduct>
+        {...(loadError !== null
+          ? { state: "error" as const, error: loadError, onRetry: () => { void reload() } }
+          : { state: loading ? ("loading" as const) : ("ready" as const) })}
+        label={t("catalog.products.title")}
+        loadingLabel={t("catalog.staff.loading")}
+        toolbar={filterBar}
+        columns={columns}
+        rows={visibleProducts}
+        onRowClick={openEdit}
+        getRowId={(product) => product.id}
+        empty={emptyProducts}
+        renderCard={(product) => (
+          <>
+            <div className="flex min-w-0 items-start justify-between gap-2">
+              <ProductNameBlock product={product} onEdit={openEdit} />
+              {menuFor(product)}
+            </div>
+            <div className="flex min-w-0 flex-wrap items-center justify-between gap-x-4 gap-y-2">
+              <span className="font-medium tabular-nums [overflow-wrap:anywhere]">{productPrice(product)}</span>
+              <ProductStatus state={stateOf(product)} />
+            </div>
+            {product.code ? <p className="font-mono text-xs text-muted-foreground [overflow-wrap:anywhere]">{product.code}</p> : null}
+            <TaxonomyChips items={[...(product.taxonomy?.categories ?? []), ...(product.taxonomy?.tags ?? [])]} hideEmpty />
+          </>
         )}
-      </div>
-
+      />
 
       <Dialog
         open={productPendingDeactivate !== null}
@@ -482,156 +493,230 @@ export function CatalogProductsPage({ view = "products" }: { view?: "products" |
         </DialogContent>
       </Dialog>
     </div>
-    </ProductSetupContext.Provider>
   )
 }
 
-type CatalogProductsTableMeta = {
-  onEdit: (product: CatalogProduct) => void
-  onToggleActive: (product: CatalogProduct) => void
-  statusBusyId: string | null
-}
+type StatusFilter = "active" | "inactive" | "incomplete"
+type VisibilityFilter = "all" | "Public" | "Restricted"
+type ProductState = { kind: StatusFilter; missing: number }
 
-function CatalogProductNameCell({ row, table }: CellContext<CatalogProduct, unknown>) {
-  const { t } = useTranslation()
-  const { can } = usePermissions()
-  const product = row.original
-  const setup = useContext(ProductSetupContext)
-  const { onEdit } = table.options.meta as CatalogProductsTableMeta
-  const setupStatus = productItemStatus({
+/** One status per product: incomplete (steps missing) wins, else the active flag. */
+function productState(
+  product: CatalogProduct,
+  setup: { menuPublished: boolean | null; linked: Readonly<Record<string, boolean>>; rentals: boolean },
+): ProductState {
+  // The API knows best: use its sale readiness when present, else the local guess.
+  if (product.saleReadiness != null) {
+    return product.saleReadiness.ready
+      ? { kind: product.isActive ? "active" : "inactive", missing: 0 }
+      : { kind: "incomplete", missing: Math.max(product.saleReadiness.missing.length, 1) }
+  }
+  const status = productItemStatus({
     name: product.name,
     isActive: product.isActive,
     price: product.price,
     audienceReady: product.visibility !== "Restricted",
-    agendaReady: !setup.rentals || setup.linked[product.id] === true,
+    agendaReady: productAgendaReady(setup.rentals, product.usesSchedule, setup.linked[product.id] === true ? 1 : 0),
     menuPublished: setup.menuPublished,
   })
-  const name = <>
-    <span className="staff-catalog-product-icon"><Package size={20} aria-hidden="true" /></span>
-    <span className="min-w-0">
-      {can("catalog.products.manage") ? (
-        <button type="button" className="touch-target staff-catalog-name-button" onClick={() => onEdit(product)}>
-          <strong>{product.name}</strong>
-        </button>
-      ) : <strong>{product.name}</strong>}
-      <ItemStatusBadge status={setupStatus} />
-      {product.description ? <small className="staff-catalog-product-description">{product.description}</small> : null}
-      <small className="staff-catalog-mobile-code">{product.code ?? "—"}</small>
-      <Link className="staff-catalog-assistant-inline" to={productWizardPath(product.id)}>
-        {t("catalog.productWizard.open")}
-      </Link>
-    </span>
-  </>
-  return <div className="staff-catalog-product-name">{name}</div>
+  if (status.kind === "missing") return { kind: "incomplete", missing: status.count }
+  return { kind: product.isActive ? "active" : "inactive", missing: 0 }
 }
 
-function CatalogProductStatusCell({ row, table }: CellContext<CatalogProduct, unknown>) {
+/**
+ * First Ready image (same rule as the view page, any visibility: staff-only screen). A file without a public URL
+ * is signed on mount (cached, deduped per file id). Icon tile while signing and on any error.
+ */
+function ProductThumb({ product }: { product: CatalogProduct }) {
+  const file = selectFirstReadyImageFile(product.files)
+  const publicUrl = file?.url?.trim() ? file.url.trim() : null
+  const fileId = file?.id ?? null
+  const [signed, setSigned] = useState<{ id: string; url: string } | null>(null)
+
+  useEffect(() => {
+    if (fileId == null || publicUrl != null) return
+    let active = true
+    getSignedProductFileUrl(product.id, fileId)
+      .then((url) => { if (active) setSigned({ id: fileId, url }) })
+      .catch(() => undefined)
+    return () => { active = false }
+  }, [product.id, fileId, publicUrl])
+
+  const url = publicUrl ?? (signed != null && signed.id === fileId ? signed.url : null)
+  if (url == null) {
+    return <span className="staff-catalog-product-icon" data-testid="product-thumb-icon"><Package size={20} aria-hidden="true" /></span>
+  }
+  return <ProductThumbImage key={url} url={url} name={product.name} />
+}
+
+function ProductThumbImage({ url, name }: { url: string; name: string }) {
+  const [failed, setFailed] = useState(false)
+  if (failed) {
+    return <span className="staff-catalog-product-icon" data-testid="product-thumb-icon"><Package size={20} aria-hidden="true" /></span>
+  }
+  return (
+    <img
+      src={url}
+      alt={name}
+      loading="lazy"
+      draggable={false}
+      className="size-10 flex-none rounded-[10px] object-cover"
+      data-testid="product-thumb-image"
+      onError={() => setFailed(true)}
+    />
+  )
+}
+
+function ProductNameBlock({ product, onEdit }: { product: CatalogProduct; onEdit: (product: CatalogProduct) => void }) {
   const { t } = useTranslation()
   const { can } = usePermissions()
-  const product = row.original
-  const { onToggleActive, statusBusyId } = table.options.meta as CatalogProductsTableMeta
-  const status = <span className="staff-catalog-status" data-tone={product.isActive ? "success" : "muted"}>
-    {t(product.isActive ? "catalog.products.active" : "catalog.products.inactive")}
-  </span>
-  return can("catalog.products.manage") ? (
-    <button type="button" className="touch-target staff-catalog-status-button"
-      aria-label={`${t(product.isActive ? "catalog.products.deactivate" : "catalog.products.activate")}: ${product.name}`}
-      disabled={statusBusyId === product.id} aria-busy={statusBusyId === product.id}
-      onClick={() => onToggleActive(product)}>{status}</button>
-  ) : status
-}
-
-function CatalogProductActionsCell({ row, table }: CellContext<CatalogProduct, unknown>) {
-  const { t } = useTranslation()
-  const { onEdit, onToggleActive, statusBusyId } = table.options.meta as CatalogProductsTableMeta
-  const product = row.original
-
-  const quickEditLabel = t("catalog.products.quickEdit")
-  const editLabel = t("common.edit")
-  const activeLabel = product.isActive
-    ? t("catalog.products.deactivate")
-    : t("catalog.products.activate")
-
+  const restricted = (product.visibility ?? "Public") === "Restricted"
   return (
-    <div className="staff-catalog-actions">
-      <Link
-        className="staff-catalog-assistant"
-        to={productWizardPath(product.id)}
-        aria-label={`${t("catalog.productWizard.open")}: ${product.name}`}
-        title={t("catalog.productWizard.open")}
-      >
-        {t("catalog.productWizard.open")}
-      </Link>
-      <Can permission="catalog.products.manage">
-        <Link
-          className={cn(buttonVariants({ variant: "outline", size: "icon" }), "staff-catalog-action")}
-          aria-label={`${quickEditLabel}: ${product.name}`}
-          title={quickEditLabel}
-          to={productWizardPath(product.id, "offer")}
-        >
-          <SlidersHorizontal size={16} aria-hidden="true" />
-        </Link>
-        <Button
-          type="button"
-          variant="outline"
-          size="icon"
-          className="staff-catalog-action"
-          aria-label={`${editLabel}: ${product.name}`}
-          title={editLabel}
-          onClick={() => onEdit(product)}
-        >
-          <Pencil size={16} aria-hidden="true" />
-        </Button>
-        <LoadingButton
-          type="button"
-          variant="outline"
-          size="icon"
-          className="staff-catalog-action"
-          aria-label={`${activeLabel}: ${product.name}`}
-          title={activeLabel}
-          loading={statusBusyId === product.id}
-          onClick={() => onToggleActive(product)}
-        >
-          <Power size={16} aria-hidden="true" />
-        </LoadingButton>
-      </Can>
+    <div className="flex min-w-0 items-center gap-3">
+      <ProductThumb product={product} />
+      <span className="min-w-0 space-y-1 [overflow-wrap:anywhere]">
+        <span className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
+          {can("catalog.products.manage") ? (
+            <button type="button" className="touch-target block max-w-full rounded-md text-left" onClick={() => onEdit(product)}>
+              <strong className="block font-semibold">{product.name}</strong>
+            </button>
+          ) : <strong className="block font-semibold">{product.name}</strong>}
+          {restricted ? (
+            <Badge variant="outline">
+              {t("catalog.products.badges.restricted", {
+                count: (product.grantedCustomerCount ?? 0) + (product.grantedGroupCount ?? 0),
+              })}
+            </Badge>
+          ) : null}
+        </span>
+        {product.description ? <small className="block text-xs text-muted-foreground">{product.description}</small> : null}
+      </span>
     </div>
   )
 }
 
-function TaxonomyFilterHeader({ kind, title, options, filter, onChange }: {
-  kind: "categories" | "tags"
-  title: string
-  options: TaxonomyOptions
-  filter: { categoryId: string | null; tagIds: string[] }
-  onChange: (value: { categoryId: string | null; tagIds: string[] }) => void
+function ProductStatus({ state }: { state: ProductState }) {
+  const { t } = useTranslation()
+  if (state.kind === "incomplete") {
+    return <StatusBadge tone="warning">{t("catalog.products.statusIncomplete", { count: state.missing })}</StatusBadge>
+  }
+  return state.kind === "active"
+    ? <StatusBadge tone="success">{t("catalog.products.active")}</StatusBadge>
+    : <StatusBadge tone="neutral">{t("catalog.products.inactive")}</StatusBadge>
+}
+
+function TaxonomyChips({ items, hideEmpty = false }: { items?: readonly { id: string; name: string }[]; hideEmpty?: boolean }) {
+  if (!items?.length) return hideEmpty ? null : <>—</>
+  return <div className="staff-catalog-tags">{items.map((item) => <span key={item.id}>{item.name}</span>)}</div>
+}
+
+/** Why "Ativar" is disabled: the API's missing items when present, else the generic hint. */
+function activateHint(product: CatalogProduct, t: (key: string, options?: Record<string, unknown>) => string): string {
+  const labels = saleMissingLabels(product.saleReadiness?.missing ?? [])
+  return labels.length > 0
+    ? t("catalog.products.notReady.message", { items: labels.join(", ") })
+    : t("catalog.products.menuActivateHint")
+}
+
+/** Row menu: edit/complete (primary when incomplete), access, then activation. */
+function ProductMenu({ product, state, onToggle, busyId }: {
+  product: CatalogProduct
+  state: ProductState
+  onToggle: (product: CatalogProduct) => void
+  busyId: string | null
 }) {
   const { t } = useTranslation()
-  const active = kind === "categories" ? !!filter.categoryId : filter.tagIds.length > 0
+  const { can } = usePermissions()
+  const canManage = can("catalog.products.manage")
+  const incomplete = state.kind === "incomplete"
+  const busy = busyId === product.id
+  const items: RowActionItem[] = []
+  if (incomplete) {
+    items.push({ key: "continue", label: t("catalog.products.menuContinue"), icon: Settings, href: productWizardPath(product.id), tone: "primary" })
+  } else {
+    items.push({ key: "edit", label: t("catalog.products.menuEdit"), icon: Pencil, href: productEditPath(product.id) })
+  }
+  if (canManage) {
+    items.push({ key: "access", label: t("catalog.products.menuAccess"), icon: Lock, href: productEditPath(product.id, "regras") })
+    if (incomplete && !product.isActive) {
+      items.push({
+        key: "activate",
+        label: t("catalog.products.menuActivate"),
+        icon: Power,
+        disabled: true,
+        hint: activateHint(product, t),
+        separatorBefore: true,
+      })
+    } else {
+      items.push({
+        key: "toggle",
+        label: t(product.isActive ? "catalog.products.menuDeactivate" : "catalog.products.menuActivate"),
+        icon: Power,
+        disabled: busy,
+        onSelect: () => onToggle(product),
+        separatorBefore: true,
+      })
+    }
+  }
+  return <RowActionsMenu items={items} busy={busy} label={t("catalog.products.rowMenu", { name: product.name })} />
+}
+
+const CATEGORY_ALL = "__all__"
+
+function MoreFilters({ options, taxonomy, onTaxonomyChange, visibility, onVisibilityChange }: {
+  options: TaxonomyOptions
+  taxonomy: { categoryId: string | null; tagIds: string[] }
+  onTaxonomyChange: (value: { categoryId: string | null; tagIds: string[] }) => void
+  visibility: VisibilityFilter
+  onVisibilityChange: (value: VisibilityFilter) => void
+}) {
+  const { t } = useTranslation()
+  const activeCount = (visibility !== "all" ? 1 : 0) + (taxonomy.categoryId ? 1 : 0) + taxonomy.tagIds.length
   const categories = [...options.categories].sort((left, right) => left.sortOrder - right.sortOrder || left.name.localeCompare(right.name))
   return (
     <Popover>
-      <PopoverTrigger render={<Button type="button" variant="outline" className="staff-catalog-filter" data-active={active} />}>
-        {title}
+      <PopoverTrigger render={<Button type="button" variant="outline" className="min-h-11 min-w-11 gap-2 rounded-lg px-3 text-sm data-[active=true]:border-primary data-[active=true]:bg-primary/10 data-[active=true]:text-primary" data-active={activeCount > 0} />}>
+        <SlidersHorizontal aria-hidden="true" />
+        {t("catalog.products.moreFilters")}
+        {activeCount > 0 ? <span className="text-xs font-semibold tabular-nums" data-testid="more-filters-count">{activeCount}</span> : null}
       </PopoverTrigger>
-      <PopoverContent className="w-72 space-y-3" align="start">
-        {kind === "categories" ? <label className="grid gap-2 text-sm font-medium">
-          {t("tenantPortal.catalog.categoryLabel")}
-          <select className="min-h-11 w-full rounded-lg border border-input bg-background px-3" value={filter.categoryId ?? ""}
-            onChange={(event) => onChange({ ...filter, categoryId: event.target.value || null })}>
-            <option value="">{t("tenantPortal.catalog.allCategories")}</option>
-            {categories.map((category) => <option key={category.id} value={category.id}>{category.name}</option>)}
-          </select>
-        </label> : <fieldset>
-          <legend className="text-sm font-medium">{t("taxonomy.tags")}</legend>
-          <p className="mb-2 text-xs text-muted-foreground">{t("tenantPortal.catalog.tagsHint")}</p>
-          {options.tags.map((tag) => <label key={tag.id} className="flex min-h-11 items-center gap-2 text-sm">
-            <Checkbox checked={filter.tagIds.includes(tag.id)} onChange={() => onChange({ ...filter,
-              tagIds: filter.tagIds.includes(tag.id) ? filter.tagIds.filter((id) => id !== tag.id) : [...filter.tagIds, tag.id],
-            })} />{tag.name}
-          </label>)}
-        </fieldset>}
-        {active ? <Button type="button" variant="ghost" className="min-h-11" onClick={() => onChange({ categoryId: null, tagIds: [] })}>
+      <PopoverContent className="w-80 max-w-[calc(100vw-2rem)] space-y-4" align="start">
+        <SegmentedControl<VisibilityFilter>
+          label={t("catalog.products.visibilityFilter.title")}
+          value={visibility}
+          onChange={onVisibilityChange}
+          options={[
+            { value: "all", label: t("catalog.products.filterAll") },
+            { value: "Public", label: t("catalog.products.visibilityFilter.public") },
+            { value: "Restricted", label: t("catalog.products.visibilityFilter.restricted") },
+          ]}
+        />
+        <div className="grid gap-2 text-sm font-medium">
+          <span id="catalog-category-filter-label">{t("tenantPortal.catalog.categoryLabel")}</span>
+          <Select modal={false} value={taxonomy.categoryId ?? CATEGORY_ALL} items={[{ value: CATEGORY_ALL, label: t("tenantPortal.catalog.allCategories") }, ...categories.map((category) => ({ value: category.id, label: category.name }))]}
+            onValueChange={(value) => onTaxonomyChange({ ...taxonomy, categoryId: value === null || value === CATEGORY_ALL ? null : value })}>
+            <SelectTrigger aria-labelledby="catalog-category-filter-label" icon={Folder}><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value={CATEGORY_ALL}>{t("tenantPortal.catalog.allCategories")}</SelectItem>
+              {categories.map((category) => <SelectItem key={category.id} value={category.id}>{category.name}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        </div>
+        {options.tags.length > 0 ? (
+          <fieldset>
+            <legend className="text-sm font-medium">{t("taxonomy.tags")}</legend>
+            <p className="mb-2 text-xs text-muted-foreground">{t("tenantPortal.catalog.tagsHint")}</p>
+            {options.tags.map((tag) => <label key={tag.id} className="flex min-h-11 items-center gap-2 text-sm">
+              <Checkbox checked={taxonomy.tagIds.includes(tag.id)} onChange={() => onTaxonomyChange({ ...taxonomy,
+                tagIds: taxonomy.tagIds.includes(tag.id) ? taxonomy.tagIds.filter((id) => id !== tag.id) : [...taxonomy.tagIds, tag.id],
+              })} />{tag.name}
+            </label>)}
+          </fieldset>
+        ) : null}
+        {activeCount > 0 ? <Button type="button" variant="ghost" className="min-h-11" onClick={() => {
+          onVisibilityChange("all")
+          onTaxonomyChange({ categoryId: null, tagIds: [] })
+        }}>
           {t("tenantPortal.catalog.clearFilters")}
         </Button> : null}
       </PopoverContent>

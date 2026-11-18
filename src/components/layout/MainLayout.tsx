@@ -1,9 +1,11 @@
-import { useEffect, useState, type ReactNode } from "react"
-import { Outlet, useLocation, useNavigate } from "react-router-dom"
+import { Suspense, useContext, useEffect, useState, type ReactNode } from "react"
+import { ChevronRight } from "lucide-react"
+import { Link, Outlet, useLocation, useNavigate } from "react-router-dom"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 
 import { AccessDeniedPage } from "@/components/layout/AccessDeniedPage"
+import { AppErrorBoundary } from "@/components/layout/AppErrorBoundary"
 import { AppShell } from "@/components/layout/AppShell"
 import { ModuleIntroLinksProvider } from "@/components/layout/ModuleIntroLinksContext"
 import { availableModuleIntros } from "@/components/layout/navigationIntros"
@@ -21,7 +23,7 @@ import {
   RENTAL_RESOURCES_PERMISSIONS,
   useAppNavigationSections,
 } from "@/components/layout/navigation"
-import { Button } from "@/components/ui/button"
+import { cadastroArea, isCadastroFocusPath } from "@/features/assistant/useCadastroStep"
 import { useAuth } from "@/contexts/AuthContext"
 import { TenantTimeZoneProvider } from "@/contexts/TenantTimeZoneProvider"
 import {
@@ -29,6 +31,7 @@ import {
   getHostTenantSubdomain,
 } from "@/features/tenantPortal/services/tenantPortalService"
 import type { TenantBranding } from "@/features/tenantPortal/schemas/tenantPortalSchemas"
+import { BreadcrumbTitleContext } from "@/components/layout/useBreadcrumbTitle"
 import { useTenantDocumentMeta } from "@/hooks/useTenantDocumentMeta"
 import { resolvePermissionRouteAccess } from "@/features/users/permissions/permissionGroups"
 import { PermissionProvider, usePermissions } from "@/features/users/permissions/PermissionContext"
@@ -41,6 +44,32 @@ import {
 import { exitTenantEnvironment } from "@/features/admin/services/adminTenantsService"
 import { WorkOrderSyncHost } from "@/features/workOrders/components/WorkOrderSyncHost"
 import { clearCustomerSessionAsSignedOut, signOutStaffPortal } from "@/lib/sessionRestoreGuard"
+
+/** Cadastro wizard breadcrumb: Catálogo › Produtos › Novo produto / name (or Configurações › Recursos › name). */
+function CadastroFocusCrumbs() {
+  const { t } = useTranslation()
+  const { pathname } = useLocation()
+  const { title } = useContext(BreadcrumbTitleContext)
+  const products = cadastroArea(pathname) === "produtos"
+  const creating = /^\/(?:catalogo\/produtos|configuracoes\/recursos)\/cadastro\/?$/.test(pathname)
+  const current = title?.pathname === pathname ? title.value : t(creating ? "cadastro.productCreate" : "nav.details")
+  const crumbs: { label: string; to?: string }[] = products
+    ? [{ label: t("cadastro.crumbCatalog") }, { label: t("nav.catalogProducts"), to: "/catalogo/produtos" }]
+    : [{ label: t("nav.sections.settings") }, { label: t("nav.rentalsResources"), to: "/configuracoes/recursos" }]
+  return (
+    <nav aria-label={t("nav.breadcrumbLabel")} className="min-w-0">
+      <ol className="flex min-w-0 items-center gap-2 text-sm text-muted-foreground">
+        {crumbs.map((crumb) => (
+          <li key={crumb.label} className="flex shrink-0 items-center gap-2">
+            {crumb.to ? <Link to={crumb.to} className="touch-target inline-flex items-center hover:text-foreground hover:underline">{crumb.label}</Link> : <span>{crumb.label}</span>}
+            <ChevronRight className="size-3.5" aria-hidden="true" />
+          </li>
+        ))}
+        <li className="min-w-0 truncate font-medium text-foreground" aria-current="page">{current}</li>
+      </ol>
+    </nav>
+  )
+}
 
 function MainLayoutShell({ children }: { children?: ReactNode }) {
   const { t } = useTranslation()
@@ -112,7 +141,15 @@ function MainLayoutShell({ children }: { children?: ReactNode }) {
     t("account.userFallback"),
   )
   const pageTitle = t(getPageTitleKey(location.pathname))
+  const cadastro = isCadastroFocusPath(location.pathname)
   const initials = getUserInitials(currentUser?.fullName, user?.email)
+  const onPlatformPanel = isPlatformAdmin && location.pathname.startsWith("/admin")
+  // The first tenant role name labels the user card; the platform panel has no tenant role.
+  const roleLabel = onPlatformPanel ? undefined : currentUser?.roles?.[0]?.name
+  const workspaceName = staffHeaderContextLabel(
+    currentUser,
+    activeTenantLabel ?? t("app.authenticatedArea"),
+  )
 
   async function handleExitEnvironment() {
     if (isExiting) {
@@ -150,7 +187,13 @@ function MainLayoutShell({ children }: { children?: ReactNode }) {
   return (
     <ModuleIntroLinksProvider keys={introKeys}>
     <AppShell
-      sidebar={(opts) => <Sidebar {...opts} />}
+      sidebar={(opts) => (
+        <Sidebar
+          {...opts}
+          workspaceName={workspaceName}
+          platformWorkspace={onPlatformPanel}
+        />
+      )}
       pageTitle={pageTitle}
       userLabel={userLabel}
       initials={initials}
@@ -158,40 +201,47 @@ function MainLayoutShell({ children }: { children?: ReactNode }) {
       collapsible
       constrainContent
       enlargeHeaderTargets
-      contextLabel={staffHeaderContextLabel(
-        currentUser,
-        t("app.authenticatedArea"),
-      )}
+      userEmail={currentUser?.email ?? user?.email ?? undefined}
+      userRoleLabel={roleLabel}
+      headerStart={
+        cadastro ? <CadastroFocusCrumbs /> : <Breadcrumb
+          variant="header"
+          fallback={
+            <p className="hidden min-w-0 truncate text-sm font-medium text-foreground lg:block">
+              {pageTitle}
+            </p>
+          }
+        />
+      }
       banner={
         <>
           <StaffHomeRedirectNotice />
           <TrialBanner informational={!isPlatformAdmin && location.pathname === "/dashboard"} />
-          {isPlatformAdmin && location.pathname.startsWith("/admin") ? (
-            <div className="border-b border-primary/20 bg-primary/5 px-4 py-2 text-sm text-foreground">
-              {t("admin.support.platformPanel")}
-            </div>
-          ) : isInTenantEnvironment ? (
-          <div className="flex min-w-0 max-w-full flex-col gap-2 border-b border-amber-500/30 bg-amber-500/10 px-4 py-2 text-sm text-amber-950 sm:flex-row sm:items-center sm:justify-between dark:text-amber-100">
-            <p className="min-w-0 break-words [overflow-wrap:anywhere]">
-              {t("admin.support.banner", {
-                tenant: activeTenantLabel ?? t("admin.support.tenantFallback"),
-              })}
-            </p>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              disabled={isExiting}
-              className="w-full shrink-0 border-amber-600/40 bg-background/80 sm:w-auto"
-              onClick={() => {
-                void handleExitEnvironment()
-              }}
+          {onPlatformPanel || isInTenantEnvironment ? (
+            <div
+              data-testid="super-admin-banner"
+              className="flex items-center justify-between gap-3 border-b border-border bg-muted/50 px-4 py-1.5 text-xs text-muted-foreground lg:px-8"
             >
-              {isExiting
-                ? t("admin.support.exiting")
-                : t("admin.support.exit")}
-            </Button>
-          </div>
+              <p className="min-w-0 truncate">
+                {onPlatformPanel
+                  ? t("admin.support.platformPanel")
+                  : t("admin.support.bannerSlim")}
+              </p>
+              {onPlatformPanel ? null : (
+                <button
+                  type="button"
+                  disabled={isExiting}
+                  className="touch-target shrink-0 text-xs font-medium text-primary hover:underline disabled:opacity-60"
+                  onClick={() => {
+                    void handleExitEnvironment()
+                  }}
+                >
+                  {isExiting
+                    ? t("admin.support.exiting")
+                    : t("admin.support.exitShort")}
+                </button>
+              )}
+            </div>
           ) : null}
         </>
       }
@@ -204,8 +254,15 @@ function MainLayoutShell({ children }: { children?: ReactNode }) {
       }}
     >
       <WorkOrderSyncHost />
-      <Breadcrumb />
-      {children ?? <Outlet />}
+      {/* Below lg the breadcrumb stays in the content (the top-bar one is lg+ only). */}
+      <div data-shell-part="content-breadcrumb" className="lg:hidden">
+        {cadastro ? <CadastroFocusCrumbs /> : <Breadcrumb />}
+      </div>
+      <AppErrorBoundary key={location.pathname}>
+        <Suspense fallback={<PageContentSkeleton rows={3} />}>
+          {children ?? <Outlet />}
+        </Suspense>
+      </AppErrorBoundary>
     </AppShell>
     </ModuleIntroLinksProvider>
   )

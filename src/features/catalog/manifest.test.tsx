@@ -21,6 +21,7 @@ describe("staff sales navigation", () => {
       { path: "/catalogo/produtos/novo", permission: "catalog.products.manage" },
       { path: "/catalogo/produtos/:id/assistente", permission: "catalog.products.read" },
       { path: "/catalogo/produtos/:id/passos", permission: "catalog.products.read" },
+      { path: "/catalogo/produtos/:id/editar-legado", permission: "catalog.products.read" },
       { path: "/catalogo/produtos/:id", permission: "catalog.products.read" },
       { path: "/catalogo/produtos", permission: "catalog.products.read" },
       { path: "/catalogo/grupos", permission: "catalog.products.read" },

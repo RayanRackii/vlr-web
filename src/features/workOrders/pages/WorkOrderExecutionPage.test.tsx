@@ -46,6 +46,7 @@ vi.mock("@/features/workOrders/services/workOrdersService", () => ({
   getWorkOrderById: vi.fn(),
   updateTaskValue: vi.fn(),
   updateWorkOrderStatus: vi.fn(),
+  cancelWorkOrder: vi.fn(),
   uploadWorkOrderTaskFile: vi.fn(),
   getWorkOrderTaskFileUrl: vi.fn(async () => ({
     url: "https://files.example/photo?exp=9999999999",
@@ -78,6 +79,7 @@ import {
 } from "@/lib/offlineSync"
 import { getTechnicians } from "@/features/users/services/usersService"
 import {
+  cancelWorkOrder,
   getWorkOrderById,
   updateTaskValue,
   updateWorkOrderAssignee,
@@ -121,6 +123,7 @@ function renderExecution(
           <Route path="/os/:id" element={<WorkOrderExecutionPage />} />
           <Route path="/pmoc/:id" element={<div>pmoc-detail</div>} />
           <Route path="/os" element={<div>os-list</div>} />
+          <Route path="/manutencao" element={<div>maintenance-orders</div>} />
         </Routes>
       </TestPermissionProvider>
     </MemoryRouter>,
@@ -231,7 +234,7 @@ describe("WorkOrderExecutionPage tasks", () => {
     })
   })
 
-  it("opens single-choice options in a native select", async () => {
+  it("opens single-choice options in the shared select", async () => {
     const base = makeWorkOrder()
     const task = base.tasks[0]
     if (!task) {
@@ -253,8 +256,9 @@ describe("WorkOrderExecutionPage tasks", () => {
     renderExecution(["os.work_orders.read"], ["os"])
 
     const select = await screen.findByRole("combobox", { name: "Estado" })
-    expect(select).toBeInstanceOf(HTMLSelectElement)
-    expect(screen.getByRole("option", { name: "Ok" })).toBeInTheDocument()
+    expect(select).toHaveAttribute("data-slot", "select-trigger")
+    await userEvent.click(select)
+    expect(await screen.findByRole("option", { name: "Ok" })).toBeInTheDocument()
     expect(screen.getByRole("option", { name: "Trocar" })).toBeInTheDocument()
   })
 
@@ -1129,6 +1133,31 @@ describe("WorkOrderExecutionPage assignee", () => {
     })).toHaveTextContent(sampleTechnician.fullName)
   })
 
+  it("explains an empty technician list with a link for people managers", async () => {
+    getWorkOrderByIdMock.mockResolvedValue(makeWorkOrder())
+    getTechniciansMock.mockResolvedValue([])
+    renderExecution(["os.work_orders.read", "os.work_orders.assign", "core.users.read"], ["os"])
+    const hint = await screen.findByTestId("assignee-no-technicians")
+    expect(hint).toHaveTextContent("Pessoas e acesso")
+    expect(within(hint).getByRole("link")).toHaveAttribute("href", "/pessoas-e-acesso")
+  })
+
+  it("explains an empty technician list without a link when the user cannot manage people", async () => {
+    getWorkOrderByIdMock.mockResolvedValue(makeWorkOrder())
+    getTechniciansMock.mockResolvedValue([])
+    renderExecution(["os.work_orders.read", "os.work_orders.assign"], ["os"])
+    const hint = await screen.findByTestId("assignee-no-technicians")
+    expect(hint).toHaveTextContent("Pessoas e acesso")
+    expect(within(hint).queryByRole("link")).not.toBeInTheDocument()
+  })
+
+  it("does not show the empty hint when technicians exist", async () => {
+    getWorkOrderByIdMock.mockResolvedValue(makeWorkOrder())
+    renderExecution(["os.work_orders.read", "os.work_orders.assign", "core.users.read"], ["os"])
+    await screen.findByRole("combobox", { name: i18n.t("workOrders.columns.assignee") })
+    expect(screen.queryByTestId("assignee-no-technicians")).not.toBeInTheDocument()
+  })
+
   it("keeps the current assignee when the technician list is forbidden", async () => {
     getWorkOrderByIdMock.mockResolvedValue(
       makeWorkOrder({
@@ -1168,5 +1197,164 @@ describe("WorkOrderExecutionPage assignee", () => {
     expect(
       screen.queryByText(i18n.t("workOrders.errors.loadOneFailed")),
     ).not.toBeInTheDocument()
+  })
+})
+
+describe("WorkOrderExecutionPage mobile-first layout", () => {
+  beforeEach(() => {
+    getWorkOrderByIdMock.mockReset()
+    getTechniciansMock.mockResolvedValue([sampleTechnician])
+  })
+
+  function baseTask() {
+    return makeWorkOrder().tasks[0] as NonNullable<
+      ReturnType<typeof makeWorkOrder>["tasks"][number]
+    >
+  }
+
+  it("shows the checklist before the collapsed details and never the full UUID or the input type", async () => {
+    getWorkOrderByIdMock.mockResolvedValue(makeWorkOrder({ notes: "Levar peça" }))
+    renderExecution(["os.work_orders.read"], ["os"])
+
+    const checklist = await screen.findByRole("heading", {
+      name: i18n.t("workOrders.execution.tasksTitle"),
+    })
+    const details = document.querySelector("[data-work-order-details]")
+    expect(details).not.toBeNull()
+    expect(details).not.toHaveAttribute("open")
+    expect(
+      checklist.compareDocumentPosition(details as Element) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy()
+    expect(
+      screen.getByRole("heading", { level: 1, name: /Split sala 1/ }),
+    ).toBeInTheDocument()
+    expect(document.body.textContent).not.toContain(WORK_ORDER_ID)
+    expect(screen.queryByText(i18n.t("workOrders.columns.id"))).not.toBeInTheDocument()
+    expect(
+      screen.queryByText(i18n.t("pmoc.inputType.Checkbox")),
+    ).not.toBeInTheDocument()
+    expect(screen.getByText(/99999999/)).toBeInTheDocument()
+  })
+
+  it("keeps the primary action in a sticky bottom bar on mobile", async () => {
+    getWorkOrderByIdMock.mockResolvedValue(makeWorkOrder())
+    renderExecution(["os.work_orders.read"], ["os"])
+    const bar = await waitFor(() => {
+      const found = document.querySelector("[data-work-order-action-bar]")
+      expect(found).not.toBeNull()
+      return found as HTMLElement
+    })
+    expect(
+      within(bar).getByRole("button", { name: i18n.t("workOrders.execution.complete") }),
+    ).toBeInTheDocument()
+  })
+
+  it("moves the primary action into the header on desktop", async () => {
+    const original = window.matchMedia
+    window.matchMedia = ((query: string) => ({
+      matches: true,
+      media: query,
+      onchange: null,
+      addEventListener: () => undefined,
+      removeEventListener: () => undefined,
+      addListener: () => undefined,
+      removeListener: () => undefined,
+      dispatchEvent: () => false,
+    })) as typeof window.matchMedia
+    try {
+      getWorkOrderByIdMock.mockResolvedValue(makeWorkOrder())
+      renderExecution(["os.work_orders.read"], ["os"])
+      expect(
+        await screen.findByRole("button", { name: i18n.t("workOrders.execution.complete") }),
+      ).toBeInTheDocument()
+      expect(document.querySelector("[data-work-order-action-bar]")).toBeNull()
+    } finally {
+      window.matchMedia = original
+    }
+  })
+
+  it.each(["Completed", "Canceled"] as const)(
+    "makes every task control read-only when the OS is %s",
+    async (status) => {
+      const base = baseTask()
+      getWorkOrderByIdMock.mockResolvedValue(
+        makeWorkOrder({
+          status,
+          tasks: [
+            { ...base, id: "20000000-0000-4000-8000-000000000001", title: "Chk", inputType: "Checkbox", order: 1 },
+            { ...base, id: "20000000-0000-4000-8000-000000000002", title: "Txt", inputType: "Text", order: 2 },
+            { ...base, id: "20000000-0000-4000-8000-000000000003", title: "Num", inputType: "Number", order: 3 },
+            {
+              ...base,
+              id: "20000000-0000-4000-8000-000000000004",
+              title: "Cho",
+              inputType: "SingleChoice",
+              configuration: JSON.stringify({ options: ["A", "B"] }),
+              order: 4,
+            },
+          ],
+        }),
+      )
+      renderExecution(["os.work_orders.read"], ["os"])
+
+      await screen.findByRole("heading", { name: i18n.t("workOrders.execution.tasksTitle") })
+      const toggle = screen.getByRole("switch")
+      expect(toggle).toHaveAttribute("aria-disabled", "true")
+      expect(toggle).toHaveAttribute("tabindex", "-1")
+      expect(screen.getByRole("textbox")).toBeDisabled()
+      expect(screen.getByRole("spinbutton")).toBeDisabled()
+      expect(screen.getByRole("combobox", { name: "Cho" })).toBeDisabled()
+      expect(
+        document.querySelector("[data-work-order-action-bar]"),
+      ).toBeNull()
+    },
+  )
+})
+
+describe("WorkOrderExecutionPage cancel", () => {
+  beforeEach(() => {
+    getWorkOrderByIdMock.mockReset()
+    vi.mocked(cancelWorkOrder).mockReset()
+  })
+
+  it("cancels an open order and navigates back to the Maintenance orders tab", async () => {
+    getWorkOrderByIdMock.mockResolvedValue(makeWorkOrder())
+    vi.mocked(cancelWorkOrder).mockResolvedValue(makeWorkOrder({ status: "Canceled" }))
+    const user = userEvent.setup()
+
+    renderExecution(["os.work_orders.read", "os.work_orders.create"], ["os"])
+
+    expect(screen.queryByRole("button", { name: i18n.t("workOrders.cancel.action") })).not.toBeInTheDocument()
+    await user.click(await screen.findByRole("button", { name: i18n.t("workOrders.execution.moreActions") }))
+    await user.click(await screen.findByRole("menuitem", { name: i18n.t("workOrders.cancel.action") }))
+    const dialog = await screen.findByRole("alertdialog")
+    await user.click(within(dialog).getByRole("button", { name: i18n.t("workOrders.cancel.action") }))
+
+    await waitFor(() => expect(cancelWorkOrder).toHaveBeenCalledWith(WORK_ORDER_ID))
+    expect(await screen.findByText("maintenance-orders")).toBeInTheDocument()
+  })
+
+  it("keeps the cancel action out of the header as a destructive button", async () => {
+    getWorkOrderByIdMock.mockResolvedValue(makeWorkOrder())
+    renderExecution(["os.work_orders.read", "os.work_orders.create"], ["os"])
+    await screen.findByText("PMOC · PMOC Split Mensal")
+    expect(screen.getByRole("button", { name: i18n.t("workOrders.execution.moreActions") })).toBeInTheDocument()
+    expect(screen.queryByRole("button", { name: i18n.t("workOrders.cancel.action") })).not.toBeInTheDocument()
+  })
+
+  it("hides the action for closed orders and without cancel permission", async () => {
+    getWorkOrderByIdMock.mockResolvedValue(makeWorkOrder({ status: "Completed" }))
+    renderExecution(["os.work_orders.read", "os.work_orders.create"], ["os"])
+    await screen.findByText("PMOC · PMOC Split Mensal")
+    expect(screen.queryByRole("button", { name: i18n.t("workOrders.cancel.action") })).not.toBeInTheDocument()
+    expect(screen.queryByRole("button", { name: i18n.t("workOrders.execution.moreActions") })).not.toBeInTheDocument()
+  })
+
+  it("hides the action when the user can only read", async () => {
+    getWorkOrderByIdMock.mockResolvedValue(makeWorkOrder())
+    renderExecution(["os.work_orders.read"], ["os"])
+    await screen.findByText("PMOC · PMOC Split Mensal")
+    expect(screen.queryByRole("button", { name: i18n.t("workOrders.cancel.action") })).not.toBeInTheDocument()
   })
 })

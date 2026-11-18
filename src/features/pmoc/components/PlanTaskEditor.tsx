@@ -1,6 +1,6 @@
 import { useState } from "react"
 import type { Control, FieldArrayWithId, UseFormSetValue } from "react-hook-form"
-import { Trash2 } from "lucide-react"
+import { Plus, Shapes, Trash2 } from "lucide-react"
 import { useTranslation } from "react-i18next"
 
 import {
@@ -52,6 +52,7 @@ export function PlanTaskEditor({
   watchedTasks,
   setValue,
   onRemove,
+  onAdd,
   issueMessage,
 }: {
   control: Control<CreatePlanFormValues>
@@ -62,6 +63,8 @@ export function PlanTaskEditor({
   }>
   setValue: UseFormSetValue<CreatePlanFormValues>
   onRemove: (index: number) => void
+  /** Renders "Adicionar tarefa" below the last row. */
+  onAdd?: () => void
   issueMessage: (path: readonly (string | number)[]) => string | undefined
 }) {
   const { t } = useTranslation()
@@ -69,7 +72,7 @@ export function PlanTaskEditor({
 
   const inputTypeItems = taskInputTypeValues.map((inputType) => ({
     value: inputType,
-    label: t(`pmoc.inputType.${inputType}`),
+    label: t(`pmoc.taskInputTypes.${inputType}`),
   }))
 
   function confirmRemoval() {
@@ -97,55 +100,36 @@ export function PlanTaskEditor({
           return (
             <div
               key={field.id}
-              className="space-y-4 rounded-lg border border-border bg-muted/20 p-4"
+              className="space-y-3 rounded-lg border border-border bg-muted/20 p-3"
             >
-              <div className="flex items-center justify-between gap-3">
-                <h3 className="text-sm font-medium">
-                  {t("pmoc.create.tasks.itemTitle", { number: index + 1 })}
-                </h3>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon-sm"
-                  disabled={fields.length <= 1}
-                  aria-label={t("pmoc.create.actions.removeTaskNamed", {
-                    number: index + 1,
-                  })}
-                  onClick={() => {
-                    setPendingRemoval(index)
-                  }}
-                >
-                  <Trash2 aria-hidden="true" />
-                </Button>
-              </div>
-
-              <FormField
-                control={control}
-                name={`tasks.${index}.title`}
-                render={({ field: titleField }) => (
-                  <FormItem>
-                    <FormLabel>{t("pmoc.create.tasks.title")}</FormLabel>
-                    <FormControl>
-                      <Input
-                        autoComplete="off"
-                        placeholder={t("pmoc.create.tasks.titlePlaceholder")}
-                        {...titleField}
+              <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_11rem_auto_auto] md:items-start">
+                <FormField
+                  control={control}
+                  name={`tasks.${index}.title`}
+                  render={({ field: titleField }) => (
+                    <FormItem>
+                      <FormLabel className="sr-only">{t("pmoc.create.tasks.title")}</FormLabel>
+                      <FormControl>
+                        <Input
+                          autoComplete="off"
+                          className="min-h-11"
+                          placeholder={t("pmoc.create.tasks.titlePlaceholder")}
+                          {...titleField}
+                        />
+                      </FormControl>
+                      <LiveFieldMessage
+                        message={issueMessage(["tasks", index, "title"])}
                       />
-                    </FormControl>
-                    <LiveFieldMessage
-                      message={issueMessage(["tasks", index, "title"])}
-                    />
-                  </FormItem>
-                )}
-              />
+                    </FormItem>
+                  )}
+                />
 
-              <div className="grid gap-4 sm:grid-cols-2">
                 <FormField
                   control={control}
                   name={`tasks.${index}.inputType`}
                   render={({ field: inputTypeField }) => (
                     <FormItem>
-                      <FormLabel>{t("pmoc.create.tasks.inputType")}</FormLabel>
+                      <FormLabel className="sr-only">{t("pmoc.create.tasks.inputType")}</FormLabel>
                       <Select
                         modal={false}
                         onValueChange={(value) => {
@@ -165,14 +149,14 @@ export function PlanTaskEditor({
                         items={inputTypeItems}
                       >
                         <FormControl>
-                          <SelectTrigger className="w-full">
+                          <SelectTrigger icon={Shapes} className="min-h-11 w-full">
                             <SelectValue />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
                           {taskInputTypeValues.map((type) => (
                             <SelectItem key={type} value={type}>
-                              {t(`pmoc.inputType.${type}`)}
+                              {t(`pmoc.taskInputTypes.${type}`)}
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -186,20 +170,38 @@ export function PlanTaskEditor({
                   control={control}
                   name={`tasks.${index}.isMandatory`}
                   render={({ field: mandatoryField }) => (
-                    <FormItem className="flex flex-row items-center justify-between gap-3 rounded-lg border border-border px-3 py-2">
-                      <FormLabel className="m-0">
-                        {t("pmoc.create.tasks.isMandatory")}
-                      </FormLabel>
+                    <FormItem className="flex min-h-11 flex-row items-center gap-2">
                       <FormControl>
                         <Switch
                           checked={mandatoryField.value}
                           onCheckedChange={mandatoryField.onChange}
                         />
                       </FormControl>
+                      <FormLabel className="m-0">
+                        {t("pmoc.create.tasks.isMandatory")}
+                      </FormLabel>
                     </FormItem>
                   )}
                 />
 
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="justify-self-end"
+                  disabled={fields.length <= 1}
+                  aria-label={t("pmoc.create.actions.removeTaskNamed", {
+                    number: index + 1,
+                  })}
+                  onClick={() => {
+                    setPendingRemoval(index)
+                  }}
+                >
+                  <Trash2 aria-hidden="true" />
+                </Button>
+              </div>
+
+              <div className="grid gap-4 sm:grid-cols-2 empty:hidden">
                 {inputType === "Number" ? (
                   <>
                     <FormField
@@ -371,6 +373,13 @@ export function PlanTaskEditor({
           )
         })}
       </div>
+
+      {onAdd ? (
+        <Button type="button" variant="outline" onClick={onAdd}>
+          <Plus data-icon="inline-start" />
+          {t("pmoc.create.actions.addTask")}
+        </Button>
+      ) : null}
 
       <AlertDialog
         open={pendingRemoval !== null}

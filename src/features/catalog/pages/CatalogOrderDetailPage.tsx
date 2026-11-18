@@ -5,11 +5,11 @@ import { CatalogTabs } from "@/features/catalog/components/StaffCatalogChrome"
 import { useEffect, useState } from "react"
 import { useForm, useWatch } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { useParams } from "react-router-dom"
+import { Check, MoreHorizontal } from "lucide-react"
+import { Link, useNavigate, useParams } from "react-router-dom"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 
-import "./pedidos.css"
 import { useBreadcrumbTitle } from "@/components/layout/useBreadcrumbTitle"
 import { PageHeader } from "@/components/layout/PageHeader"
 import { PageContentSkeleton } from "@/components/loading/PageContentSkeleton"
@@ -36,7 +36,20 @@ import { Textarea } from "@/components/ui/textarea"
 import { formatOrderTotalText } from "@/features/catalog/lib/catalogPriceSummary"
 import { orderResourceFact, type OrderResourceFact } from "@/features/catalog/lib/orderResourceFact"
 import { CatalogOrderAllocationPanel } from "@/features/catalog/components/CatalogOrderAllocationPanel"
+import {
+  allocationAgendaPath,
+  useAllocationUsage,
+  type OrderAllocation,
+} from "@/features/catalog/lib/orderAllocationUsage"
 import { Can } from "@/features/users/permissions/Can"
+import { usePermissions } from "@/features/users/permissions/PermissionContext"
+import { resolveTenantTimeZone } from "@/lib/tenantTimeZone"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import {
   B2B_ORDER_ACTIONS,
   catalogReasonFormSchema,
@@ -44,6 +57,7 @@ import {
   formatCatalogMoney,
   type B2BOrderAction,
   type CatalogOrder,
+  type CatalogOrderStatus,
   type CatalogReasonFormValues,
 } from "@/features/catalog/schemas/catalogSchemas"
 import {
@@ -66,10 +80,79 @@ const USAGE_HISTORY_LABELS: Record<string, string> = {
   "usage.released": "catalog.orders.history.released",
 }
 
+const PROGRESS_STEPS = ["Requested", "Approved", "Preparing", "Ready", "Completed"] as const satisfies readonly CatalogOrderStatus[]
+
+/** Steps shown in the progress line; Rejected/Cancelled end it as a terminal state. */
+function progressSteps(order: CatalogOrder): { steps: CatalogOrderStatus[]; current: CatalogOrderStatus } {
+  const status = order.status
+  if (status === "Rejected") {
+    return { steps: ["Requested", "Rejected"], current: status }
+  }
+  if (status === "Cancelled") {
+    const reached = order.history
+      .map((entry) => (PROGRESS_STEPS as readonly string[]).indexOf(entry.status))
+      .reduce((max, index) => Math.max(max, index), 0)
+    return { steps: [...PROGRESS_STEPS.slice(0, reached + 1), status], current: status }
+  }
+  return { steps: [...PROGRESS_STEPS], current: status }
+}
+
+function OrderProgress({ order }: { order: CatalogOrder }) {
+  const { t } = useTranslation()
+  const { steps, current } = progressSteps(order)
+  const currentIndex = steps.indexOf(current)
+  return (
+    <ol
+      aria-label={t("catalog.orders.progressLabel")}
+      className="flex min-w-0 items-center gap-2 rounded-xl border border-border bg-card px-4 py-3 text-sm"
+    >
+      {steps.map((step, index) => {
+        const isCurrent = index === currentIndex
+        const done = index < currentIndex
+        return (
+          <li
+            key={step}
+            aria-current={isCurrent ? "true" : undefined}
+            className="flex min-w-0 items-center gap-2"
+          >
+            {done ? (
+              <Check aria-hidden="true" className="size-4 shrink-0 text-success" />
+            ) : null}
+            {isCurrent ? (
+              <span className="staff-catalog-status" data-tone={STAFF_ORDER_STATUS_TONE[step]}>
+                {t(`catalog.status.${step}`)}
+              </span>
+            ) : (
+              <span className={done ? "hidden text-foreground sm:inline" : "hidden text-muted-foreground sm:inline"}>
+                {t(`catalog.status.${step}`)}
+              </span>
+            )}
+            {index < steps.length - 1 ? (
+              <span aria-hidden="true" className="h-px w-4 shrink-0 bg-border sm:w-8" />
+            ) : null}
+          </li>
+        )
+      })}
+    </ol>
+  )
+}
+
+/** "26/11, 14:00-17:00" in the allocation's time zone. */
+function formatWorkWindow(allocation: OrderAllocation, locale: string): string {
+  const timeZone = resolveTenantTimeZone(allocation.timeZoneId)
+  const start = new Date(allocation.plannedWorkStart)
+  const end = new Date(allocation.plannedWorkEnd)
+  const day = new Intl.DateTimeFormat(locale, { timeZone, day: "2-digit", month: "2-digit" }).format(start)
+  const hm = new Intl.DateTimeFormat(locale, { timeZone, hour: "2-digit", minute: "2-digit", hourCycle: "h23" })
+  return `${day}, ${hm.format(start)}–${hm.format(end)}`
+}
+
 export function CatalogOrderDetailPage({ unified = false }: { unified?: boolean }) {
   const { t, i18n } = useTranslation()
   const timeZoneId = useTenantTimeZone()
   const params = useParams()
+  const navigate = useNavigate()
+  const { can } = usePermissions()
   const orderId = params.orderId ?? ""
 
   const [order, setOrder] = useState<CatalogOrder | null>(null)
@@ -91,6 +174,7 @@ export function CatalogOrderDetailPage({ unified = false }: { unified?: boolean 
     defaultValues: { reason: "" },
   })
   const reasonValues = useWatch({ control: form.control })
+  const usage = useAllocationUsage(order, setOrder)
 
   async function load() {
     if (!orderId) {
@@ -259,23 +343,173 @@ export function CatalogOrderDetailPage({ unified = false }: { unified?: boolean 
     (item) => item.productionSummary === "Unscheduled",
   )
   const actions = B2B_ORDER_ACTIONS[order.status]
+  const canManage = can("catalog.orders.manage")
   const totalLabel = formatOrderTotalText(order, i18n.language, {
     onRequest: t("catalog.priceOnRequest"),
     partial: (amount) => t("catalog.knownPlusOnRequest", { amount }),
   })
 
+  // One primary action: the next order transition, else the resource-usage step.
+  const orderPrimary: Exclude<B2BOrderAction, "reject" | "cancel"> | null =
+    !canManage
+      ? null
+      : actions.includes("approve") && !needsResourceApproval
+        ? "approve"
+        : actions.includes("preparing")
+          ? "preparing"
+          : actions.includes("ready")
+            ? "ready"
+            : actions.includes("complete")
+              ? "complete"
+              : null
+  const usagePrimary: "work-finished" | "release" | null =
+    orderPrimary != null
+      ? null
+      : usage.canFinish
+        ? "work-finished"
+        : usage.canRelease
+          ? "release"
+          : null
+  const showReject = canManage && actions.includes("reject")
+  const showCancel = canManage && actions.includes("cancel")
+  const menuFinish = usage.canFinish && usagePrimary !== "work-finished"
+  const menuRelease = usage.canRelease && usagePrimary !== "release"
+  const agendaPath =
+    usage.allocation && can("rentals.schedule.read")
+      ? allocationAgendaPath(usage.allocation)
+      : null
+  const hasMenu = showReject || showCancel || menuFinish || menuRelease || agendaPath != null
+  const primaryLabel = orderPrimary
+    ? t(`catalog.orders.actions.${orderPrimary}`)
+    : usagePrimary === "work-finished"
+      ? t("catalog.resourcePlanning.activeUse.workFinished")
+      : usagePrimary === "release"
+        ? t("catalog.resourcePlanning.activeUse.release")
+        : null
+  const primaryBusy = orderPrimary
+    ? busyAction === orderPrimary
+    : usagePrimary != null && usage.busyAction === usagePrimary
+  const usageLine = usage.allocation
+    ? `${t("catalog.orders.resourceUsage")}: ${t(`catalog.resourcePlanning.allocationStatus.${usage.allocation.status}`)}`
+    : null
+
   return (
-    <div className={unified ? "pedidos-page staff-catalog staff-catalog-detail mx-auto space-y-5" : "staff-catalog staff-catalog-detail space-y-6"}>
+    <div className={unified ? "staff-catalog staff-catalog-detail mx-auto min-w-0 space-y-5 [overflow-wrap:anywhere]" : "staff-catalog staff-catalog-detail space-y-6"}>
       <PageHeader
         className="min-w-0 [&_h1]:tabular-nums"
         title={unified ? t("pedidos.detailTitle") : order.displayNumber}
         description={<>{order.customerName}{order.customerEmail ? ` · ${order.customerEmail}` : ""}</>}
-        actions={<span className="staff-catalog-status" data-tone={STAFF_ORDER_STATUS_TONE[order.status]}>
-          {t(`catalog.status.${order.status}`)}
-        </span>}
+        actions={primaryLabel != null || hasMenu ? (
+          <div className="flex items-center gap-2">
+            {primaryLabel != null ? (
+              <LoadingButton
+                type="button"
+                className="touch-target"
+                loading={primaryBusy}
+                onClick={() => {
+                  if (orderPrimary) {
+                    void runAction(orderPrimary)
+                  } else if (usagePrimary) {
+                    void usage.runUsage(usagePrimary)
+                  }
+                }}
+              >
+                {primaryLabel}
+              </LoadingButton>
+            ) : null}
+            {hasMenu ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger
+                  render={
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      className="size-11"
+                      aria-label={t("catalog.orders.moreActions")}
+                    />
+                  }
+                >
+                  <MoreHorizontal aria-hidden="true" />
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  {menuFinish ? (
+                    <DropdownMenuItem
+                      className="min-h-11 py-2.5"
+                      onClick={() => {
+                        void usage.runUsage("work-finished")
+                      }}
+                    >
+                      {t("catalog.resourcePlanning.activeUse.workFinished")}
+                    </DropdownMenuItem>
+                  ) : null}
+                  {menuRelease ? (
+                    <DropdownMenuItem
+                      className="min-h-11 py-2.5"
+                      onClick={() => {
+                        void usage.runUsage("release")
+                      }}
+                    >
+                      {t("catalog.resourcePlanning.activeUse.release")}
+                    </DropdownMenuItem>
+                  ) : null}
+                  {agendaPath ? (
+                    <DropdownMenuItem
+                      className="min-h-11 py-2.5"
+                      onClick={() => {
+                        void navigate(agendaPath)
+                      }}
+                    >
+                      {t("catalog.orders.openInAgenda")}
+                    </DropdownMenuItem>
+                  ) : null}
+                  {showReject ? (
+                    <DropdownMenuItem
+                      className="min-h-11 py-2.5"
+                      onClick={() => {
+                        form.reset({ reason: "" })
+                        setReasonAction("reject")
+                      }}
+                    >
+                      {t("catalog.orders.actions.reject")}
+                    </DropdownMenuItem>
+                  ) : null}
+                  {showCancel ? (
+                    <DropdownMenuItem
+                      className="min-h-11 py-2.5"
+                      onClick={() => {
+                        form.reset({ reason: "" })
+                        setReasonAction("cancel")
+                      }}
+                    >
+                      {t("catalog.orders.actions.cancel")}
+                    </DropdownMenuItem>
+                  ) : null}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : null}
+          </div>
+        ) : undefined}
       />
 
       {!unified && <CatalogTabs active="orders" />}
+
+      <OrderProgress order={order} />
+      {usageLine || order.estimatedReadyAt ? (
+        <p className="-mt-2 text-sm text-muted-foreground tabular-nums">
+          {usageLine}
+          {usageLine && order.estimatedReadyAt ? " · " : null}
+          {order.estimatedReadyAt
+            ? `${t("catalog.orders.estimatedReady")}: ${formatCatalogDate(order.estimatedReadyAt, i18n.language, timeZoneId)}`
+            : null}
+        </p>
+      ) : null}
+
+      {order.status === "Cancelled" && usage.allocation && usage.allocation.status !== "Released" ? (
+        <Alert variant="destructive">
+          <AlertDescription>{t("catalog.resourcePlanning.activeUse.cancelledHint")}</AlertDescription>
+        </Alert>
+      ) : null}
 
       {inactiveNamesForApproval.length > 0 ? (
         <Alert variant="warning">
@@ -288,93 +522,31 @@ export function CatalogOrderDetailPage({ unified = false }: { unified?: boolean 
         </Alert>
       ) : null}
 
-      <Can permission="catalog.orders.manage">
-        {actions.length > 0 ? (
-          <div className="flex flex-wrap gap-2">
-            {actions.includes("approve") && !needsResourceApproval ? (
-              <LoadingButton
-                type="button"
-                className="touch-target"
-                loading={busyAction === "approve"}
-                onClick={() => {
-                  void runAction("approve")
-                }}
-              >
-                {t("catalog.orders.actions.approve")}
-              </LoadingButton>
-            ) : null}
-            {actions.includes("preparing") ? (
-              <LoadingButton
-                type="button"
-                className="touch-target"
-                loading={busyAction === "preparing"}
-                onClick={() => {
-                  void runAction("preparing")
-                }}
-              >
-                {t("catalog.orders.actions.preparing")}
-              </LoadingButton>
-            ) : null}
-            {actions.includes("ready") ? (
-              <LoadingButton
-                type="button"
-                className="touch-target"
-                loading={busyAction === "ready"}
-                onClick={() => {
-                  void runAction("ready")
-                }}
-              >
-                {t("catalog.orders.actions.ready")}
-              </LoadingButton>
-            ) : null}
-            {actions.includes("complete") ? (
-              <LoadingButton
-                type="button"
-                className="touch-target"
-                loading={busyAction === "complete"}
-                onClick={() => {
-                  void runAction("complete")
-                }}
-              >
-                {t("catalog.orders.actions.complete")}
-              </LoadingButton>
-            ) : null}
-            {actions.includes("reject") ? (
-              <Button
-                type="button"
-                className="touch-target"
-                variant="outline"
-                onClick={() => {
-                  form.reset({ reason: "" })
-                  setReasonAction("reject")
-                }}
-              >
-                {t("catalog.orders.actions.reject")}
-              </Button>
-            ) : null}
-            {actions.includes("cancel") ? (
-              <Button
-                type="button"
-                className="touch-target"
-                variant="outline"
-                onClick={() => {
-                  form.reset({ reason: "" })
-                  setReasonAction("cancel")
-                }}
-              >
-                {t("catalog.orders.actions.cancel")}
-              </Button>
-            ) : null}
-          </div>
-        ) : null}
+      <Can permission="catalog.orders.read">
+        <CatalogOrderAllocationPanel
+          order={order}
+          resourceName={Object.values(resources).find((fact) => fact.kind === "named")?.name ?? null}
+          preferredUnitId={Object.values(resources).find((fact) => fact.kind === "named")?.unitId ?? null}
+          onOrderChange={setOrder}
+          onReloadNeeded={() => {
+            void load()
+          }}
+        />
       </Can>
 
       <section className="min-w-0 space-y-2 rounded-xl border border-border bg-card p-4 sm:p-6">
+        <h2 className="text-sm font-medium">{t("catalog.orders.summary")}</h2>
         <p className="text-sm tabular-nums">
           <span className="text-muted-foreground">
             {t("catalog.orders.total")}:{" "}
           </span>
           {totalLabel}
+        </p>
+        <p className="text-sm">
+          <span className="text-muted-foreground">
+            {t("catalog.orders.customerLabel")}:{" "}
+          </span>
+          {order.customerName}
         </p>
         {order.customerNote ? (
           <p className="text-sm">
@@ -402,40 +574,15 @@ export function CatalogOrderDetailPage({ unified = false }: { unified?: boolean 
         ) : null}
       </section>
 
-      {order.productionSummary !== "NotRequired" ? (
-        <section className="min-w-0 space-y-2 rounded-xl border border-border bg-card p-4 sm:p-6">
-          <h2 className="text-sm font-medium">{t("catalog.resourcePlanning.productionSummary.title")}</h2>
-          <p className="text-sm">
-            {t(`catalog.resourcePlanning.productionSummary.status.${order.productionSummary}`)}
-          </p>
-          {order.estimatedReadyAt ? (
-            <p className="text-sm tabular-nums">
-              <span className="text-muted-foreground">
-                {t("catalog.resourcePlanning.productionSummary.estimatedReadyAt")}:{" "}
-              </span>
-              {formatCatalogDate(order.estimatedReadyAt, i18n.language, timeZoneId)}
-            </p>
-          ) : null}
-        </section>
-      ) : null}
-
-      <Can permission="catalog.orders.read">
-        <CatalogOrderAllocationPanel
-          order={order}
-          resourceName={Object.values(resources).find((fact) => fact.kind === "named")?.name ?? null}
-          preferredUnitId={Object.values(resources).find((fact) => fact.kind === "named")?.unitId ?? null}
-          onOrderChange={setOrder}
-          onReloadNeeded={() => {
-            void load()
-          }}
-        />
-      </Can>
-
       <section className="min-w-0 space-y-3 rounded-xl border border-border bg-card p-4 sm:p-6">
         <h2 className="text-sm font-medium">{t("catalog.orders.items")}</h2>
         <ul className="min-w-0 divide-y divide-border">
           {order.items.map((item) => {
             const fact = resources[item.productId]
+            const resourceName = fact?.kind === "named" ? fact.name : null
+            const windowText = item.allocation
+              ? [formatWorkWindow(item.allocation, i18n.language), resourceName].filter(Boolean).join(" · ")
+              : null
             return (
             <li
               key={item.id}
@@ -445,15 +592,29 @@ export function CatalogOrderDetailPage({ unified = false }: { unified?: boolean 
                 {item.productName}
                 {item.productCode ? ` (${item.productCode})` : ""} ×{" "}
                 {item.quantity}
-                {fact?.kind === "named" ? (
+                {windowText ? (
+                  <span className="mt-1 block text-muted-foreground">
+                    {windowText}
+                    {agendaPath ? (
+                      <>
+                        {" · "}
+                        <Link
+                          className="inline-flex min-h-11 items-center text-primary underline-offset-4 hover:underline"
+                          to={agendaPath}
+                        >
+                          {t("catalog.orders.openInAgenda")}
+                        </Link>
+                      </>
+                    ) : null}
+                  </span>
+                ) : fact?.kind === "named" ? (
                   <span className="mt-1 block text-muted-foreground">
                     {t("catalog.resourcePlanning.approvalPanel.resourceNamed", {
                       name: fact.name,
                       minutes: fact.durationMinutesPerUnit,
                     })}
                   </span>
-                ) : null}
-                {fact?.kind === "unset" ? (
+                ) : fact?.kind === "unset" ? (
                   <span className="mt-1 block text-muted-foreground">
                     {t("catalog.resourcePlanning.approvalPanel.resourceUnset")}
                   </span>

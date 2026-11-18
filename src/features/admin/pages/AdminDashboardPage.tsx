@@ -1,9 +1,50 @@
 import { useCallback, useEffect, useMemo, useState } from "react"
-import { Building2, CircleCheck, CircleDollarSign, Plus, Power, Search } from "lucide-react"
+import {
+  Building2,
+  CircleCheck,
+  CircleDollarSign,
+  Copy,
+  Landmark,
+  MoreHorizontal,
+  Palette,
+  Pencil,
+  Plus,
+  Power,
+  Trash2,
+} from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { useNavigate } from "react-router-dom"
+import { toast } from "sonner"
 
-import { TenantAdminCard } from "@/features/admin/components/TenantAdminCard"
+import { DataList, type DataListColumn } from "@/components/data-table/DataList"
+import { FilterBar } from "@/components/data-table/FilterBar"
+import { StatusChips } from "@/components/data-table/StatusChips"
+import { Page } from "@/components/layout/Page"
+import {
+  AlertDialog,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { StatusBadge } from "@/components/ui/status"
+import {
+  clearPlatformTenantExited,
+  refreshAuthSession,
+  writeActiveTenantLabel,
+} from "@/features/admin/hooks/usePlatformTenantSession"
 import { moduleNameI18nKey } from "@/features/admin/moduleCatalog"
 import {
   PRICE_PER_MODULE_BRL,
@@ -11,38 +52,17 @@ import {
 } from "@/features/admin/schemas/adminTenantSchemas"
 import {
   deleteAdminTenant,
+  enterTenantEnvironment,
   listAdminTenants,
 } from "@/features/admin/services/adminTenantsService"
-import { Button } from "@/components/ui/button"
-import { ErrorState } from "@/components/ErrorState"
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Skeleton } from "@/components/ui/skeleton"
+import { tenantPortalHref } from "@/features/tenantPortal/services/tenantPortalService"
 import { isAxiosError } from "@/lib/api"
 import { formatLocaleCurrency } from "@/lib/localeFormat"
 import type { TFunction } from "i18next"
 
-function TenantCardSkeleton() {
-  return (
-    <Card>
-      <CardHeader>
-        <Skeleton className="h-5 w-40" />
-        <Skeleton className="h-3 w-28" />
-      </CardHeader>
-      <CardContent className="space-y-2">
-        <Skeleton className="h-4 w-24" />
-        <Skeleton className="h-6 w-full" />
-      </CardContent>
-    </Card>
-  )
-}
+const MAX_VISIBLE_MODULES = 3
+
+type StatusFilter = "active" | "inactive"
 
 function mapTenantDeleteError(message: string, t: TFunction): string {
   const normalized = message.toLowerCase()
@@ -72,15 +92,12 @@ function mapTenantDeleteError(message: string, t: TFunction): string {
     : t("admin.dashboard.delete.failed")
 }
 
-function moduleLabelKey(moduleName: string): string {
-  return moduleNameI18nKey(moduleName)
-}
-
 export function AdminDashboardPage() {
   const { t, i18n } = useTranslation()
   const navigate = useNavigate()
   const [tenants, setTenants] = useState<TenantAdmin[]>([])
   const [searchQuery, setSearchQuery] = useState("")
+  const [statusFilter, setStatusFilter] = useState<StatusFilter | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [loadError, setLoadError] = useState<string | null>(null)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
@@ -88,21 +105,27 @@ export function AdminDashboardPage() {
     useState<TenantAdmin | null>(null)
   const [deleteError, setDeleteError] = useState<string | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
+  const [enteringId, setEnteringId] = useState<string | null>(null)
 
   const normalizedSearch = searchQuery.trim().toLowerCase()
-  const filteredTenants = useMemo(() => {
-    if (!normalizedSearch) {
-      return tenants
-    }
-
-    return tenants.filter((tenant) =>
-      [tenant.legalName, tenant.subdomain ?? ""].some((value) =>
-        value.toLowerCase().includes(normalizedSearch),
-      ),
-    )
-  }, [normalizedSearch, tenants])
+  const filteredTenants = useMemo(
+    () =>
+      tenants.filter((tenant) => {
+        if (statusFilter !== null && tenant.isActive !== (statusFilter === "active")) {
+          return false
+        }
+        if (!normalizedSearch) {
+          return true
+        }
+        return [tenant.legalName, tenant.subdomain ?? ""].some((value) =>
+          value.toLowerCase().includes(normalizedSearch),
+        )
+      }),
+    [normalizedSearch, statusFilter, tenants],
+  )
 
   const activeTenantCount = tenants.filter((tenant) => tenant.isActive).length
+  const inactiveTenantCount = tenants.length - activeTenantCount
   const estimatedMonthlyRevenue = tenants.reduce(
     (total, tenant) =>
       total +
@@ -153,14 +176,13 @@ export function AdminDashboardPage() {
     }
   }, [successMessage])
 
-  function handleDeleteDialogOpenChange(tenant: TenantAdmin, open: boolean) {
-    if (open) {
-      setTenantPendingDelete(tenant)
-      setDeleteError(null)
-      return
-    }
+  function openDeleteDialog(tenant: TenantAdmin) {
+    setTenantPendingDelete(tenant)
+    setDeleteError(null)
+  }
 
-    if (tenantPendingDelete?.id === tenant.id) {
+  function handleDeleteDialogOpenChange(open: boolean) {
+    if (!open) {
       setTenantPendingDelete(null)
       setDeleteError(null)
     }
@@ -188,30 +210,265 @@ export function AdminDashboardPage() {
     }
   }
 
-  return (
-    <div className="mx-auto w-full min-w-0 max-w-7xl space-y-6">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-        <div className="space-y-1">
-          <h1 className="text-xl font-semibold tracking-tight">
-            {t("admin.dashboard.title")}
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            {t("admin.dashboard.description")}
-          </p>
-        </div>
+  async function handleOpenEnvironment(tenant: TenantAdmin) {
+    if (enteringId !== null || !tenant.isActive) {
+      return
+    }
 
+    setEnteringId(tenant.id)
+    try {
+      const result = await enterTenantEnvironment(tenant.id)
+      clearPlatformTenantExited()
+      writeActiveTenantLabel(result.legalName)
+      await refreshAuthSession()
+      void navigate("/dashboard", { replace: true })
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error && error.message.trim().length > 0
+          ? error.message
+          : t("admin.support.enterFailed")
+      toast.error(t("admin.support.enterErrorTitle"), { description: message })
+    } finally {
+      setEnteringId(null)
+    }
+  }
+
+  function tenantUrl(tenant: TenantAdmin): string | null {
+    return tenant.subdomain ? tenantPortalHref(tenant.subdomain) : null
+  }
+
+  async function handleCopyUrl(tenant: TenantAdmin) {
+    const url = tenantUrl(tenant)
+    if (!url) {
+      return
+    }
+    const absolute = url.startsWith("/") ? `${window.location.origin}${url}` : url
+    try {
+      await navigator.clipboard.writeText(absolute)
+      toast.success(t("admin.dashboard.actions.copyUrlDone"))
+    } catch {
+      toast.error(t("admin.dashboard.actions.copyUrlFailed"))
+    }
+  }
+
+  function clientCell(tenant: TenantAdmin) {
+    return (
+      <div className="min-w-0">
+        <p className="font-medium text-foreground [overflow-wrap:anywhere]">{tenant.legalName}</p>
+        <p
+          className="truncate text-xs text-muted-foreground"
+          title={tenantUrl(tenant) ?? undefined}
+        >
+          {tenant.subdomain ?? t("admin.dashboard.noSubdomain")}
+        </p>
+      </div>
+    )
+  }
+
+  function modulesCell(tenant: TenantAdmin) {
+    const modules = tenant.activeModules
+    if (modules.length === 0) {
+      return (
+        <span className="text-xs text-muted-foreground">
+          {t("admin.dashboard.noModules")}
+        </span>
+      )
+    }
+    const label = (moduleName: string) =>
+      t(moduleNameI18nKey(moduleName) as "admin.modules.Inventory")
+    const hidden = modules.slice(MAX_VISIBLE_MODULES)
+    return (
+      <div className="flex flex-wrap gap-1.5">
+        {modules.slice(0, MAX_VISIBLE_MODULES).map((module) => (
+          <Badge key={module.moduleName} variant="outline">
+            {label(module.moduleName)}
+          </Badge>
+        ))}
+        {hidden.length > 0 ? (
+          <Badge
+            variant="secondary"
+            title={hidden.map((module) => label(module.moduleName)).join(", ")}
+          >
+            +{hidden.length}
+          </Badge>
+        ) : null}
+      </div>
+    )
+  }
+
+  function statusCell(tenant: TenantAdmin) {
+    return (
+      <StatusBadge tone={tenant.isActive ? "success" : "neutral"}>
+        {tenant.isActive
+          ? t("admin.dashboard.statusActive")
+          : t("admin.dashboard.statusInactive")}
+      </StatusBadge>
+    )
+  }
+
+  function actionsCell(tenant: TenantAdmin) {
+    return (
+      <div className="flex items-center justify-end gap-1">
         <Button
           type="button"
+          variant="outline"
           className="min-h-11"
+          disabled={!tenant.isActive || enteringId !== null}
           onClick={() => {
-            void navigate("/admin/tenants/new")
+            void handleOpenEnvironment(tenant)
           }}
         >
-          <Plus className="size-4" />
-          {t("admin.dashboard.newClient")}
+          {t("admin.dashboard.actions.openEnvironment")}
         </Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger
+            render={
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="size-11"
+                aria-label={t("admin.dashboard.actions.rowMenu", { name: tenant.legalName })}
+              />
+            }
+          >
+            <MoreHorizontal aria-hidden="true" />
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem
+              className="min-h-11 py-2.5"
+              onClick={() => {
+                void navigate(`/admin/tenants/${tenant.id}/edit`)
+              }}
+            >
+              <Pencil aria-hidden="true" />
+              {t("admin.dashboard.actions.edit")}
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              className="min-h-11 py-2.5"
+              onClick={() => {
+                void navigate(`/admin/tenants/${tenant.id}/recursos-visuais`)
+              }}
+            >
+              <Palette aria-hidden="true" />
+              {t("admin.dashboard.actions.visualResources")}
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              className="min-h-11 py-2.5"
+              disabled={!tenant.subdomain}
+              onClick={() => {
+                void handleCopyUrl(tenant)
+              }}
+            >
+              <Copy aria-hidden="true" />
+              {t("admin.dashboard.actions.copyUrl")}
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              variant="destructive"
+              className="min-h-11 py-2.5"
+              onClick={() => {
+                openDeleteDialog(tenant)
+              }}
+            >
+              <Trash2 aria-hidden="true" />
+              {t("admin.dashboard.actions.delete")}
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
+    )
+  }
 
+  const columns: DataListColumn<TenantAdmin>[] = [
+    { id: "client", header: t("admin.dashboard.columns.client"), cell: clientCell },
+    { id: "modules", header: t("admin.dashboard.columns.modules"), cell: modulesCell },
+    {
+      id: "taxId",
+      header: t("admin.dashboard.taxId"),
+      hideBelow: "lg",
+      className: "whitespace-nowrap text-muted-foreground",
+      cell: (tenant) => tenant.taxId,
+    },
+    { id: "status", header: t("admin.dashboard.columns.status"), cell: statusCell },
+    {
+      id: "actions",
+      header: t("admin.dashboard.columns.actions"),
+      align: "end",
+      cell: actionsCell,
+    },
+  ]
+
+  const hasFilters = normalizedSearch !== "" || statusFilter !== null
+  function clearFilters() {
+    setSearchQuery("")
+    setStatusFilter(null)
+  }
+
+  const toolbar =
+    tenants.length > 0 ? (
+      <FilterBar
+        label={t("admin.dashboard.searchLabel")}
+        search={{
+          value: searchQuery,
+          onChange: setSearchQuery,
+          label: t("admin.dashboard.searchLabel"),
+          placeholder: t("admin.dashboard.searchPlaceholder"),
+        }}
+        filters={
+          <StatusChips<StatusFilter>
+            label={t("admin.dashboard.columns.status")}
+            allLabel={t("admin.dashboard.filterAll")}
+            allCount={tenants.length}
+            value={statusFilter}
+            onChange={setStatusFilter}
+            options={[
+              { value: "active", label: t("admin.dashboard.statusActive"), tone: "success", count: activeTenantCount },
+              { value: "inactive", label: t("admin.dashboard.statusInactive"), tone: "neutral", count: inactiveTenantCount },
+            ]}
+          />
+        }
+      />
+    ) : null
+
+  const empty =
+    tenants.length === 0
+      ? {
+          icon: Landmark,
+          title: t("admin.dashboard.emptyTitle"),
+          description: t("admin.dashboard.emptyDescription"),
+        }
+      : {
+          icon: Landmark,
+          title: t("admin.dashboard.searchEmptyTitle"),
+          description: t("admin.dashboard.searchEmptyDescription"),
+          action: hasFilters ? (
+            <Button type="button" variant="outline" className="min-h-11" onClick={clearFilters}>
+              {t("admin.dashboard.clearSearch")}
+            </Button>
+          ) : undefined,
+        }
+
+  return (
+    <Page
+      width="wide"
+      header={{
+        title: t("admin.dashboard.title"),
+        description: t("admin.dashboard.description"),
+        actions: (
+          <Button
+            type="button"
+            className="min-h-11"
+            onClick={() => {
+              void navigate("/admin/tenants/new")
+            }}
+          >
+            <Plus className="size-4" />
+            {t("admin.dashboard.newClient")}
+          </Button>
+        ),
+      }}
+    >
       {successMessage ? (
         <div
           role="status"
@@ -223,8 +480,6 @@ export function AdminDashboardPage() {
           </div>
         </div>
       ) : null}
-
-      {loadError ? <ErrorState message={loadError} onRetry={() => void loadTenants()} /> : null}
 
       {!isLoading && !loadError ? (
         <div className="grid grid-cols-2 gap-3 lg:grid-cols-3">
@@ -271,78 +526,68 @@ export function AdminDashboardPage() {
         </div>
       ) : null}
 
-      {isLoading ? (
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-          <TenantCardSkeleton />
-          <TenantCardSkeleton />
-          <TenantCardSkeleton />
-        </div>
-      ) : null}
+      <DataList<TenantAdmin>
+        {...(loadError !== null
+          ? { state: "error" as const, error: loadError, onRetry: () => { void loadTenants() } }
+          : { state: isLoading ? ("loading" as const) : ("ready" as const) })}
+        label={t("admin.dashboard.title")}
+        toolbar={toolbar}
+        columns={columns}
+        rows={filteredTenants}
+        getRowId={(tenant) => tenant.id}
+        empty={empty}
+        renderCard={(tenant) => (
+          <>
+            <div className="flex min-w-0 items-start justify-between gap-3">
+              {clientCell(tenant)}
+              {statusCell(tenant)}
+            </div>
+            {modulesCell(tenant)}
+            <p className="text-xs text-muted-foreground [overflow-wrap:anywhere]">
+              {t("admin.dashboard.taxId")}: {tenant.taxId}
+            </p>
+            {actionsCell(tenant)}
+          </>
+        )}
+      />
 
-      {!isLoading && !loadError && tenants.length === 0 ? (
-        <Card>
-          <CardHeader>
-            <CardTitle>{t("admin.dashboard.emptyTitle")}</CardTitle>
-            <CardDescription>
-              {t("admin.dashboard.emptyDescription")}
-            </CardDescription>
-          </CardHeader>
-        </Card>
-      ) : null}
+      <AlertDialog
+        open={tenantPendingDelete !== null}
+        onOpenChange={handleDeleteDialogOpenChange}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t("admin.dashboard.delete.title")}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t("admin.dashboard.delete.description")}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
 
-      {!isLoading && !loadError && tenants.length > 0 ? (
-        <div className="space-y-2 sm:max-w-sm">
-          <Label htmlFor="admin-tenant-search">{t("admin.dashboard.searchLabel")}</Label>
-          <div className="relative">
-            <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
-            <Input
-              id="admin-tenant-search"
-              type="search"
-              value={searchQuery}
-              onChange={(event) => setSearchQuery(event.target.value)}
-              placeholder={t("admin.dashboard.searchPlaceholder")}
-              className="min-h-11 pl-9"
-            />
-          </div>
-        </div>
-      ) : null}
+          {deleteError ? (
+            <p className="text-sm text-destructive" role="alert">
+              {deleteError}
+            </p>
+          ) : null}
 
-      {!isLoading && !loadError && tenants.length > 0 && filteredTenants.length === 0 ? (
-        <Card>
-          <CardHeader role="status">
-            <CardTitle>{t("admin.dashboard.searchEmptyTitle")}</CardTitle>
-            <CardDescription>
-              {t("admin.dashboard.searchEmptyDescription")}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Button type="button" variant="outline" className="min-h-11" onClick={() => setSearchQuery("")}>
-              {t("admin.dashboard.clearSearch")}
-            </Button>
-          </CardContent>
-        </Card>
-      ) : null}
-
-      {!isLoading && !loadError && filteredTenants.length > 0 ? (
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-          {filteredTenants.map((tenant) => (
-            <TenantAdminCard
-              key={tenant.id}
-              tenant={tenant}
-              moduleLabelKey={moduleLabelKey}
-              isDeleting={isDeleting && tenantPendingDelete?.id === tenant.id}
-              deleteError={
-                tenantPendingDelete?.id === tenant.id ? deleteError : null
-              }
-              isDeleteDialogOpen={tenantPendingDelete?.id === tenant.id}
-              onDeleteDialogOpenChange={(open) => {
-                handleDeleteDialogOpenChange(tenant, open)
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting} />
+            <Button
+              type="button"
+              variant="destructive"
+              disabled={isDeleting}
+              onClick={() => {
+                if (tenantPendingDelete) {
+                  void handleConfirmDelete(tenantPendingDelete)
+                }
               }}
-              onConfirmDelete={handleConfirmDelete}
-            />
-          ))}
-        </div>
-      ) : null}
-    </div>
+            >
+              {isDeleting
+                ? t("admin.dashboard.delete.deleting")
+                : t("admin.dashboard.delete.confirm")}
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </Page>
   )
 }

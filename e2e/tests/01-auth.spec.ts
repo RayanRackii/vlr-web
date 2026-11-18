@@ -50,7 +50,7 @@ test.describe("B2B UI session", () => {
     await page.goto("/dashboard")
     await expect(page).not.toHaveURL(/\/login/)
     await expect(
-      page.getByRole("heading", { name: /Centro de Comando/i }),
+      page.getByRole("heading", { name: /^In[ií]cio$/i }),
     ).toBeVisible({ timeout: 30_000 })
     guards.assertNoCrash()
   })

@@ -83,11 +83,12 @@
       "fila": "Fila",
       "regras": "Reglas",
       "precos": "Precios",
-      "publicacao": "Publicación"
+      "publicacao": "Publicación",
+      "arquivos": "Fotos y archivos"
     },
     "firstSteps": {
       "title": "Primeros pasos",
-      "description": "Lo que falta para la primera reserva. Cada sello se calcula ahora, sin progreso guardado.",
+      "description": "Lo que falta para la primera reserva.",
       "preview": "Ver como cliente",
       "company": "Datos de la empresa",
       "pricedOffer": "Oferta con precio que alcanza un recurso",
@@ -95,10 +96,12 @@
       "resource": "Recurso publicado",
       "admin": "Admin invitado",
       "previewItem": "Ver como cliente",
+      "remaining_one": "Falta {{count}} paso",
+      "remaining_other": "Faltan {{count}} pasos",
       "state": {
-        "published": "Publicado",
+        "published": "Hecho",
         "draft": "Borrador",
-        "missing": "Falta completar"
+        "missing": "Falta"
       },
       "detail": {
         "company": "Nombre y documento que aparecen en la página pública.",
@@ -163,7 +166,11 @@
   },
   "app": {
     "name": "Rolvix",
-    "authenticatedArea": "Zona autenticada"
+    "authenticatedArea": "Zona autenticada",
+    "errorBoundary": {
+      "title": "Algo salió mal en esta pantalla",
+      "home": "Volver al inicio"
+    }
   },
   "common": {
     "close": "Cerrar",
@@ -223,19 +230,20 @@
     "invalidResponse": "Respuesta inválida de la API.",
     "loadUsers": "No se pudieron cargar los usuarios.",
     "deleteUser": "No se pudo eliminar el usuario.",
-    "loadTenantUsers": "No se pudieron cargar los usuarios del cliente.",
+    "loadTenantUsers": "No se pudieron cargar los usuarios de la empresa.",
     "sendInvite": "No se pudo enviar la invitación.",
     "resendInvite": "No se pudo reenviar la invitación.",
     "revokeInvite": "No se pudo revocar la invitación.",
     "promoteUser": "No se pudo actualizar el rol del usuario.",
-    "loadTenant": "No se pudo cargar el cliente.",
-    "deleteTenant": "No se pudo eliminar el cliente.",
-    "enterTenant": "No se pudo abrir el entorno del cliente.",
-    "exitTenant": "No se pudo salir del entorno del cliente.",
-    "createTenant": "No se pudo crear el cliente.",
-    "updateTenant": "No se pudo actualizar el cliente.",
+    "loadTenant": "No se pudo cargar la empresa.",
+    "deleteTenant": "No se pudo eliminar la empresa.",
+    "enterTenant": "No se pudo abrir la empresa.",
+    "exitTenant": "No se pudo salir de la empresa.",
+    "createTenant": "No se pudo crear la empresa.",
+    "updateTenant": "No se pudo actualizar la empresa.",
     "loadReservations": "No se pudieron cargar las reservas.",
     "confirmReservation": "No se pudo confirmar la reserva.",
+    "createReservation": "No se pudo crear la reserva.",
     "cancelReservation": "No se pudo cancelar la reserva.",
     "completeReservation": "No se pudo completar la reserva.",
     "createOccupancyKind": "No se pudo crear el tipo de ocupación.",
@@ -247,6 +255,7 @@
     "seedTemplates": "No se pudo crear la grilla estándar.",
     "updateSchedulePolicy": "No se pudo actualizar la política de escala.",
     "applyDailyOccurrence": "No se pudo actualizar el horario de este día.",
+    "upsertSlot": "No se pudo guardar el horario.",
     "applyWeeklyRule": "No se pudo aplicar la regla semanal.",
     "noBookableKind": "No hay tipo reservable. Cree un tipo Abierto primero.",
     "register": "No se pudo completar el registro.",
@@ -262,7 +271,6 @@
     "updateMenuItem": "No se pudo actualizar el ítem de menú.",
     "deleteMenuItem": "No se pudo eliminar el ítem de menú.",
     "checkAvailability": "No se pudo verificar la disponibilidad.",
-    "createReservation": "No se pudo crear la reserva.",
     "loadScheduleDay": "No se pudo cargar la agenda del día.",
     "bookSlot": "No se pudo reservar el horario.",
     "loadBookingPolicy": "No se pudo cargar la política de reservas.",
@@ -317,7 +325,8 @@
     "loadTaxonomy": "No se pudieron cargar las categorías y etiquetas.",
     "saveTaxonomy": "No se pudieron guardar las categorías y etiquetas.",
     "deleteTaxonomy": "No se pudo eliminar la categoría o etiqueta.",
-    "loadCatalogAgenda": "No se pudo cargar la agenda."
+    "loadCatalogAgenda": "No se pudo cargar la agenda.",
+    "timeout": "La conexión tardó demasiado. Inténtalo de nuevo."
   },
   "trial": {
     "banner": {
@@ -413,18 +422,18 @@
         "accountMismatch": "La sesión actual es de otra cuenta. Entre con el correo de esta invitación para aceptar.",
         "identityConflict": "No se pudo confirmar la cuenta de esta invitación. No se cambió nada. Inténtelo de nuevo o hable con el soporte."
       },
-      "pickerSearch": "Buscar entorno por nombre o subdominio",
-      "pickerEmpty": "No hay entornos disponibles.",
-      "pickerNoResults": "No se encontraron entornos. Prueba otro nombre o subdominio.",
-      "pickerLoading": "Cargando tus entornos...",
+      "pickerSearch": "Buscar empresa por nombre o subdominio",
+      "pickerEmpty": "No hay empresas disponibles.",
+      "pickerNoResults": "No se encontraron empresas. Prueba otro nombre o subdominio.",
+      "pickerLoading": "Cargando tus empresas...",
       "passwordHint": "Usa al menos 8 caracteres.",
       "confirmPasswordHint": "Repite la nueva contraseña para confirmar.",
-      "pickerTitle": "Elija el ambiente",
-      "pickerBody": "Su cuenta participa de más de un ambiente. Elija cuál abrir ahora.",
+      "pickerTitle": "Elija la empresa",
+      "pickerBody": "Su cuenta participa de más de una empresa. Elija cuál abrir ahora.",
       "pickerSubmit": "Continuar",
       "pickerSubmitting": "Abriendo...",
-      "pickerError": "No se pudo cambiar de ambiente. Inténtelo de nuevo.",
-      "membershipError": "No se pudieron cargar sus ambientes. Inténtelo de nuevo.",
+      "pickerError": "No se pudo cambiar de empresa. Inténtelo de nuevo.",
+      "membershipError": "No se pudieron cargar sus empresas. Inténtelo de nuevo.",
       "membershipErrorHint": "Esto puede ser una falla temporal de conexión. Inténtelo de nuevo o cierre sesión y vuelva a entrar.",
       "membershipRetry": "Intentar de nuevo",
       "membershipSignOut": "Cerrar sesión"
@@ -1087,24 +1096,43 @@
     },
     "products": {
       "title": "Productos",
-      "subtitle": "Gestione los productos del catálogo de este ambiente.",
+      "subtitle": "Gestione los productos del catálogo de esta empresa.",
       "create": "Nuevo producto",
       "createTitle": "Nuevo producto",
       "editTitle": "Editar producto",
       "quickEdit": "Edición rápida",
+      "rowMenu": "Acciones de {{name}}",
+      "menuAccess": "Gestionar acceso",
+      "menuContinue": "Completar registro",
+      "menuEdit": "Editar producto",
+      "menuActivate": "Activar producto",
+      "menuDeactivate": "Desactivar producto",
+      "notReady": {
+        "message": "No se puede activar: falta {{items}}.",
+        "generic": "No se puede activar: el registro está incompleto.",
+        "NAME": "nombre",
+        "RESOURCE": "un recurso en la agenda",
+        "AUDIENCE": "quién puede verlo (clientes o grupos)",
+        "PRICE": "un precio mayor que cero"
+      },
+      "menuActivateHint": "Completa el registro para activar",
+      "statusIncomplete": "Configuración incompleta · faltan {{count}}",
+      "filterActive": "Activos",
+      "filterInactive": "Inactivos",
+      "filterIncomplete": "Incompletos",
+      "statusFilter": "Filtrar por estado",
+      "moreFilters": "Más filtros",
       "quickEditTitle": "Edición rápida",
       "quickEditDescription": "Cambie nombre, precio y estado. Para lo demás, abra la edición completa.",
       "createContinue": "Crear y continuar →",
       "tabs": {
         "dados": "Datos",
         "price": "Precio",
+        "agenda": "Agenda",
         "access": "Visibilidad y acceso",
         "history": "Historial"
       },
       "editor": {
-        "createStatusFailed": "Producto creado, pero sigue activo porque no se pudo desactivar. Inténtalo de nuevo para terminar.",
-        "accessSaveFailed": "No se pudo guardar el acceso. Inténtalo de nuevo.",
-        "breadcrumbRoot": "Catálogo",
         "notFound": "Producto no encontrado.",
         "back": "Volver a productos"
       },
@@ -1119,7 +1147,7 @@
       "invalidPrice": "Informe un precio válido o déjelo vacío.",
       "toastCreated": "Producto creado.",
       "toastUpdated": "Producto actualizado.",
-      "toastActivated": "Producto activado.",
+      "toastActivated": "Producto activo.",
       "toastDeactivated": "Producto desactivado.",
       "deactivateConfirmTitle": "¿Desactivar producto?",
       "deactivateConfirmBody": "{{name}} deja de aparecer en pedidos nuevos. Los pedidos ya hechos no cambian.",
@@ -1175,8 +1203,10 @@
         "extensionRequired": "{{name}} necesita una extensión.",
         "required": "Selecciona un archivo.",
         "whoSees": "Quién lo ve",
-        "customerShort": "Cliente",
-        "internalShort": "Interno"
+        "customerShort": "Aparece en el portal (fotos)",
+        "internalShort": "Uso interno (documentos)",
+        "deleteConfirmTitle": "¿Eliminar este archivo?",
+        "deleteConfirmBody": "{{name}} se quitará del producto. Esta acción no se puede deshacer."
       },
       "gallery": {
         "previous": "Imagen anterior",
@@ -1223,10 +1253,182 @@
       "badges": {
         "restricted": "Restringido · {{count}}"
       },
+      "filterAll": "Todos",
       "visibilityFilter": {
         "title": "Visibilidad",
         "public": "Público",
         "restricted": "Restringido"
+      },
+      "view": {
+        "title": "Detalles del producto",
+        "edit": "Editar producto",
+        "moreActions": "Más acciones",
+        "duplicate": "Duplicar producto",
+        "delete": "Eliminar producto",
+        "toastDuplicated": "Copia creada (sin fotos).",
+        "toastDeleted": "Producto eliminado.",
+        "deleteTitle": "¿Eliminar producto?",
+        "deleteBody": "{{name}} se eliminará de forma definitiva, con sus archivos, acceso y categorías. Esta acción no se puede deshacer.",
+        "deleteConfirm": "Eliminar",
+        "statusIncomplete": "Configuración incompleta",
+        "bannerInactive": "Este producto está inactivo: los clientes no lo ven.",
+        "bannerIncomplete": "El registro está incompleto: los clientes no pueden comprar este producto.",
+        "bannerMissing": "Falta: {{items}}.",
+        "completeSetup": "Completar registro",
+        "code": "Código interno: {{code}}",
+        "priceLabel": "Precio",
+        "onRequest": "A consultar",
+        "seeMore": "Ver más",
+        "seeLess": "Ver menos",
+        "usesAgenda": "Usa agenda",
+        "usesAgendaWith": "Usa agenda: {{resources}}",
+        "noAgenda": "Se vende sin agenda",
+        "seeAgenda": "Ver agenda",
+        "portalAvailable": "Disponible en el portal del cliente",
+        "portalRestricted": "Restringido a grupos y clientes habilitados",
+        "portalInactive": "Inactivo — los clientes no lo ven",
+        "gallery": {
+          "noPhoto": "Sin foto registrada",
+          "addPhotos": "Agregar fotos",
+          "photo": "Foto {{current}} de {{total}}",
+          "thumbnails": "Fotos del producto",
+          "mainImage": "Imagen principal",
+          "lightbox": "Foto ampliada de {{name}}"
+        },
+        "tabs": {
+          "overview": "Resumen",
+          "operation": "Operación",
+          "files": "Archivos",
+          "history": "Historial"
+        },
+        "overview": {
+          "about": "Sobre el producto",
+          "info": "Información del registro",
+          "code": "Código interno",
+          "category": "Categoría",
+          "tags": "Etiquetas",
+          "visibility": "Visibilidad",
+          "visibilityPublic": "Portal del cliente",
+          "visibilityRestricted": "Restringido",
+          "created": "Creado el",
+          "updated": "Actualizado el"
+        },
+        "operation": {
+          "agenda": "Agenda",
+          "noResources": "Ningún recurso vinculado.",
+          "notScheduled": "Este producto se vende sin agenda.",
+          "qty": "Cant. {{count}}",
+          "duration": "{{count}} min por unidad",
+          "prep": "Preparación {{count}} min",
+          "cleanup": "Limpieza {{count}} min",
+          "resourceCategory": "Categoría de recursos",
+          "queue": "Fila",
+          "access": "Reglas de acceso",
+          "accessPublic": "Público: todos los clientes ven este producto.",
+          "accessRestricted": "Restringido: solo los clientes habilitados ven este producto.",
+          "groups": "Grupos: {{names}}",
+          "customers_one": "{{count}} cliente habilitado",
+          "customers_other": "{{count}} clientes habilitados",
+          "unknownResource": "Recurso"
+        },
+        "files": {
+          "title": "Documentos internos",
+          "open": "Abrir"
+        },
+        "history": {
+          "title": "Historial",
+          "empty": "Ningún cambio registrado.",
+          "loadMore": "Cargar más",
+          "loadError": "No se pudo cargar el historial.",
+          "system": "Sistema",
+          "yes": "Sí",
+          "no": "No",
+          "meta": "{{actor}} · {{date}}",
+          "actions": {
+            "created": "Producto creado",
+            "activated": "Producto activado",
+            "deactivated": "Producto desactivado",
+            "deleted": "Producto eliminado",
+            "duplicated": "Producto duplicado",
+            "copyCreated": "Copia creada",
+            "copiedFrom": "Creado como copia de {{name}}",
+            "fileAdded": "Archivo agregado: {{name}}",
+            "fileRemoved": "Archivo quitado: {{name}}",
+            "requirementsChanged": "Recursos de la agenda cambiados",
+            "changed": "Producto cambiado",
+            "unknownField": "Registro cambiado"
+          },
+          "fields": {
+            "name": {
+              "changed": "Nombre cambiado de {{old}} a {{new}}",
+              "set": "Nombre definido como {{new}}",
+              "cleared": "Nombre quitado (era {{old}})"
+            },
+            "code": {
+              "changed": "Código cambiado de {{old}} a {{new}}",
+              "set": "Código definido como {{new}}",
+              "cleared": "Código quitado (era {{old}})"
+            },
+            "description": {
+              "text": "Descripción cambiada"
+            },
+            "price": {
+              "changed": "Precio cambiado de {{old}} a {{new}}",
+              "set": "Precio definido como {{new}}",
+              "cleared": "Precio quitado (era {{old}})"
+            },
+            "currency": {
+              "changed": "Moneda cambiada de {{old}} a {{new}}",
+              "set": "Moneda definida como {{new}}",
+              "cleared": "Moneda quitada (era {{old}})"
+            },
+            "usesSchedule": {
+              "changed": "Uso de la agenda cambiado de {{old}} a {{new}}",
+              "set": "Uso de la agenda definido como {{new}}",
+              "cleared": "Uso de la agenda quitado (era {{old}})"
+            },
+            "isActive": {
+              "changed": "Estado cambiado de {{old}} a {{new}}",
+              "set": "Estado definido como {{new}}",
+              "cleared": "Estado quitado (era {{old}})"
+            },
+            "categories": {
+              "changed": "Categorías cambiadas de {{old}} a {{new}}",
+              "set": "Categorías definidas como {{new}}",
+              "cleared": "Categorías quitadas (era {{old}})"
+            },
+            "tags": {
+              "changed": "Etiquetas cambiadas de {{old}} a {{new}}",
+              "set": "Etiquetas definidas como {{new}}",
+              "cleared": "Etiquetas quitadas (era {{old}})"
+            },
+            "visibility": {
+              "changed": "Visibilidad cambiada de {{old}} a {{new}}",
+              "set": "Visibilidad definida como {{new}}",
+              "cleared": "Visibilidad quitada (era {{old}})"
+            },
+            "accessCustomers": {
+              "changed": "Clientes habilitados cambiados de {{old}} a {{new}}",
+              "set": "Clientes habilitados definidos como {{new}}",
+              "cleared": "Clientes habilitados quitados (era {{old}})"
+            },
+            "accessGroups": {
+              "changed": "Grupos habilitados cambiados de {{old}} a {{new}}",
+              "set": "Grupos habilitados definidos como {{new}}",
+              "cleared": "Grupos habilitados quitados (era {{old}})"
+            },
+            "resourceRequirements": {
+              "changed": "Recursos de la agenda cambiados de {{old}} a {{new}}",
+              "set": "Recursos de la agenda definidos como {{new}}",
+              "cleared": "Recursos de la agenda quitados (era {{old}})"
+            }
+          }
+        },
+        "errors": {
+          "hasOrders": "Este producto tiene pedidos; desactívalo en lugar de eliminarlo.",
+          "duplicate": "No se pudo duplicar el producto.",
+          "delete": "No se pudo eliminar el producto."
+        }
       }
     },
     "customerGroups": {
@@ -1363,6 +1565,13 @@
       "total": "Total",
       "items": "Ítems",
       "timeline": "Historial",
+      "summary": "Resumen",
+      "moreActions": "Más acciones",
+      "progressLabel": "Progreso del pedido",
+      "resourceUsage": "Uso del recurso",
+      "openInAgenda": "Abrir en la agenda",
+      "customerLabel": "Cliente",
+      "estimatedReady": "Finalización estimada",
       "customerNote": "Nota del cliente",
       "rejectedReason": "Motivo del rechazo",
       "cancelledReason": "Motivo de la cancelación",
@@ -1536,6 +1745,11 @@
       }
     },
     "policy": {
+      "generalTitle": "Reglas de cancelación",
+      "ordersBefore": "Los clientes pueden cancelar pedidos hasta el estado",
+      "requestsBefore": "Los clientes pueden cancelar solicitudes mientras estén",
+      "notAllowed": "no permitir",
+      "addText": "Añadir texto de cancelación",
       "title": "Ventas",
       "description": "Define cuándo los clientes pueden cancelar pedidos y solicitudes en este catálogo.",
       "ordersEnabled": "Los clientes pueden cancelar pedidos",
@@ -1552,22 +1766,19 @@
     },
     "resourcePlanning": {
       "title": "Recursos necesarios",
-      "description": "Define qué recursos específicos consume este producto al producirse, y por cuánto tiempo.",
       "loading": "Cargando recursos...",
-      "emptyState": "No requiere programación",
       "addRequirement": "Agregar recurso",
       "save": "Guardar recursos",
       "saveErrorTitle": "No se pudo guardar",
       "toastSaved": "Recursos guardados correctamente.",
-      "requirementLabel": "Recurso {{index}}",
-      "calculationHint": "Cada unidad ocupa el recurso durante {{duration}} min, además de la preparación y limpieza.",
       "fields": {
         "resource": "Recurso",
-        "resourcePlaceholder": "Selecciona un recurso",
         "resourceQuantity": "Cantidad",
-        "durationMinutesPerUnit": "Duración por unidad (min)",
-        "prepMinutes": "Preparación (min)",
-        "cleanupMinutes": "Limpieza (min)"
+        "durationMinutesPerUnit": "Duración por unidad",
+        "prepMinutes": "Preparación",
+        "cleanupMinutes": "Limpieza",
+        "unitSuffix": "un.",
+        "minuteSuffix": "min"
       },
       "errors": {
         "loadRequirements": "No se pudieron cargar los recursos de este producto.",
@@ -1636,6 +1847,47 @@
           "Blocked": "Bloqueado",
           "Cancelled": "Cancelado"
         }
+      },
+      "subtitleEmpty": "Agrega los equipos o espacios que usa este producto.",
+      "subtitleCount_one": "{{count}} recurso configurado para este producto.",
+      "subtitleCount_other": "{{count}} recursos configurados para este producto.",
+      "breakdown": "{{prep}} min de preparación + {{duration}} min de uso + {{cleanup}} min de limpieza",
+      "empty": {
+        "title": "¿Qué recursos necesita este producto?",
+        "description": "Elige un recurso y configura la cantidad y los tiempos de ocupación.",
+        "action": "Seleccionar recurso"
+      },
+      "dialog": {
+        "addTitle": "Agregar recurso",
+        "editTitle": "Editar recurso",
+        "description": "Selecciona un recurso y configura cómo será ocupado.",
+        "searchLabel": "Buscar recurso",
+        "typeFilter": "Filtrar por tipo",
+        "allTypes": "Todos los tipos",
+        "count_one": "{{count}} recurso",
+        "count_other": "{{count}} recursos",
+        "noMatches": "No se encontraron recursos.",
+        "alreadyAdded": "Ya agregado",
+        "pickPrompt": "Selecciona un recurso para configurar la cantidad y los tiempos.",
+        "selectedHint": "Define la cantidad y los tiempos para este producto.",
+        "summaryTotal": "{{total}} min de ocupación por unidad",
+        "note": "El recurso solo se incluirá al confirmar abajo.",
+        "selectedCount_one": "{{count}} recurso seleccionado",
+        "selectedCount_other": "{{count}} recursos seleccionados",
+        "noneSelected": "Ningún recurso seleccionado",
+        "confirmAdd": "Agregar recurso",
+        "confirmEdit": "Guardar cambios"
+      },
+      "card": {
+        "units_one": "{{count}} unidad",
+        "units_other": "{{count}} unidades",
+        "minutes": "{{count}} min",
+        "occupancy": "Ocupación por unidad: {{total}} min",
+        "remove": "Quitar {{name}}"
+      },
+      "info": {
+        "title": "El tiempo va más allá de la atención",
+        "body": "Incluye preparación y limpieza para reservar el intervalo necesario antes y después del uso del recurso."
       }
     },
     "agenda": {
@@ -1709,6 +1961,7 @@
       "subtitle": "{{date}} · recursos y productos",
       "viewAll": "Ver agenda",
       "rowLink": "Ver agenda",
+      "rowLinkOrder": "Ver pedido",
       "seeAll": "Ver todos",
       "empty": "Nada agendado para hoy.",
       "reserved": "Reservado",
@@ -1723,20 +1976,29 @@
         "inUse": "Ahora: {{ref}} · hasta {{time}}",
         "prep": "Preparación: {{ref}} · inicio {{time}}",
         "cleaning": "Limpieza: {{ref}} · hasta {{time}}",
-        "overdue": "Atraso {{minutes}} min",
+        "overdue": "Atrasado hace {{duration}}",
+        "overdueOrder": "Inicio del pedido {{ref}} · atrasado hace {{duration}}",
         "freeNext": "Próximo: {{ref}} · {{time}}",
         "freeNone": "Sin uso hoy"
       }
     }
   },
+  "lateDuration": {
+    "days_one": "{{count}} día",
+    "days_other": "{{count}} días",
+    "hours_one": "{{count}} h",
+    "hours_other": "{{count}} h",
+    "minutes_one": "{{count}} min",
+    "minutes_other": "{{count}} min"
+  },
   "notifications": {
     "settings": {
       "title": "Notificaciones",
-      "subtitle": "Elija los canales de aviso por evento. Solo aparecen los módulos activos de este entorno.",
-      "subtitleBoth": "Canales de aviso y el historial de entregas de este entorno.",
+      "subtitle": "Elija los canales de aviso por evento. Solo aparecen los módulos activos de esta empresa.",
+      "subtitleBoth": "Canales de aviso y el historial de entregas de esta empresa.",
       "deliveries": "Entregas",
       "emailDefault": "Las notificaciones por correo para los clientes empiezan activadas en organizaciones nuevas. Puede desactivarlas aquí.",
-      "empty": "Ningún módulo con notificaciones está activo en este entorno.",
+      "empty": "Ningún módulo con notificaciones está activo en esta empresa.",
       "inAppAlwaysOn": "En la app siempre activo",
       "channelUnavailable": "No disponible",
       "toggleChannel": "Activar {{channel}} para {{event}}",
@@ -1749,7 +2011,10 @@
     },
     "page": {
       "subtitle": "Defina por dónde se envía cada aviso y siga las entregas.",
-      "tabs": { "channels": "Canales", "history": "Historial" },
+      "tabs": {
+        "channels": "Canales",
+        "history": "Historial"
+      },
       "channelsTitle": "Canales por evento",
       "channelsSubtitle": "Marque los canales que avisan a clientes y al equipo en cada evento.",
       "historyTitle": "Historial de entregas",
@@ -1763,7 +2028,7 @@
       "all": "Todos",
       "clear": "Limpiar búsqueda y filtros",
       "emptyChannelsTitle": "Ningún canal para configurar",
-      "emptyChannels": "Ningún módulo con avisos está activo en este entorno.",
+      "emptyChannels": "Ningún módulo con avisos está activo en esta empresa.",
       "emptyHistoryTitle": "Todavía no hay entregas",
       "emptyHistory": "Los avisos enviados aparecen aquí, con el canal y el resultado.",
       "noResultsTitle": "Ninguna entrega encontrada",
@@ -1771,7 +2036,10 @@
       "showing": "Mostrando {{shown}} de {{total}}",
       "previous": "Página anterior",
       "next": "Página siguiente",
-      "modules": { "catalog": "Pedidos", "rentals": "Reservas" }
+      "modules": {
+        "catalog": "Pedidos",
+        "rentals": "Reservas"
+      }
     },
     "inbox": {
       "items": {
@@ -2029,7 +2297,7 @@
       "pillars": {
         "isolation": {
           "title": "Sus datos, solo suyos",
-          "body": "Cada cliente opera en un espacio aislado. Ningún otro tenant ve lo que es de su operación."
+          "body": "Cada cliente opera en un espacio aislado. Ninguna otra empresa ve lo que es de su operación."
         },
         "modular": {
           "title": "Crece a su ritmo",
@@ -2108,7 +2376,11 @@
     }
   },
   "grupos": {
-    "eyebrow": "Clientes",
+    "colGroup": "Grupo",
+    "colMembers": "Miembros",
+    "colProducts": "Productos",
+    "colActions": "Acciones",
+    "rowMenu": "Acciones de {{name}}",
     "title": "Grupos de clientes",
     "subtitle": "Agrupe clientes para liberar productos y condiciones exclusivas.",
     "create": "Nuevo grupo",
@@ -2135,6 +2407,7 @@
     "name": "Nombre",
     "namePlaceholder": "Ej.: Clientes frecuentes",
     "nameHelp": "Aparece para el equipo al liberar productos.",
+    "sectionDetails": "Datos del grupo",
     "nameRequired": "Indique el nombre del grupo.",
     "description": "Descripción",
     "descriptionPlaceholder": "Para qué sirve este grupo",
@@ -2191,13 +2464,15 @@
     "notifications": "Notificaciones",
     "peopleAccess": "Personas y acceso",
     "admin": "Super-Admin",
-    "adminTenants": "Clientes",
+    "adminTenants": "Empresas",
     "adminUsers": "Usuarios",
     "adminAssetFamilies": "Familias",
     "menu": "Menú de navegación",
     "openMenu": "Abrir menú de navegación",
     "loading": "Cargando menú de navegación",
     "collapseMenu": "Contraer menú",
+    "workspaceCaption": "Tu espacio de trabajo",
+    "platformWorkspace": "Plataforma Rolvix",
     "expandMenu": "Expandir menú",
     "sections": {
       "settings": "Configuración",
@@ -2271,10 +2546,10 @@
         "how3": "Los planes se relacionan con los equipos y las órdenes de trabajo de Mantenimiento."
       },
       "platform": {
-        "summary": "Administra los entornos de clientes y los registros compartidos de la plataforma.",
-        "how1": "Consulta los clientes y abre el entorno que necesitas administrar.",
+        "summary": "Administra las empresas y los registros compartidos de la plataforma.",
+        "how1": "Consulta las empresas y abre la que necesitas administrar.",
         "how2": "Gestiona los usuarios de la plataforma y las familias de equipos en las pantallas disponibles.",
-        "how3": "Dentro de un entorno, el menú muestra las áreas disponibles para ese cliente."
+        "how3": "Dentro de una empresa, el menú muestra las áreas disponibles para esa empresa."
       }
     }
   },
@@ -2856,7 +3131,7 @@
           "title": "Gestiona usuarios y familias"
         },
         "learn3": {
-          "title": "Explora el menú del entorno"
+          "title": "Explora el menú de la empresa"
         }
       },
       "visit": {
@@ -2876,7 +3151,7 @@
     "emptyTags": "Aún no hay etiquetas.",
     "emptyTagsHint": "Usa etiquetas para identificar y encontrar elementos fácilmente.",
     "title": "Categorías y etiquetas",
-    "sharedHint": "Estas definiciones se comparten con todos los consumidores de este tenant.",
+    "sharedHint": "Estas definiciones se comparten con todos los consumidores de esta empresa.",
     "categories": "Categorías",
     "tags": "Etiquetas",
     "newCategory": "Nueva categoría",
@@ -2906,7 +3181,8 @@
   "theme": {
     "toggle": "Cambiar tema",
     "light": "Claro",
-    "dark": "Oscuro"
+    "dark": "Oscuro",
+    "system": "Sistema"
   },
   "language": {
     "label": "Idioma",
@@ -2916,8 +3192,8 @@
   },
   "pages": {
     "dashboard": {
-      "title": "Centro de Comando",
-      "description": "Indicadores según los módulos y familias activos en este entorno."
+      "title": "Inicio",
+      "description": "Lo que está pasando hoy."
     },
     "assets": {
       "title": "Módulo de Activos",
@@ -2947,15 +3223,15 @@
     },
     "limitedTitle": "Información disponible para tu perfil",
     "readOnlyNotice": "Puedes consultar tus datos en modo de solo lectura. El período de prueba terminó. Para seguir usando la plataforma, elige una suscripción antes de la eliminación de los datos en {{days}} día(s).",
-    "limitedNotice": "Tu acceso permite consultar la información disponible para tu perfil. Para solicitar más acceso, contacta a la persona responsable de este entorno.",
-    "emptyDescription": "Los indicadores aparecerán aquí a medida que haya actividad en este entorno.",
+    "limitedNotice": "Tu acceso permite consultar la información disponible para tu perfil. Para solicitar más acceso, contacta a la persona responsable de esta empresa.",
+    "emptyDescription": "Los indicadores aparecerán aquí a medida que haya actividad en esta empresa.",
     "unavailable": "Los indicadores no están disponibles en este momento.",
     "workOrdersEmpty": "No hay órdenes de servicio para mostrar en este período.",
     "viewOrders": "Ver órdenes de servicio",
     "clientEmptyHint": "Las nuevas actividades vinculadas a tu perfil aparecerán aquí.",
     "ordersEmptyHint": "Puedes consultar la lista de órdenes de servicio para seguir otras actividades.",
-    "title": "Centro de Comando",
-    "description": "Indicadores según los módulos y familias activos en este entorno.",
+    "title": "Inicio",
+    "description": "Lo que está pasando hoy.",
     "emptyModules": "Ningún módulo operativo activo además del portal de clientes.",
     "rentalsReadiness": {
       "title": "Configure Alquileres",
@@ -2983,7 +3259,7 @@
     "sections": {
       "customers": {
         "title": "Clientes del portal",
-        "description": "Inicios de sesión en el portal de clientes de este entorno."
+        "description": "Inicios de sesión en el portal de clientes de esta empresa."
       },
       "assets": {
         "title": "Recursos",
@@ -3021,7 +3297,7 @@
       },
       "totalCustomers": {
         "title": "Clientes registrados",
-        "subtitle": "Total en el portal de este tenant"
+        "subtitle": "Total en el portal de esta empresa"
       },
       "totalAssets": {
         "title": "Total de recursos",
@@ -3046,6 +3322,10 @@
       "completionRate": {
         "title": "Tasa de conclusión",
         "subtitle": "Completadas sobre el total del mes"
+      },
+      "openDueWorkOrders": {
+        "title": "OT abiertas hasta hoy",
+        "subtitle": "Pendientes y en curso con fecha hasta hoy"
       },
       "pendingWorkOrders": {
         "title": "OT pendientes",
@@ -3121,7 +3401,7 @@
       },
       "families": {
         "title": "Por familia",
-        "description": "Conteo en las familias activas del tenant.",
+        "description": "Conteo en las familias activas de la empresa.",
         "empty": "Ninguna familia activa."
       }
     },
@@ -3197,6 +3477,12 @@
       "permanentSuccess": "Elemento eliminado permanentemente."
     },
     "resourceTypes": {
+      "colType": "Tipo",
+      "colCapabilities": "Capacidades",
+      "colResources": "Recursos",
+      "colActions": "Acciones",
+      "rowMenu": "Acciones de {{name}}",
+      "all": "Todos",
       "title": "Tipos de recurso",
       "subtitle": "Familias de lo que su empresa reserva. El comportamiento viene de las capacidades, no del nombre.",
       "search": "Buscar tipo",
@@ -3278,7 +3564,10 @@
         "cancel": "Cancelar",
         "edit": "Editar"
       },
-      "errors": { "load": "No se pudieron cargar los tipos de recurso.", "save": "No se pudo guardar el tipo de recurso." }
+      "errors": {
+        "load": "No se pudieron cargar los tipos de recurso.",
+        "save": "No se pudo guardar el tipo de recurso."
+      }
     },
     "categories": {
       "title": {
@@ -3425,7 +3714,11 @@
         "category": "Tipo",
         "tag": "Tag",
         "location": "Ubicación",
-        "placeholder": "Filtrar..."
+        "placeholder": "Filtrar...",
+        "label": "Filtros de activos",
+        "searchLabel": "Buscar activos",
+        "searchPlaceholder": "Buscar por nombre o tag",
+        "all": "Todos"
       },
       "actions": {
         "add": "Agregar",
@@ -3734,6 +4027,87 @@
       "intervalInvalid": "Indique un intervalo entero entre 1 y 3650 días.",
       "firstDueRequired": "Indique el primer vencimiento."
     },
+    "taskInputTypes": {
+      "Checkbox": "Sí/No",
+      "Text": "Texto",
+      "Number": "Número",
+      "Image": "Foto",
+      "SingleChoice": "Elección única"
+    },
+    "newPlan": {
+      "choose": {
+        "title": "¿Cómo quiere empezar?",
+        "library": {
+          "title": "Usar un modelo de la Biblioteca (recomendado)",
+          "description": "Modelos PMOC listos, con checklist y frecuencia ya definidos."
+        },
+        "blank": {
+          "title": "Empezar en blanco",
+          "description": "Arme el plan y el checklist desde cero."
+        }
+      },
+      "form": {
+        "addDescription": "Añadir descripción",
+        "frequency": "Frecuencia",
+        "presets": {
+          "monthly": "Mensual",
+          "quarterly": "Trimestral",
+          "semiannual": "Semestral",
+          "annual": "Anual",
+          "custom": "Personalizado"
+        },
+        "customDays": "Intervalo en días",
+        "appliesTo": "Aplicar a",
+        "categorySearch": "Buscar categoría",
+        "categoryNone": "No se encontró ninguna categoría",
+        "specificAsset": "O elegir un equipo específico",
+        "backToCategory": "Aplicar a una categoría",
+        "assetPlaceholder": "Seleccione el equipo",
+        "assetSearch": "Buscar equipo",
+        "assetNone": "No se encontró ningún equipo",
+        "appliesHelp": "El plan vale para todos los equipos de la categoría en la unidad.",
+        "assetHelp": "El plan vale solo para este equipo."
+      },
+      "scheduleHelper": "Tras cada OT completada, el próximo vencimiento cuenta desde la finalización real."
+    },
+    "planDetail": {
+      "badges": {
+        "automatic": "Automático",
+        "origin": {
+          "Custom": "Personalizado",
+          "RolvixTemplate": "Biblioteca"
+        }
+      },
+      "actions": {
+        "activate": "Activar plan",
+        "enableAuto": "Activar generación automática",
+        "disableAuto": "Desactivar generación automática",
+        "more": "Más acciones",
+        "save": "Guardar cambios"
+      },
+      "toast": {
+        "saved": "Plan guardado."
+      },
+      "errors": {
+        "partialSave": "Los datos del plan se guardaron, pero el checklist no. Intente guardar de nuevo."
+      },
+      "coverage": {
+        "overdue_zero": "Ningún equipo atrasado",
+        "overdue_one": "{{count}} equipo atrasado",
+        "overdue_other": "{{count}} equipos atrasados",
+        "dueToday_zero": "0 vencen hoy",
+        "dueToday_one": "{{count}} vence hoy",
+        "dueToday_other": "{{count}} vencen hoy",
+        "inactive": "Plan inactivo: no genera OT automáticamente.",
+        "columns": {
+          "asset": "Equipo",
+          "last": "Último mantenimiento",
+          "nextDue": "Próximo vencimiento",
+          "status": "Situación",
+          "openOrder": "OT abierta"
+        }
+      }
+    },
     "inputType": {
       "Checkbox": "Checkbox",
       "Text": "Texto",
@@ -3865,8 +4239,14 @@
       }
     },
     "library": {
+      "colModel": "Modelo",
+      "colVersion": "Versión",
+      "colCategory": "Categoría",
+      "colTasks": "Tareas",
+      "colActions": "Acciones",
+      "tasksCount": "{{count}} tareas",
       "title": "Biblioteca Rolvix",
-      "description": "Modelos estándar de la plataforma. Clónelos en su tenant y personalice el checklist.",
+      "description": "Modelos estándar de la plataforma. Clónelos en su empresa y personalice el checklist.",
       "loading": "Cargando biblioteca...",
       "empty": "No hay modelos publicados en este momento.",
       "version": "Versión {{version}}",
@@ -3977,6 +4357,15 @@
     }
   },
   "workOrders": {
+    "cancel": {
+      "action": "Cancelar OT",
+      "title": "¿Cancelar esta OT?",
+      "description": "Queda en el historial como cancelada y el equipo vuelve a aparecer como \"Necesita OT\" en el plan.",
+      "back": "Volver",
+      "success": "OT cancelada",
+      "open": "Abrir OT",
+      "menu": "Acciones de la OT de {{name}}"
+    },
     "viewOpen": "Ver OT abiertas",
     "title": "Órdenes de Trabajo",
     "description": "Ejecute checklists en campo y siga el estado de cada OT.",
@@ -4037,25 +4426,52 @@
         "notes": "Observaciones",
         "notesPlaceholder": "Contexto adicional para la ejecución"
       },
+      "sections": {
+        "details": "Datos de la OT"
+      },
+      "mode": {
+        "label": "Checklist de la OT",
+        "plan": "Usar checklist de un plan",
+        "adhoc": "Suelta"
+      },
+      "plan": {
+        "label": "Plan de mantenimiento",
+        "placeholder": "Seleccione un plan",
+        "hint": "Las tareas del plan se convierten en el checklist de la OT.",
+        "noTasks": "Este plan no tiene tareas."
+      },
+      "checklist": {
+        "title": "Tareas",
+        "taskN": "Tarea {{n}}",
+        "taskPlaceholder": "Ej.: Inspeccionar el equipo",
+        "mandatory": "Obligatoria",
+        "add": "Añadir tarea",
+        "remove": "Quitar tarea {{n}}",
+        "moveUp": "Subir tarea {{n}}",
+        "moveDown": "Bajar tarea {{n}}"
+      },
       "validation": {
         "assetRequired": "Seleccione un activo.",
         "dateRequired": "Informe la fecha programada.",
-        "taskRequired": "Informe al menos una tarea."
+        "taskRequired": "Informe al menos una tarea.",
+        "planRequired": "Seleccione un plan."
       },
       "errors": {
         "loadLookupsFailed": "No se pudieron cargar los activos y técnicos.",
         "createFailed": "No se pudo crear la orden de trabajo."
       },
       "emptyAssetsTitle": "Ningún recurso disponible",
-      "emptyAssetsDescription": "No hay recursos para abrir una orden de trabajo. Los recursos de este entorno vienen del aprovisionamiento (Super-Admin).",
+      "emptyAssetsDescription": "No hay recursos para abrir una orden de trabajo. Los recursos de esta empresa vienen del aprovisionamiento (Super-Admin).",
       "success": "Orden de trabajo creada correctamente.",
       "submit": "Crear OT",
       "redirecting": "OT creada"
     },
     "execution": {
-      "breadcrumb": "OT {{id}} · {{asset}}",
+      "breadcrumb": "{{title}}",
+      "numberPrefix": "OT",
       "title": "Ejecución de OT",
-      "subtitle": "Activo {{tag}} — {{name}}",
+      "subtitle": "{{tag}} · {{code}}",
+      "details": "Detalles de la OT",
       "loading": "Cargando OT...",
       "back": "Volver a la lista",
       "tasksTitle": "Checklist",
@@ -4092,6 +4508,9 @@
       "startedSuccess": "OT iniciada con éxito.",
       "completedSuccess": "OT finalizada con éxito.",
       "mandatoryIncomplete": "Complete las tareas obligatorias: {{tasks}}",
+      "assigneeNoTechniciansLinked": "Nadie puede ser técnico todavía. Dé a alguien el permiso de ejecutar OS en <link>Personas y acceso</link>.",
+      "assigneeNoTechniciansPlain": "Nadie puede ser técnico todavía. Dé a alguien el permiso de ejecutar OS en Personas y acceso.",
+      "moreActions": "Más acciones de la OS",
       "mandatoryIncompleteTitle": "Complete las tareas obligatorias antes de finalizar:",
       "save": {
         "saving": "guardando",
@@ -4105,6 +4524,8 @@
       "loadOneFailed": "No se pudo cargar la orden de trabajo.",
       "invalidResponse": "Respuesta inválida de la API.",
       "updateTaskFailed": "No se pudo guardar la respuesta de la tarea.",
+      "cancelFailed": "No se pudo cancelar la OT.",
+      "cancelNotAllowed": "Esta OT ya no se puede cancelar.",
       "updateStatusFailed": "No se pudo actualizar el estado de la OT.",
       "mandatoryTasksIncomplete": "Hay tareas obligatorias incompletas.",
       "mandatoryTasksIncompleteList": "Hay tareas obligatorias incompletas: {{tasks}}",
@@ -4158,12 +4579,12 @@
     "dashboard": "Volver al panel",
     "login": "Ir al inicio de sesión",
     "title": "Página no encontrada",
-    "description": "Esta dirección no existe en este entorno.",
+    "description": "Esta dirección no existe en esta empresa.",
     "home": "Ir al inicio"
   },
   "staffProfile": {
     "title": "Mi perfil",
-    "description": "Sus datos de acceso en este entorno.",
+    "description": "Sus datos de acceso en esta empresa.",
     "name": "Nombre",
     "email": "Correo",
     "roles": "Funciones"
@@ -4171,11 +4592,11 @@
   "rbac": {
     "errors": {
       "PRIVILEGE_ESCALATION_BLOCKED": "No puede asignar un perfil de acceso con más permisos que los suyos.",
-      "LAST_ADMIN_PROTECTED": "No se puede quitar al último administrador activo de este entorno.",
+      "LAST_ADMIN_PROTECTED": "No se puede quitar al último administrador activo de esta empresa.",
       "ROLE_IN_USE": "Esta función está en uso y no se puede eliminar.",
       "CANNOT_MODIFY_SYSTEM_ROLE": "Las funciones de sistema no se pueden renombrar ni reducir de esta forma.",
       "CANNOT_DELETE_SYSTEM_ROLE": "Las funciones de sistema no se pueden eliminar.",
-      "CANNOT_ASSIGN_SUPERADMIN": "No se puede asignar la función SuperAdmin en este entorno.",
+      "CANNOT_ASSIGN_SUPERADMIN": "No se puede asignar la función SuperAdmin en esta empresa.",
       "FORBIDDEN": "No tiene permiso para esta acción."
     }
   },
@@ -4188,12 +4609,12 @@
       "actions": "Acciones"
     },
     "roleSummary": {
-      "description": "Quién puede hacer qué en este entorno.",
+      "description": "Quién puede hacer qué en esta empresa.",
       "permissions_one": "{{count}} permiso",
       "permissions_other": "{{count}} permisos"
     },
     "title": "Personas y acceso",
-    "description": "Gestione usuarios del entorno y los perfiles de acceso.",
+    "description": "Gestione usuarios de la empresa y los perfiles de acceso.",
     "tabs": {
       "users": "Equipo",
       "customers": "Clientes del portal",
@@ -4317,11 +4738,12 @@
       "email": "E-mail",
       "sendInvite": "Enviar invitación",
       "assign": "Asignar funciones",
+      "rowMenu": "Acciones de {{name}}",
       "assignTitle": "Asignar funciones",
       "assignDescription": "Defina las funciones de {{name}}.",
       "saveRoles": "Guardar funciones",
-      "empty": "Ningún usuario en este entorno.",
-      "emptyDescription": "Invita a una persona para comenzar a configurar los accesos de este entorno.",
+      "empty": "Ningún usuario en esta empresa.",
+      "emptyDescription": "Invita a una persona para comenzar a configurar los accesos de esta empresa.",
       "noRoles": "Ninguna función asignada",
       "searchLabel": "Buscar en el equipo",
       "searchPlaceholder": "Nombre o e-mail",
@@ -4331,8 +4753,8 @@
     "customers": {
       "customerCount_one": "{{count}} cliente del portal",
       "customerCount_other": "{{count}} clientes del portal",
-      "description": "Clientes que entran por el portal de este entorno.",
-      "empty": "Ningún cliente en este entorno.",
+      "description": "Clientes que entran por el portal de esta empresa.",
+      "empty": "Ningún cliente en esta empresa.",
       "emptyDescription": "Cuando alguien cree una cuenta en el portal, aparece aquí.",
       "verified": "Verificado",
       "unverified": "No verificado",
@@ -4367,17 +4789,17 @@
       "deleteRole": "Solo si no está asignada a nadie"
     },
     "roles": {
-      "description": "Funciones de sistema y perfiles personalizados de este entorno.",
+      "description": "Funciones de sistema y perfiles personalizados de esta empresa.",
       "create": "Nueva función",
       "createTitle": "Nueva función",
       "editTitle": "Perfil de acceso",
       "editorDescription": "Defina el nombre y los permisos de esta función.",
-      "adminReadonly": "La función Admin del sistema es de solo lectura. Los permisos siguen el catálogo del tenant.",
+      "adminReadonly": "La función Admin del sistema es de solo lectura. Los permisos siguen el catálogo de la empresa.",
       "descriptionLabel": "Descripción",
       "view": "Ver permisos",
       "save": "Guardar",
       "empty": "Ninguna función visible.",
-      "emptyDescription": "Cree una función personalizada para organizar los accesos de este entorno.",
+      "emptyDescription": "Cree una función personalizada para organizar los accesos de esta empresa.",
       "deleteTitle": "Eliminar función",
       "deleteDescription": "¿Eliminar la función {{name}}? Solo es posible si nadie la tiene asignada."
     },
@@ -4532,7 +4954,7 @@
       },
       "exploreTitle": "Explorar otros módulos",
       "exploreDescription": "Vea lo que la plataforma ofrece para el portal del cliente y para la operación interna.",
-      "exploreAllActive": "Todos los módulos de la plataforma ya están activos en este entorno.",
+      "exploreAllActive": "Todos los módulos de la plataforma ya están activos en esta empresa.",
       "categoryCustomer": "Para sus clientes",
       "categoryOperations": "Para su operación",
       "stateActive": "Activo",
@@ -4540,9 +4962,9 @@
       "exploreDescriptions": {
         "Catalog": "Muestre productos y reciba solicitudes de sus clientes en el portal.",
         "Rentals": "Gestione recursos reservables y horarios.",
-        "PMOC": "Utiliza los recursos registrados en el entorno.",
+        "PMOC": "Utiliza los recursos registrados en la empresa.",
         "Inventory": "Registre y controle activos y recursos de la operación.",
-        "OS": "Permite vincular servicios a los recursos del entorno."
+        "OS": "Permite vincular servicios a los recursos de la empresa."
       },
       "noEligibleFunctionality": "No hay otras funcionalidades activas disponibles.",
       "catalogAutoNav": "El módulo añade automáticamente:",
@@ -4553,72 +4975,83 @@
     },
     "dashboard": {
       "title": "Panel Super-Admin",
-      "description": "Administre clientes (tenants), subdominios y módulos contratados.",
-      "newClient": "Nuevo Cliente",
+      "description": "Administre empresas clientes, subdominios y módulos contratados.",
+      "newClient": "Nueva Empresa",
       "statusActive": "Activo",
       "statusInactive": "Inactivo",
       "taxId": "Documento",
       "noSubdomain": "Sin subdominio",
       "noModules": "Sin módulos activos",
-      "emptyTitle": "Aún no hay clientes",
-      "emptyDescription": "Registre el primer tenant con el asistente de onboarding.",
-      "searchLabel": "Buscar clientes",
+      "emptyTitle": "Aún no hay empresas",
+      "emptyDescription": "Registre la primera empresa con el asistente de onboarding.",
+      "searchLabel": "Buscar empresas",
       "clearSearch": "Borrar búsqueda",
       "searchPlaceholder": "Buscar por nombre o subdominio...",
-      "searchEmptyTitle": "No se encontraron clientes",
+      "searchEmptyTitle": "No se encontraron empresas",
       "searchEmptyDescription": "Ajuste la búsqueda por nombre o subdominio.",
+      "filterAll": "Todos",
+      "columns": {
+        "client": "Empresa",
+        "modules": "Módulos",
+        "status": "Estado",
+        "actions": "Acciones"
+      },
       "metrics": {
-        "totalTenants": "Total de tenants",
-        "activeTenants": "Tenants activos",
+        "totalTenants": "Total de empresas",
+        "activeTenants": "Empresas activas",
         "estimatedRevenue": "Ingresos mensuales estimados"
       },
       "actions": {
-        "edit": "Editar cliente",
-        "delete": "Eliminar cliente",
+        "edit": "Editar empresa",
+        "delete": "Eliminar empresa",
         "openEnvironment": "Entrar",
-        "visualResources": "Recursos visuales"
+        "visualResources": "Recursos visuales",
+        "copyUrl": "Copiar URL",
+        "copyUrlDone": "URL copiada.",
+        "copyUrlFailed": "No se pudo copiar la URL.",
+        "rowMenu": "Acciones para {{name}}"
       },
       "delete": {
-        "title": "Eliminar cliente",
+        "title": "Eliminar empresa",
         "description": "¿Está seguro? Esta acción es irreversible y eliminará la empresa con todas las unidades, roles, usuarios y datos operativos vinculados.",
         "confirm": "Continuar",
         "deleting": "Eliminando...",
-        "success": "Cliente eliminado con éxito.",
-        "failed": "No se pudo eliminar el cliente.",
+        "success": "Empresa eliminada con éxito.",
+        "failed": "No se pudo eliminar la empresa.",
         "errors": {
-          "hasUsers": "No se puede eliminar: este cliente aún tiene usuarios.",
-          "hasUnits": "No se puede eliminar: este cliente aún tiene unidades.",
-          "hasRoles": "No se puede eliminar: este cliente aún tiene roles.",
-          "linkedData": "No se puede eliminar: este cliente aún tiene datos vinculados.",
-          "notFound": "Cliente no encontrado."
+          "hasUsers": "No se puede eliminar: esta empresa aún tiene usuarios.",
+          "hasUnits": "No se puede eliminar: esta empresa aún tiene unidades.",
+          "hasRoles": "No se puede eliminar: esta empresa aún tiene roles.",
+          "linkedData": "No se puede eliminar: esta empresa aún tiene datos vinculados.",
+          "notFound": "Empresa no encontrada."
         }
       }
     },
     "edit": {
-      "title": "Editar cliente",
+      "title": "Editar empresa",
       "description": "Actualice los datos legales, subdominio y módulos contratados.",
       "successTitle": "Éxito",
-      "success": "¡Cliente actualizado!",
+      "success": "¡Empresa actualizada!",
       "errorTitle": "Error",
       "sections": {
         "basic": "Información Básica",
         "basicDescription": "Razón social y documento fiscal de la empresa.",
         "identity": "Subdominio e Identidad",
-        "identityDescription": "Dirección del ambiente, logo, colores y frase del portal.",
+        "identityDescription": "Dirección de la empresa, logo, colores y frase del portal.",
         "modules": "Módulos Rolvix",
-        "modulesDescription": "Seleccione los módulos activos para este cliente.",
+        "modulesDescription": "Seleccione los módulos activos para esta empresa.",
         "families": "Familias de recursos",
-        "familiesDescription": "Qué tipos de recursos registra este cliente (espacios, eléctricos, bienes…)."
+        "familiesDescription": "Qué tipos de recursos registra esta empresa (espacios, eléctricos, bienes…)."
       },
       "actions": {
         "save": "Guardar Cambios",
         "saving": "Guardando..."
       },
       "errors": {
-        "invalidId": "Identificador de cliente inválido.",
-        "notFound": "Cliente no encontrado.",
-        "loadFailed": "No se pudo cargar el cliente.",
-        "updateFailed": "No se pudo actualizar el cliente."
+        "invalidId": "Identificador de empresa inválido.",
+        "notFound": "Empresa no encontrada.",
+        "loadFailed": "No se pudo cargar la empresa.",
+        "updateFailed": "No se pudo actualizar la empresa."
       }
     },
     "users": {
@@ -4646,18 +5079,18 @@
     },
     "platformUsers": {
       "title": "Usuarios de la plataforma",
-      "description": "Visualice y gestione todos los usuarios B2B de todos los tenants.",
+      "description": "Visualice y gestione todos los usuarios B2B de todas las empresas.",
       "filters": {
         "name": "Nombre",
         "namePlaceholder": "Filtrar por nombre...",
-        "tenant": "Cliente",
-        "tenantPlaceholder": "Todos los clientes",
-        "allTenants": "Todos los clientes"
+        "tenant": "Empresa",
+        "tenantPlaceholder": "Todas las empresas",
+        "allTenants": "Todas las empresas"
       },
       "columns": {
         "name": "Nombre",
         "email": "Correo",
-        "tenant": "Cliente",
+        "tenant": "Empresa",
         "roles": "Roles",
         "status": "Estado",
         "actions": "Acciones"
@@ -4665,7 +5098,7 @@
       "statusActive": "Activo",
       "statusInactive": "Inactivo",
       "emptyTitle": "No se encontraron usuarios",
-      "emptyDescription": "Ajuste los filtros o invite usuarios desde un cliente.",
+      "emptyDescription": "Ajuste los filtros o invite usuarios desde una empresa.",
       "actions": {
         "delete": "Eliminar usuario",
         "deleteNamed": "Eliminar usuario {{email}}"
@@ -4692,6 +5125,13 @@
       "statusInactive": "Inactiva",
       "emptyTitle": "Ninguna familia encontrada",
       "emptyDescription": "Cree una familia o incluya las inactivas.",
+      "filters": {
+        "label": "Filtrar familias",
+        "searchLabel": "Buscar familias",
+        "searchPlaceholder": "Buscar por clave o etiqueta",
+        "statusLabel": "Estado",
+        "all": "Todas"
+      },
       "columns": {
         "key": "Clave",
         "label": "Etiqueta",
@@ -4767,9 +5207,9 @@
       "Inventory": "Inventario",
       "InventoryDescription": "Registro y control de activos.",
       "PMOC": "PMOC",
-      "PMOCDescription": "Utiliza los recursos registrados en el entorno.",
+      "PMOCDescription": "Utiliza los recursos registrados en la empresa.",
       "OS": "Órdenes de Trabajo",
-      "OSDescription": "Permite vincular servicios a los recursos del entorno.",
+      "OSDescription": "Permite vincular servicios a los recursos de la empresa.",
       "Rentals": "Alquileres",
       "RentalsDescription": "Gestione recursos reservables y horarios.",
       "Catalog": "Catálogo y pedidos",
@@ -4779,7 +5219,7 @@
       "ResourcePlanningDescription": "Organiza la disponibilidad y el uso de los recursos.",
       "loadFailed": "No se pudieron cargar los módulos.",
       "retry": "Intentar de nuevo",
-      "legacyMaintenanceNote": "Este cliente aún tiene el módulo legado Mantenimiento. Permanece activo, pero no se puede seleccionar ni desactivar aquí."
+      "legacyMaintenanceNote": "Esta empresa aún tiene el módulo legado Mantenimiento. Permanece activo, pero no se puede seleccionar ni desactivar aquí."
     },
     "wizard": {
       "title": "Registrar nueva empresa",
@@ -4843,10 +5283,10 @@
         "finishing": "Aprovisionando..."
       },
       "successTitle": "Éxito",
-      "success": "¡Ambiente creado con éxito!",
+      "success": "¡Empresa creada con éxito!",
       "errorTitle": "Error",
       "errors": {
-        "createFailed": "No se pudo aprovisionar el cliente.",
+        "createFailed": "No se pudo aprovisionar la empresa.",
         "familiesLoadFailed": "No se pudieron cargar las familias de recursos."
       },
       "stepperAriaLabel": "Pasos del registro de la empresa",
@@ -4869,18 +5309,20 @@
     },
     "errors": {
       "forbidden": "Acceso restringido a Super-Admins de la plataforma.",
-      "loadFailed": "No se pudieron cargar los clientes."
+      "loadFailed": "No se pudieron cargar las empresas."
     },
     "support": {
-      "banner": "Está en el tenant {{tenant}} como super-admin",
+      "banner": "Está en la empresa {{tenant}} como super-admin",
       "platformPanel": "Panel de la plataforma",
-      "tenantFallback": "cliente",
-      "exit": "Salir del tenant",
+      "bannerSlim": "Estás viendo este espacio como super-admin",
+      "exitShort": "Salir de la empresa",
+      "tenantFallback": "empresa",
+      "exit": "Salir de la empresa",
       "exiting": "Saliendo...",
       "exitErrorTitle": "Error",
       "exitFailed": "No se pudo volver a la plataforma.",
       "enterErrorTitle": "Error",
-      "enterFailed": "No se pudo abrir el entorno."
+      "enterFailed": "No se pudo abrir la empresa."
     }
   },
   "rentals": {
@@ -4951,8 +5393,12 @@
         "empty": "Horario vacío",
         "noSelection": "Seleccione uno o más espacios / bienes para ver la grilla.",
         "legendLabel": "Leyenda",
-        "minimumLeadTime": "Fuera del plazo mínimo de antelación"
+        "minimumLeadTime": "Fuera del plazo mínimo de antelación",
+        "addSlot": "Agregar horario en {{name}}",
+        "continues": "continúa",
+        "addSlotShort": "Agregar horario"
       },
+      "dayOnlyNote": "Los cambios valen solo para {{date}}.",
       "dayOnlyBanner": "Los cambios en esta grilla valen solo para {{date}}. Para cambiar la regla semanal, use Configuración semanal.",
       "weeklyBanner": "Esta grilla se repite semanalmente el {{day}}. La Agenda del día solo cambia una fecha.",
       "weeklyCellHint": "El cambio vale para este día semanal, en todas las fechas futuras.",
@@ -5075,9 +5521,64 @@
         "sheetHint": "Expande los espacios seleccionados, los días marcados y los intervalos en una sola aplicación.",
         "success": "Regla semanal aplicada a {{count}} horarios."
       },
+      "hours": {
+        "title": "Horario de atención",
+        "description": "Define cuándo abres cada día de la semana. Vale para los recursos elegidos.",
+        "scope": "Aplicar a",
+        "allResources": "Todos los recursos",
+        "someResources": "Elegir recursos",
+        "scopeNone": "Elige al menos un recurso.",
+        "appliesTo": "Vale para {{count}} recursos.",
+        "open": "Abierto",
+        "closed": "Cerrado",
+        "opens": "Abre",
+        "closes": "Cierra",
+        "differs": "Varía entre recursos",
+        "define": "Definir horario",
+        "groupResources_one": "{{count}} recurso",
+        "groupResources_other": "{{count}} recursos",
+        "noHours": "sin horario definido",
+        "copyToAll": "Copiar a todos los días",
+        "slotLabel": "Duración de cada horario",
+        "slotUnit": "{{count}} min",
+        "slotCustom": "Personalizado",
+        "slotMinutes": "Minutos",
+        "slotDiffers": "La duración es distinta entre los recursos. Elige una para aplicar.",
+        "save": "Guardar horarios",
+        "problem": {
+          "invalidTimes": "Revisa los horarios: la apertura debe ser antes del cierre.",
+          "slotRequired": "Elige la duración de cada horario.",
+          "invalidSlot": "Indica una duración válida, en minutos."
+        },
+        "confirm": {
+          "title": "¿Quitar horarios existentes?",
+          "description": "Al guardar, se quitarán estos horarios de los recursos elegidos:",
+          "removeClosed_one": "{{day}} cerrado: {{count}} horario en {{resources}} recurso(s)",
+          "removeClosed_other": "{{day}} cerrado: {{count}} horarios en {{resources}} recurso(s)",
+          "removeOutside_one": "{{day}}, fuera del nuevo horario: {{count}} horario en {{resources}} recurso(s)",
+          "removeOutside_other": "{{day}}, fuera del nuevo horario: {{count}} horarios en {{resources}} recurso(s)",
+          "removeReplace_one": "{{day}}: {{count}} horario será reemplazado en {{resources}} recurso(s)",
+          "removeReplace_other": "{{day}}: {{count}} horarios serán reemplazados en {{resources}} recurso(s)",
+          "action": "Quitar y guardar"
+        },
+        "saveSuccess": "Horarios guardados: {{created}} creados, {{updated}} actualizados, {{removed}} quitados.",
+        "saveFailed": "No se guardó todo ({{count}} problemas). Mira los detalles en pantalla.",
+        "conflict": "Hay horarios de otro tipo en {{days}}. Esos días no se cambiarán.",
+        "errorConflict": "{{days}}: hay horarios de otro tipo en este día, no se cambió nada.",
+        "errorRemoveDay": "{{day}}: no se pudieron quitar {{count}} horario(s) anterior(es), el día no se cambió ({{message}})",
+        "errorsTitle": "No se guardó todo",
+        "errorRule": "{{days}}: {{message}}",
+        "errorRemove": "No se pudieron quitar {{count}} horario(s): {{message}}",
+        "errorPolicy": "Horario general de los recursos: {{message}}",
+        "preview": "Vista previa de la semana",
+        "previewHint": "Solo para revisar. Haz clic en un horario para editarlo.",
+        "previewShow": "Mostrar vista previa",
+        "previewHide": "Ocultar vista previa"
+      },
+      "advanced": "Avanzado",
       "tabs": {
-        "daily": "Agenda del día",
-        "templates": "Configuración semanal",
+        "daily": "Ajustar un día",
+        "templates": "Horario de atención",
         "kinds": "Tipos de ocupación",
         "dailyShort": "Día",
         "templatesShort": "Semana",
@@ -5094,7 +5595,7 @@
       },
       "kinds": {
         "title": "Tipos de ocupación",
-        "description": "Catálogo del tenant: definen si el horario es reservable (ej.: Abierto, Clase, Cerrado).",
+        "description": "Definen si el cliente puede reservar un horario (por ejemplo: Abierto, Clase, Cerrado).",
         "empty": "Sin tipos aún — los valores por defecto se crean en la primera carga.",
         "emptyTitle": "Sin tipos de ocupación",
         "key": "Clave",
@@ -5192,6 +5693,25 @@
       "summarySpaces_many": "{{count}} espacios",
       "summaryItems_zero": "{{count}} artículos",
       "summaryItems_many": "{{count}} artículos",
+      "filters": {
+        "label": "Filtros de recursos",
+        "searchLabel": "Buscar recurso",
+        "searchPlaceholder": "Buscar por nombre",
+        "all": "Todos",
+        "spaces": "Espacios",
+        "items": "Artículos",
+        "kind": "Tipo de recurso",
+        "emptyTitle": "Ningún recurso encontrado",
+        "emptyDescription": "Ajusta la búsqueda o el filtro."
+      },
+      "columns": {
+        "resource": "Recurso",
+        "price": "Precio",
+        "durations": "Duraciones",
+        "capacity": "Capacidad",
+        "actions": "Acciones"
+      },
+      "rowMenu": "Acciones de {{name}}",
       "sheetTabs": {
         "basic": "Básico",
         "pricingRules": "Precio y reglas",
@@ -5239,12 +5759,12 @@
         "location": "Ubicación",
         "locationPlaceholder": "Ej.: Bloque A",
         "horizonLabel": "Horizonte",
-        "horizonInherit": "Usar el valor del ambiente",
+        "horizonInherit": "Usar el valor de la empresa",
         "horizonUnlimited": "Ilimitado",
         "horizonDaysMode": "Número de días",
         "horizonDays": "Días adelante",
         "horizonHint": "Defina hasta cuándo los clientes pueden reservar este recurso.",
-        "horizonTechnicalHelp": "Usar el valor del ambiente sigue la política de reservas y borra un número de días guardado en este recurso. Ilimitado hace lo mismo, con un borrado explícito. Queda sin límite solo cuando la propia política es ilimitada. Un número de días sustituye la política en este recurso. Se acepta una fecha hasta ese número de días adelante; el día siguiente se rechaza (booking_horizon_exceeded).",
+        "horizonTechnicalHelp": "Usar el valor de la empresa sigue la política de reservas y borra un número de días guardado en este recurso. Ilimitado hace lo mismo, con un borrado explícito. Queda sin límite solo cuando la propia política es ilimitada. Un número de días sustituye la política en este recurso. Se acepta una fecha hasta ese número de días adelante; el día siguiente se rechaza (booking_horizon_exceeded).",
         "horizonEffectiveUnlimited": "En vigor: ilimitado (sin límite).",
         "horizonEffectiveDays": "En vigor: {{count}} días adelante.",
         "cancelCutoffLabel": "Plazo de cancelación",
@@ -5351,7 +5871,7 @@
       "spaceType": "Espacio reservable",
       "bookableItemType": "Elemento reservable",
       "templatesTitle": "Tipo y modelo visual",
-      "templatesHelp": "Los modelos listados coinciden con los segmentos habilitados del tenant.",
+      "templatesHelp": "Los modelos listados coinciden con los segmentos habilitados de la empresa.",
       "mapTitle": "Posicione los bloques",
       "mapHelp": "Arrastre los bloques y elija un tamaño adecuado para cada espacio.",
       "reviewSpaces_one": "{{count}} espacio en el mapa",
@@ -5362,6 +5882,9 @@
       }
     },
     "reservations": {
+      "assetFilter": "Mostrando solo el recurso: {{name}}",
+      "assetFilterClear": "Mostrar todos los recursos",
+      "assetFilterUnknown": "Este recurso",
       "title": "Reservas",
       "description": "Confirma depósitos, completa y cancela reservas hechas a través del portal.",
       "date": "Fecha",
@@ -5398,6 +5921,11 @@
       "period": "Período",
       "previousDay": "Día anterior",
       "nextDay": "Día siguiente",
+      "previousWeek": "Semana anterior",
+      "nextWeek": "Semana siguiente",
+      "previousMonth": "Mes anterior",
+      "nextMonth": "Mes siguiente",
+      "pickDate": "Elegir fecha",
       "today": "Hoy",
       "goToday": "Ir a hoy",
       "showWeek": "Ver la semana",
@@ -5418,20 +5946,13 @@
     },
     "bookingPolicy": {
       "title": "Política de reservas",
-      "description": "Defina el texto de cancelación, hasta cuántos días adelante el cliente puede reservar un recurso y el límite diario de reservas activas por cliente. Vale para todos los recursos de este ambiente, salvo donde un recurso define su propio valor.",
+      "description": "Defina el texto de cancelación, hasta cuántos días adelante el cliente puede reservar un recurso y el límite diario de reservas activas por cliente. Vale para todos los recursos de esta empresa, salvo donde un recurso define su propio valor.",
       "cancellationLabel": "Texto de cancelación",
-      "cancellationHint": "Texto simple, sin formato. Hasta 2000 caracteres. En blanco, el portal muestra una nota neutra: el horario vuelve a quedar disponible y la persona debe consultar las reglas.",
       "cancellationPlaceholder": "Texto simple que se muestra al cancelar una reserva.",
       "characterCount": "{{count}}/{{max}}",
-      "dailyLimitToggle": "Limitar reservas activas por cliente por día",
-      "dailyLimitHint": "Cuenta reservas pendientes de depósito y confirmadas que empiezan el mismo día. Desactivado significa sin límite.",
       "dailyLimitValue": "Máximo por día",
-      "horizonLabel": "Hasta cuántos días adelante el cliente puede reservar",
-      "horizonUnlimited": "Ilimitado",
-      "horizonDaysMode": "Número de días",
+      "horizonUnlimited": "sin límite",
       "horizonDays": "Días adelante",
-      "horizonHintUnlimited": "Ilimitado significa que no hay límite para reservar un recurso.",
-      "horizonHintDays": "Se acepta una fecha hasta ese número de días adelante. El día siguiente queda fuera del límite de reserva.",
       "save": "Guardar",
       "saved": "Política de reservas guardada.",
       "loadError": "No se pudo cargar la política de reservas.",
@@ -5444,22 +5965,29 @@
         "horizonRange": "Indique un entero de 0 a 3650.",
         "cancelCutoffRange": "Introduce un número entero de 0 a 8760 horas."
       },
-      "cancelCutoffLabel": "Plazo de cancelación",
-      "cancelCutoffNone": "Sin plazo",
-      "cancelCutoffHoursMode": "N horas antes del inicio",
+      "cancelCutoffNone": "sin plazo",
       "cancelCutoffHours": "Horas antes del inicio",
-      "cancelCutoffHint": "El cliente puede cancelar hasta este plazo antes del inicio.",
       "categories": {
-        "title": "Por categoría",
-        "description": "Se aplica a los recursos de la categoría. Déjelo en blanco para usar el valor general de arriba. Un valor definido en el propio recurso tiene prioridad.",
-        "horizonDays": "Antelación máxima (días)",
-        "cancelCutoffHours": "Cancelar hasta (horas antes)",
-        "inherit": "General",
-        "save": "Guardar",
-        "saved": "Política de la categoría guardada.",
-        "invalid": "Use un número entero o déjelo en blanco.",
-        "empty": "No hay categorías con recursos reservables."
-      }
+        "title": "Excepciones por categoría",
+        "description": "Déjalo en blanco para usar la regla general.",
+        "category": "Categoría",
+        "horizonDays": "Reservar hasta (días)",
+        "cancelCutoffHours": "Cancelar hasta (h antes)",
+        "inherit": "{{value}} (general)",
+        "noLimit": "sin límite",
+        "saveFailed": "No se pudo guardar: {{names}}.",
+        "invalid": "Usa un número entero o déjalo en blanco.",
+        "empty": "Ninguna categoría con recursos reservables."
+      },
+      "generalTitle": "Reglas generales",
+      "horizonBefore": "Los clientes pueden reservar hasta",
+      "horizonAfter": "días de antelación",
+      "cancelCutoffBefore": "Cancelación hasta",
+      "cancelCutoffAfter": "h antes del inicio",
+      "dailyLimitBefore": "Máximo de",
+      "dailyLimitAfter": "reservas activas por cliente al día",
+      "dailyLimitNone": "sin límite",
+      "addCancellationText": "Añadir texto de cancelación"
     },
     "resourceWizard": {
       "open": "Asistente",
@@ -5602,7 +6130,7 @@
     }
   },
   "resourceVisual": {
-    "tenantSegmentsTitle": "Segmentos del tenant: {{tenantName}}",
+    "tenantSegmentsTitle": "Segmentos de la empresa: {{tenantName}}",
     "title": "Catálogo visual de recursos",
     "help": "Gestione modelos globales, arte publicada y clasificaciones.",
     "newTemplate": "Nuevo modelo",
@@ -5641,7 +6169,7 @@
     "deleteTagDescription": "Esta acción no se puede deshacer.",
     "deleteTemplateTitle": "¿Eliminar modelo?",
     "deleteTemplateDescription": "¿Eliminar \"{{name}}\"? Esta acción no se puede deshacer.",
-    "segmentsTitle": "Segmentos del tenant",
+    "segmentsTitle": "Segmentos de la empresa",
     "segmentsHelp": "Defina los segmentos que aparecen primero al elegir un modelo.",
     "enabledTemplates": "Modelos habilitados",
     "noEnabledTemplates": "Ningún modelo corresponde a los segmentos seleccionados.",
@@ -5743,7 +6271,8 @@
     "eyebrow": "Operación · Agendas",
     "overview": {
       "title": "Vista general de las agendas",
-      "subtitle": "Ocupación de los recursos en el período: reservas, pedidos, mantenimiento y bloqueos."
+      "subtitle": "Todos tus recursos. Una vista del día.",
+      "subtitleWeek": "Todos tus recursos. Una vista de la semana."
     },
     "resources": {
       "title": "Agenda de recursos",
@@ -5754,10 +6283,128 @@
       "subtitle": "Ocupación de los recursos utilizados por el producto en el período."
     },
     "chooseProduct": "Elige un producto para consultar su agenda.",
+    "newReservationDialog": {
+      "title": "Nueva reserva",
+      "description": "Reserva creada por el equipo. El cliente recibe el mensaje de confirmación.",
+      "resource": "Recurso",
+      "resourcePlaceholder": "Elige un recurso",
+      "date": "Fecha",
+      "start": "Inicio",
+      "end": "Fin",
+      "endAfterStart": "El fin debe ser posterior al inicio.",
+      "customer": "Cliente",
+      "customerSearch": "Buscar cliente por nombre o correo",
+      "customerSearchHint": "Escribe al menos 2 letras.",
+      "customerNone": "No se encontró ningún cliente.",
+      "customerSelected": "Cliente seleccionado",
+      "customerClear": "Cambiar",
+      "newCustomer": "+ Nuevo cliente",
+      "existingCustomer": "Buscar cliente existente",
+      "newName": "Nombre",
+      "newWhatsApp": "WhatsApp",
+      "newEmail": "Correo (opcional)",
+      "awaiting": "Esperando la seña",
+      "awaitingHelp": "La reserva queda pendiente hasta que se pague la seña.",
+      "cancel": "Cancelar",
+      "submit": "Crear reserva",
+      "saving": "Creando…",
+      "success": "Reserva creada",
+      "startInThePast": "La fecha y hora de inicio ya pasaron.",
+      "slotTaken": "Ese horario ya está ocupado.",
+      "customerNotFound": "Cliente no encontrado.",
+      "invalidPhone": "WhatsApp inválido. Usa código de área y número.",
+      "customerExists": "Cliente ya registrado — seleccionado",
+      "error": "No se pudo crear la reserva."
+    },
+    "newReservation": "Nueva reserva",
+    "block": {
+      "description": "Los horarios que cruzan el período se bloquean completos. Si el recurso no tiene horarios en él, el período se bloquea exactamente como se indicó.",
+      "resource": "Recurso",
+      "resourcePlaceholder": "Elige un recurso",
+      "date": "Fecha",
+      "start": "Inicio",
+      "end": "Fin",
+      "endAfterStart": "El fin debe ser posterior al inicio.",
+      "reason": "Motivo",
+      "reasonPlaceholder": "Elige un motivo",
+      "noReasons": "No hay motivos de bloqueo configurados.",
+      "note": "Observación",
+      "cancel": "Cancelar",
+      "submit": "Bloquear",
+      "saving": "Bloqueando…",
+      "close": "Cerrar",
+      "error": "No se pudo bloquear el período.",
+      "success_one": "{{count}} horario bloqueado.",
+      "success_other": "{{count}} horarios bloqueados.",
+      "skipped_one": "{{count}} ya reservado no se bloqueó: {{ranges}}.",
+      "skipped_other": "{{count}} ya reservados no se bloquearon: {{ranges}}.",
+      "failed": "No se pudo bloquear: {{ranges}}."
+    },
+    "nav": {
+      "previousDay": "Día anterior",
+      "nextDay": "Día siguiente",
+      "previousWeek": "Semana anterior",
+      "nextWeek": "Semana siguiente",
+      "pickDate": "Elegir fecha"
+    },
+    "chips": {
+      "pedido": "Pedidos",
+      "reserva": "Reservas",
+      "manutencao": "Mantenimiento",
+      "bloqueio": "Bloqueos"
+    },
+    "filters": {
+      "title": "Filtros",
+      "resources": "Recursos · {{selected}} de {{total}}",
+      "resourcesList": "Recursos",
+      "noCategory": "Sin categoría",
+      "group": "Todos los recursos de {{name}}",
+      "noResources": "No se encontraron recursos.",
+      "product": "Producto",
+      "allProducts": "Todos los productos",
+      "pickProduct": "Elige un producto",
+      "options": "Opciones",
+      "onlyFree": "Solo recursos con horario libre",
+      "showClosed": "Mostrar 24 horas",
+      "clear": "Limpiar filtros",
+      "sheetDescription": "Filtra los recursos y el producto que se muestran en la agenda.",
+      "selected_one": "{{count}} recurso seleccionado",
+      "selected_other": "{{count}} recursos seleccionados"
+    },
     "prep": "Preparación",
     "cleanup": "Limpieza",
     "selectedProductOrders": "Pedidos del producto: {{count}}",
-    "otherUses": "Otros usos · {{kind}}: {{count}}"
+    "otherUses": "Otros usos · {{kind}}: {{count}}",
+    "dateLong": "{{day}} de {{month}}, {{year}}",
+    "searchPlaceholder": "Buscar pedido o cliente",
+    "openSearch": "Abrir búsqueda de pedido",
+    "grid": {
+      "available": "Disponible para reservar",
+      "reserveOn": "Reservar {{name}}",
+      "reserveHere": "Reservar aquí",
+      "rowActions": "Acciones de {{name}}",
+      "allDay": "Todo el día",
+      "scrollHint": "Desplázate para ver más horas",
+      "continues": "continúa",
+      "outside_one": "{{count}} fuera de horario",
+      "outside_other": "{{count}} fuera de horario",
+      "resourceType": {
+        "Location": "Espacio",
+        "Good": "Equipo"
+      },
+      "businessHours": "Horario comercial · {{start}} – {{end}}",
+      "variableHours": "Horario variable"
+    },
+    "footer": {
+      "resources_one": "{{count}} recurso",
+      "resources_other": "{{count}} recursos",
+      "activitiesDay_one": "{{count}} actividad este día",
+      "activitiesDay_other": "{{count}} actividades este día",
+      "activitiesWeek_one": "{{count}} actividad esta semana",
+      "activitiesWeek_other": "{{count}} actividades esta semana",
+      "updatedNow": "Actualizado ahora",
+      "updatedAgo": "Actualizado hace {{minutes}} min"
+    }
   },
   "pedidos": {
     "eyebrow": "Operación · Pedidos",
@@ -5770,6 +6417,8 @@
     "emptyTitle": "Sin resultados",
     "emptyDescription": "Ningún pedido o solicitud coincide con la búsqueda y los filtros.",
     "clear": "Limpiar búsqueda/filtros",
+    "loadMore": "Cargar más",
+    "showing": "Mostrando {{shown}} de {{total}}",
     "loading": "Cargando pedidos…",
     "quantity": "Cantidad: {{count}}",
     "detailTitle": "Detalles del pedido",
@@ -5781,6 +6430,12 @@
     "createdAt": "Creada el",
     "files": "Archivos",
     "customer": "Cliente",
+    "columns": {
+      "order": "Pedido",
+      "customer": "Cliente",
+      "total": "Total",
+      "date": "Fecha"
+    },
     "tabs": {
       "todos": "Todos",
       "pedidos": "Pedidos",
@@ -5792,26 +6447,21 @@
     "eyebrow": "Operación · Mantenimiento",
     "subtitle": "Planes recurrentes y órdenes de trabajo de tus equipos, en un solo lugar.",
     "tabs": {
-      "hoje": "Hoy",
+      "agenda": "Agenda",
       "ordens": "Órdenes",
       "planos": "Planes"
     },
     "sections": {
-      "hoje": "Planes con primera fecha vencida y órdenes abiertas, incluidas las próximas.",
-      "ordens": "Sigue las órdenes de trabajo y su ejecución.",
-      "planos": "Organiza los planes recurrentes de mantenimiento."
+      "overdue": "Atrasadas",
+      "week": "Esta semana",
+      "upcoming": "Próximas"
     },
     "newPlan": "Nuevo plan",
     "newOrder": "Nueva orden",
     "generate": "Generar orden",
-    "search": "Buscar por plan, orden o equipo",
+    "search": "Buscar por equipo, plan o técnico",
     "filters": "Filtros",
     "status": "Estado",
-    "type": "Tipo",
-    "allStatuses": "Todos los estados",
-    "allTypes": "Todos los tipos",
-    "due": "Primera fecha vencida",
-    "firstDue": "Primer vencimiento: {{date}}",
     "emptyTitle": "No hay elementos para mostrar",
     "emptyDescription": "Los elementos disponibles aparecerán aquí. Ajusta los filtros o crea un elemento.",
     "clear": "Limpiar búsqueda/filtros",
@@ -5819,7 +6469,41 @@
     "loadError": "No se pudo cargar el mantenimiento.",
     "generateDescription": "Elige un equipo elegible y una fecha. La orden usará la lista del plan.",
     "checklist": "Lista del plan",
-    "sourcePlan": "Plan de origen: {{name}}"
+    "sourcePlan": "Plan de origen: {{name}}",
+    "noTechnician": "Sin técnico",
+    "needsOrder": "Necesita OT",
+    "auto": "Automático",
+    "agendaFilters": {
+      "label": "Filtrar la agenda",
+      "all": "Todas",
+      "overdue": "Atrasadas",
+      "unassigned": "Sin técnico",
+      "mine": "Mías"
+    },
+    "columns": {
+      "equipment": "Equipo",
+      "plan": "Plan",
+      "technician": "Técnico",
+      "date": "Fecha",
+      "status": "Estado",
+      "action": "Acción",
+      "frequency": "Frecuencia",
+      "nextDue": "Próximo vencimiento"
+    },
+    "overdueDays_one": "hace {{count}} día",
+    "overdueDays_other": "hace {{count}} días",
+    "every_one": "Cada {{count}} día",
+    "every_other": "Cada {{count}} días",
+    "generateOverdue": "Generar OT atrasadas ({{count}})",
+    "generating": "Generando {{done}} de {{total}}…",
+    "bulkTitle": "¿Generar {{count}} OT atrasadas?",
+    "bulkDescription": "Se crea una OT por cada equipo atrasado, con fecha de hoy y sin técnico. Puedes asignar el técnico después.",
+    "bulkSummary": "{{created}} OT generadas, {{skipped}} ya existían, {{failed}} con error.",
+    "coverageFailed_one": "No se pudo calcular la cobertura de {{count}} plan. La agenda puede estar incompleta.",
+    "coverageFailed_other": "No se pudo calcular la cobertura de {{count}} planes. La agenda puede estar incompleta.",
+    "overdueDays_many": "hace {{count}} días",
+    "every_many": "Cada {{count}} días",
+    "coverageFailed_many": "No se pudo calcular la cobertura de {{count}} planes. La agenda puede estar incompleta."
   },
   "cadastro": {
     "saveBeforeContinue": "Guarda los cambios o restaura los valores antes de cambiar de paso.",
@@ -5829,6 +6513,8 @@
     "productCreate": "Nuevo producto",
     "resourceCreate": "Nuevo recurso",
     "subtitle": "Paso {{count}} de {{total}} · {{step}}. Guarda los cambios antes de continuar.",
+    "stepOf": "Paso {{count}} de {{total}}",
+    "stepCompact": "{{count}} de {{total}}",
     "steps": "Pasos del registro",
     "back": "Volver",
     "next": "Continuar",
@@ -5837,9 +6523,150 @@
     "createCategory": "Añadir categoría",
     "createTag": "Añadir tag",
     "noParent": "Ninguna",
-    "taxonomyHelp": "Selecciona las categorías y tags de este producto y guarda el paso.",
+    "taxonomyHelp": "Selecciona las categorías y tags de este producto.",
     "taxonomyLimit": "El límite es 20 categorías y 20 tags.",
     "resourceTaxonomyHelp": "Puedes crear categorías y tags compartidos aquí, pero no se vinculan a este recurso. El tipo operativo del recurso se configura por separado.",
-    "taxonomyNoRead": "Necesitas permiso para consultar categorías y tags."
+    "taxonomyNoRead": "Necesitas permiso para consultar categorías y tags.",
+    "progressCaptionProduct": "Configuración del producto",
+    "progressCaptionResource": "Configuración del recurso",
+    "stage": "Etapa {{count}} de {{total}}",
+    "optional": "Opcional",
+    "doneLabel": "completada",
+    "notApplicable": "No aplica",
+    "timeTitle": "A tu ritmo",
+    "timeBody": "El producto solo estará disponible para los clientes después de publicarlo.",
+    "productDescription": "Configura tu producto y deja todo listo para recibir reservas.",
+    "saveAndContinue": "Guardar y continuar",
+    "saveAndExit": "Guardar y salir",
+    "editTitle": "Editar producto",
+    "saveChanges": "Guardar cambios",
+    "changesSaved": "Cambios guardados",
+    "requiredNote": "* Campo obligatorio",
+    "crumbCatalog": "Catálogo",
+    "product": {
+      "nameLabel": "Nombre del producto *",
+      "salesMode": {
+        "label": "¿Cómo se vende este producto?",
+        "description": "Esto define si será necesario configurar la disponibilidad.",
+        "titleWith": "Con agenda",
+        "descWith": "El cliente reserva un recurso para una fecha u horario.",
+        "titleWithout": "Sin agenda",
+        "descWithout": "El producto se vende sin reservar una fecha ni un horario.",
+        "helperWith": "Agenda y Cola están disponibles para este producto.",
+        "helperWithout": "Agenda y Cola no se aplican a este producto."
+      },
+      "nameHelp": "Este nombre se muestra en el catálogo y en las reservas.",
+      "codeLabel": "Código interno",
+      "codeHelp": "Usa un código único para localizar el producto en tu operación.",
+      "descriptionLabel": "Descripción",
+      "descriptionPlaceholder": "Describe qué incluye, los diferenciales y la información principal para el cliente.",
+      "descriptionHelp": "Opcional. Puedes completar esta información después.",
+      "pricingInfo": "Los valores y condiciones de cobro se definen en el paso Precios."
+    },
+    "productSteps": {
+      "dados": {
+        "title": "Datos del producto",
+        "subtitle": "Nombre e identificación",
+        "description": "Empieza por la información que identifica tu producto."
+      },
+      "arquivos": {
+        "title": "Fotos y archivos",
+        "subtitle": "Imágenes y documentos",
+        "description": "Opcional. Agrega fotos que aparecen en el portal y documentos de uso interno. Cada envío se guarda al instante."
+      },
+      "categorias": {
+        "title": "Categorías y tags",
+        "subtitle": "Organización del catálogo",
+        "description": "Facilita la búsqueda y mantén tu catálogo organizado."
+      },
+      "agenda": {
+        "title": "Agenda",
+        "subtitle": "Disponibilidad y horarios",
+        "description": "Define qué recursos atienden este producto y por cuánto tiempo."
+      },
+      "fila": {
+        "title": "Fila",
+        "subtitle": "Orden de atención",
+        "description": "Mira cómo funciona la fila de los recursos vinculados."
+      },
+      "regras": {
+        "title": "Reglas",
+        "subtitle": "Condiciones de uso",
+        "description": "Elige quién puede ver y comprar este producto."
+      },
+      "precos": {
+        "title": "Precios",
+        "subtitle": "Valores y cobro",
+        "description": "Define el valor y las condiciones de cobro."
+      },
+      "publicacao": {
+        "title": "Publicación",
+        "subtitle": "Revisión y visibilidad",
+        "description": "Revisa lo que falta y publica para los clientes."
+      }
+    },
+    "categoriesHelp": "Agrupa productos similares para facilitar la navegación.",
+    "categorySearchPlaceholder": "Buscar o seleccionar categorías",
+    "categorySearchLabel": "Buscar categorías",
+    "createNewCategory": "Crear nueva categoría",
+    "createCategoryButton": "Crear categoría",
+    "noCategorySelected": "Ninguna categoría seleccionada",
+    "noCategorySelectedHint": "Selecciona una categoría existente o crea una nueva.",
+    "categoryDialogTitle": "Crear categoría",
+    "categoryDialogDescription": "Organiza tu catálogo sin salir del registro.",
+    "categoryNameLabel": "Nombre de la categoría *",
+    "categoryNameHelp": "Usa un nombre corto y fácil de reconocer.",
+    "categoryParentLabel": "Categoría principal (opcional)",
+    "categorySubOf": "{{name}} será una subcategoría de {{parent}}.",
+    "categorySlugLabel": "Dirección de la categoría",
+    "categorySlugEdit": "Editar",
+    "categoryScopeNote": "Disponible en todo el catálogo de este espacio.",
+    "categoryAutoSelectNote": "Al crearla, la categoría se seleccionará en este producto.",
+    "createAndSelect": "Crear y seleccionar",
+    "categoryCreatedSelected": "Categoría creada y seleccionada para este producto.",
+    "categorySlugInvalid": "Usa solo letras minúsculas, números y guiones.",
+    "noCategoryMatch": "No se encontró ninguna categoría",
+    "tagsHelp": "Agrega palabras clave para búsquedas más específicas.",
+    "tagInputPlaceholder": "Escribe una etiqueta y presiona Enter",
+    "tagSearchPlaceholder": "Escribe para buscar una etiqueta",
+    "noTagMatch": "No se encontró ninguna etiqueta",
+    "tagInvalid": "Usa letras o números en la etiqueta.",
+    "removeItem": "Quitar {{name}}",
+    "differenceTitle": "¿Cuál es la diferencia?",
+    "differenceBody": "Las categorías son las secciones de tu catálogo. Las etiquetas describen características que pueden aparecer en productos de categorías distintas.",
+    "saveError": "No se pudo guardar. Revisa e inténtalo de nuevo.",
+    "offerNameHelp": "Este nombre se muestra en el catálogo y en las reservas.",
+    "offerCodeHelp": "Usa un código único para encontrar el producto en tu operación.",
+    "offerDescriptionHelp": "Opcional. Puedes completar esta información después.",
+    "offerDescriptionPlaceholder": "Describe qué incluye, los diferenciales y la información principal para el cliente.",
+    "offerPricingInfo": "Los valores y condiciones de cobro se definen en el paso Precios.",
+    "productStatusActive": "Activo",
+    "stageName": "· {{name}}",
+    "published": {
+      "title": "Producto publicado",
+      "priceOnRequest": "Bajo consulta",
+      "visibilityPublic": "Visible para todos los clientes (Público).",
+      "visibilityRestricted": "Visible solo para clientes y grupos autorizados (Restringido).",
+      "viewList": "Ver en la lista de productos",
+      "createAnother": "Crear otro producto",
+      "keepEditing": "Seguir editando",
+      "menuFailed": "El producto está activo, pero no entró en el menú del portal."
+    },
+    "review": {
+      "title": "Resumen antes de publicar",
+      "edit": "Editar",
+      "editField": "Editar {{field}}",
+      "name": "Nombre",
+      "categories": "Categorías",
+      "noCategories": "Ninguna",
+      "price": "Precio",
+      "priceOnRequest": "Bajo consulta",
+      "agenda": "Agenda",
+      "noAgenda": "No usa agenda",
+      "visibility": "Visibilidad",
+      "visibilityPublic": "Público",
+      "visibilityRestricted": "Restringido",
+      "agendaLinked": "Recursos vinculados"
+    }
   }
 }

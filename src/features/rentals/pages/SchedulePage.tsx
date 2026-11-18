@@ -6,8 +6,16 @@ import {
   scheduleAssetIdFromSearch,
   scheduleTabFromSearch,
 } from "@/features/rentals/components/resourceWizard/wizardSteps"
+import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-import { CalendarDays, CalendarRange, Tag } from "lucide-react"
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet"
+import { CalendarDays, Settings2 } from "lucide-react"
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useCallback, useContext, useEffect, useMemo, useRef, useState } from "react"
 import { useTranslation } from "react-i18next"
 import {
@@ -35,7 +43,8 @@ import type { TemplateDraft } from "@/features/rentals/components/schedule/sched
 import { TemplateSheet } from "@/features/rentals/components/schedule/TemplateSheet"
 import { WeeklyTemplatesTab } from "@/features/rentals/components/schedule/WeeklyTemplatesTab"
 import type { WeeklyGridCellPayload } from "@/features/rentals/components/schedule/WeeklyTemplatesTab"
-import type { WeeklyRuleDraft } from "@/features/rentals/components/schedule/WeeklyRuleSheet"
+import type { BusinessHoursSaveResult } from "@/features/rentals/components/schedule/BusinessHoursEditor"
+import type { BusinessHoursPlan } from "@/features/rentals/components/schedule/businessHoursModel"
 import { occupancyIdFromSlot, todayWeekdayName } from "@/features/rentals/components/schedule/scheduleGridModel"
 import {
   applyDailyOccurrence,
@@ -50,8 +59,6 @@ import {
   listOccupancyKinds,
   listScheduleTemplates,
   publishScheduleDay,
-  groupAssetsByHours,
-  seedDefaultHourlyTemplates,
   updateOccupancyKind,
   updateRentalSchedulePolicyBulk,
   updateScheduleTemplate,
@@ -62,15 +69,18 @@ import {
   type OccurrenceEditScope,
   type ScheduleTemplate,
   type DayOfWeekName,
-  type UpdateSchedulePolicyInput,
   type UpsertOccupancyKindInput,
 } from "@/features/rentals/services/scheduleService"
 import { useTrialStatus } from "@/features/users/hooks/useTrialStatus"
-import { cn } from "@/lib/utils"
 import { usePermissions } from "@/features/users/permissions/PermissionContext"
 import { TeacherLessonsPage } from "@/features/rentals/pages/TeacherLessonsPage"
 
-type ScheduleTab = "daily" | "templates" | "kinds"
+type ScheduleTab = "hours" | "daily"
+
+/** Old tab values keep working: "templates" is the hours tab, "kinds" opens the advanced sheet. */
+function initialScheduleTab(search: string): ScheduleTab {
+  return scheduleTabFromSearch(search) === "daily" ? "daily" : "hours"
+}
 
 function ScheduleLeaveGuard({ dirty }: { dirty: boolean }) {
   const { t } = useTranslation()
@@ -125,10 +135,15 @@ function AdminSchedulePage() {
   const { isTrialReadOnly } = useTrialStatus()
   const timeZoneId = useTenantTimeZone()
 
-  const [tab, setTab] = useState<ScheduleTab>(
-    () => scheduleTabFromSearch(window.location.search) ?? "daily",
+  const [tab, setTab] = useState<ScheduleTab>(() =>
+    initialScheduleTab(window.location.search),
+  )
+  const [advancedOpen, setAdvancedOpen] = useState(
+    () => scheduleTabFromSearch(window.location.search) === "kinds",
   )
   const [assets, setAssets] = useState<AdminRentalAsset[]>([])
+  // Resources whose business hours the hours tab edits. Kept apart from the day tab's filter.
+  const [hoursAssetIds, setHoursAssetIds] = useState<string[]>([])
   const [selectedRentalAssetIds, setSelectedRentalAssetIds] = useState<string[]>(
     [],
   )
@@ -136,6 +151,7 @@ function AdminSchedulePage() {
   const [date, setDate] = useState(() => todayIsoDate(timeZoneId))
   const [kinds, setKinds] = useState<OccupancyKind[]>([])
   const [templates, setTemplates] = useState<ScheduleTemplate[]>([])
+  const [allTemplates, setAllTemplates] = useState<ScheduleTemplate[] | null>(null)
   const [scheduleTemplatesState, setScheduleTemplatesState] = useState<{
     key: string
     list: ScheduleTemplate[]
@@ -162,10 +178,7 @@ function AdminSchedulePage() {
   const [editingKind, setEditingKind] = useState<OccupancyKind | null>(null)
   const [templateSheetOpen, setTemplateSheetOpen] = useState(false)
   const [templateDirty, setTemplateDirty] = useState(false)
-  const [ruleOpen, setRuleOpen] = useState(false)
-  const [ruleDirty, setRuleDirty] = useState(false)
-  const [policyOpen, setPolicyOpen] = useState(false)
-  const [policyDirty, setPolicyDirty] = useState(false)
+  const [hoursDirty, setHoursDirty] = useState(false)
   const [editingTemplate, setEditingTemplate] =
     useState<ScheduleTemplate | null>(null)
   const [weeklyTarget, setWeeklyTarget] =
@@ -177,7 +190,7 @@ function AdminSchedulePage() {
   const [editingCell, setEditingCell] =
     useState<DayResourceGridCellPayload | null>(null)
   const hasDataRouter = useContext(DataRouterContext) != null
-  const draftDirty = (templateSheetOpen && templateDirty) || (ruleOpen && ruleDirty) || (policyOpen && policyDirty) || (slotSheetOpen && slotDirty) || (kindSheetOpen && kindDirty)
+  const draftDirty = (templateSheetOpen && templateDirty) || hoursDirty || (slotSheetOpen && slotDirty) || (kindSheetOpen && kindDirty)
 
   useEffect(() => {
     if (!draftDirty) return
@@ -197,6 +210,14 @@ function AdminSchedulePage() {
     [kinds],
   )
 
+  // New business hours are always "open" time: prefer the built-in Open kind.
+  const openKindId = useMemo(
+    () =>
+      kinds.find((kind) => kind.isActive && kind.key.trim().toLowerCase() === "open")?.id ??
+      defaultKindId,
+    [kinds, defaultKindId],
+  )
+
   function beginBusy(action: Exclude<ScheduleBusyAction, null>, targetId?: string) {
     setBusy(true)
     setBusyAction(action)
@@ -214,16 +235,6 @@ function AdminSchedulePage() {
     setTemplateDirty(false)
     setEditingTemplate(null)
     setWeeklyTarget(null)
-  }
-
-  function closeWeeklyRule() {
-    setRuleOpen(false)
-    setRuleDirty(false)
-  }
-
-  function closePolicy() {
-    setPolicyOpen(false)
-    setPolicyDirty(false)
   }
 
   function clearSlotDraft() {
@@ -273,8 +284,6 @@ function AdminSchedulePage() {
   function runOrAsk(action: () => void) {
     const proceed = () => {
       clearTemplateDraft()
-      if (ruleDirty) closeWeeklyRule()
-      if (policyDirty) closePolicy()
       clearSlotDraft()
       clearKindDraft()
       action()
@@ -286,20 +295,17 @@ function AdminSchedulePage() {
     proceed()
   }
 
-  function requestCloseRule() {
-    if (ruleOpen && ruleDirty) {
-      setPendingLeave(() => closeWeeklyRule)
-      return
-    }
-    setRuleOpen(false)
+  function closeAdvanced() {
+    clearKindDraft()
+    setAdvancedOpen(false)
   }
 
-  function requestClosePolicy() {
-    if (policyOpen && policyDirty) {
-      setPendingLeave(() => closePolicy)
+  function requestCloseAdvanced() {
+    if (kindSheetOpen && kindDirty) {
+      setPendingLeave(() => closeAdvanced)
       return
     }
-    setPolicyOpen(false)
+    closeAdvanced()
   }
 
   function discardTemplateDraft() {
@@ -311,11 +317,15 @@ function AdminSchedulePage() {
     const href = safeStaffReturnTo(new URLSearchParams(window.location.search).get("returnTo"))
     setPendingLeave(() => () => {
       clearTemplateDraft()
-      closeWeeklyRule()
-      closePolicy()
       if (href) navigate(href)
     })
     return false
+  }
+
+  function onHoursAssetIdsChange(ids: string[]) {
+    if (ids.length === hoursAssetIds.length &&
+      ids.every((id) => hoursAssetIds.includes(id))) return
+    runOrAsk(() => setHoursAssetIds(ids))
   }
 
   function onSelectedRentalAssetIdsChange(ids: string[]) {
@@ -365,6 +375,14 @@ function AdminSchedulePage() {
           )
           return valid.length > 0 ? valid : assetList.map((asset) => asset.id)
         })
+        setHoursAssetIds((current) => {
+          const requested = scheduleAssetIdFromSearch(window.location.search)
+          if (requested && assetList.some((asset) => asset.id === requested)) {
+            return [requested]
+          }
+          const valid = current.filter((id) => assetList.some((asset) => asset.id === id))
+          return valid.length > 0 ? valid : assetList.map((asset) => asset.id)
+        })
         if (assetList.length > 0) {
           setLoadingDay(true)
           setShowDaySkeleton(true)
@@ -404,14 +422,14 @@ function AdminSchedulePage() {
   }, [date, selectedRentalAssetIds])
 
   const refreshWeeklyTemplates = useCallback(async () => {
-    if (selectedRentalAssetIds.length === 0) {
+    if (hoursAssetIds.length === 0) {
       setTemplates([])
       return
     }
-    const key = templatesCacheKey(selectedRentalAssetIds, weekday)
+    const key = templatesCacheKey(hoursAssetIds, weekday)
     const list = await listScheduleTemplates(
       undefined,
-      selectedRentalAssetIds,
+      hoursAssetIds,
       weekday,
     )
     // Keep the visible day's cache available until its replacement is ready.
@@ -421,20 +439,44 @@ function AdminSchedulePage() {
     setTemplates(list)
     loadedTemplateKeysRef.current.add(key)
     templatesCacheRef.current.set(key, list)
-  }, [selectedRentalAssetIds, weekday])
+  }, [hoursAssetIds, weekday])
+
+  const allAssetIdsKey = assets.map((asset) => asset.id).join(",")
+
+  const refreshAllTemplates = useCallback(async () => {
+    if (!allAssetIdsKey) return
+    const list = await listScheduleTemplates(undefined, allAssetIdsKey.split(","), undefined)
+    setAllTemplates(list.filter((template) => template.isActive))
+  }, [allAssetIdsKey])
 
   const refreshScheduleTemplates = useCallback(async () => {
-    if (selectedRentalAssetIds.length === 0) return
+    await refreshAllTemplates()
+    if (hoursAssetIds.length === 0) return
     const list = await listScheduleTemplates(
       undefined,
-      selectedRentalAssetIds,
+      hoursAssetIds,
       undefined,
     )
     setScheduleTemplatesState({
-      key: selectedRentalAssetIds.join(","),
+      key: hoursAssetIds.join(","),
       list: list.filter((template) => template.isActive),
     })
-  }, [selectedRentalAssetIds])
+  }, [hoursAssetIds, refreshAllTemplates])
+
+  useEffect(() => {
+    if (!allAssetIdsKey) return
+    let cancelled = false
+    void listScheduleTemplates(undefined, allAssetIdsKey.split(","), undefined)
+      .then((list) => {
+        if (!cancelled) setAllTemplates(list.filter((template) => template.isActive))
+      })
+      .catch(() => {
+        // The hours editor still works on the selected resources without the grouping.
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [allAssetIdsKey])
 
   useEffect(() => {
     if (selectedRentalAssetIds.length === 0 || !date) {
@@ -489,10 +531,10 @@ function AdminSchedulePage() {
   }, [selectedRentalAssetIds, date, t])
 
   useEffect(() => {
-    if (selectedRentalAssetIds.length === 0) return
+    if (hoursAssetIds.length === 0) return
     let cancelled = false
-    const key = selectedRentalAssetIds.join(",")
-    void listScheduleTemplates(undefined, selectedRentalAssetIds, undefined)
+    const key = hoursAssetIds.join(",")
+    void listScheduleTemplates(undefined, hoursAssetIds, undefined)
       .then((list) => {
         if (!cancelled) {
           setScheduleTemplatesState({
@@ -514,11 +556,11 @@ function AdminSchedulePage() {
     return () => {
       cancelled = true
     }
-  }, [selectedRentalAssetIds, t])
+  }, [hoursAssetIds, t])
 
   useEffect(() => {
-    if (tab !== "templates" || selectedRentalAssetIds.length === 0) {
-      if (selectedRentalAssetIds.length === 0) {
+    if (tab !== "hours" || hoursAssetIds.length === 0) {
+      if (hoursAssetIds.length === 0) {
         setTemplates([])
       }
       setShowTemplateSkeleton(false)
@@ -526,7 +568,7 @@ function AdminSchedulePage() {
       return
     }
 
-    const key = templatesCacheKey(selectedRentalAssetIds, weekday)
+    const key = templatesCacheKey(hoursAssetIds, weekday)
     const known = loadedTemplateKeysRef.current.has(key)
     const cached = templatesCacheRef.current.get(key)
 
@@ -540,7 +582,7 @@ function AdminSchedulePage() {
       setTemplates([])
     }
 
-    void listScheduleTemplates(undefined, selectedRentalAssetIds, weekday)
+    void listScheduleTemplates(undefined, hoursAssetIds, weekday)
       .then((list) => {
         if (cancelled) {
           return
@@ -568,7 +610,7 @@ function AdminSchedulePage() {
     return () => {
       cancelled = true
     }
-  }, [selectedRentalAssetIds, t, tab, weekday])
+  }, [hoursAssetIds, t, tab, weekday])
 
   async function handleSaveKind(
     values: UpsertOccupancyKindInput,
@@ -669,75 +711,6 @@ function AdminSchedulePage() {
     }
   }
 
-  async function onSeedSelected() {
-    if (selectedRentalAssetIds.length === 0) {
-      return
-    }
-    const selected = assets.filter((asset) => selectedRentalAssetIds.includes(asset.id))
-    const groups = groupAssetsByHours(selected)
-    if (!groups) {
-      toast.error(t("rentals.schedule.presets.required"))
-      return
-    }
-    beginBusy("seed")
-    try {
-      let created = 0
-      for (const group of groups) {
-        created += await seedDefaultHourlyTemplates(group.ids, {
-          openTime: group.openTime,
-          closeTime: group.closeTime,
-        })
-      }
-      toast.success(t("rentals.schedule.seedSuccess", { count: created }))
-      await Promise.all([
-        refreshWeeklyTemplates(),
-        refreshScheduleTemplates(),
-        refreshDay(),
-      ])
-    } catch (error) {
-      toast.error(
-        error instanceof Error
-          ? error.message
-          : t("rentals.schedule.seedError"),
-      )
-    } finally {
-      endBusy()
-    }
-  }
-
-  async function onSavePolicy(input: UpdateSchedulePolicyInput) {
-    if (selectedRentalAssetIds.length === 0) {
-      return
-    }
-    beginBusy("policy")
-    try {
-      const updated = await updateRentalSchedulePolicyBulk(
-        selectedRentalAssetIds,
-        input,
-      )
-      setAssets((current) => mergeAssets(current, updated))
-      toast.success(
-        input.schedulePolicy === "OpenHours"
-          ? t("rentals.schedule.policy.saveOpenHoursSuccess")
-          : t("rentals.schedule.policy.saveSlotGridSuccess"),
-      )
-      await Promise.all([
-        refreshWeeklyTemplates(),
-        refreshScheduleTemplates(),
-        refreshDay(),
-      ])
-    } catch (error) {
-      toast.error(
-        error instanceof Error
-          ? error.message
-          : t("rentals.schedule.policy.saveError"),
-      )
-      throw error
-    } finally {
-      endBusy()
-    }
-  }
-
   async function onPublish() {
     if (selectedRentalAssetIds.length === 0 || !date) {
       return
@@ -761,29 +734,145 @@ function AdminSchedulePage() {
     }
   }
 
-  async function onApplyWeeklyRule(draft: WeeklyRuleDraft): Promise<boolean> {
+  async function onSaveBusinessHours(
+    plan: BusinessHoursPlan,
+  ): Promise<BusinessHoursSaveResult> {
+    const errors: string[] = []
+    let created = 0
+    let updated = 0
+    let removed = 0
+    let applied = 0
+    const messageOf = (error: unknown, fallback: string) =>
+      error instanceof Error ? error.message : fallback
+
     beginBusy("weeklyRule")
     try {
-      const result = await applyWeeklyRule(draft)
-      toast.success(
-        t("rentals.schedule.weeklyRule.success", {
-          count: result.created + result.updated,
-        }),
+      const dayName = (day: string) => t(`rentals.schedule.days.${day}`)
+      if (plan.conflicts.length > 0) {
+        errors.push(
+          t("rentals.schedule.hours.errorConflict", {
+            days: plan.conflicts.map(dayName).join(", "),
+          }),
+        )
+      }
+
+      // Replace semantics: old slots of a day go first, and a day whose old slots could not
+      // all be removed is not applied, so a weekday is never left half changed.
+      for (const group of plan.groups) {
+        const applyDays: string[] = []
+        for (const day of group.days) {
+          const stale = plan.removals.filter(
+            (removal) => removal.reason !== "closed" && removal.template.dayOfWeek === day,
+          )
+          const results = await Promise.allSettled(
+            stale.map((removal) => deleteScheduleTemplate(removal.template.id)),
+          )
+          const failedStale = results.filter(
+            (item): item is PromiseRejectedResult => item.status === "rejected",
+          )
+          removed += results.length - failedStale.length
+          if (failedStale.length > 0) {
+            errors.push(
+              t("rentals.schedule.hours.errorRemoveDay", {
+                day: dayName(day),
+                count: failedStale.length,
+                message: messageOf(failedStale[0].reason, t("apiErrors.deleteTemplate")),
+              }),
+            )
+            continue
+          }
+          applyDays.push(day)
+        }
+        if (applyDays.length === 0) continue
+        try {
+          const result = await applyWeeklyRule({
+            rentalAssetIds: plan.rentalAssetIds,
+            daysOfWeek: applyDays,
+            openTime: group.openTime,
+            closeTime: group.closeTime,
+            slotMinutes: plan.slotMinutes,
+            occupancyKindId: openKindId,
+          })
+          created += result.created
+          updated += result.updated
+          applied += 1
+        } catch (error) {
+          errors.push(
+            t("rentals.schedule.hours.errorRule", {
+              days: applyDays.map(dayName).join(", "),
+              message: messageOf(error, t("apiErrors.applyWeeklyRule")),
+            }),
+          )
+        }
+      }
+
+      const closedRemovals = plan.removals.filter((removal) => removal.reason === "closed")
+      const deletions = await Promise.allSettled(
+        closedRemovals.map((removal) => deleteScheduleTemplate(removal.template.id)),
       )
-      await Promise.all([
-        refreshAssets(),
-        refreshWeeklyTemplates(),
-        refreshScheduleTemplates(),
-        refreshDay(),
-      ])
-      return true
-    } catch (error) {
-      toast.error(
-        error instanceof Error
-          ? error.message
-          : t("apiErrors.applyWeeklyRule"),
+      const failedDeletions = deletions.filter(
+        (item): item is PromiseRejectedResult => item.status === "rejected",
       )
-      return false
+      removed += deletions.length - failedDeletions.length
+      if (failedDeletions.length > 0) {
+        errors.push(
+          t("rentals.schedule.hours.errorRemove", {
+            count: failedDeletions.length,
+            message: messageOf(failedDeletions[0].reason, t("apiErrors.deleteTemplate")),
+          }),
+        )
+      }
+
+      // Resources that keep open/close on the resource itself follow the new overall hours.
+      const openHoursAssets = assets.filter(
+        (asset) =>
+          plan.rentalAssetIds.includes(asset.id) &&
+          (asset.schedulePolicy ?? "SlotGrid") === "OpenHours",
+      )
+      if (plan.policyHours && openHoursAssets.length > 0 && applied > 0) {
+        const byDurations = new Map<string, string[]>()
+        for (const asset of openHoursAssets) {
+          const key = asset.allowedDurationMinutes ?? ""
+          byDurations.set(key, [...(byDurations.get(key) ?? []), asset.id])
+        }
+        for (const [durations, ids] of byDurations) {
+          try {
+            const items = await updateRentalSchedulePolicyBulk(ids, {
+              schedulePolicy: "OpenHours",
+              openTime: plan.policyHours.openTime,
+              closeTime: plan.policyHours.closeTime,
+              allowedDurationMinutes: durations || null,
+            })
+            setAssets((current) => mergeAssets(current, items))
+          } catch (error) {
+            errors.push(
+              t("rentals.schedule.hours.errorPolicy", {
+                message: messageOf(error, t("rentals.schedule.policy.saveError")),
+              }),
+            )
+          }
+        }
+      }
+
+      try {
+        await Promise.all([
+          refreshAssets(),
+          refreshWeeklyTemplates(),
+          refreshScheduleTemplates(),
+          refreshDay(),
+        ])
+      } catch (error) {
+        errors.push(messageOf(error, t("rentals.schedule.loadError")))
+      }
+
+      if (errors.length === 0) {
+        toast.success(
+          t("rentals.schedule.hours.saveSuccess", { created, updated, removed }),
+        )
+      } else {
+        toast.error(t("rentals.schedule.hours.saveFailed", { count: errors.length }))
+      }
+      return { ok: errors.length === 0, errors }
     } finally {
       endBusy()
     }
@@ -837,19 +926,13 @@ function AdminSchedulePage() {
     }
   }
 
-  const tabItems: {
-    id: ScheduleTab
-    labelKey: string
-    shortLabelKey: string
-    icon: typeof CalendarDays
-  }[] = [
-    { id: "daily", labelKey: "rentals.schedule.tabs.daily", shortLabelKey: "rentals.schedule.tabs.dailyShort", icon: CalendarDays },
-    { id: "templates", labelKey: "rentals.schedule.tabs.templates", shortLabelKey: "rentals.schedule.tabs.templatesShort", icon: CalendarRange },
-    { id: "kinds", labelKey: "rentals.schedule.tabs.kinds", shortLabelKey: "rentals.schedule.tabs.kindsShort", icon: Tag },
+  const tabItems: { id: ScheduleTab; labelKey: string }[] = [
+    { id: "hours", labelKey: "rentals.schedule.tabs.templates" },
+    { id: "daily", labelKey: "rentals.schedule.tabs.daily" },
   ]
 
-  const scheduleTemplatesKey = selectedRentalAssetIds.join(",")
-  const loadingScheduleTemplates = selectedRentalAssetIds.length > 0 &&
+  const scheduleTemplatesKey = hoursAssetIds.join(",")
+  const loadingScheduleTemplates = hoursAssetIds.length > 0 &&
     scheduleTemplatesState?.key !== scheduleTemplatesKey
   const scheduleTemplates = loadingScheduleTemplates || !scheduleTemplatesState
     ? []
@@ -865,46 +948,37 @@ function AdminSchedulePage() {
             title={t("rentals.schedule.title")}
             description={t("rentals.schedule.descriptionOperational")}
             className="mb-0 sm:mb-0"
+            actions={
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setAdvancedOpen(true)}
+              >
+                <Settings2 aria-hidden />
+                {t("rentals.schedule.advanced")}
+              </Button>
+            }
           />
           <p className="text-xs text-muted-foreground" data-testid="tenant-tz-label">
             {formatTenantTimeZoneLabel(timeZoneId, i18n.language, date)}
           </p>
         </div>
 
-        <div
-          role="group"
-          aria-label={t("nav.menu")}
-          className="grid h-auto w-full grid-cols-3 gap-1 rounded-lg bg-muted p-1 text-muted-foreground sm:flex sm:w-max"
+        <Tabs
+          value={tab}
+          onValueChange={(value) => {
+            const next = value as ScheduleTab
+            if (next === tab) return
+            runOrAsk(() => setTab(next))
+          }}
         >
-          {tabItems.map((item) => {
-            const isActive = tab === item.id
-            return (
-              <button
-                key={item.id}
-                type="button"
-                aria-pressed={isActive}
-                onClick={() => {
-                  if (item.id === tab) return
-                  runOrAsk(() => {
-                    if (item.id !== "templates") {
-                      closeWeeklyRule()
-                      closePolicy()
-                    }
-                    setTab(item.id)
-                  })
-                }}
-                className={cn(
-                  "touch-target inline-flex min-h-9 min-w-0 items-center justify-center gap-1.5 rounded-md px-2 py-1.5 text-sm font-medium motion-safe:transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring sm:px-3",
-                  isActive ? "bg-background text-foreground shadow-sm" : "hover:text-foreground",
-                )}
-              >
-                <item.icon aria-hidden className="size-4 shrink-0" />
-                <span className="truncate sm:hidden">{t(item.shortLabelKey)}</span>
-                <span className="hidden sm:inline">{t(item.labelKey)}</span>
-              </button>
-            )
-          })}
-        </div>
+          <TabsList variant="line" aria-label={t("nav.menu")}>
+            {tabItems.map((item) => (
+              <TabsTrigger key={item.id} value={item.id}>{t(item.labelKey)}</TabsTrigger>
+            ))}
+          </TabsList>
+        </Tabs>
       </div>
 
       <Card className="min-w-0 motion-reduce:transition-none">
@@ -931,7 +1005,7 @@ function AdminSchedulePage() {
               void onPublish()
             }}
             onGoWeeklySetup={() => {
-              runOrAsk(() => setTab("templates"))
+              runOrAsk(() => setTab("hours"))
             }}
             onSlotOrCellClick={(target) => {
               const openCell = () => {
@@ -971,32 +1045,33 @@ function AdminSchedulePage() {
               handleSlotAction("RestoreWeeklyDefault", "slotRestore")
             }
             onGoWeeklySetup={() => {
-              runOrAsk(() => setTab("templates"))
+              runOrAsk(() => setTab("hours"))
             }}
           />
           </>
         ) : null}
 
-        {tab === "templates" ? (
+        {tab === "hours" ? (
           <WeeklyTemplatesTab
             assets={assets}
-            selectedRentalAssetIds={selectedRentalAssetIds}
+            selectedRentalAssetIds={hoursAssetIds}
             weekday={weekday}
             templates={templates}
             scheduleTemplates={scheduleTemplates}
+            allScheduleTemplates={allTemplates}
             loadingScheduleTemplates={loadingScheduleTemplates}
             kinds={kinds}
-            defaultKindId={defaultKindId}
+            openKindId={openKindId}
             loading={loadingAssets || loadingTemplates}
             showSkeleton={
               loadingAssets ||
-              (showTemplateSkeleton && selectedRentalAssetIds.length > 0)
+              (showTemplateSkeleton && hoursAssetIds.length > 0)
             }
             busy={busy}
             busyAction={busyAction}
             busyTargetId={busyTargetId}
             readOnly={isTrialReadOnly}
-            onSelectedRentalAssetIdsChange={onSelectedRentalAssetIdsChange}
+            onSelectedRentalAssetIdsChange={onHoursAssetIdsChange}
             onWeekdayChange={(nextWeekday) => {
               if (nextWeekday === weekday) return
               runOrAsk(() => setWeekday(nextWeekday))
@@ -1010,10 +1085,8 @@ function AdminSchedulePage() {
                 setTemplateSheetOpen(true)
               })
             }}
-            onSeedSelected={() => {
-              void onSeedSelected()
-            }}
-            onSavePolicy={onSavePolicy}
+            onSaveBusinessHours={onSaveBusinessHours}
+            onHoursDirtyChange={setHoursDirty}
             templateEditor={<>
               {templateSheetOpen && kindsLoadError ? (
                 <p role="alert" className="text-sm text-destructive">
@@ -1058,20 +1131,22 @@ function AdminSchedulePage() {
                 }
               />
             </>}
-            onApplyWeeklyRule={onApplyWeeklyRule}
-            ruleOpen={ruleOpen}
-            onRuleOpenChange={setRuleOpen}
-            onRuleDirtyChange={setRuleDirty}
-            onRuleRequestClose={requestCloseRule}
-            policyOpen={policyOpen}
-            onPolicyOpenChange={setPolicyOpen}
-            onPolicyDirtyChange={setPolicyDirty}
-            onPolicyRequestClose={requestClosePolicy}
           />
         ) : null}
+      </CardContent>
+      </Card>
 
-        {tab === "kinds" ? (
-          <>
+      <Sheet
+        open={advancedOpen}
+        onOpenChange={(open) => {
+          if (open) setAdvancedOpen(true)
+          else requestCloseAdvanced()
+        }}
+      >
+        <SheetContent className="w-full overflow-y-auto p-4 sm:max-w-xl">
+          <SheetHeader className="p-0">
+            <SheetTitle>{t("rentals.schedule.kinds.title")}</SheetTitle>
+          </SheetHeader>
           <OccupancyKindsTab
             kinds={kinds}
             loading={loadingKinds}
@@ -1081,24 +1156,22 @@ function AdminSchedulePage() {
             onEdit={(kind) => openKind(kind)}
           />
           {kindSheetOpen ? (
-          <OccupancyKindSheet
-            key={editingKind?.id ?? "new"}
-            open
-            onOpenChange={(open) => {
-              if (!open) clearKindDraft()
-            }}
-            onDirtyChange={setKindDirty}
-            onRequestClose={requestCloseKind}
-            editing={editingKind}
-            busy={busy}
-            readOnly={isTrialReadOnly}
-            onSubmit={handleSaveKind}
-          />
+            <OccupancyKindSheet
+              key={editingKind?.id ?? "new"}
+              open
+              onOpenChange={(open) => {
+                if (!open) clearKindDraft()
+              }}
+              onDirtyChange={setKindDirty}
+              onRequestClose={requestCloseKind}
+              editing={editingKind}
+              busy={busy}
+              readOnly={isTrialReadOnly}
+              onSubmit={handleSaveKind}
+            />
           ) : null}
-          </>
-        ) : null}
-      </CardContent>
-      </Card>
+        </SheetContent>
+      </Sheet>
 
       {hasDataRouter ? <ScheduleLeaveGuard dirty={draftDirty} /> : null}
       <LeaveConfirmDialog
