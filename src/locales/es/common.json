@@ -230,17 +230,17 @@
     "invalidResponse": "Respuesta inválida de la API.",
     "loadUsers": "No se pudieron cargar los usuarios.",
     "deleteUser": "No se pudo eliminar el usuario.",
-    "loadTenantUsers": "No se pudieron cargar los usuarios del cliente.",
+    "loadTenantUsers": "No se pudieron cargar los usuarios de la empresa.",
     "sendInvite": "No se pudo enviar la invitación.",
     "resendInvite": "No se pudo reenviar la invitación.",
     "revokeInvite": "No se pudo revocar la invitación.",
     "promoteUser": "No se pudo actualizar el rol del usuario.",
-    "loadTenant": "No se pudo cargar el cliente.",
-    "deleteTenant": "No se pudo eliminar el cliente.",
-    "enterTenant": "No se pudo abrir el entorno del cliente.",
-    "exitTenant": "No se pudo salir del entorno del cliente.",
-    "createTenant": "No se pudo crear el cliente.",
-    "updateTenant": "No se pudo actualizar el cliente.",
+    "loadTenant": "No se pudo cargar la empresa.",
+    "deleteTenant": "No se pudo eliminar la empresa.",
+    "enterTenant": "No se pudo abrir la empresa.",
+    "exitTenant": "No se pudo salir de la empresa.",
+    "createTenant": "No se pudo crear la empresa.",
+    "updateTenant": "No se pudo actualizar la empresa.",
     "loadReservations": "No se pudieron cargar las reservas.",
     "confirmReservation": "No se pudo confirmar la reserva.",
     "createReservation": "No se pudo crear la reserva.",
@@ -428,12 +428,12 @@
       "pickerLoading": "Cargando tus entornos...",
       "passwordHint": "Usa al menos 8 caracteres.",
       "confirmPasswordHint": "Repite la nueva contraseña para confirmar.",
-      "pickerTitle": "Elija el ambiente",
-      "pickerBody": "Su cuenta participa de más de un ambiente. Elija cuál abrir ahora.",
+      "pickerTitle": "Elija la empresa",
+      "pickerBody": "Su cuenta participa de más de una empresa. Elija cuál abrir ahora.",
       "pickerSubmit": "Continuar",
       "pickerSubmitting": "Abriendo...",
-      "pickerError": "No se pudo cambiar de ambiente. Inténtelo de nuevo.",
-      "membershipError": "No se pudieron cargar sus ambientes. Inténtelo de nuevo.",
+      "pickerError": "No se pudo cambiar de empresa. Inténtelo de nuevo.",
+      "membershipError": "No se pudieron cargar sus empresas. Inténtelo de nuevo.",
       "membershipErrorHint": "Esto puede ser una falla temporal de conexión. Inténtelo de nuevo o cierre sesión y vuelva a entrar.",
       "membershipRetry": "Intentar de nuevo",
       "membershipSignOut": "Cerrar sesión"
@@ -1096,7 +1096,7 @@
     },
     "products": {
       "title": "Productos",
-      "subtitle": "Gestione los productos del catálogo de este ambiente.",
+      "subtitle": "Gestione los productos del catálogo de esta empresa.",
       "create": "Nuevo producto",
       "createTitle": "Nuevo producto",
       "editTitle": "Editar producto",
@@ -2297,7 +2297,7 @@
       "pillars": {
         "isolation": {
           "title": "Sus datos, solo suyos",
-          "body": "Cada cliente opera en un espacio aislado. Ningún otro tenant ve lo que es de su operación."
+          "body": "Cada cliente opera en un espacio aislado. Ninguna otra empresa ve lo que es de su operación."
         },
         "modular": {
           "title": "Crece a su ritmo",
@@ -3151,7 +3151,7 @@
     "emptyTags": "Aún no hay etiquetas.",
     "emptyTagsHint": "Usa etiquetas para identificar y encontrar elementos fácilmente.",
     "title": "Categorías y etiquetas",
-    "sharedHint": "Estas definiciones se comparten con todos los consumidores de este tenant.",
+    "sharedHint": "Estas definiciones se comparten con todos los consumidores de esta empresa.",
     "categories": "Categorías",
     "tags": "Etiquetas",
     "newCategory": "Nueva categoría",
@@ -4246,7 +4246,7 @@
       "colActions": "Acciones",
       "tasksCount": "{{count}} tareas",
       "title": "Biblioteca Rolvix",
-      "description": "Modelos estándar de la plataforma. Clónelos en su tenant y personalice el checklist.",
+      "description": "Modelos estándar de la plataforma. Clónelos en su empresa y personalice el checklist.",
       "loading": "Cargando biblioteca...",
       "empty": "No hay modelos publicados en este momento.",
       "version": "Versión {{version}}",
@@ -4794,7 +4794,7 @@
       "createTitle": "Nueva función",
       "editTitle": "Perfil de acceso",
       "editorDescription": "Defina el nombre y los permisos de esta función.",
-      "adminReadonly": "La función Admin del sistema es de solo lectura. Los permisos siguen el catálogo del tenant.",
+      "adminReadonly": "La función Admin del sistema es de solo lectura. Los permisos siguen el catálogo de la empresa.",
       "descriptionLabel": "Descripción",
       "view": "Ver permisos",
       "save": "Guardar",
@@ -4975,35 +4975,35 @@
     },
     "dashboard": {
       "title": "Panel Super-Admin",
-      "description": "Administre clientes (tenants), subdominios y módulos contratados.",
-      "newClient": "Nuevo Cliente",
+      "description": "Administre empresas clientes, subdominios y módulos contratados.",
+      "newClient": "Nueva Empresa",
       "statusActive": "Activo",
       "statusInactive": "Inactivo",
       "taxId": "Documento",
       "noSubdomain": "Sin subdominio",
       "noModules": "Sin módulos activos",
-      "emptyTitle": "Aún no hay clientes",
-      "emptyDescription": "Registre el primer tenant con el asistente de onboarding.",
-      "searchLabel": "Buscar clientes",
+      "emptyTitle": "Aún no hay empresas",
+      "emptyDescription": "Registre la primera empresa con el asistente de onboarding.",
+      "searchLabel": "Buscar empresas",
       "clearSearch": "Borrar búsqueda",
       "searchPlaceholder": "Buscar por nombre o subdominio...",
-      "searchEmptyTitle": "No se encontraron clientes",
+      "searchEmptyTitle": "No se encontraron empresas",
       "searchEmptyDescription": "Ajuste la búsqueda por nombre o subdominio.",
       "filterAll": "Todos",
       "columns": {
-        "client": "Cliente",
+        "client": "Empresa",
         "modules": "Módulos",
         "status": "Estado",
         "actions": "Acciones"
       },
       "metrics": {
-        "totalTenants": "Total de tenants",
-        "activeTenants": "Tenants activos",
+        "totalTenants": "Total de empresas",
+        "activeTenants": "Empresas activas",
         "estimatedRevenue": "Ingresos mensuales estimados"
       },
       "actions": {
-        "edit": "Editar cliente",
-        "delete": "Eliminar cliente",
+        "edit": "Editar empresa",
+        "delete": "Eliminar empresa",
         "openEnvironment": "Entrar",
         "visualResources": "Recursos visuales",
         "copyUrl": "Copiar URL",
@@ -5012,46 +5012,46 @@
         "rowMenu": "Acciones para {{name}}"
       },
       "delete": {
-        "title": "Eliminar cliente",
+        "title": "Eliminar empresa",
         "description": "¿Está seguro? Esta acción es irreversible y eliminará la empresa con todas las unidades, roles, usuarios y datos operativos vinculados.",
         "confirm": "Continuar",
         "deleting": "Eliminando...",
-        "success": "Cliente eliminado con éxito.",
-        "failed": "No se pudo eliminar el cliente.",
+        "success": "Empresa eliminada con éxito.",
+        "failed": "No se pudo eliminar la empresa.",
         "errors": {
-          "hasUsers": "No se puede eliminar: este cliente aún tiene usuarios.",
-          "hasUnits": "No se puede eliminar: este cliente aún tiene unidades.",
-          "hasRoles": "No se puede eliminar: este cliente aún tiene roles.",
-          "linkedData": "No se puede eliminar: este cliente aún tiene datos vinculados.",
-          "notFound": "Cliente no encontrado."
+          "hasUsers": "No se puede eliminar: esta empresa aún tiene usuarios.",
+          "hasUnits": "No se puede eliminar: esta empresa aún tiene unidades.",
+          "hasRoles": "No se puede eliminar: esta empresa aún tiene roles.",
+          "linkedData": "No se puede eliminar: esta empresa aún tiene datos vinculados.",
+          "notFound": "Empresa no encontrada."
         }
       }
     },
     "edit": {
-      "title": "Editar cliente",
+      "title": "Editar empresa",
       "description": "Actualice los datos legales, subdominio y módulos contratados.",
       "successTitle": "Éxito",
-      "success": "¡Cliente actualizado!",
+      "success": "¡Empresa actualizada!",
       "errorTitle": "Error",
       "sections": {
         "basic": "Información Básica",
         "basicDescription": "Razón social y documento fiscal de la empresa.",
         "identity": "Subdominio e Identidad",
-        "identityDescription": "Dirección del ambiente, logo, colores y frase del portal.",
+        "identityDescription": "Dirección de la empresa, logo, colores y frase del portal.",
         "modules": "Módulos Rolvix",
-        "modulesDescription": "Seleccione los módulos activos para este cliente.",
+        "modulesDescription": "Seleccione los módulos activos para esta empresa.",
         "families": "Familias de recursos",
-        "familiesDescription": "Qué tipos de recursos registra este cliente (espacios, eléctricos, bienes…)."
+        "familiesDescription": "Qué tipos de recursos registra esta empresa (espacios, eléctricos, bienes…)."
       },
       "actions": {
         "save": "Guardar Cambios",
         "saving": "Guardando..."
       },
       "errors": {
-        "invalidId": "Identificador de cliente inválido.",
-        "notFound": "Cliente no encontrado.",
-        "loadFailed": "No se pudo cargar el cliente.",
-        "updateFailed": "No se pudo actualizar el cliente."
+        "invalidId": "Identificador de empresa inválido.",
+        "notFound": "Empresa no encontrada.",
+        "loadFailed": "No se pudo cargar la empresa.",
+        "updateFailed": "No se pudo actualizar la empresa."
       }
     },
     "users": {
@@ -5079,18 +5079,18 @@
     },
     "platformUsers": {
       "title": "Usuarios de la plataforma",
-      "description": "Visualice y gestione todos los usuarios B2B de todos los tenants.",
+      "description": "Visualice y gestione todos los usuarios B2B de todas las empresas.",
       "filters": {
         "name": "Nombre",
         "namePlaceholder": "Filtrar por nombre...",
-        "tenant": "Cliente",
-        "tenantPlaceholder": "Todos los clientes",
-        "allTenants": "Todos los clientes"
+        "tenant": "Empresa",
+        "tenantPlaceholder": "Todas las empresas",
+        "allTenants": "Todas las empresas"
       },
       "columns": {
         "name": "Nombre",
         "email": "Correo",
-        "tenant": "Cliente",
+        "tenant": "Empresa",
         "roles": "Roles",
         "status": "Estado",
         "actions": "Acciones"
@@ -5098,7 +5098,7 @@
       "statusActive": "Activo",
       "statusInactive": "Inactivo",
       "emptyTitle": "No se encontraron usuarios",
-      "emptyDescription": "Ajuste los filtros o invite usuarios desde un cliente.",
+      "emptyDescription": "Ajuste los filtros o invite usuarios desde una empresa.",
       "actions": {
         "delete": "Eliminar usuario",
         "deleteNamed": "Eliminar usuario {{email}}"
@@ -5219,7 +5219,7 @@
       "ResourcePlanningDescription": "Organiza la disponibilidad y el uso de los recursos.",
       "loadFailed": "No se pudieron cargar los módulos.",
       "retry": "Intentar de nuevo",
-      "legacyMaintenanceNote": "Este cliente aún tiene el módulo legado Mantenimiento. Permanece activo, pero no se puede seleccionar ni desactivar aquí."
+      "legacyMaintenanceNote": "Esta empresa aún tiene el módulo legado Mantenimiento. Permanece activo, pero no se puede seleccionar ni desactivar aquí."
     },
     "wizard": {
       "title": "Registrar nueva empresa",
@@ -5283,10 +5283,10 @@
         "finishing": "Aprovisionando..."
       },
       "successTitle": "Éxito",
-      "success": "¡Ambiente creado con éxito!",
+      "success": "¡Empresa creada con éxito!",
       "errorTitle": "Error",
       "errors": {
-        "createFailed": "No se pudo aprovisionar el cliente.",
+        "createFailed": "No se pudo aprovisionar la empresa.",
         "familiesLoadFailed": "No se pudieron cargar las familias de recursos."
       },
       "stepperAriaLabel": "Pasos del registro de la empresa",
@@ -5309,15 +5309,15 @@
     },
     "errors": {
       "forbidden": "Acceso restringido a Super-Admins de la plataforma.",
-      "loadFailed": "No se pudieron cargar los clientes."
+      "loadFailed": "No se pudieron cargar las empresas."
     },
     "support": {
-      "banner": "Está en el tenant {{tenant}} como super-admin",
+      "banner": "Está en la empresa {{tenant}} como super-admin",
       "platformPanel": "Panel de la plataforma",
       "bannerSlim": "Estás viendo este espacio como super-admin",
-      "exitShort": "Salir del tenant",
-      "tenantFallback": "cliente",
-      "exit": "Salir del tenant",
+      "exitShort": "Salir de la empresa",
+      "tenantFallback": "empresa",
+      "exit": "Salir de la empresa",
       "exiting": "Saliendo...",
       "exitErrorTitle": "Error",
       "exitFailed": "No se pudo volver a la plataforma.",
@@ -5759,12 +5759,12 @@
         "location": "Ubicación",
         "locationPlaceholder": "Ej.: Bloque A",
         "horizonLabel": "Horizonte",
-        "horizonInherit": "Usar el valor del ambiente",
+        "horizonInherit": "Usar el valor de la empresa",
         "horizonUnlimited": "Ilimitado",
         "horizonDaysMode": "Número de días",
         "horizonDays": "Días adelante",
         "horizonHint": "Defina hasta cuándo los clientes pueden reservar este recurso.",
-        "horizonTechnicalHelp": "Usar el valor del ambiente sigue la política de reservas y borra un número de días guardado en este recurso. Ilimitado hace lo mismo, con un borrado explícito. Queda sin límite solo cuando la propia política es ilimitada. Un número de días sustituye la política en este recurso. Se acepta una fecha hasta ese número de días adelante; el día siguiente se rechaza (booking_horizon_exceeded).",
+        "horizonTechnicalHelp": "Usar el valor de la empresa sigue la política de reservas y borra un número de días guardado en este recurso. Ilimitado hace lo mismo, con un borrado explícito. Queda sin límite solo cuando la propia política es ilimitada. Un número de días sustituye la política en este recurso. Se acepta una fecha hasta ese número de días adelante; el día siguiente se rechaza (booking_horizon_exceeded).",
         "horizonEffectiveUnlimited": "En vigor: ilimitado (sin límite).",
         "horizonEffectiveDays": "En vigor: {{count}} días adelante.",
         "cancelCutoffLabel": "Plazo de cancelación",
@@ -5871,7 +5871,7 @@
       "spaceType": "Espacio reservable",
       "bookableItemType": "Elemento reservable",
       "templatesTitle": "Tipo y modelo visual",
-      "templatesHelp": "Los modelos listados coinciden con los segmentos habilitados del tenant.",
+      "templatesHelp": "Los modelos listados coinciden con los segmentos habilitados de la empresa.",
       "mapTitle": "Posicione los bloques",
       "mapHelp": "Arrastre los bloques y elija un tamaño adecuado para cada espacio.",
       "reviewSpaces_one": "{{count}} espacio en el mapa",
@@ -5946,7 +5946,7 @@
     },
     "bookingPolicy": {
       "title": "Política de reservas",
-      "description": "Defina el texto de cancelación, hasta cuántos días adelante el cliente puede reservar un recurso y el límite diario de reservas activas por cliente. Vale para todos los recursos de este ambiente, salvo donde un recurso define su propio valor.",
+      "description": "Defina el texto de cancelación, hasta cuántos días adelante el cliente puede reservar un recurso y el límite diario de reservas activas por cliente. Vale para todos los recursos de esta empresa, salvo donde un recurso define su propio valor.",
       "cancellationLabel": "Texto de cancelación",
       "cancellationPlaceholder": "Texto simple que se muestra al cancelar una reserva.",
       "characterCount": "{{count}}/{{max}}",
@@ -6130,7 +6130,7 @@
     }
   },
   "resourceVisual": {
-    "tenantSegmentsTitle": "Segmentos del tenant: {{tenantName}}",
+    "tenantSegmentsTitle": "Segmentos de la empresa: {{tenantName}}",
     "title": "Catálogo visual de recursos",
     "help": "Gestione modelos globales, arte publicada y clasificaciones.",
     "newTemplate": "Nuevo modelo",
@@ -6169,7 +6169,7 @@
     "deleteTagDescription": "Esta acción no se puede deshacer.",
     "deleteTemplateTitle": "¿Eliminar modelo?",
     "deleteTemplateDescription": "¿Eliminar \"{{name}}\"? Esta acción no se puede deshacer.",
-    "segmentsTitle": "Segmentos del tenant",
+    "segmentsTitle": "Segmentos de la empresa",
     "segmentsHelp": "Defina los segmentos que aparecen primero al elegir un modelo.",
     "enabledTemplates": "Modelos habilitados",
     "noEnabledTemplates": "Ningún modelo corresponde a los segmentos seleccionados.",

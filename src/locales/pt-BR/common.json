@@ -230,17 +230,17 @@
     "invalidResponse": "Resposta inválida da API.",
     "loadUsers": "Não foi possível carregar os usuários.",
     "deleteUser": "Não foi possível excluir o usuário.",
-    "loadTenantUsers": "Não foi possível carregar os usuários do cliente.",
+    "loadTenantUsers": "Não foi possível carregar os usuários da empresa.",
     "sendInvite": "Não foi possível enviar o convite.",
     "resendInvite": "Não foi possível reenviar o convite.",
     "revokeInvite": "Não foi possível revogar o convite.",
     "promoteUser": "Não foi possível atualizar o papel do usuário.",
-    "loadTenant": "Não foi possível carregar o cliente.",
-    "deleteTenant": "Não foi possível excluir o cliente.",
-    "enterTenant": "Não foi possível abrir o ambiente do cliente.",
-    "exitTenant": "Não foi possível sair do ambiente do cliente.",
-    "createTenant": "Não foi possível criar o cliente.",
-    "updateTenant": "Não foi possível atualizar o cliente.",
+    "loadTenant": "Não foi possível carregar a empresa.",
+    "deleteTenant": "Não foi possível excluir a empresa.",
+    "enterTenant": "Não foi possível abrir a empresa.",
+    "exitTenant": "Não foi possível sair da empresa.",
+    "createTenant": "Não foi possível criar a empresa.",
+    "updateTenant": "Não foi possível atualizar a empresa.",
     "loadReservations": "Não foi possível carregar as reservas.",
     "confirmReservation": "Não foi possível confirmar a reserva.",
     "createReservation": "Não foi possível criar a reserva.",
@@ -295,7 +295,7 @@
     "loadCustomerProfile": "Não foi possível carregar o perfil.",
     "updateCustomerProfile": "Não foi possível atualizar o perfil.",
     "invalidPayload": "Dados inválidos recebidos da API.",
-    "moduleInactive": "Este módulo não está ativo neste ambiente.",
+    "moduleInactive": "Este módulo não está ativo nesta empresa.",
     "loadCatalogProducts": "Não foi possível carregar os produtos.",
     "loadCatalogProduct": "Não foi possível carregar o produto.",
     "saveCatalogProduct": "Não foi possível salvar o produto.",
@@ -422,18 +422,18 @@
         "accountMismatch": "A sessão atual é de outra conta. Entre com o e-mail deste convite para aceitar.",
         "identityConflict": "Não foi possível confirmar a conta deste convite. Nada foi alterado. Tente novamente ou fale com o suporte."
       },
-      "pickerSearch": "Buscar ambiente por nome ou subdomínio",
-      "pickerEmpty": "Nenhum ambiente disponível.",
-      "pickerNoResults": "Nenhum ambiente encontrado. Tente outro nome ou subdomínio.",
-      "pickerLoading": "Carregando seus ambientes...",
+      "pickerSearch": "Buscar empresa por nome ou subdomínio",
+      "pickerEmpty": "Nenhuma empresa disponível.",
+      "pickerNoResults": "Nenhuma empresa encontrada. Tente outro nome ou subdomínio.",
+      "pickerLoading": "Carregando suas empresas...",
       "passwordHint": "Use pelo menos 8 caracteres.",
       "confirmPasswordHint": "Repita a nova senha para confirmar.",
-      "pickerTitle": "Escolha o ambiente",
-      "pickerBody": "Sua conta participa de mais de um ambiente. Escolha qual abrir agora.",
+      "pickerTitle": "Escolha a empresa",
+      "pickerBody": "Sua conta participa de mais de uma empresa. Escolha qual abrir agora.",
       "pickerSubmit": "Continuar",
       "pickerSubmitting": "Abrindo...",
-      "pickerError": "Não foi possível trocar de ambiente. Tente novamente.",
-      "membershipError": "Não foi possível carregar seus ambientes. Tente novamente.",
+      "pickerError": "Não foi possível trocar de empresa. Tente novamente.",
+      "membershipError": "Não foi possível carregar suas empresas. Tente novamente.",
       "membershipErrorHint": "Isso pode ser uma falha temporária de conexão. Tente novamente ou saia e entre de novo.",
       "membershipRetry": "Tentar novamente",
       "membershipSignOut": "Sair"
@@ -1096,7 +1096,7 @@
     },
     "products": {
       "title": "Produtos",
-      "subtitle": "Cadastre produtos do catálogo deste ambiente.",
+      "subtitle": "Cadastre produtos do catálogo desta empresa.",
       "create": "Novo produto",
       "createTitle": "Novo produto",
       "editTitle": "Editar produto",
@@ -1685,7 +1685,7 @@
       "pickMember": "Adicionar {{name}}",
       "memberAdded": "{{name}} entrou no grupo.",
       "noCustomerMatch": "Nenhum cliente com esse nome ou e-mail.",
-      "noResources": "Não há recursos reserváveis neste ambiente.",
+      "noResources": "Não há recursos reserváveis nesta empresa.",
       "accessSaved": "Quem pode comprar foi salvo.",
       "menuPublished": "A loja entrou no menu do cliente.",
       "steps": {
@@ -1732,8 +1732,8 @@
           "none": "Este produto não usa recurso. A compra não agenda nada.",
           "missing": "Há um recurso necessário sem um item escolhido.",
           "unavailable": "Não foi possível ler o recurso deste produto.",
-          "notApplicable": "Este ambiente não usa recursos reserváveis.",
-          "inactiveModule": "O servidor ainda não libera o vínculo de recurso neste ambiente. A compra não depende disso."
+          "notApplicable": "Esta empresa não usa recursos reserváveis.",
+          "inactiveModule": "O servidor ainda não libera o vínculo de recurso nesta empresa. A compra não depende disso."
         }
       },
       "actions": {
@@ -1994,11 +1994,11 @@
   "notifications": {
     "settings": {
       "title": "Notificações",
-      "subtitle": "Escolha os canais de aviso por evento. Só aparecem os módulos ativos neste ambiente.",
-      "subtitleBoth": "Canais de aviso e o histórico de entregas deste ambiente.",
+      "subtitle": "Escolha os canais de aviso por evento. Só aparecem os módulos ativos nesta empresa.",
+      "subtitleBoth": "Canais de aviso e o histórico de entregas desta empresa.",
       "deliveries": "Entregas",
       "emailDefault": "As notificações por e-mail para clientes começam ligadas em organizações novas. Você pode desligá-las aqui.",
-      "empty": "Nenhum módulo com notificações está ativo neste ambiente.",
+      "empty": "Nenhum módulo com notificações está ativo nesta empresa.",
       "inAppAlwaysOn": "No app sempre ativo",
       "channelUnavailable": "Indisponível",
       "toggleChannel": "Ativar {{channel}} para {{event}}",
@@ -2028,7 +2028,7 @@
       "all": "Todos",
       "clear": "Limpar busca e filtros",
       "emptyChannelsTitle": "Nenhum canal para configurar",
-      "emptyChannels": "Nenhum módulo com avisos está ativo neste ambiente.",
+      "emptyChannels": "Nenhum módulo com avisos está ativo nesta empresa.",
       "emptyHistoryTitle": "Nenhuma entrega ainda",
       "emptyHistory": "Os avisos enviados aparecem aqui, com o canal e o resultado.",
       "noResultsTitle": "Nenhuma entrega encontrada",
@@ -2297,7 +2297,7 @@
       "pillars": {
         "isolation": {
           "title": "Seus dados, só seus",
-          "body": "Cada cliente opera em espaço isolado. Nenhum outro tenant vê o que é da sua operação."
+          "body": "Cada cliente opera em espaço isolado. Nenhuma outra empresa vê o que é da sua operação."
         },
         "modular": {
           "title": "Cresce no seu ritmo",
@@ -2464,7 +2464,7 @@
     "notifications": "Notificações",
     "peopleAccess": "Pessoas e acesso",
     "admin": "Super-Admin",
-    "adminTenants": "Clientes",
+    "adminTenants": "Empresas",
     "adminUsers": "Usuários",
     "adminAssetFamilies": "Famílias",
     "menu": "Menu de navegação",
@@ -2546,10 +2546,10 @@
         "how3": "Os planos se relacionam aos equipamentos e às ordens de serviço de Manutenção."
       },
       "platform": {
-        "summary": "Administre os ambientes e os cadastros compartilhados da plataforma.",
-        "how1": "Consulte os clientes e abra o ambiente que precisa administrar.",
+        "summary": "Administre as empresas e os cadastros compartilhados da plataforma.",
+        "how1": "Consulte as empresas e abra a que precisa administrar.",
         "how2": "Gerencie os usuários da plataforma e as famílias de equipamentos nas telas disponíveis.",
-        "how3": "Dentro de um ambiente, o menu mostra as áreas disponíveis para aquele cliente."
+        "how3": "Dentro de uma empresa, o menu mostra as áreas disponíveis para aquela empresa."
       }
     }
   },
@@ -3131,7 +3131,7 @@
           "title": "Gerencie usuários e famílias"
         },
         "learn3": {
-          "title": "Explore o menu do ambiente"
+          "title": "Explore o menu da empresa"
         }
       },
       "visit": {
@@ -3151,7 +3151,7 @@
     "emptyTags": "Nenhuma tag cadastrada.",
     "emptyTagsHint": "Use tags para identificar e encontrar itens com facilidade.",
     "title": "Categorias e tags",
-    "sharedHint": "Estas definições são compartilhadas por todos os consumidores deste ambiente.",
+    "sharedHint": "Estas definições são compartilhadas por todos os consumidores desta empresa.",
     "categories": "Categorias",
     "tags": "Tags",
     "newCategory": "Nova categoria",
@@ -3223,8 +3223,8 @@
     },
     "limitedTitle": "Informações disponíveis para seu perfil",
     "readOnlyNotice": "Você pode consultar seus dados em modo somente leitura. O período de teste terminou. Para continuar usando a plataforma, escolha uma assinatura antes da remoção dos dados em {{days}} dia(s).",
-    "limitedNotice": "Seu acesso permite consultar apenas as informações disponíveis para seu perfil. Para ampliar o acesso, fale com a pessoa responsável pelo ambiente.",
-    "emptyDescription": "Os indicadores aparecerão aqui conforme houver atividade neste ambiente.",
+    "limitedNotice": "Seu acesso permite consultar apenas as informações disponíveis para seu perfil. Para ampliar o acesso, fale com a pessoa responsável pela empresa.",
+    "emptyDescription": "Os indicadores aparecerão aqui conforme houver atividade nesta empresa.",
     "unavailable": "Os indicadores não estão disponíveis no momento.",
     "workOrdersEmpty": "Nenhuma ordem de serviço para exibir neste período.",
     "viewOrders": "Ver ordens de serviço",
@@ -3259,7 +3259,7 @@
     "sections": {
       "customers": {
         "title": "Clientes no portal",
-        "description": "Logins no portal do cliente deste ambiente."
+        "description": "Logins no portal do cliente desta empresa."
       },
       "assets": {
         "title": "Recursos",
@@ -4246,7 +4246,7 @@
       "colActions": "Ações",
       "tasksCount": "{{count}} tarefas",
       "title": "Biblioteca Rolvix",
-      "description": "Modelos padrão da plataforma. Clone para o seu tenant e personalize o checklist.",
+      "description": "Modelos padrão da plataforma. Clone para a sua empresa e personalize o checklist.",
       "loading": "Carregando biblioteca...",
       "empty": "Nenhum modelo publicado no momento.",
       "version": "Versão {{version}}",
@@ -4461,7 +4461,7 @@
         "createFailed": "Não foi possível criar a ordem de serviço."
       },
       "emptyAssetsTitle": "Nenhum recurso disponível",
-      "emptyAssetsDescription": "Não há recursos cadastrados para abrir uma ordem de serviço. Os recursos deste ambiente vêm do provisionamento (Super-Admin).",
+      "emptyAssetsDescription": "Não há recursos cadastrados para abrir uma ordem de serviço. Os recursos desta empresa vêm do provisionamento (Super-Admin).",
       "success": "Ordem de serviço criada com sucesso.",
       "submit": "Criar OS",
       "redirecting": "OS criada"
@@ -4579,12 +4579,12 @@
     "dashboard": "Voltar ao painel",
     "login": "Ir para o login",
     "title": "Página não encontrada",
-    "description": "Este endereço não existe neste ambiente.",
+    "description": "Este endereço não existe nesta empresa.",
     "home": "Ir para o início"
   },
   "staffProfile": {
     "title": "Meu perfil",
-    "description": "Seus dados de acesso neste ambiente.",
+    "description": "Seus dados de acesso nesta empresa.",
     "name": "Nome",
     "email": "E-mail",
     "roles": "Funções"
@@ -4592,11 +4592,11 @@
   "rbac": {
     "errors": {
       "PRIVILEGE_ESCALATION_BLOCKED": "Você não pode atribuir um perfil de acesso com mais permissões do que as suas.",
-      "LAST_ADMIN_PROTECTED": "Não é possível remover o último administrador ativo deste ambiente.",
+      "LAST_ADMIN_PROTECTED": "Não é possível remover o último administrador ativo desta empresa.",
       "ROLE_IN_USE": "Esta função está em uso e não pode ser excluída.",
       "CANNOT_MODIFY_SYSTEM_ROLE": "Funções de sistema não podem ser renomeadas nem ter as permissões reduzidas desta forma.",
       "CANNOT_DELETE_SYSTEM_ROLE": "Funções de sistema não podem ser excluídas.",
-      "CANNOT_ASSIGN_SUPERADMIN": "Não é possível atribuir a função SuperAdmin neste ambiente.",
+      "CANNOT_ASSIGN_SUPERADMIN": "Não é possível atribuir a função SuperAdmin nesta empresa.",
       "FORBIDDEN": "Você não tem permissão para esta ação."
     }
   },
@@ -4609,12 +4609,12 @@
       "actions": "Ações"
     },
     "roleSummary": {
-      "description": "Quem pode fazer o quê neste ambiente.",
+      "description": "Quem pode fazer o quê nesta empresa.",
       "permissions_one": "{{count}} permissão",
       "permissions_other": "{{count}} permissões"
     },
     "title": "Pessoas e acesso",
-    "description": "Gerencie usuários do ambiente e os perfis de acesso.",
+    "description": "Gerencie usuários da empresa e os perfis de acesso.",
     "tabs": {
       "users": "Equipe",
       "customers": "Clientes do portal",
@@ -4623,7 +4623,7 @@
     "role": "Função",
     "permissions": "Permissões",
     "accessProfile": "Perfil de acesso",
-    "moduleInactive": "Este módulo não está ativo neste ambiente.",
+    "moduleInactive": "Este módulo não está ativo nesta empresa.",
     "status": {
       "active": "Ativo",
       "inactive": "Inativo"
@@ -4742,8 +4742,8 @@
       "assignTitle": "Atribuir funções",
       "assignDescription": "Defina as funções de {{name}}.",
       "saveRoles": "Salvar funções",
-      "empty": "Nenhum usuário neste ambiente.",
-      "emptyDescription": "Convide uma pessoa para começar a configurar os acessos deste ambiente.",
+      "empty": "Nenhum usuário nesta empresa.",
+      "emptyDescription": "Convide uma pessoa para começar a configurar os acessos desta empresa.",
       "noRoles": "Nenhuma função atribuída",
       "searchLabel": "Buscar na equipe",
       "searchPlaceholder": "Nome ou e-mail",
@@ -4753,8 +4753,8 @@
     "customers": {
       "customerCount_one": "{{count}} cliente do portal",
       "customerCount_other": "{{count}} clientes do portal",
-      "description": "Clientes que entram pelo portal deste ambiente.",
-      "empty": "Nenhum cliente neste ambiente.",
+      "description": "Clientes que entram pelo portal desta empresa.",
+      "empty": "Nenhum cliente nesta empresa.",
       "emptyDescription": "Quando alguém criar uma conta no portal, ela aparece aqui.",
       "verified": "Verificado",
       "unverified": "Não verificado",
@@ -4789,17 +4789,17 @@
       "deleteRole": "Só se não estiver atribuída a ninguém"
     },
     "roles": {
-      "description": "Funções de sistema e perfis personalizados deste ambiente.",
+      "description": "Funções de sistema e perfis personalizados desta empresa.",
       "create": "Nova função",
       "createTitle": "Nova função",
       "editTitle": "Perfil de acesso",
       "editorDescription": "Defina o nome e as permissões desta função.",
-      "adminReadonly": "A função Admin do sistema é somente leitura. As permissões acompanham o catálogo do tenant.",
+      "adminReadonly": "A função Admin do sistema é somente leitura. As permissões acompanham o catálogo da empresa.",
       "descriptionLabel": "Descrição",
       "view": "Ver permissões",
       "save": "Salvar",
       "empty": "Nenhuma função visível.",
-      "emptyDescription": "Crie uma função personalizada para organizar os acessos deste ambiente.",
+      "emptyDescription": "Crie uma função personalizada para organizar os acessos desta empresa.",
       "deleteTitle": "Excluir função",
       "deleteDescription": "Excluir a função {{name}}? Só é possível se ela não estiver atribuída a ninguém."
     },
@@ -4954,7 +4954,7 @@
       },
       "exploreTitle": "Explore outros módulos",
       "exploreDescription": "Veja o que a plataforma oferece para o portal do cliente e para a operação interna.",
-      "exploreAllActive": "Todos os módulos da plataforma já estão ativos neste ambiente.",
+      "exploreAllActive": "Todos os módulos da plataforma já estão ativos nesta empresa.",
       "categoryCustomer": "Para seus clientes",
       "categoryOperations": "Para sua operação",
       "stateActive": "Ativo",
@@ -4962,9 +4962,9 @@
       "exploreDescriptions": {
         "Catalog": "Exiba produtos e receba solicitações dos seus clientes no portal.",
         "Rentals": "Gerencie recursos reserváveis e horários.",
-        "PMOC": "Utiliza os recursos cadastrados no ambiente.",
+        "PMOC": "Utiliza os recursos cadastrados na empresa.",
         "Inventory": "Cadastre e controle ativos e recursos da operação.",
-        "OS": "Permite vincular serviços aos recursos do ambiente."
+        "OS": "Permite vincular serviços aos recursos da empresa."
       },
       "noEligibleFunctionality": "Nenhuma outra funcionalidade ativa disponível.",
       "catalogAutoNav": "O módulo adiciona automaticamente:",
@@ -4975,35 +4975,35 @@
     },
     "dashboard": {
       "title": "Painel Super-Admin",
-      "description": "Gerencie clientes (tenants), subdomínios e módulos assinados.",
-      "newClient": "Novo Cliente",
+      "description": "Gerencie empresas clientes, subdomínios e módulos assinados.",
+      "newClient": "Nova Empresa",
       "statusActive": "Ativo",
       "statusInactive": "Inativo",
       "taxId": "Documento",
       "noSubdomain": "Sem subdomínio",
       "noModules": "Nenhum módulo ativo",
-      "emptyTitle": "Nenhum cliente ainda",
-      "emptyDescription": "Cadastre o primeiro tenant com o assistente de onboarding.",
-      "searchLabel": "Buscar clientes",
+      "emptyTitle": "Nenhuma empresa ainda",
+      "emptyDescription": "Cadastre a primeira empresa com o assistente de onboarding.",
+      "searchLabel": "Buscar empresas",
       "clearSearch": "Limpar busca",
       "searchPlaceholder": "Buscar por nome ou subdomínio...",
-      "searchEmptyTitle": "Nenhum cliente encontrado",
+      "searchEmptyTitle": "Nenhuma empresa encontrada",
       "searchEmptyDescription": "Ajuste a busca por nome ou subdomínio.",
       "filterAll": "Todos",
       "columns": {
-        "client": "Cliente",
+        "client": "Empresa",
         "modules": "Módulos",
         "status": "Status",
         "actions": "Ações"
       },
       "metrics": {
-        "totalTenants": "Total de tenants",
-        "activeTenants": "Tenants ativos",
+        "totalTenants": "Total de empresas",
+        "activeTenants": "Empresas ativas",
         "estimatedRevenue": "Receita mensal estimada"
       },
       "actions": {
-        "edit": "Editar cliente",
-        "delete": "Excluir cliente",
+        "edit": "Editar empresa",
+        "delete": "Excluir empresa",
         "openEnvironment": "Entrar",
         "visualResources": "Recursos visuais",
         "copyUrl": "Copiar URL",
@@ -5012,46 +5012,46 @@
         "rowMenu": "Ações para {{name}}"
       },
       "delete": {
-        "title": "Excluir cliente",
+        "title": "Excluir empresa",
         "description": "Você tem certeza? Esta ação é irreversível e excluirá a empresa com todas as unidades, papéis, usuários e dados operacionais vinculados.",
         "confirm": "Continuar",
         "deleting": "Excluindo...",
-        "success": "Cliente excluído com sucesso.",
-        "failed": "Não foi possível excluir o cliente.",
+        "success": "Empresa excluída com sucesso.",
+        "failed": "Não foi possível excluir a empresa.",
         "errors": {
-          "hasUsers": "Não é possível excluir: ainda há usuários neste cliente.",
-          "hasUnits": "Não é possível excluir: ainda há unidades neste cliente.",
-          "hasRoles": "Não é possível excluir: ainda há papéis neste cliente.",
-          "linkedData": "Não é possível excluir: ainda existem dados vinculados a este cliente.",
-          "notFound": "Cliente não encontrado."
+          "hasUsers": "Não é possível excluir: ainda há usuários nesta empresa.",
+          "hasUnits": "Não é possível excluir: ainda há unidades nesta empresa.",
+          "hasRoles": "Não é possível excluir: ainda há papéis nesta empresa.",
+          "linkedData": "Não é possível excluir: ainda existem dados vinculados a esta empresa.",
+          "notFound": "Empresa não encontrada."
         }
       }
     },
     "edit": {
-      "title": "Editar cliente",
+      "title": "Editar empresa",
       "description": "Atualize os dados legais, subdomínio e módulos contratados.",
       "successTitle": "Sucesso",
-      "success": "Cliente atualizado!",
+      "success": "Empresa atualizada!",
       "errorTitle": "Erro",
       "sections": {
         "basic": "Informações Básicas",
         "basicDescription": "Razão social e documento fiscal da empresa.",
         "identity": "Subdomínio e Identidade",
-        "identityDescription": "Endereço do ambiente, logo, cores e frase do portal.",
+        "identityDescription": "Endereço da empresa, logo, cores e frase do portal.",
         "modules": "Módulos Rolvix",
-        "modulesDescription": "Selecione os módulos ativos para este cliente.",
+        "modulesDescription": "Selecione os módulos ativos para esta empresa.",
         "families": "Famílias de recursos",
-        "familiesDescription": "Quais tipos de recursos este cliente cadastra (espaços, elétricos, bens…)."
+        "familiesDescription": "Quais tipos de recursos esta empresa cadastra (espaços, elétricos, bens…)."
       },
       "actions": {
         "save": "Salvar Alterações",
         "saving": "Salvando..."
       },
       "errors": {
-        "invalidId": "Identificador do cliente inválido.",
-        "notFound": "Cliente não encontrado.",
-        "loadFailed": "Não foi possível carregar o cliente.",
-        "updateFailed": "Não foi possível atualizar o cliente."
+        "invalidId": "Identificador da empresa inválido.",
+        "notFound": "Empresa não encontrada.",
+        "loadFailed": "Não foi possível carregar a empresa.",
+        "updateFailed": "Não foi possível atualizar a empresa."
       }
     },
     "users": {
@@ -5079,18 +5079,18 @@
     },
     "platformUsers": {
       "title": "Usuários da plataforma",
-      "description": "Visualize e gerencie todos os usuários B2B de todos os tenants.",
+      "description": "Visualize e gerencie todos os usuários B2B de todas as empresas.",
       "filters": {
         "name": "Nome",
         "namePlaceholder": "Filtrar por nome...",
-        "tenant": "Cliente",
-        "tenantPlaceholder": "Todos os clientes",
-        "allTenants": "Todos os clientes"
+        "tenant": "Empresa",
+        "tenantPlaceholder": "Todas as empresas",
+        "allTenants": "Todas as empresas"
       },
       "columns": {
         "name": "Nome",
         "email": "E-mail",
-        "tenant": "Cliente",
+        "tenant": "Empresa",
         "roles": "Papéis",
         "status": "Status",
         "actions": "Ações"
@@ -5098,7 +5098,7 @@
       "statusActive": "Ativo",
       "statusInactive": "Inativo",
       "emptyTitle": "Nenhum usuário encontrado",
-      "emptyDescription": "Ajuste os filtros ou cadastre usuários via convite no cliente.",
+      "emptyDescription": "Ajuste os filtros ou cadastre usuários via convite na empresa.",
       "actions": {
         "delete": "Excluir usuário",
         "deleteNamed": "Excluir usuário {{email}}"
@@ -5207,9 +5207,9 @@
       "Inventory": "Inventário",
       "InventoryDescription": "Cadastro e controle de ativos.",
       "PMOC": "PMOC",
-      "PMOCDescription": "Utiliza os recursos cadastrados no ambiente.",
+      "PMOCDescription": "Utiliza os recursos cadastrados na empresa.",
       "OS": "Ordens de Serviço",
-      "OSDescription": "Permite vincular serviços aos recursos do ambiente.",
+      "OSDescription": "Permite vincular serviços aos recursos da empresa.",
       "Rentals": "Aluguéis",
       "RentalsDescription": "Gerencie recursos reserváveis e horários.",
       "Catalog": "Catálogo & Pedidos",
@@ -5219,7 +5219,7 @@
       "ResourcePlanningDescription": "Organiza a disponibilidade e o uso dos recursos.",
       "loadFailed": "Não foi possível carregar os módulos.",
       "retry": "Tentar novamente",
-      "legacyMaintenanceNote": "Este cliente ainda tem o módulo legado Manutenção. Ele permanece ativo, mas não pode ser selecionado ou desativado aqui."
+      "legacyMaintenanceNote": "Esta empresa ainda tem o módulo legado Manutenção. Ele permanece ativo, mas não pode ser selecionado ou desativado aqui."
     },
     "wizard": {
       "title": "Cadastrar nova empresa",
@@ -5227,7 +5227,7 @@
       "steps": {
         "company": "Informe os dados legais da empresa.",
         "identity": "Defina o subdomínio e a identidade visual.",
-        "modules": "Selecione os módulos que o cliente contratou.",
+        "modules": "Selecione os módulos que a empresa contratou.",
         "families": "Quais recursos você trabalha?",
         "admin": "Convide o administrador inicial do projeto (sem definir senha).",
         "summary": "Revise o provisionamento antes de finalizar."
@@ -5283,10 +5283,10 @@
         "finishing": "Provisionando..."
       },
       "successTitle": "Sucesso",
-      "success": "Ambiente criado com sucesso!",
+      "success": "Empresa criada com sucesso!",
       "errorTitle": "Erro",
       "errors": {
-        "createFailed": "Não foi possível provisionar o cliente.",
+        "createFailed": "Não foi possível provisionar a empresa.",
         "familiesLoadFailed": "Não foi possível carregar as famílias de recursos."
       },
       "stepperAriaLabel": "Etapas do cadastro da empresa",
@@ -5309,20 +5309,20 @@
     },
     "errors": {
       "forbidden": "Acesso restrito a Super-Admins da plataforma.",
-      "loadFailed": "Não foi possível carregar os clientes."
+      "loadFailed": "Não foi possível carregar as empresas."
     },
     "support": {
-      "banner": "Você está no tenant {{tenant}} como super-admin",
+      "banner": "Você está na empresa {{tenant}} como super-admin",
       "platformPanel": "Painel da plataforma",
       "bannerSlim": "Você está visualizando este espaço como super-admin",
-      "exitShort": "Sair do tenant",
-      "tenantFallback": "cliente",
-      "exit": "Sair do tenant",
+      "exitShort": "Sair da empresa",
+      "tenantFallback": "empresa",
+      "exit": "Sair da empresa",
       "exiting": "Saindo...",
       "exitErrorTitle": "Erro",
       "exitFailed": "Não foi possível voltar à plataforma.",
       "enterErrorTitle": "Erro",
-      "enterFailed": "Não foi possível abrir o ambiente."
+      "enterFailed": "Não foi possível abrir a empresa."
     }
   },
   "rentals": {
@@ -5759,12 +5759,12 @@
         "location": "Localização",
         "locationPlaceholder": "Ex.: Bloco A",
         "horizonLabel": "Horizonte",
-        "horizonInherit": "Usar o padrão do ambiente",
+        "horizonInherit": "Usar o padrão da empresa",
         "horizonUnlimited": "Ilimitado",
         "horizonDaysMode": "Número de dias",
         "horizonDays": "Dias à frente",
         "horizonHint": "Defina até quando clientes podem reservar este recurso.",
-        "horizonTechnicalHelp": "Usar o padrão do ambiente segue a política de reservas e apaga um número de dias gravado neste recurso. Ilimitado faz o mesmo, com uma limpeza explícita. Só fica sem limite quando a própria política é ilimitada. Um número de dias substitui a política neste recurso. Uma data até esse número de dias à frente é aceita; o dia seguinte é recusado (booking_horizon_exceeded).",
+        "horizonTechnicalHelp": "Usar o padrão da empresa segue a política de reservas e apaga um número de dias gravado neste recurso. Ilimitado faz o mesmo, com uma limpeza explícita. Só fica sem limite quando a própria política é ilimitada. Um número de dias substitui a política neste recurso. Uma data até esse número de dias à frente é aceita; o dia seguinte é recusado (booking_horizon_exceeded).",
         "horizonEffectiveUnlimited": "Em vigor: ilimitado (sem limite).",
         "horizonEffectiveDays": "Em vigor: {{count}} dias à frente.",
         "cancelCutoffLabel": "Prazo de cancelamento",
@@ -5871,7 +5871,7 @@
       "spaceType": "Espaço reservável",
       "bookableItemType": "Item reservável",
       "templatesTitle": "Tipo e modelo visual",
-      "templatesHelp": "Os modelos listados correspondem aos segmentos habilitados para este tenant.",
+      "templatesHelp": "Os modelos listados correspondem aos segmentos habilitados para esta empresa.",
       "mapTitle": "Posicione os blocos",
       "mapHelp": "Arraste os blocos e escolha um tamanho adequado para cada espaço.",
       "reviewSpaces_one": "{{count}} espaço no mapa",
@@ -5946,7 +5946,7 @@
     },
     "bookingPolicy": {
       "title": "Política de reservas",
-      "description": "Defina o texto de cancelamento, até quantos dias à frente o cliente pode reservar um recurso e o limite diário de reservas ativas por cliente. Vale para todos os recursos deste ambiente, exceto onde um recurso define o próprio valor.",
+      "description": "Defina o texto de cancelamento, até quantos dias à frente o cliente pode reservar um recurso e o limite diário de reservas ativas por cliente. Vale para todos os recursos desta empresa, exceto onde um recurso define o próprio valor.",
       "cancellationLabel": "Texto de cancelamento",
       "cancellationPlaceholder": "Texto simples exibido ao cancelar uma reserva.",
       "characterCount": "{{count}}/{{max}}",
@@ -6130,7 +6130,7 @@
     }
   },
   "resourceVisual": {
-    "tenantSegmentsTitle": "Segmentos do tenant: {{tenantName}}",
+    "tenantSegmentsTitle": "Segmentos da empresa: {{tenantName}}",
     "title": "Catálogo visual de recursos",
     "help": "Gerencie modelos, arte publicada e classificações globais.",
     "newTemplate": "Novo modelo",
@@ -6169,7 +6169,7 @@
     "deleteTagDescription": "Esta ação não pode ser desfeita.",
     "deleteTemplateTitle": "Excluir modelo?",
     "deleteTemplateDescription": "Excluir \"{{name}}\"? Esta ação não pode ser desfeita.",
-    "segmentsTitle": "Segmentos do tenant",
+    "segmentsTitle": "Segmentos da empresa",
     "segmentsHelp": "Defina os segmentos que aparecem primeiro ao escolher um modelo.",
     "enabledTemplates": "Modelos habilitados",
     "noEnabledTemplates": "Nenhum modelo corresponde aos segmentos selecionados.",

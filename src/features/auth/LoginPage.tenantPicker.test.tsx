@@ -170,7 +170,7 @@ describe("LoginPage tenant selector", () => {
     const user = await submit()
     expect(
       await screen.findByText(
-        "Não foi possível carregar seus ambientes. Tente novamente.",
+        "Não foi possível carregar suas empresas. Tente novamente.",
       ),
     ).toBeInTheDocument()
     expect(screen.queryByText("dashboard")).not.toBeInTheDocument()

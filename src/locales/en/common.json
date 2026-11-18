@@ -230,17 +230,17 @@
     "invalidResponse": "Invalid API response.",
     "loadUsers": "Could not load users.",
     "deleteUser": "Could not delete user.",
-    "loadTenantUsers": "Could not load tenant users.",
+    "loadTenantUsers": "Could not load company users.",
     "sendInvite": "Could not send invite.",
     "resendInvite": "Could not resend invite.",
     "revokeInvite": "Could not revoke invite.",
     "promoteUser": "Could not update user role.",
-    "loadTenant": "Could not load tenant.",
-    "deleteTenant": "Could not delete tenant.",
-    "enterTenant": "Could not enter tenant environment.",
-    "exitTenant": "Could not leave tenant environment.",
-    "createTenant": "Could not create tenant.",
-    "updateTenant": "Could not update tenant.",
+    "loadTenant": "Could not load the company.",
+    "deleteTenant": "Could not delete the company.",
+    "enterTenant": "Could not open the company.",
+    "exitTenant": "Could not leave the company.",
+    "createTenant": "Could not create the company.",
+    "updateTenant": "Could not update the company.",
     "loadReservations": "Could not load reservations.",
     "confirmReservation": "Could not confirm reservation.",
     "createReservation": "Could not create reservation.",
@@ -295,7 +295,7 @@
     "loadCustomerProfile": "Could not load the profile.",
     "updateCustomerProfile": "Could not update the profile.",
     "invalidPayload": "Invalid data received from the API.",
-    "moduleInactive": "This module is not active in this workspace.",
+    "moduleInactive": "This module is not active in this company.",
     "loadCatalogProducts": "Could not load products.",
     "loadCatalogProduct": "Could not load the product.",
     "saveCatalogProduct": "Could not save the product.",
@@ -422,18 +422,18 @@
         "accountMismatch": "The current session belongs to another account. Sign in with the email on this invite to accept.",
         "identityConflict": "We could not confirm the account on this invite. Nothing was changed. Try again or contact support."
       },
-      "pickerSearch": "Search environments by name or subdomain",
-      "pickerEmpty": "No environments available.",
-      "pickerNoResults": "No environments found. Try another name or subdomain.",
-      "pickerLoading": "Loading your environments...",
+      "pickerSearch": "Search companies by name or subdomain",
+      "pickerEmpty": "No companies available.",
+      "pickerNoResults": "No companies found. Try another name or subdomain.",
+      "pickerLoading": "Loading your companies...",
       "passwordHint": "Use at least 8 characters.",
       "confirmPasswordHint": "Repeat your new password to confirm.",
-      "pickerTitle": "Choose an environment",
-      "pickerBody": "Your account belongs to more than one environment. Choose which one to open now.",
+      "pickerTitle": "Choose a company",
+      "pickerBody": "Your account belongs to more than one company. Choose which one to open now.",
       "pickerSubmit": "Continue",
       "pickerSubmitting": "Opening...",
-      "pickerError": "Could not switch environments. Please try again.",
-      "membershipError": "Could not load your environments. Please try again.",
+      "pickerError": "Could not switch companies. Please try again.",
+      "membershipError": "Could not load your companies. Please try again.",
       "membershipErrorHint": "This may be a temporary connection issue. Try again or sign out and sign back in.",
       "membershipRetry": "Try again",
       "membershipSignOut": "Sign out"
@@ -1096,7 +1096,7 @@
     },
     "products": {
       "title": "Products",
-      "subtitle": "Manage this environment's catalog products.",
+      "subtitle": "Manage this company's catalog products.",
       "create": "New product",
       "createTitle": "New product",
       "editTitle": "Edit product",
@@ -1994,11 +1994,11 @@
   "notifications": {
     "settings": {
       "title": "Notifications",
-      "subtitle": "Choose notification channels per event. Only active modules for this workspace are listed.",
-      "subtitleBoth": "Notification channels and the delivery history for this workspace.",
+      "subtitle": "Choose notification channels per event. Only active modules for this company are listed.",
+      "subtitleBoth": "Notification channels and the delivery history for this company.",
       "deliveries": "Deliveries",
       "emailDefault": "Email notifications for customers start on for new organizations. You can turn them off here.",
-      "empty": "No notification modules are active in this workspace.",
+      "empty": "No notification modules are active in this company.",
       "inAppAlwaysOn": "In-app always on",
       "channelUnavailable": "Unavailable",
       "toggleChannel": "Enable {{channel}} for {{event}}",
@@ -2028,7 +2028,7 @@
       "all": "All",
       "clear": "Clear search and filters",
       "emptyChannelsTitle": "No channels to configure",
-      "emptyChannels": "No module with notices is active in this workspace.",
+      "emptyChannels": "No module with notices is active in this company.",
       "emptyHistoryTitle": "No deliveries yet",
       "emptyHistory": "Sent notices show up here, with the channel and the result.",
       "noResultsTitle": "No deliveries found",
@@ -2297,7 +2297,7 @@
       "pillars": {
         "isolation": {
           "title": "Your data stays yours",
-          "body": "Every customer runs in an isolated space. No other tenant sees what belongs to your operation."
+          "body": "Every customer runs in an isolated space. No other company sees what belongs to your operation."
         },
         "modular": {
           "title": "Grows at your pace",
@@ -2546,10 +2546,10 @@
         "how3": "Plans relate to equipment and work orders in Maintenance."
       },
       "platform": {
-        "summary": "Manage customer environments and shared platform records.",
-        "how1": "Browse customers and open the environment you need to manage.",
+        "summary": "Manage companies and shared platform records.",
+        "how1": "Browse companies and open the one you need to manage.",
         "how2": "Manage platform users and equipment families in the available screens.",
-        "how3": "Inside an environment, the menu shows the areas available to that customer."
+        "how3": "Inside a company, the menu shows the areas available to that company."
       }
     }
   },
@@ -3131,7 +3131,7 @@
           "title": "Manage users and families"
         },
         "learn3": {
-          "title": "Explore the environment menu"
+          "title": "Explore the company menu"
         }
       },
       "visit": {
@@ -3151,7 +3151,7 @@
     "emptyTags": "No tags yet.",
     "emptyTagsHint": "Use tags to label and find items easily.",
     "title": "Categories and tags",
-    "sharedHint": "These definitions are shared by every consumer in this tenant.",
+    "sharedHint": "These definitions are shared by every consumer in this company.",
     "categories": "Categories",
     "tags": "Tags",
     "newCategory": "New category",
@@ -3223,8 +3223,8 @@
     },
     "limitedTitle": "Information available to your profile",
     "readOnlyNotice": "You can view your data in read-only mode. Your trial has ended. To keep using the platform, choose a subscription before data removal in {{days}} day(s).",
-    "limitedNotice": "Your access lets you view the information available to your profile. To request additional access, contact the person responsible for this workspace.",
-    "emptyDescription": "Indicators will appear here as activity is recorded in this workspace.",
+    "limitedNotice": "Your access lets you view the information available to your profile. To request additional access, contact the person responsible for this company.",
+    "emptyDescription": "Indicators will appear here as activity is recorded in this company.",
     "unavailable": "Indicators are currently unavailable.",
     "workOrdersEmpty": "No work orders to display for this period.",
     "viewOrders": "View work orders",
@@ -3259,7 +3259,7 @@
     "sections": {
       "customers": {
         "title": "Portal customers",
-        "description": "Logins on this environment's customer portal."
+        "description": "Logins on this company's customer portal."
       },
       "assets": {
         "title": "Resources",
@@ -3839,7 +3839,7 @@
         "location": "e.g. Block A, ground floor"
       },
       "help": {
-        "unit": "Physical site for this resource (HQ, branch). Created automatically when the tenant is registered; unit management comes later.",
+        "unit": "Physical site for this resource (HQ, branch). Created automatically when the company is registered; unit management comes later.",
         "category": "Resource type (e.g. Outdoor area). Define types under Assets → Types.",
         "family": "Attribute family (spaces, goods, electrical…). Controls extra form fields.",
         "voltage": "Voltage records the electrical supply this equipment accepts, so it is not connected to the wrong circuit.",
@@ -4246,7 +4246,7 @@
       "colActions": "Actions",
       "tasksCount": "{{count}} tasks",
       "title": "Rolvix Library",
-      "description": "Standard templates from the platform. Clone into your tenant and customize the checklist.",
+      "description": "Standard templates from the platform. Clone into your company and customize the checklist.",
       "loading": "Loading library...",
       "empty": "No published templates at the moment.",
       "version": "Version {{version}}",
@@ -4461,7 +4461,7 @@
         "createFailed": "Could not create the work order."
       },
       "emptyAssetsTitle": "No resources available",
-      "emptyAssetsDescription": "There are no resources to open a work order. Resources in this environment come from Super-Admin provisioning.",
+      "emptyAssetsDescription": "There are no resources to open a work order. Resources in this company come from Super-Admin provisioning.",
       "success": "Work order created successfully.",
       "submit": "Create work order",
       "redirecting": "Work order created"
@@ -4579,12 +4579,12 @@
     "dashboard": "Back to dashboard",
     "login": "Go to login",
     "title": "Page not found",
-    "description": "This address does not exist in this workspace.",
+    "description": "This address does not exist in this company.",
     "home": "Go to the home"
   },
   "staffProfile": {
     "title": "My profile",
-    "description": "Your access details in this workspace.",
+    "description": "Your access details in this company.",
     "name": "Name",
     "email": "Email",
     "roles": "Roles"
@@ -4592,11 +4592,11 @@
   "rbac": {
     "errors": {
       "PRIVILEGE_ESCALATION_BLOCKED": "You cannot assign an access profile with more permissions than your own.",
-      "LAST_ADMIN_PROTECTED": "The last active administrator in this environment cannot be removed.",
+      "LAST_ADMIN_PROTECTED": "The last active administrator in this company cannot be removed.",
       "ROLE_IN_USE": "This access profile is in use and cannot be deleted.",
       "CANNOT_MODIFY_SYSTEM_ROLE": "System access profiles cannot be renamed or reduced this way.",
       "CANNOT_DELETE_SYSTEM_ROLE": "System access profiles cannot be deleted.",
-      "CANNOT_ASSIGN_SUPERADMIN": "The SuperAdmin profile cannot be assigned in this environment.",
+      "CANNOT_ASSIGN_SUPERADMIN": "The SuperAdmin profile cannot be assigned in this company.",
       "FORBIDDEN": "You do not have permission for this action."
     }
   },
@@ -4609,12 +4609,12 @@
       "actions": "Actions"
     },
     "roleSummary": {
-      "description": "Who can do what in this environment.",
+      "description": "Who can do what in this company.",
       "permissions_one": "{{count}} permission",
       "permissions_other": "{{count}} permissions"
     },
     "title": "People and access",
-    "description": "Manage users in this environment and their access profiles.",
+    "description": "Manage users in this company and their access profiles.",
     "tabs": {
       "users": "Team",
       "customers": "Portal customers",
@@ -4623,7 +4623,7 @@
     "role": "Function",
     "permissions": "Permissions",
     "accessProfile": "Access profile",
-    "moduleInactive": "This module is not active in this workspace.",
+    "moduleInactive": "This module is not active in this company.",
     "status": {
       "active": "Active",
       "inactive": "Inactive"
@@ -4742,8 +4742,8 @@
       "assignTitle": "Assign functions",
       "assignDescription": "Set the functions for {{name}}.",
       "saveRoles": "Save functions",
-      "empty": "No users in this environment.",
-      "emptyDescription": "Invite someone to start configuring access for this environment.",
+      "empty": "No users in this company.",
+      "emptyDescription": "Invite someone to start configuring access for this company.",
       "noRoles": "No function assigned",
       "searchLabel": "Search the team",
       "searchPlaceholder": "Name or email",
@@ -4753,8 +4753,8 @@
     "customers": {
       "customerCount_one": "{{count}} portal customer",
       "customerCount_other": "{{count}} portal customers",
-      "description": "Customers who sign in through this environment's portal.",
-      "empty": "No portal customers in this environment.",
+      "description": "Customers who sign in through this company's portal.",
+      "empty": "No portal customers in this company.",
       "emptyDescription": "When someone creates a portal account, they show up here.",
       "verified": "Verified",
       "unverified": "Not verified",
@@ -4789,17 +4789,17 @@
       "deleteRole": "Only if it is not assigned to anyone"
     },
     "roles": {
-      "description": "System functions and custom access profiles for this environment.",
+      "description": "System functions and custom access profiles for this company.",
       "create": "New function",
       "createTitle": "New function",
       "editTitle": "Access profile",
       "editorDescription": "Set the name and permissions for this function.",
-      "adminReadonly": "The system Admin function is read-only. Permissions follow the tenant catalog.",
+      "adminReadonly": "The system Admin function is read-only. Permissions follow the company catalog.",
       "descriptionLabel": "Description",
       "view": "View permissions",
       "save": "Save",
       "empty": "No visible functions.",
-      "emptyDescription": "Create a custom function to organize access in this environment.",
+      "emptyDescription": "Create a custom function to organize access in this company.",
       "deleteTitle": "Delete function",
       "deleteDescription": "Delete {{name}}? This is only possible if nobody is assigned to it."
     },
@@ -4954,7 +4954,7 @@
       },
       "exploreTitle": "Explore other modules",
       "exploreDescription": "See what the platform offers for the customer portal and for internal operations.",
-      "exploreAllActive": "Every platform module is already active in this environment.",
+      "exploreAllActive": "Every platform module is already active in this company.",
       "categoryCustomer": "For your customers",
       "categoryOperations": "For your operations",
       "stateActive": "Active",
@@ -4962,9 +4962,9 @@
       "exploreDescriptions": {
         "Catalog": "Show products and receive customer requests in the portal.",
         "Rentals": "Manage bookable resources and hours.",
-        "PMOC": "Uses resources registered in the environment.",
+        "PMOC": "Uses resources registered in the company.",
         "Inventory": "Register and track assets and operational resources.",
-        "OS": "Lets you link services to the environment's resources."
+        "OS": "Lets you link services to the company's resources."
       },
       "noEligibleFunctionality": "No other active features are available.",
       "catalogAutoNav": "The module automatically adds:",
@@ -4975,35 +4975,35 @@
     },
     "dashboard": {
       "title": "Super-Admin Panel",
-      "description": "Manage tenants, subdomains, and subscribed modules.",
-      "newClient": "New Client",
+      "description": "Manage companies, subdomains, and subscribed modules.",
+      "newClient": "New Company",
       "statusActive": "Active",
       "statusInactive": "Inactive",
       "taxId": "Document",
       "noSubdomain": "No subdomain",
       "noModules": "No active modules",
-      "emptyTitle": "No clients yet",
-      "emptyDescription": "Provision the first tenant using the onboarding wizard.",
-      "searchLabel": "Search clients",
+      "emptyTitle": "No companies yet",
+      "emptyDescription": "Provision the first company using the onboarding wizard.",
+      "searchLabel": "Search companies",
       "clearSearch": "Clear search",
       "searchPlaceholder": "Search by name or subdomain...",
-      "searchEmptyTitle": "No clients found",
+      "searchEmptyTitle": "No companies found",
       "searchEmptyDescription": "Adjust the search by name or subdomain.",
       "filterAll": "All",
       "columns": {
-        "client": "Client",
+        "client": "Company",
         "modules": "Modules",
         "status": "Status",
         "actions": "Actions"
       },
       "metrics": {
-        "totalTenants": "Total tenants",
-        "activeTenants": "Active tenants",
+        "totalTenants": "Total companies",
+        "activeTenants": "Active companies",
         "estimatedRevenue": "Estimated monthly revenue"
       },
       "actions": {
-        "edit": "Edit client",
-        "delete": "Delete client",
+        "edit": "Edit company",
+        "delete": "Delete company",
         "openEnvironment": "Enter",
         "visualResources": "Visual resources",
         "copyUrl": "Copy URL",
@@ -5012,46 +5012,46 @@
         "rowMenu": "Actions for {{name}}"
       },
       "delete": {
-        "title": "Delete client",
+        "title": "Delete company",
         "description": "Are you sure? This action is irreversible and will delete the company with all linked units, roles, users, and operational data.",
         "confirm": "Continue",
         "deleting": "Deleting...",
-        "success": "Client deleted successfully.",
-        "failed": "Could not delete the client.",
+        "success": "Company deleted successfully.",
+        "failed": "Could not delete the company.",
         "errors": {
-          "hasUsers": "Cannot delete: this client still has users.",
-          "hasUnits": "Cannot delete: this client still has units.",
-          "hasRoles": "Cannot delete: this client still has roles.",
-          "linkedData": "Cannot delete: this client still has linked data.",
-          "notFound": "Client not found."
+          "hasUsers": "Cannot delete: this company still has users.",
+          "hasUnits": "Cannot delete: this company still has units.",
+          "hasRoles": "Cannot delete: this company still has roles.",
+          "linkedData": "Cannot delete: this company still has linked data.",
+          "notFound": "Company not found."
         }
       }
     },
     "edit": {
-      "title": "Edit client",
+      "title": "Edit company",
       "description": "Update legal details, subdomain, and subscribed modules.",
       "successTitle": "Success",
-      "success": "Client updated!",
+      "success": "Company updated!",
       "errorTitle": "Error",
       "sections": {
         "basic": "Basic Information",
         "basicDescription": "Legal name and tax document for the company.",
         "identity": "Subdomain & Branding",
-        "identityDescription": "Environment address, logo, colors, and portal tagline.",
+        "identityDescription": "Company address, logo, colors, and portal tagline.",
         "modules": "Rolvix Modules",
-        "modulesDescription": "Select the active modules for this client.",
+        "modulesDescription": "Select the active modules for this company.",
         "families": "Asset families",
-        "familiesDescription": "Which resource types this client registers (spaces, electrical, goods…)."
+        "familiesDescription": "Which resource types this company registers (spaces, electrical, goods…)."
       },
       "actions": {
         "save": "Save Changes",
         "saving": "Saving..."
       },
       "errors": {
-        "invalidId": "Invalid client identifier.",
-        "notFound": "Client not found.",
-        "loadFailed": "Could not load the client.",
-        "updateFailed": "Could not update the client."
+        "invalidId": "Invalid company identifier.",
+        "notFound": "Company not found.",
+        "loadFailed": "Could not load the company.",
+        "updateFailed": "Could not update the company."
       }
     },
     "users": {
@@ -5079,18 +5079,18 @@
     },
     "platformUsers": {
       "title": "Platform users",
-      "description": "View and manage all B2B users across every tenant.",
+      "description": "View and manage all B2B users across every company.",
       "filters": {
         "name": "Name",
         "namePlaceholder": "Filter by name...",
-        "tenant": "Client",
-        "tenantPlaceholder": "All clients",
-        "allTenants": "All clients"
+        "tenant": "Company",
+        "tenantPlaceholder": "All companies",
+        "allTenants": "All companies"
       },
       "columns": {
         "name": "Name",
         "email": "Email",
-        "tenant": "Client",
+        "tenant": "Company",
         "roles": "Roles",
         "status": "Status",
         "actions": "Actions"
@@ -5098,7 +5098,7 @@
       "statusActive": "Active",
       "statusInactive": "Inactive",
       "emptyTitle": "No users found",
-      "emptyDescription": "Adjust the filters or invite users from a client.",
+      "emptyDescription": "Adjust the filters or invite users from a company.",
       "actions": {
         "delete": "Delete user",
         "deleteNamed": "Delete user {{email}}"
@@ -5207,9 +5207,9 @@
       "Inventory": "Inventory",
       "InventoryDescription": "Register and control assets.",
       "PMOC": "PMOC",
-      "PMOCDescription": "Uses resources registered in the environment.",
+      "PMOCDescription": "Uses resources registered in the company.",
       "OS": "Work Orders",
-      "OSDescription": "Lets you link services to the environment's resources.",
+      "OSDescription": "Lets you link services to the company's resources.",
       "Rentals": "Rentals",
       "RentalsDescription": "Manage bookable resources and hours.",
       "Catalog": "Catalog & Orders",
@@ -5219,7 +5219,7 @@
       "ResourcePlanningDescription": "Organizes resource availability and use.",
       "loadFailed": "Could not load modules.",
       "retry": "Try again",
-      "legacyMaintenanceNote": "This client still has the legacy Maintenance module. It stays active, but it cannot be selected or turned off here."
+      "legacyMaintenanceNote": "This company still has the legacy Maintenance module. It stays active, but it cannot be selected or turned off here."
     },
     "wizard": {
       "title": "Register a new company",
@@ -5227,7 +5227,7 @@
       "steps": {
         "company": "Enter the company legal details.",
         "identity": "Define the subdomain and brand identity.",
-        "modules": "Select the modules this client subscribed to.",
+        "modules": "Select the modules this company subscribed to.",
         "families": "What kinds of resources do you work with?",
         "admin": "Invite the project’s initial admin (without setting a password).",
         "summary": "Review the provisioning before finishing."
@@ -5283,10 +5283,10 @@
         "finishing": "Provisioning..."
       },
       "successTitle": "Success",
-      "success": "Environment created successfully!",
+      "success": "Company created successfully!",
       "errorTitle": "Error",
       "errors": {
-        "createFailed": "Could not provision the client.",
+        "createFailed": "Could not provision the company.",
         "familiesLoadFailed": "Could not load asset families."
       },
       "stepperAriaLabel": "Company registration steps",
@@ -5309,20 +5309,20 @@
     },
     "errors": {
       "forbidden": "Access restricted to platform Super-Admins.",
-      "loadFailed": "Could not load clients."
+      "loadFailed": "Could not load companies."
     },
     "support": {
-      "banner": "You are in tenant {{tenant}} as a super-admin",
+      "banner": "You are in company {{tenant}} as a super-admin",
       "platformPanel": "Platform panel",
       "bannerSlim": "You are viewing this workspace as super-admin",
-      "exitShort": "Leave tenant",
-      "tenantFallback": "client",
-      "exit": "Leave tenant",
+      "exitShort": "Leave company",
+      "tenantFallback": "company",
+      "exit": "Leave company",
       "exiting": "Leaving...",
       "exitErrorTitle": "Error",
       "exitFailed": "Could not return to the platform.",
       "enterErrorTitle": "Error",
-      "enterFailed": "Could not open the environment."
+      "enterFailed": "Could not open the company."
     }
   },
   "rentals": {
@@ -5759,12 +5759,12 @@
         "location": "Location",
         "locationPlaceholder": "E.g. Building A",
         "horizonLabel": "Horizon",
-        "horizonInherit": "Use tenant default",
+        "horizonInherit": "Use company default",
         "horizonUnlimited": "Unlimited",
         "horizonDaysMode": "A number of days",
         "horizonDays": "Days ahead",
         "horizonHint": "Set how far ahead customers can book this resource.",
-        "horizonTechnicalHelp": "Use tenant default follows the booking policy and clears a number of days stored on this resource. Unlimited does the same with an explicit clear. There is no limit only when the policy itself is unlimited. A number of days replaces the policy for this resource. A start that many days ahead is allowed; the next day is rejected (booking_horizon_exceeded).",
+        "horizonTechnicalHelp": "Use company default follows the booking policy and clears a number of days stored on this resource. Unlimited does the same with an explicit clear. There is no limit only when the policy itself is unlimited. A number of days replaces the policy for this resource. A start that many days ahead is allowed; the next day is rejected (booking_horizon_exceeded).",
         "horizonEffectiveUnlimited": "In effect: unlimited (no limit).",
         "horizonEffectiveDays": "In effect: {{count}} days ahead.",
         "cancelCutoffLabel": "Cancellation cutoff",
@@ -5871,7 +5871,7 @@
       "spaceType": "Bookable space",
       "bookableItemType": "Bookable item",
       "templatesTitle": "Type and visual template",
-      "templatesHelp": "The listed templates match this tenant's enabled segments.",
+      "templatesHelp": "The listed templates match this company's enabled segments.",
       "mapTitle": "Position blocks",
       "mapHelp": "Drag blocks and choose an appropriate size for each space.",
       "reviewSpaces_one": "{{count}} space on the map",
@@ -5946,7 +5946,7 @@
     },
     "bookingPolicy": {
       "title": "Booking policy",
-      "description": "Set the cancellation text, how far ahead customers can book a resource, and the daily cap on active reservations per customer. It applies to every resource in this workspace, except where a resource sets its own value.",
+      "description": "Set the cancellation text, how far ahead customers can book a resource, and the daily cap on active reservations per customer. It applies to every resource in this company, except where a resource sets its own value.",
       "cancellationLabel": "Cancellation text",
       "cancellationPlaceholder": "Plain text shown when a reservation is canceled.",
       "characterCount": "{{count}}/{{max}}",
@@ -6130,7 +6130,7 @@
     }
   },
   "resourceVisual": {
-    "tenantSegmentsTitle": "Tenant segments: {{tenantName}}",
+    "tenantSegmentsTitle": "Company segments: {{tenantName}}",
     "title": "Resource visual catalog",
     "help": "Manage global templates, published art, and classifications.",
     "newTemplate": "New template",
@@ -6169,7 +6169,7 @@
     "deleteTagDescription": "This action cannot be undone.",
     "deleteTemplateTitle": "Delete template?",
     "deleteTemplateDescription": "Delete \"{{name}}\"? This action cannot be undone.",
-    "segmentsTitle": "Tenant segments",
+    "segmentsTitle": "Company segments",
     "segmentsHelp": "Set the segments shown first when selecting a template.",
     "enabledTemplates": "Enabled templates",
     "noEnabledTemplates": "No template matches the selected segments.",

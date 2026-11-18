@@ -27,7 +27,7 @@ describe("module inactive API errors", () => {
   ])("localizes module-inactive 403 payloads: %o", async (payload) => {
     await i18n.changeLanguage("en")
     expect(describeApiError(forbiddenError(payload), "fallback")).toBe(
-      "This module is not active in this workspace.",
+      "This module is not active in this company.",
     )
   })
 })
