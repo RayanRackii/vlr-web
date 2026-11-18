@@ -149,7 +149,7 @@ test.describe("PlatformAdmin create/edit secondary tenant", () => {
 
       const guards = attachPageGuards(page)
       await page.goto(`/admin/tenants/${context.isolationTenantId}/edit`)
-      await expect(page.getByRole("heading", { name: "Editar cliente" })).toBeVisible({
+      await expect(page.getByRole("heading", { name: "Editar empresa" })).toBeVisible({
         timeout: 30_000,
       })
       guards.assertNoCrash()

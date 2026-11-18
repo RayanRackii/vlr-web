@@ -27,7 +27,7 @@ test.describe("Desktop PlatformAdmin", () => {
     const context = readContext()
     await page.setViewportSize(DESKTOP)
     await visit(page, `/admin/tenants/${context.tenantId}/edit`, async () => {
-      await expect(page.getByRole("heading", { name: "Editar cliente" })).toBeVisible({
+      await expect(page.getByRole("heading", { name: "Editar empresa" })).toBeVisible({
         timeout: 30_000,
       })
     })
