@@ -2521,7 +2521,8 @@
     "agendasOverview": "Overview",
     "agendasResources": "Resource agenda",
     "agendasProduct": "Product agenda",
-    "pedidos": "Orders"
+    "pedidos": "Orders",
+    "company": "Company details"
   },
   "moduleIntro": {
     "title": "Introduction",
@@ -6700,5 +6701,43 @@
       "visibilityRestricted": "Restricted",
       "agendaLinked": "Linked resources"
     }
+  },
+  "company": {
+    "description": "Your company's name, tax ID, contact and address.",
+    "readOnly": "You can view, but not edit, the company details.",
+    "saved": "Company details saved.",
+    "saveError": "Could not save the company details.",
+    "loadError": "Could not load the company details.",
+    "sections": {
+      "identity": "Identification",
+      "contact": "Contact",
+      "address": "Address",
+      "portal": "Portal address"
+    },
+    "fields": {
+      "legalName": "Legal name",
+      "tradeName": "Trade name",
+      "taxId": "CPF/CNPJ",
+      "taxIdHelp": "Numbers only; the mask is automatic.",
+      "contactEmail": "Email",
+      "contactPhone": "WhatsApp/phone",
+      "postalCode": "Postal code (CEP)",
+      "street": "Street",
+      "number": "Number",
+      "complement": "Complement",
+      "district": "District",
+      "city": "City",
+      "state": "State",
+      "stateNone": "No state"
+    },
+    "validation": {
+      "legalNameRequired": "Enter the legal name.",
+      "taxIdInvalid": "Invalid CPF or CNPJ.",
+      "emailInvalid": "Invalid email.",
+      "phoneInvalid": "Invalid phone. Use area code + number.",
+      "postalCodeInvalid": "The postal code must have 8 digits.",
+      "stateInvalid": "Choose the state."
+    },
+    "portalHelp": "The portal address your customers use. Only Rolvix support changes it."
   }
 }

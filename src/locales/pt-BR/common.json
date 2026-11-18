@@ -2521,7 +2521,8 @@
     "agendasOverview": "Visão geral",
     "agendasResources": "Agenda de recursos",
     "agendasProduct": "Agenda do produto",
-    "pedidos": "Pedidos"
+    "pedidos": "Pedidos",
+    "company": "Dados da empresa"
   },
   "moduleIntro": {
     "title": "Apresentação",
@@ -6700,5 +6701,43 @@
       "visibilityRestricted": "Restrito",
       "agendaLinked": "Recursos vinculados"
     }
+  },
+  "company": {
+    "description": "Nome, documento, contato e endereço da sua empresa.",
+    "readOnly": "Você pode ver, mas não editar, os dados da empresa.",
+    "saved": "Dados da empresa salvos.",
+    "saveError": "Não foi possível salvar os dados da empresa.",
+    "loadError": "Não foi possível carregar os dados da empresa.",
+    "sections": {
+      "identity": "Identificação",
+      "contact": "Contato",
+      "address": "Endereço",
+      "portal": "Endereço do portal"
+    },
+    "fields": {
+      "legalName": "Razão social",
+      "tradeName": "Nome fantasia",
+      "taxId": "CPF/CNPJ",
+      "taxIdHelp": "Somente números; a máscara é automática.",
+      "contactEmail": "E-mail",
+      "contactPhone": "WhatsApp/telefone",
+      "postalCode": "CEP",
+      "street": "Rua",
+      "number": "Número",
+      "complement": "Complemento",
+      "district": "Bairro",
+      "city": "Cidade",
+      "state": "UF",
+      "stateNone": "Sem UF"
+    },
+    "validation": {
+      "legalNameRequired": "Informe a razão social.",
+      "taxIdInvalid": "CPF ou CNPJ inválido.",
+      "emailInvalid": "E-mail inválido.",
+      "phoneInvalid": "Telefone inválido. Use DDD + número.",
+      "postalCodeInvalid": "CEP deve ter 8 números.",
+      "stateInvalid": "Escolha a UF."
+    },
+    "portalHelp": "Endereço do portal dos seus clientes. Só o suporte da Rolvix altera."
   }
 }

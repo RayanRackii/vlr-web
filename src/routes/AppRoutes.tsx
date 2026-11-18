@@ -16,6 +16,7 @@ import { catalogManifest } from "@/features/catalog/manifest"
 import { assetsManifest } from "@/features/assets/manifest"
 import { landingManifest } from "@/features/landing/manifest"
 import { dashboardManifest } from "@/features/dashboard/manifest"
+import { companyManifest } from "@/features/company/manifest"
 import { notificationsManifest } from "@/features/notifications/manifest"
 import { onboardingManifest } from "@/features/onboarding/manifest"
 import { pmocManifest } from "@/features/pmoc/manifest"
@@ -219,6 +220,9 @@ function AppRoutesTree() {
             <Route key={route.path} element={<PermissionRoute permission={route.permission} />}>
               <Route path={route.path} element={route.element} />
             </Route>
+          ))}
+          {companyManifest.routes.staff.map((route) => (
+            <Route key={route.path} path={route.path} element={route.element} />
           ))}
           {notificationsManifest.routes.staff.map((route) => (
             <Route key={route.path} element={<PermissionRoute permission={route.permission} anyOf={route.anyOf} />}>
