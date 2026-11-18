@@ -38,6 +38,7 @@ import {
   type CatalogOrder,
   type CatalogOrderAllocationPreview,
   type CatalogOrderStatus,
+  type CatalogPriceUnit,
   type CatalogProduct,
   type CatalogProductHistoryEntry,
   type CatalogProductFile,
@@ -61,6 +62,8 @@ export type CatalogProductWriteRequest = {
   description?: string | null
   price?: number | null
   currency?: string
+  /** Omit to keep the stored value on update; null clears it. Only the Preços step sends it. */
+  priceUnit?: CatalogPriceUnit | null
   taxonomy?: { categoryIds: string[]; tagIds: string[] }
   /** Absent = true on create, unchanged on update. */
   usesSchedule?: boolean

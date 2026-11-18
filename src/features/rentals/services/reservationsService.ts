@@ -45,8 +45,12 @@ const reservationSchema = z.object({
   totalAmount: z.number(),
   depositPaid: z.number(),
   createdAt: z.string(),
+  /** Internal staff note (never sent to customers). Absent on older responses. */
+  notes: z.string().nullish(),
   items: z.array(reservationItemSchema),
 })
+
+export const RESERVATION_NOTES_MAX_LENGTH = 1000
 
 export type AdminReservation = z.infer<typeof reservationSchema>
 
@@ -213,6 +217,8 @@ export type CreateStaffReservationInput = {
   endTime: string
   items: { assetId: string; quantity?: number }[]
   awaitingDeposit: boolean
+  /** Internal staff note, at most RESERVATION_NOTES_MAX_LENGTH characters. */
+  notes?: string
 }
 
 /** Failure of POST /api/reservations/staff, with the API code when it sent one. */
@@ -258,4 +264,18 @@ export async function createStaffReservation(
   const raw: unknown = response.data
   const id = typeof raw === "object" && raw !== null && "id" in raw && typeof raw.id === "string" ? raw.id : undefined
   return id ? { id } : {}
+}
+
+/** Sets (or clears, with an empty text) the internal note of a reservation. */
+export async function updateReservationNotes(id: string, notes: string): Promise<AdminReservation> {
+  try {
+    const response = await api.put(`/api/reservations/${id}/notes`, { notes: notes.trim() === "" ? null : notes.trim() })
+    const parsed = reservationSchema.safeParse(response.data)
+    if (!parsed.success) {
+      throw new Error(i18n.t("apiErrors.invalidResponse"))
+    }
+    return parsed.data
+  } catch (error) {
+    throw new Error(parseApiError(getAxiosErrorPayload(error), i18n.t("apiErrors.updateReservationNotes")), { cause: error })
+  }
 }

@@ -326,7 +326,8 @@
     "saveTaxonomy": "Could not save categories and tags.",
     "deleteTaxonomy": "Could not delete the category or tag.",
     "loadCatalogAgenda": "Could not load the agenda.",
-    "timeout": "The connection took too long. Please try again."
+    "timeout": "The connection took too long. Please try again.",
+    "updateReservationNotes": "Could not save the note."
   },
   "trial": {
     "banner": {
@@ -1981,6 +1982,27 @@
         "freeNext": "Next: {{ref}} · {{time}}",
         "freeNone": "No use today"
       }
+    },
+    "priceUnit": {
+      "label": "Billing",
+      "none": "No unit",
+      "help": "How the price is charged. With no unit, only the amount is shown.",
+      "option": {
+        "Unit": "Per unit",
+        "Hour": "Per hour",
+        "Day": "Per day",
+        "Person": "Per person",
+        "Booking": "Per booking",
+        "Package": "Per package"
+      },
+      "suffix": {
+        "Unit": "per unit",
+        "Hour": "per hour",
+        "Day": "per day",
+        "Person": "per person",
+        "Booking": "per booking",
+        "Package": "per package"
+      }
     }
   },
   "lateDuration": {
@@ -2499,7 +2521,8 @@
     "agendasOverview": "Overview",
     "agendasResources": "Resource agenda",
     "agendasProduct": "Product agenda",
-    "pedidos": "Orders"
+    "pedidos": "Orders",
+    "company": "Company details"
   },
   "moduleIntro": {
     "title": "Introduction",
@@ -5942,7 +5965,8 @@
       "noActions": "No actions available",
       "durationHours": "{{hours}}h",
       "durationMinutes": "{{minutes}}min",
-      "durationHoursMinutes": "{{hours}}h{{minutes}}min"
+      "durationHoursMinutes": "{{hours}}h{{minutes}}min",
+      "noteLabel": "Note: {{note}}"
     },
     "bookingPolicy": {
       "title": "Booking policy",
@@ -6314,7 +6338,9 @@
       "customerNotFound": "Customer not found.",
       "invalidPhone": "Invalid WhatsApp number. Use area code and number.",
       "customerExists": "Customer already registered — selected",
-      "error": "Could not create the reservation."
+      "error": "Could not create the reservation.",
+      "notes": "Notes (staff only)",
+      "notesPlaceholder": "E.g. customer asked for an extra net"
     },
     "newReservation": "New reservation",
     "block": {
@@ -6404,6 +6430,13 @@
       "activitiesWeek_other": "{{count}} activities this week",
       "updatedNow": "Updated just now",
       "updatedAgo": "Updated {{minutes}} min ago"
+    },
+    "reservationNotes": {
+      "label": "Notes (staff only)",
+      "empty": "No notes.",
+      "add": "Add",
+      "edit": "Edit",
+      "saved": "Note saved."
     }
   },
   "pedidos": {
@@ -6668,5 +6701,46 @@
       "visibilityRestricted": "Restricted",
       "agendaLinked": "Linked resources"
     }
+  },
+  "company": {
+    "description": "Your company's name, tax ID, contact and address.",
+    "readOnly": "You can view, but not edit, the company details.",
+    "saved": "Company details saved.",
+    "saveError": "Could not save the company details.",
+    "loadError": "Could not load the company details.",
+    "sections": {
+      "identity": "Identification",
+      "contact": "Contact",
+      "address": "Address",
+      "portal": "Portal address"
+    },
+    "fields": {
+      "legalName": "Legal name",
+      "tradeName": "Trade name",
+      "taxId": "CPF/CNPJ",
+      "taxIdHelp": "Numbers only; the mask is automatic.",
+      "contactEmail": "Email",
+      "contactPhone": "WhatsApp/phone",
+      "postalCode": "Postal code (CEP)",
+      "street": "Street",
+      "number": "Number",
+      "complement": "Complement",
+      "district": "District",
+      "city": "City",
+      "state": "State",
+      "stateNone": "No state"
+    },
+    "validation": {
+      "legalNameRequired": "Enter the legal name.",
+      "taxIdInvalid": "Invalid CPF or CNPJ.",
+      "emailInvalid": "Invalid email.",
+      "phoneInvalid": "Invalid phone. Use area code + number.",
+      "postalCodeInvalid": "The postal code must have 8 digits.",
+      "stateInvalid": "Choose the state.",
+      "taxIdRequired": "Enter the CPF or CNPJ.",
+      "taxIdDuplicate": "This CPF/CNPJ is already registered to another company."
+    },
+    "portalHelp": "The portal address your customers use. Only Rolvix support changes it.",
+    "saveInvalid": "Check the details and try again."
   }
 }

@@ -3,6 +3,8 @@ import { useTranslation } from "react-i18next"
 import { CircleCheck } from "lucide-react"
 
 import { Button, buttonVariants } from "@/components/ui/button"
+import type { TFunction } from "i18next"
+import { withPriceUnit } from "@/features/catalog/lib/catalogPriceUnit"
 import { formatCatalogMoney } from "@/features/catalog/schemas/catalogSchemas"
 import { cn } from "@/lib/utils"
 import type { CadastroStep } from "./useCadastroStep"
@@ -11,12 +13,14 @@ type PanelProduct = {
   name: string
   price?: number | null
   currency: string
+  priceUnit?: string | null
 }
 
 type Visibility = "Public" | "Restricted"
 
-function priceLabel(product: PanelProduct, locale: string, fallback: string): string {
-  return formatCatalogMoney(product.price ?? null, product.currency, locale) ?? fallback
+function priceLabel(product: PanelProduct, locale: string, fallback: string, t: TFunction): string {
+  const money = formatCatalogMoney(product.price ?? null, product.currency, locale)
+  return money == null ? fallback : withPriceUnit(t, money, product.priceUnit)
 }
 
 /** Publicação step before publishing: what the customer will get, with a link back to each step. Built from the wizard's own data. */
@@ -32,7 +36,7 @@ export function ProductPublishSummary({ product, categoryNames, usesAgenda, reso
   const rows: { field: string; step: CadastroStep; label: string; value: string }[] = [
     { field: "name", step: "dados", label: t("cadastro.review.name"), value: product.name },
     { field: "categories", step: "categorias", label: t("cadastro.review.categories"), value: categoryNames.length > 0 ? categoryNames.join(", ") : t("cadastro.review.noCategories") },
-    { field: "price", step: "precos", label: t("cadastro.review.price"), value: priceLabel(product, i18n.language, t("cadastro.review.priceOnRequest")) },
+    { field: "price", step: "precos", label: t("cadastro.review.price"), value: priceLabel(product, i18n.language, t("cadastro.review.priceOnRequest"), t) },
     { field: "agenda", step: "agenda", label: t("cadastro.review.agenda"), value: usesAgenda ? (resourceNames.length > 0 ? resourceNames.join(", ") : t("cadastro.review.agendaLinked")) : t("cadastro.review.noAgenda") },
     { field: "visibility", step: "regras", label: t("cadastro.review.visibility"), value: t(visibility === "Restricted" ? "cadastro.review.visibilityRestricted" : "cadastro.review.visibilityPublic") },
   ]
@@ -69,7 +73,7 @@ export function ProductPublishSuccess({ product, visibility, editorPath }: {
         <CircleCheck className="mt-0.5 size-6 shrink-0 text-primary" aria-hidden="true" />
         <div className="min-w-0 space-y-1">
           <h3 className="text-lg font-semibold" role="status">{t("cadastro.published.title")}</h3>
-          <p className="break-words text-sm font-medium">{product.name} · {priceLabel(product, i18n.language, t("cadastro.published.priceOnRequest"))}</p>
+          <p className="break-words text-sm font-medium">{product.name} · {priceLabel(product, i18n.language, t("cadastro.published.priceOnRequest"), t)}</p>
           <p className="text-sm text-muted-foreground">{t(visibility === "Restricted" ? "cadastro.published.visibilityRestricted" : "cadastro.published.visibilityPublic")}</p>
         </div>
       </div>

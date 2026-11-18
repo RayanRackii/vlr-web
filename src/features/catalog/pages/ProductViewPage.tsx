@@ -22,6 +22,7 @@ import { QueueSummary } from "@/features/catalog/components/ProductScheduleSecti
 import { useProductWizard } from "@/features/catalog/components/productWizard/useProductWizard"
 import { saleMissingLabels } from "@/features/catalog/lib/catalogApiErrors"
 import { productWizardPath } from "@/features/catalog/components/productWizard/wizardSteps"
+import { priceUnitSuffix } from "@/features/catalog/lib/catalogPriceUnit"
 import { productEditPath, productViewPath } from "@/features/catalog/lib/productEditorPath"
 import { selectCatalogProductImages } from "@/features/catalog/lib/selectCatalogProductImages"
 import {
@@ -364,6 +365,11 @@ function ProductView({ wizard, model }: { wizard: Wizard; model: WizardModel }) 
             <p className="text-3xl font-semibold tracking-tight text-foreground" data-testid="product-view-price">
               {price ?? t("catalog.products.view.onRequest")}
             </p>
+            {price != null && priceUnitSuffix(t, product.priceUnit) ? (
+              <p className="text-sm text-muted-foreground" data-testid="product-view-price-unit">
+                {priceUnitSuffix(t, product.priceUnit)}
+              </p>
+            ) : null}
           </div>
 
           {categories.length > 0 || tags.length > 0 ? (

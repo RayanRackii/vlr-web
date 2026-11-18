@@ -12,6 +12,7 @@ import { agendaKindTone } from "./agendaKindTone"
 import { useIsMedium } from "./agendaFilterModel"
 import { clipBlock, formatClock, layoutLanes, type AgendaBlock, type AgendaRow } from "./dayGridModel"
 import type { AgendaSourceId } from "./useAgendaDay"
+import { ReservationNotes } from "./ReservationNotes"
 import { AgendaProductPads } from "./AgendaProductPads"
 import { productViewPath } from "@/features/catalog/lib/productEditorPath"
 
@@ -85,9 +86,13 @@ type AgendaDayGridProps = {
   onBlockPeriod?: (resourceId: string, minutes: number) => void
   focusDate?: string
   focusedProductId?: string | null
+  /** Whether the viewer may edit the internal note of a reservation. */
+  canEditNotes?: boolean
+  /** Called after a reservation note was saved. */
+  onNotesSaved?: () => void
 }
 
-export function AgendaDayGrid({ loading, failedSources, rows, start: axisStart, end: axisEnd, canReserve, canBlock, nowMinutes = null, onCreateReservation, onBlockPeriod, focusedProductId, focusDate }: AgendaDayGridProps) {
+export function AgendaDayGrid({ loading, failedSources, rows, start: axisStart, end: axisEnd, canReserve, canBlock, nowMinutes = null, onCreateReservation, onBlockPeriod, focusedProductId, focusDate, canEditNotes = false, onNotesSaved }: AgendaDayGridProps) {
   const { t } = useTranslation()
   const timeZone = useTenantTimeZone()
   const wide = useIsMedium()
@@ -164,7 +169,7 @@ export function AgendaDayGrid({ loading, failedSources, rows, start: axisStart, 
                     </button>
                   ) : <p className="text-xs text-muted-foreground">{t("agendas.grid.available")}</p>)}
                 </section>
-                {selected?.row.id === row.id && <BlockDetail block={selected.block} resourceName={selected.row.name} onClose={() => setSelectedKey(null)} />}
+                {selected?.row.id === row.id && <BlockDetail block={selected.block} resourceName={selected.row.name} canEditNotes={canEditNotes} onNotesSaved={onNotesSaved} onClose={() => setSelectedKey(null)} />}
               </div>
             )
           })}
@@ -272,7 +277,7 @@ export function AgendaDayGrid({ loading, failedSources, rows, start: axisStart, 
       </section>
       {hours.length > 14 && <div aria-hidden="true" data-testid="scroll-fade" className="pointer-events-none absolute inset-y-0 right-0 w-8 bg-gradient-to-l from-card to-transparent" />}
       </div>
-      {selected && <BlockDetail block={selected.block} resourceName={selected.row.name} onClose={() => setSelectedKey(null)} />}
+      {selected && <BlockDetail block={selected.block} resourceName={selected.row.name} canEditNotes={canEditNotes} onNotesSaved={onNotesSaved} onClose={() => setSelectedKey(null)} />}
     </div>
   )
 }
@@ -298,7 +303,7 @@ function RowMenu({ row, axisStart, canBlock, create, block, reveal }: { row: Age
   )
 }
 
-function BlockDetail({ block, resourceName, onClose }: { block: AgendaBlock; resourceName: string; onClose: () => void }) {
+function BlockDetail({ block, resourceName, canEditNotes, onNotesSaved, onClose }: { block: AgendaBlock; resourceName: string; canEditNotes: boolean; onNotesSaved?: () => void; onClose: () => void }) {
   const { t, i18n } = useTranslation()
   const kindLabel = t(`staffAgenda.types.${block.kind}`)
   const statusKey = block.orderStatus ? `catalog.status.${block.orderStatus}` : null
@@ -350,6 +355,9 @@ function BlockDetail({ block, resourceName, onClose }: { block: AgendaBlock; res
             <dt className="text-muted-foreground">{t("staffAgenda.customer")}</dt>
             <dd>{block.customerName}</dd>
           </div>
+        )}
+        {block.kind === "reserva" && block.reservationId && block.notes !== undefined && (
+          <ReservationNotes key={block.reservationId} reservationId={block.reservationId} notes={block.notes} canEdit={canEditNotes} onSaved={onNotesSaved} />
         )}
       </dl>
     </section>

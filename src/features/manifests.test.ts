@@ -11,6 +11,7 @@ import { assetsManifest } from "@/features/assets/manifest"
 import { pmocManifest } from "@/features/pmoc/manifest"
 import { rentalsManifest } from "@/features/rentals/manifest"
 import { taxonomyManifest } from "@/features/taxonomy/manifest"
+import { companyManifest } from "@/features/company/manifest"
 import { notificationsManifest } from "@/features/notifications/manifest"
 import { adminManifest } from "@/features/admin/manifest"
 import { authManifest } from "@/features/auth/manifest"
@@ -250,12 +251,20 @@ describe("feature manifests", () => {
     }
   })
 
+  it("keeps the company profile route and navigation in its manifest", () => {
+    expect(companyManifest.routes.staff.map((route) => route.path)).toEqual(["/configuracoes/empresa"])
+    expect(appNavigationItems).toContain(companyManifest.navigationItems[0])
+    expect(navigationSource).toContain("...companyManifest.navigationItems")
+    expect(appRoutesSource).toContain("companyManifest.routes.staff")
+  })
+
   it("has a manifest for every feature that owns routes", () => {
     const manifestsByFeature = {
       admin: adminManifest,
       assets: assetsManifest,
       auth: authManifest,
       catalog: catalogManifest,
+      company: companyManifest,
       dashboard: dashboardManifest,
       landing: landingManifest,
       notifications: notificationsManifest,
@@ -273,6 +282,7 @@ describe("feature manifests", () => {
       "assets",
       "auth",
       "catalog",
+      "company",
       "dashboard",
       "landing",
       "notifications",

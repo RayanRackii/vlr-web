@@ -1,4 +1,5 @@
 import type { ReactNode } from "react"
+import { StickyNote } from "lucide-react"
 import { useTranslation } from "react-i18next"
 
 import { DataList, type DataListColumn } from "@/components/data-table/DataList"
@@ -26,6 +27,19 @@ type ReservationsListProps = {
   | { state?: "ready" | "loading"; error?: undefined; onRetry?: undefined }
   | { state: "error"; error: string; onRetry: () => void }
 )
+
+/** Note indicator: icon plus a one-line excerpt; the full text is the tooltip and accessible name. */
+function NoteHint({ notes }: { notes: string | null | undefined }) {
+  const { t } = useTranslation()
+  const text = notes?.trim()
+  if (!text) return null
+  return (
+    <p className="mt-0.5 flex min-w-0 items-center gap-1 text-xs text-muted-foreground" data-testid="reservation-note" title={text} aria-label={t("rentals.reservations.noteLabel", { note: text })}>
+      <StickyNote className="size-3.5 shrink-0" aria-hidden="true" />
+      <span className="min-w-0 truncate" aria-hidden="true">{text}</span>
+    </p>
+  )
+}
 
 /** One set of rows and actions through DataList: a table from md, cards below. */
 export function ReservationsList({ rows, dateLabel, showDates, actions, toolbar, empty, loadingLabel, ...stateProps }: ReservationsListProps) {
@@ -90,6 +104,7 @@ export function ReservationsList({ rows, dateLabel, showDates, actions, toolbar,
           <div className="min-w-0">
             <strong className="break-words font-semibold">{row.customerName}</strong>
             <p className="text-sm text-muted-foreground break-words lg:hidden">{formatReservationAssets(row)}</p>
+            <NoteHint notes={row.notes} />
           </div>
         </div>
       ),
@@ -150,6 +165,7 @@ export function ReservationsList({ rows, dateLabel, showDates, actions, toolbar,
               <div className="min-w-0">
                 <strong className="break-words font-semibold">{row.customerName}</strong>
                 <p className="text-sm text-muted-foreground break-words">{formatReservationAssets(row)}</p>
+                <NoteHint notes={row.notes} />
               </div>
             </div>
             <div className="flex items-center justify-between gap-3 text-sm">

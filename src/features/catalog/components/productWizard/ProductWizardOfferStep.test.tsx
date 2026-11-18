@@ -25,10 +25,10 @@ const product = {
   taxonomy: { categories: [], tags: [] },
 } as unknown as CatalogProduct
 
-function renderStep(mode?: "dados" | "precos") {
+function renderStep(mode?: "dados" | "precos", item: CatalogProduct = product) {
   const onSaved = vi.fn()
   const { StepShell, shell } = createStepShell()
-  const view = render(<StepShell><ProductWizardOfferStep product={product} mode={mode} readOnly={false} onSaved={onSaved} /></StepShell>)
+  const view = render(<StepShell><ProductWizardOfferStep product={item} mode={mode} readOnly={false} onSaved={onSaved} /></StepShell>)
   return { shell, onSaved, ...view }
 }
 
@@ -115,5 +115,47 @@ describe("ProductWizardOfferStep", () => {
     await act(async () => { result = await shell.submit() })
     expect(result).toBe(false)
     await waitFor(() => expect(updateCatalogProduct).not.toHaveBeenCalled())
+  })
+
+  describe("price unit", () => {
+    const withUnit = { ...product, priceUnit: "Hour" } as unknown as CatalogProduct
+
+    it("precos mode shows the Cobrança select with the stored unit; dados mode hides it", () => {
+      const { unmount } = renderStep("precos", withUnit)
+      expect(screen.getByText("Cobrança")).toBeInTheDocument()
+      expect(screen.getByTestId("price-unit-select")).toHaveTextContent("Por hora")
+      unmount()
+      renderStep("dados", withUnit)
+      expect(screen.queryByTestId("price-unit-select")).not.toBeInTheDocument()
+    })
+
+    it("shows 'Sem unidade' when the product has no unit", () => {
+      renderStep("precos")
+      expect(screen.getByTestId("price-unit-select")).toHaveTextContent("Sem unidade")
+    })
+
+    it("precos save sends the unit (null clears it)", async () => {
+      const user = userEvent.setup()
+      const { shell } = renderStep("precos", withUnit)
+      await user.type(screen.getByLabelText("Preço"), "5")
+      await act(async () => { await shell.submit() })
+      expect(updateCatalogProduct).toHaveBeenCalledWith("p1", expect.objectContaining({ priceUnit: "Hour" }))
+    })
+
+    it("precos save sends null when the product has no unit", async () => {
+      const user = userEvent.setup()
+      const { shell } = renderStep("precos")
+      await user.type(screen.getByLabelText("Preço"), "5")
+      await act(async () => { await shell.submit() })
+      expect(vi.mocked(updateCatalogProduct).mock.calls[0][1]).toHaveProperty("priceUnit", null)
+    })
+
+    it("dados save never sends priceUnit so the stored value is kept", async () => {
+      const user = userEvent.setup()
+      const { shell } = renderStep("dados", withUnit)
+      await user.type(screen.getByLabelText("Nome do produto *"), " 2")
+      await act(async () => { await shell.submit() })
+      expect(vi.mocked(updateCatalogProduct).mock.calls[0][1]).not.toHaveProperty("priceUnit")
+    })
   })
 })

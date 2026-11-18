@@ -43,6 +43,7 @@ import {
 } from "@/features/catalog/schemas/catalogSchemas"
 import { catalogMenuIsActive } from "@/features/catalog/components/productWizard/sellableChecklist"
 import { productWizardPath } from "@/features/catalog/components/productWizard/wizardSteps"
+import { priceUnitSuffix } from "@/features/catalog/lib/catalogPriceUnit"
 import { selectFirstReadyImageFile } from "@/features/catalog/lib/selectCatalogProductImages"
 import { getSignedProductFileUrl } from "@/features/catalog/lib/signedFileUrlCache"
 import { productEditPath, productViewPath } from "@/features/catalog/lib/productEditorPath"
@@ -259,7 +260,15 @@ export function CatalogProductsPage({ view = "products" }: { view?: "products" |
       header: t("catalog.products.columns.price"),
       align: "end",
       className: "whitespace-nowrap tabular-nums",
-      cell: (product) => productPrice(product),
+      cell: (product) => {
+        const suffix = product.price == null ? null : priceUnitSuffix(t, product.priceUnit)
+        return (
+          <>
+            {productPrice(product)}
+            {suffix ? <span className="ml-1 text-xs font-normal text-muted-foreground" data-testid="product-price-unit">{suffix}</span> : null}
+          </>
+        )
+      },
     },
     {
       id: "status",

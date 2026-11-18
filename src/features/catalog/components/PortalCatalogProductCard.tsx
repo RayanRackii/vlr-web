@@ -13,6 +13,7 @@ import {
   clampCatalogQuantity,
 } from "@/features/catalog/cart"
 import { CatalogProductImageGallery } from "@/features/catalog/components/CatalogProductImageGallery"
+import { priceUnitSuffix } from "@/features/catalog/lib/catalogPriceUnit"
 import { selectCatalogProductImages } from "@/features/catalog/lib/selectCatalogProductImages"
 import {
   formatCatalogMoney,
@@ -94,7 +95,12 @@ export function PortalCatalogProductCard({
               {t("tenantPortal.catalog.priceOnRequest")}
             </Badge>
           ) : (
-            <p className="portal-catalog-price">{priceLabel}</p>
+            <p className="portal-catalog-price">
+              {priceLabel}
+              {priceUnitSuffix(t, product.priceUnit) ? (
+                <span className="ml-1 text-xs font-normal text-muted-foreground" data-testid="portal-price-unit">{priceUnitSuffix(t, product.priceUnit)}</span>
+              ) : null}
+            </p>
           )}
           <PortalAddToCartButton
             type="button"

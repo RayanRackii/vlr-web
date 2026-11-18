@@ -81,6 +81,20 @@ export const catalogSaleReadinessSchema = z.object({
 
 export type CatalogSaleReadiness = z.infer<typeof catalogSaleReadinessSchema>
 
+/** How a product price is charged. Null/absent = just the price. */
+export const CATALOG_PRICE_UNITS = ["Unit", "Hour", "Day", "Person", "Booking", "Package"] as const
+export const catalogPriceUnitSchema = z.enum(CATALOG_PRICE_UNITS)
+export type CatalogPriceUnit = z.infer<typeof catalogPriceUnitSchema>
+
+/** Unknown values from newer APIs degrade to "no unit" instead of failing the whole payload. */
+const priceUnitFieldSchema = z
+  .string()
+  .nullish()
+  .transform((value): CatalogPriceUnit | null => {
+    const parsed = catalogPriceUnitSchema.safeParse(value)
+    return parsed.success ? parsed.data : null
+  })
+
 export const catalogProductSchema = z.object({
   id: z.string().uuid(),
   name: z.string(),
@@ -88,6 +102,8 @@ export const catalogProductSchema = z.object({
   description: z.string().nullable(),
   price: z.number().nullable(),
   currency: z.string(),
+  /** Billing unit ("por hora", ...). Absent on older responses. */
+  priceUnit: priceUnitFieldSchema.optional(),
   isActive: z.boolean(),
   /** Whether Agenda and Fila apply to this product. Absent on older responses: true. */
   usesSchedule: z.boolean().optional().default(true),
@@ -121,6 +137,8 @@ export const catalogProductFormSchema = z.object({
   description: z.string().trim().max(4000),
   price: z.string().trim(),
   currency: z.string().trim().length(3),
+  /** "" = no unit. Only the Preços step sends it. */
+  priceUnit: z.string().optional(),
   taxonomy: z.object({
     categoryIds: z.array(z.string().uuid()).max(20),
     tagIds: z.array(z.string().uuid()).max(20),
@@ -330,6 +348,7 @@ export const portalProductSchema = z.object({
   description: z.string().nullable(),
   price: z.number().nullable(),
   currency: z.string(),
+  priceUnit: priceUnitFieldSchema.optional(),
   files: z.array(portalProductFileSchema),
   taxonomy: taxonomyAssignmentSchema.optional(),
   /** True when this product is Restricted and visible to this customer. */

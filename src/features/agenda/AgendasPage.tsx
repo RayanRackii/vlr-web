@@ -1,5 +1,6 @@
 import { Ban, Plus } from "lucide-react"
 import { useState } from "react"
+import { useQueryClient } from "@tanstack/react-query"
 import { useSearchParams } from "react-router-dom"
 import { useTranslation } from "react-i18next"
 import { FilterTabs } from "@/components/data-table/FilterTabs"
@@ -8,7 +9,9 @@ import { Button } from "@/components/ui/button"
 import { DateNavigator } from "@/components/ui/date-navigator"
 import { useTenantTimeZone } from "@/contexts/TenantTimeZoneContext"
 import { addCivilDays, civilToday, formatDayLabel, startOfCivilWeek, zonedDayAndMinutes } from "@/features/catalog/components/agenda/agendaLayout"
+import { useTrialStatus } from "@/features/users/hooks/useTrialStatus"
 import { usePermissions } from "@/features/users/permissions/PermissionContext"
+import { tenantKey } from "@/lib/queryKeys"
 import { ICON_SIZE, ICON_STROKE_WIDTH } from "@/lib/icon"
 import { AgendaFooter, BusinessHoursLabel } from "./AgendaCardParts"
 import { AgendaDayGrid } from "./AgendaDayGrid"
@@ -59,6 +62,9 @@ export function AgendasPage({ view }: { view: AgendasView }) {
   }, tenantId, !isLoading, productView ? state.produto : null)
   const canReserve = rentals && can("rentals.reservations.create")
   const canBlock = rentals && can("rentals.schedule.write")
+  const { isTrialReadOnly } = useTrialStatus()
+  const canEditNotes = rentals && !isTrialReadOnly && (can("rentals.reservations.create") || can("rentals.reservations.confirm"))
+  const queryClient = useQueryClient()
   const [reservePrefill, setReservePrefill] = useState<NewReservationPrefill | null>(null)
   const [blockPrefill, setBlockPrefill] = useState<BlockPeriodPrefill | null>(null)
   const canReadProducts = catalog && can("catalog.products.read")
@@ -162,7 +168,8 @@ export function AgendasPage({ view }: { view: AgendasView }) {
           : <AgendaDayGrid loading={loading} failedSources={day.failedSources} rows={day.day.rows} start={day.day.start} end={day.day.end}
               canReserve={canReserve} canBlock={canBlock} nowMinutes={nowMinutes} onCreateReservation={createReservation}
               onBlockPeriod={(resourceId, minutes) => setBlockPrefill({ resourceId, date: state.date, start: formatClock(minutes) })}
-              focusedProductId={productView ? state.produto : null} focusDate={state.date} />}
+              focusedProductId={productView ? state.produto : null} focusDate={state.date}
+              canEditNotes={canEditNotes} onNotesSaved={() => { void queryClient.invalidateQueries({ queryKey: tenantKey("staff", tenantId, "reservations") }).catch(() => undefined) }} />}
         <AgendaFooter
           resources={resourceCount}
           activities={activities}

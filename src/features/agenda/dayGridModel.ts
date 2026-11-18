@@ -34,6 +34,8 @@ export type AgendaBlock = {
   orderStatus?: string | null
   reservationId?: string | null
   customerName?: string | null
+  /** Internal reservation note; undefined when the block does not come from a reservation row. */
+  notes?: string | null
   label?: string | null
   color?: string | null
 }
@@ -133,7 +135,7 @@ export function buildAgendaDay(
       ensure(item.rentalAssetId, item.assetName)
       const key = `reserva:${reservation.id}:${item.rentalAssetId}`
       if (blocks.some((block) => block.key === key)) continue
-      blocks.push({ key, resourceId: item.rentalAssetId, kind: "reserva", ...window, startInstant: reservation.startDateTime, endInstant: reservation.endDateTime, reservationId: reservation.id, customerName: reservation.customerName })
+      blocks.push({ key, resourceId: item.rentalAssetId, kind: "reserva", ...window, startInstant: reservation.startDateTime, endInstant: reservation.endDateTime, reservationId: reservation.id, customerName: reservation.customerName, notes: reservation.notes ?? null })
     }
   }
   for (const slot of data.slots) {

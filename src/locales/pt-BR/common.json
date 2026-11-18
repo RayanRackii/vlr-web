@@ -326,7 +326,8 @@
     "saveTaxonomy": "Não foi possível salvar categorias e tags.",
     "deleteTaxonomy": "Não foi possível excluir a categoria ou tag.",
     "loadCatalogAgenda": "Não foi possível carregar a agenda.",
-    "timeout": "A conexão demorou demais. Tente novamente."
+    "timeout": "A conexão demorou demais. Tente novamente.",
+    "updateReservationNotes": "Não foi possível salvar a observação."
   },
   "trial": {
     "banner": {
@@ -1981,6 +1982,27 @@
         "freeNext": "Próximo: {{ref}} · {{time}}",
         "freeNone": "Sem uso hoje"
       }
+    },
+    "priceUnit": {
+      "label": "Cobrança",
+      "none": "Sem unidade",
+      "help": "Como o preço é cobrado. Sem unidade, mostramos só o valor.",
+      "option": {
+        "Unit": "Por unidade",
+        "Hour": "Por hora",
+        "Day": "Por dia",
+        "Person": "Por pessoa",
+        "Booking": "Por reserva",
+        "Package": "Por pacote"
+      },
+      "suffix": {
+        "Unit": "por unidade",
+        "Hour": "por hora",
+        "Day": "por dia",
+        "Person": "por pessoa",
+        "Booking": "por reserva",
+        "Package": "por pacote"
+      }
     }
   },
   "lateDuration": {
@@ -2499,7 +2521,8 @@
     "agendasOverview": "Visão geral",
     "agendasResources": "Agenda de recursos",
     "agendasProduct": "Agenda do produto",
-    "pedidos": "Pedidos"
+    "pedidos": "Pedidos",
+    "company": "Dados da empresa"
   },
   "moduleIntro": {
     "title": "Apresentação",
@@ -5942,7 +5965,8 @@
       "noActions": "Sem ações disponíveis",
       "durationHours": "{{hours}}h",
       "durationMinutes": "{{minutes}}min",
-      "durationHoursMinutes": "{{hours}}h{{minutes}}min"
+      "durationHoursMinutes": "{{hours}}h{{minutes}}min",
+      "noteLabel": "Observação: {{note}}"
     },
     "bookingPolicy": {
       "title": "Política de reservas",
@@ -6314,7 +6338,9 @@
       "customerNotFound": "Cliente não encontrado.",
       "invalidPhone": "WhatsApp inválido. Use DDD e número.",
       "customerExists": "Cliente já cadastrado — selecionado",
-      "error": "Não foi possível criar a reserva."
+      "error": "Não foi possível criar a reserva.",
+      "notes": "Observações (só a equipe vê)",
+      "notesPlaceholder": "Ex.: cliente pediu rede extra"
     },
     "newReservation": "Nova reserva",
     "block": {
@@ -6404,6 +6430,13 @@
       "activitiesWeek_other": "{{count}} atividades nesta semana",
       "updatedNow": "Atualizado agora",
       "updatedAgo": "Atualizado há {{minutes}} min"
+    },
+    "reservationNotes": {
+      "label": "Observações (só a equipe vê)",
+      "empty": "Sem observações.",
+      "add": "Adicionar",
+      "edit": "Editar",
+      "saved": "Observação salva."
     }
   },
   "pedidos": {
@@ -6668,5 +6701,46 @@
       "visibilityRestricted": "Restrito",
       "agendaLinked": "Recursos vinculados"
     }
+  },
+  "company": {
+    "description": "Nome, documento, contato e endereço da sua empresa.",
+    "readOnly": "Você pode ver, mas não editar, os dados da empresa.",
+    "saved": "Dados da empresa salvos.",
+    "saveError": "Não foi possível salvar os dados da empresa.",
+    "loadError": "Não foi possível carregar os dados da empresa.",
+    "sections": {
+      "identity": "Identificação",
+      "contact": "Contato",
+      "address": "Endereço",
+      "portal": "Endereço do portal"
+    },
+    "fields": {
+      "legalName": "Razão social",
+      "tradeName": "Nome fantasia",
+      "taxId": "CPF/CNPJ",
+      "taxIdHelp": "Somente números; a máscara é automática.",
+      "contactEmail": "E-mail",
+      "contactPhone": "WhatsApp/telefone",
+      "postalCode": "CEP",
+      "street": "Rua",
+      "number": "Número",
+      "complement": "Complemento",
+      "district": "Bairro",
+      "city": "Cidade",
+      "state": "UF",
+      "stateNone": "Sem UF"
+    },
+    "validation": {
+      "legalNameRequired": "Informe a razão social.",
+      "taxIdInvalid": "CPF ou CNPJ inválido.",
+      "emailInvalid": "E-mail inválido.",
+      "phoneInvalid": "Telefone inválido. Use DDD + número.",
+      "postalCodeInvalid": "CEP deve ter 8 números.",
+      "stateInvalid": "Escolha a UF.",
+      "taxIdRequired": "Informe o CPF ou CNPJ.",
+      "taxIdDuplicate": "Este CPF/CNPJ já está cadastrado em outra empresa."
+    },
+    "portalHelp": "Endereço do portal dos seus clientes. Só o suporte da Rolvix altera.",
+    "saveInvalid": "Confira os dados informados e tente de novo."
   }
 }
