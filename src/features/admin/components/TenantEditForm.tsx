@@ -246,7 +246,6 @@ export function TenantEditForm({
       header={{
         title: tenant.legalName,
         description,
-        back: { to: "/admin/dashboard", label: t("admin.edit.back") },
       }}
     >
       <UnsavedChangesGuard when={isDirty} />

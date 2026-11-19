@@ -192,6 +192,15 @@ describe("TenantEditForm tabs and save bar", () => {
     ).toHaveValue("Acme Quadras")
   })
 
+  it("relies on the shell breadcrumb and renders no back link above the title", async () => {
+    renderEdit()
+
+    await screen.findAllByRole("tab")
+    expect(
+      screen.queryByRole("link", { name: i18n.t("admin.edit.back") }),
+    ).not.toBeInTheDocument()
+  })
+
   it("switches tabs through the ?tab= search param", async () => {
     const user = userEvent.setup()
     renderEdit()

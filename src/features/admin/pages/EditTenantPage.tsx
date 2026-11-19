@@ -86,7 +86,6 @@ export function EditTenantPage() {
       <Page
         header={{
           title: t("admin.edit.title"),
-          back: { to: "/admin/dashboard", label: t("admin.edit.back") },
         }}
         state="error"
         error={loadError ?? t("admin.edit.errors.loadFailed")}
