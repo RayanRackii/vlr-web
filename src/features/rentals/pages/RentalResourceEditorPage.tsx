@@ -164,7 +164,7 @@ export function RentalResourceEditorPage({ cadastro = false }: { cadastro?: bool
         stored: editing?.maxAdvanceBookingDays,
         storedVisualTemplateRevisionId: editing?.visualTemplateRevisionId,
         storedCapacityPeople: editing?.capacityPeople,
-      })
+      }, families.find((family) => family.id === values.familyId), editing?.familyId === values.familyId ? editing?.attributes : undefined)
       if (editing) {
         const saved = await updateRentalAsset(editing.id, body)
         if (!currentLifetime.active) return false

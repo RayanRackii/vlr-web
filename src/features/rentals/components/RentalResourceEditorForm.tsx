@@ -31,7 +31,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { AssetFamilyFields } from "@/features/assets/components/AssetFamilyFields"
+import { AssetAttributeFields } from "@/features/assets/components/AssetAttributeFields"
+import type { AssetAttributeValue } from "@/features/assets/schemas/assetSchemas"
+import type { AttributeFormValue } from "@/features/assets/lib/assetAttributeValues"
 import { emptyAttributesFromFields, type AssetFamily } from "@/features/assets/schemas/assetFamilySchemas"
 import type { Unit } from "@/features/assets/schemas/unitSchemas"
 import { getUnits } from "@/features/assets/services/unitsService"
@@ -181,6 +183,11 @@ export function RentalResourceEditorForm({
 
   const legacyBlankKeys = useMemo(() => legacyBlankRequiredKeys(editing, families), [editing, families])
 
+  const stored = useMemo(
+    () => (editing?.attributes && editing.familyId ? { familyId: editing.familyId, attributes: editing.attributes as Record<string, AssetAttributeValue> } : null),
+    [editing],
+  )
+
   const formSchema = useMemo(
     () =>
       createRentalResourceFormSchema({
@@ -197,8 +204,8 @@ export function RentalResourceEditorForm({
         horizonRange: t("rentals.resources.validation.horizonRange"),
         attributeRequired: t("common.required"),
         attributeInvalid: t("assets.inventory.validation.attributeInvalid"),
-      }, { families, legacyBlankKeys }),
-    [t, families, legacyBlankKeys],
+      }, { families, legacyBlankKeys, stored }),
+    [t, families, legacyBlankKeys, stored],
   )
 
   const form = useForm<RentalResourceFormValues>({
@@ -579,11 +586,11 @@ export function RentalResourceEditorForm({
             />
 
             {selectedFamily && watched.attributes ? (
-              <AssetFamilyFields
+              <AssetAttributeFields
                 fields={selectedFamily.fields}
-                values={watched.attributes as Record<string, string>}
+                values={watched.attributes as Record<string, AttributeFormValue>}
                 disabled={readOnly || busy}
-                onChange={(attributes) => form.setValue("attributes", attributes, { shouldDirty: true, shouldTouch: true })}
+                onChange={(key, value) => form.setValue("attributes", { ...(form.getValues("attributes") ?? {}), [key]: value }, { shouldDirty: true, shouldTouch: true })}
                 controlProps={(key, required) => {
                   const error = issueMessageAt(visibleErrors, ["attributes", key])
                   return {

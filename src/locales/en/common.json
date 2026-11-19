@@ -3858,6 +3858,15 @@
       "familyFields": {
         "capacity": "Capacity"
       },
+      "attributes": {
+        "counter": "{{count}}/{{max}}",
+        "noSelection": "None",
+        "selectPlaceholder": "Select an option",
+        "legacyValue": "Value saved before this option list changed. You can only remove it.",
+        "rangeBetween": "Between {{min}} and {{max}}",
+        "rangeMin": "Minimum {{min}}",
+        "rangeMax": "Maximum {{max}}"
+      },
       "placeholders": {
         "name": "e.g. Equipment 1",
         "tag": "e.g. EQ-01",

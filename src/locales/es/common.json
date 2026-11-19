@@ -3858,6 +3858,15 @@
       "familyFields": {
         "capacity": "Capacidad"
       },
+      "attributes": {
+        "counter": "{{count}}/{{max}}",
+        "noSelection": "Ninguno",
+        "selectPlaceholder": "Seleccione una opción",
+        "legacyValue": "Valor guardado antes de que cambiara la lista de opciones. Solo se puede quitar.",
+        "rangeBetween": "Entre {{min}} y {{max}}",
+        "rangeMin": "Mínimo {{min}}",
+        "rangeMax": "Máximo {{max}}"
+      },
       "placeholders": {
         "name": "Ej.: Equipo 1",
         "tag": "Ej.: EQ-01",
