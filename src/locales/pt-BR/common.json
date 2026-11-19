@@ -2521,6 +2521,7 @@
     "agendasOverview": "Visão geral",
     "agendasResources": "Agenda de recursos",
     "agendasProduct": "Agenda do produto",
+    "agendasPlanning": "Planejamento",
     "pedidos": "Pedidos",
     "company": "Dados da empresa",
     "portalAppearance": "Aparência do portal"
@@ -6343,6 +6344,157 @@
       "portalOrders": "Ex.: materiais de limpeza para a recepção",
       "portalRequests": "Ex.: um produto de limpeza para a recepção",
       "portalCatalog": "Ex.: materiais de uso diário para a recepção"
+    }
+  },
+  "planning": {
+    "title": "Planejamento",
+    "subtitle": "Ocupação dos recursos planejáveis por dia e por semana.",
+    "newAllocation": "Nova alocação",
+    "empty": {
+      "title": "Nenhum recurso planejável",
+      "description": "Marque um recurso do cadastro como planejável para ele aparecer aqui."
+    },
+    "grid": {
+      "dayRegion": "Linha do tempo do dia",
+      "weekRegion": "Planejamento da semana",
+      "asset": "Recurso",
+      "closed": "Fora do horário",
+      "externalBusy": "Ocupado por reserva de cliente",
+      "loading": "Carregando o planejamento",
+      "openDay": "Abrir {{day}}",
+      "more": "+{{count}} mais"
+    },
+    "footer": {
+      "resources_one": "{{count}} recurso",
+      "resources_other": "{{count}} recursos",
+      "allocations_one": "{{count}} alocação",
+      "allocations_other": "{{count}} alocações",
+      "overdue_one": "{{count}} atrasada",
+      "overdue_other": "{{count}} atrasadas",
+      "expired_one": "{{count}} expirada",
+      "expired_other": "{{count}} expiradas"
+    },
+    "flags": {
+      "overdue": "Atrasada",
+      "expired": "Expirada"
+    },
+    "status": {
+      "Scheduled": "Agendada",
+      "Running": "Em uso",
+      "Cleaning": "Em limpeza",
+      "Released": "Liberada",
+      "Cancelled": "Cancelada"
+    },
+    "kind": {
+      "Use": "Uso",
+      "Unavailable": "Indisponível"
+    },
+    "conflicts": {
+      "title_one": "Conflito com {{count}} ocupação",
+      "title_other": "Conflito com {{count}} ocupações",
+      "noLabel": "Ocupado",
+      "source": {
+        "allocation": "alocação",
+        "reservation": "reserva"
+      }
+    },
+    "hours": {
+      "title": "Fora do horário de funcionamento.",
+      "start_outside_working_hours": "O início precisa cair dentro do horário de funcionamento do recurso.",
+      "outside_working_hours": "O período inteiro precisa caber no horário de funcionamento do recurso.",
+      "invalid_interval": "O período informado é inválido."
+    },
+    "preview": {
+      "checking": "Verificando a disponibilidade...",
+      "feasible": "Horário livre. Pode salvar.",
+      "unavailable": "Não foi possível verificar agora. A checagem final acontece ao salvar."
+    },
+    "errors": {
+      "conflict": "O recurso já está ocupado nesse período.",
+      "version_conflict": "A alocação mudou desde que você a abriu. A agenda foi recarregada, confira e tente de novo.",
+      "asset_not_plannable": "Este recurso não está disponível para planejamento.",
+      "invalid_transition": "Essa ação não é possível no estado atual da alocação.",
+      "outside_working_hours": "O período está fora do horário de funcionamento.",
+      "cancel_forbidden": "Só quem criou a alocação ou um administrador pode cancelá-la.",
+      "unavailable_forbidden": "Criar, editar ou iniciar um bloqueio de indisponibilidade exige permissão de administrador.",
+      "order_workflow_required": "Esta alocação pertence a um pedido. Use o fluxo do pedido.",
+      "asset_not_found": "Recurso não encontrado.",
+      "allocation_not_found": "Alocação não encontrada. Ela pode ter sido removida.",
+      "invalid_allocation": "Os dados da alocação são inválidos. Confira os campos.",
+      "invalid_range": "O intervalo pedido é inválido.",
+      "invalid_profile": "A configuração do recurso é inválida.",
+      "working_hours_required": "Defina o horário de funcionamento do recurso.",
+      "rental_schedule_authority": "Este recurso é alugável: o horário é definido pela agenda de reservas.",
+      "module_inactive": "O módulo de Planejamento de recursos não está ativo para esta empresa.",
+      "network": "Sem conexão com o servidor. Verifique a internet e tente de novo.",
+      "forbidden": "Você não tem permissão para esta ação.",
+      "server": "O servidor falhou. Tente de novo em instantes.",
+      "unknown": "Não foi possível concluir. Tente de novo."
+    },
+    "dialog": {
+      "createTitle": "Nova alocação",
+      "editTitle": "Editar alocação",
+      "description": "Reserve um recurso por um período. Conflitos e horário de funcionamento são verificados antes de salvar.",
+      "asset": "Recurso",
+      "assetPlaceholder": "Escolha o recurso",
+      "noAssets": "Nenhum recurso planejável cadastrado.",
+      "kind": "Tipo",
+      "unavailableHint": "O recurso fica bloqueado e indisponível nesse período.",
+      "title": "Título",
+      "reason": "Motivo",
+      "startDate": "Data de início",
+      "startTime": "Hora de início",
+      "endDate": "Data de término",
+      "endTime": "Hora de término",
+      "prep": "Preparo (min)",
+      "cleanup": "Limpeza (min)",
+      "notes": "Observações",
+      "cancel": "Cancelar",
+      "save": "Criar alocação",
+      "saveEdit": "Salvar alterações",
+      "saving": "Salvando...",
+      "created": "Alocação criada.",
+      "updated": "Alocação atualizada.",
+      "errors": {
+        "asset": "Escolha um recurso.",
+        "title": "Informe um título ou motivo.",
+        "dates": "Informe datas e horas válidas.",
+        "order": "O término precisa ser depois do início.",
+        "tooLong": "A alocação pode durar no máximo 30 dias.",
+        "buffer": "Preparo e limpeza são minutos inteiros, até 1440."
+      }
+    },
+    "sheet": {
+      "done": {
+        "start": "Uso iniciado.",
+        "work-finished": "Trabalho concluído.",
+        "release": "Recurso liberado.",
+        "cancel": "Alocação cancelada."
+      },
+      "overdueRunning": "O horário previsto acabou e o recurso continua em uso. Conclua o trabalho para seguir.",
+      "overdueCleaning": "A limpeza passou do horário. Libere o recurso para ele voltar a ficar livre.",
+      "expiredNote": "Esta alocação nunca foi iniciada e o prazo acabou. Ela não bloqueia mais o recurso.",
+      "work": "Trabalho",
+      "occupied": "Ocupação",
+      "startedAt": "Iniciada em",
+      "finishedAt": "Trabalho concluído em",
+      "releasedAt": "Liberada em",
+      "reference": "Vínculo",
+      "notes": "Observações",
+      "cancelReason": "Motivo do cancelamento",
+      "orderWorkflow": "Esta alocação é gerenciada por {{label}}. Inicie, conclua ou libere pelo fluxo dele.",
+      "theOrder": "um pedido",
+      "cancelReasonLabel": "Motivo do cancelamento (opcional)",
+      "working": "Aguarde...",
+      "actions": {
+        "start": "Iniciar uso",
+        "workFinished": "Concluir trabalho",
+        "release": "Liberar recurso",
+        "edit": "Editar",
+        "cancel": "Cancelar alocação",
+        "confirmCancel": "Confirmar cancelamento",
+        "keep": "Manter"
+      }
     }
   },
   "agendas": {

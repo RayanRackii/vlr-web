@@ -2521,6 +2521,7 @@
     "agendasOverview": "Overview",
     "agendasResources": "Resource agenda",
     "agendasProduct": "Product agenda",
+    "agendasPlanning": "Planning",
     "pedidos": "Orders",
     "company": "Company details",
     "portalAppearance": "Portal appearance"
@@ -6343,6 +6344,157 @@
       "portalOrders": "E.g.: cleaning supplies for reception",
       "portalRequests": "E.g.: a cleaning product for reception",
       "portalCatalog": "E.g.: everyday supplies for reception"
+    }
+  },
+  "planning": {
+    "title": "Planning",
+    "subtitle": "Occupancy of plannable resources by day and by week.",
+    "newAllocation": "New allocation",
+    "empty": {
+      "title": "No plannable resources",
+      "description": "Mark a registered resource as plannable and it will show up here."
+    },
+    "grid": {
+      "dayRegion": "Day timeline",
+      "weekRegion": "Week planning",
+      "asset": "Resource",
+      "closed": "Outside working hours",
+      "externalBusy": "Taken by a customer reservation",
+      "loading": "Loading the planning",
+      "openDay": "Open {{day}}",
+      "more": "+{{count}} more"
+    },
+    "footer": {
+      "resources_one": "{{count}} resource",
+      "resources_other": "{{count}} resources",
+      "allocations_one": "{{count}} allocation",
+      "allocations_other": "{{count}} allocations",
+      "overdue_one": "{{count}} overdue",
+      "overdue_other": "{{count}} overdue",
+      "expired_one": "{{count}} expired",
+      "expired_other": "{{count}} expired"
+    },
+    "flags": {
+      "overdue": "Overdue",
+      "expired": "Expired"
+    },
+    "status": {
+      "Scheduled": "Scheduled",
+      "Running": "In use",
+      "Cleaning": "Cleaning",
+      "Released": "Released",
+      "Cancelled": "Cancelled"
+    },
+    "kind": {
+      "Use": "Use",
+      "Unavailable": "Unavailable"
+    },
+    "conflicts": {
+      "title_one": "Conflicts with {{count}} booking",
+      "title_other": "Conflicts with {{count}} bookings",
+      "noLabel": "Occupied",
+      "source": {
+        "allocation": "allocation",
+        "reservation": "reservation"
+      }
+    },
+    "hours": {
+      "title": "Outside working hours.",
+      "start_outside_working_hours": "The start must fall inside the resource's working hours.",
+      "outside_working_hours": "The whole period must fit inside the resource's working hours.",
+      "invalid_interval": "The period is not valid."
+    },
+    "preview": {
+      "checking": "Checking availability...",
+      "feasible": "The slot is free. You can save.",
+      "unavailable": "Could not check right now. The final check happens when you save."
+    },
+    "errors": {
+      "conflict": "The resource is already occupied in this period.",
+      "version_conflict": "The allocation changed since you opened it. The agenda was reloaded, check it and try again.",
+      "asset_not_plannable": "This resource is not available for planning.",
+      "invalid_transition": "That action is not possible in the allocation's current state.",
+      "outside_working_hours": "The period is outside working hours.",
+      "cancel_forbidden": "Only the person who created the allocation or an administrator can cancel it.",
+      "unavailable_forbidden": "Creating, editing or starting an unavailability block needs administrator permission.",
+      "order_workflow_required": "This allocation belongs to an order. Use the order flow.",
+      "asset_not_found": "Resource not found.",
+      "allocation_not_found": "Allocation not found. It may have been removed.",
+      "invalid_allocation": "The allocation data is not valid. Check the fields.",
+      "invalid_range": "The requested range is not valid.",
+      "invalid_profile": "The resource configuration is not valid.",
+      "working_hours_required": "Set the resource's working hours.",
+      "rental_schedule_authority": "This resource is rentable: its hours come from the reservation schedule.",
+      "module_inactive": "The Resource planning module is not active for this company.",
+      "network": "No connection to the server. Check your internet and try again.",
+      "forbidden": "You do not have permission for this action.",
+      "server": "The server failed. Try again in a moment.",
+      "unknown": "Could not complete. Try again."
+    },
+    "dialog": {
+      "createTitle": "New allocation",
+      "editTitle": "Edit allocation",
+      "description": "Reserve a resource for a period. Conflicts and working hours are checked before saving.",
+      "asset": "Resource",
+      "assetPlaceholder": "Choose the resource",
+      "noAssets": "No plannable resources registered.",
+      "kind": "Type",
+      "unavailableHint": "The resource is blocked and unavailable in this period.",
+      "title": "Title",
+      "reason": "Reason",
+      "startDate": "Start date",
+      "startTime": "Start time",
+      "endDate": "End date",
+      "endTime": "End time",
+      "prep": "Preparation (min)",
+      "cleanup": "Cleanup (min)",
+      "notes": "Notes",
+      "cancel": "Cancel",
+      "save": "Create allocation",
+      "saveEdit": "Save changes",
+      "saving": "Saving...",
+      "created": "Allocation created.",
+      "updated": "Allocation updated.",
+      "errors": {
+        "asset": "Choose a resource.",
+        "title": "Enter a title or reason.",
+        "dates": "Enter valid dates and times.",
+        "order": "The end must be after the start.",
+        "tooLong": "An allocation can last at most 30 days.",
+        "buffer": "Preparation and cleanup are whole minutes, up to 1440."
+      }
+    },
+    "sheet": {
+      "done": {
+        "start": "Use started.",
+        "work-finished": "Work finished.",
+        "release": "Resource released.",
+        "cancel": "Allocation cancelled."
+      },
+      "overdueRunning": "The planned time is over and the resource is still in use. Finish the work to move on.",
+      "overdueCleaning": "Cleanup ran past its time. Release the resource to free it again.",
+      "expiredNote": "This allocation was never started and its time is over. It no longer blocks the resource.",
+      "work": "Work",
+      "occupied": "Occupancy",
+      "startedAt": "Started at",
+      "finishedAt": "Work finished at",
+      "releasedAt": "Released at",
+      "reference": "Linked to",
+      "notes": "Notes",
+      "cancelReason": "Cancellation reason",
+      "orderWorkflow": "This allocation is managed by {{label}}. Start, finish or release it from that flow.",
+      "theOrder": "an order",
+      "cancelReasonLabel": "Cancellation reason (optional)",
+      "working": "Please wait...",
+      "actions": {
+        "start": "Start use",
+        "workFinished": "Finish work",
+        "release": "Release resource",
+        "edit": "Edit",
+        "cancel": "Cancel allocation",
+        "confirmCancel": "Confirm cancellation",
+        "keep": "Keep it"
+      }
     }
   },
   "agendas": {
