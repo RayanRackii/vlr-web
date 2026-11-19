@@ -55,9 +55,6 @@ const TAB_LABEL_KEYS: Record<TenantEditTab, string> = {
   menu: "admin.edit.tabs.menu",
 }
 
-/** Tabs 1-3 share the form and the save bar; the others save on their own. */
-const FORM_TABS: readonly TenantEditTab[] = ["empresa", "portal", "modulos"]
-
 const TAB_BY_FIELD: Partial<Record<keyof TenantEditFormValues, TenantEditTab>> = {
   legalName: "empresa",
   tradeName: "empresa",
@@ -222,7 +219,6 @@ export function TenantEditForm({
     void form.handleSubmit(handleSubmit, handleInvalid)()
   }
 
-  const showSaveBar = isDirty && FORM_TABS.includes(activeTab)
   const trialEnded = Boolean(tenant.isTrialReadOnly)
 
   const description = (
@@ -359,7 +355,7 @@ export function TenantEditForm({
         </Tabs>
       </Form>
 
-      {showSaveBar ? (
+      {isDirty ? (
         <SaveBar
           dirty={isDirty}
           unsavedCount={unsavedCount}

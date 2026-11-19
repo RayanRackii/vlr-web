@@ -256,6 +256,25 @@ describe("TenantEditForm tabs and save bar", () => {
     expect(tradeName).toHaveValue("Acme Quadras")
   })
 
+  it("keeps the save bar and the unsaved count visible on the other tabs", async () => {
+    const user = userEvent.setup()
+    renderEdit()
+
+    await user.type(
+      await screen.findByLabelText(i18n.t("admin.edit.company.tradeName")),
+      " Norte",
+    )
+    await user.click(
+      screen.getByRole("tab", { name: i18n.t("admin.edit.tabs.users") }),
+    )
+
+    expect(await screen.findByText("users-manager")).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: saveName() })).toBeEnabled()
+    expect(
+      screen.getByText(i18n.t("fullPage.unsavedChanges", { count: 1 })),
+    ).toBeInTheDocument()
+  })
+
   it("saves only the touched company fields and stays on the page", async () => {
     const setTimeoutSpy = vi.spyOn(window, "setTimeout")
     const user = userEvent.setup()
