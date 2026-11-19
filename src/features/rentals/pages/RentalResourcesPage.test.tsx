@@ -32,6 +32,8 @@ vi.mock("@/features/assets/services/assetsService", () => ({
   getAssets: vi.fn(async () => {
     throw new Error("must not call GET /api/assets")
   }),
+  // Stored family attributes are optional for the editor; a failed read leaves them untouched.
+  getAssetById: vi.fn().mockRejectedValue(new Error("not available")),
 }))
 
 vi.mock("@/features/assets/services/assetCategoriesService", () => ({
