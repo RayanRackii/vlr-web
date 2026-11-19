@@ -7,6 +7,7 @@ import {
   normalizeNumberInput,
   toFormValue,
   toPayloadValue,
+  untouchedStoredValue,
 } from "@/features/assets/lib/assetAttributeValues"
 import { assetSchema } from "@/features/assets/schemas/assetSchemas"
 import { assetFamilySchema } from "@/features/assets/schemas/assetFamilySchemas"
@@ -147,5 +148,21 @@ describe("isBlankFormValue and formatAttributeValue", () => {
     expect(formatAttributeValue({ type: "number", unit: "mm" }, "0.02", "en")).toBe("0.02 mm")
     expect(formatAttributeValue({ type: "multiselect" }, ["PLA", "PETG"], "en")).toBe("PLA, PETG")
     expect(formatAttributeValue({ type: "text" }, null, "en")).toBe("")
+  })
+})
+
+describe("untouchedStoredValue", () => {
+  const number = { type: "number" } as const
+  const multi = { type: "multiselect" } as const
+  it("returns the stored raw value while the form value equals what loading produced", () => {
+    expect(untouchedStoredValue(number, "1,000", "1,000")).toBe("1,000")
+    expect(untouchedStoredValue(number, "256", 256)).toBe(256)
+    expect(untouchedStoredValue(multi, ["PLA", "PETG"], "PLA, PETG")).toBe("PLA, PETG")
+  })
+  it("returns undefined once changed, or when nothing was stored", () => {
+    expect(untouchedStoredValue(number, "1,001", "1,000")).toBeUndefined()
+    expect(untouchedStoredValue(multi, ["PLA"], "PLA, PETG")).toBeUndefined()
+    expect(untouchedStoredValue(number, "5", undefined)).toBeUndefined()
+    expect(untouchedStoredValue(number, "", null)).toBeUndefined()
   })
 })

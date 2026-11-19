@@ -121,4 +121,24 @@ describe("RentalResourceEditorForm family attributes", () => {
       materials: ["PLA", "PETG", "ABS"],
     })
   })
+
+  it("re-sends untouched legacy values verbatim and lets them save", async () => {
+    const user = userEvent.setup()
+    const legacyFamily = { ...family, fields: [{ key: "volts", type: "number", required: false, label: "Volts", max: 10 }] }
+    const editing = {
+      id: "22222222-2222-2222-2222-222222222222", assetId: "33333333-3333-3333-3333-333333333333",
+      familyId: id, attributes: { volts: "1,000" }, unitId: id, categoryId: id, name: "Furadeira", tag: "F1", type: "Good", totalQuantity: 1,
+    } as unknown as AdminRentalAsset
+    const onSubmit = renderForm({ editing, families: [legacyFamily as never] })
+
+    await user.type(screen.getByLabelText(i18n.t("rentals.resources.form.name")), " 2")
+    const save = screen.getByRole("button", { name: i18n.t("rentals.resources.saveEdit") })
+    await waitFor(() => expect(save).toBeEnabled())
+    await user.click(save)
+
+    await waitFor(() => expect(onSubmit).toHaveBeenCalledTimes(1))
+    const values = vi.mocked(onSubmit).mock.calls[0]![0]
+    expect(toCreateRentableRequest(values, undefined, legacyFamily as never, { volts: "1,000" }).attributes).toEqual({ volts: "1,000" })
+    expect(toCreateRentableRequest(values, undefined, legacyFamily as never).attributes).toEqual({ volts: 1 })
+  })
 })

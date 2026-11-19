@@ -32,6 +32,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { AssetAttributeFields } from "@/features/assets/components/AssetAttributeFields"
+import type { AssetAttributeValue } from "@/features/assets/schemas/assetSchemas"
 import type { AttributeFormValue } from "@/features/assets/lib/assetAttributeValues"
 import { emptyAttributesFromFields, type AssetFamily } from "@/features/assets/schemas/assetFamilySchemas"
 import type { Unit } from "@/features/assets/schemas/unitSchemas"
@@ -182,6 +183,11 @@ export function RentalResourceEditorForm({
 
   const legacyBlankKeys = useMemo(() => legacyBlankRequiredKeys(editing, families), [editing, families])
 
+  const stored = useMemo(
+    () => (editing?.attributes && editing.familyId ? { familyId: editing.familyId, attributes: editing.attributes as Record<string, AssetAttributeValue> } : null),
+    [editing],
+  )
+
   const formSchema = useMemo(
     () =>
       createRentalResourceFormSchema({
@@ -198,8 +204,8 @@ export function RentalResourceEditorForm({
         horizonRange: t("rentals.resources.validation.horizonRange"),
         attributeRequired: t("common.required"),
         attributeInvalid: t("assets.inventory.validation.attributeInvalid"),
-      }, { families, legacyBlankKeys }),
-    [t, families, legacyBlankKeys],
+      }, { families, legacyBlankKeys, stored }),
+    [t, families, legacyBlankKeys, stored],
   )
 
   const form = useForm<RentalResourceFormValues>({

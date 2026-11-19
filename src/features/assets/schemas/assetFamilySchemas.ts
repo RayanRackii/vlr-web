@@ -1,10 +1,13 @@
 import { z } from "zod"
 
+import type { AssetAttributeValue } from "@/features/assets/schemas/assetSchemas"
+
 import {
   emptyFormValue,
   isBlankFormValue,
   normalizeNumberInput,
   toPayloadValue,
+  untouchedStoredValue,
   type AttributeFormValue,
   type AttributePayloadValue,
 } from "@/features/assets/lib/assetAttributeValues"
@@ -100,9 +103,12 @@ export type AttributeIssue = "required" | "invalid"
 export function validateAttributeValue(
   field: AssetFamilyField,
   value: AttributeFormValue | undefined | null,
+  /** Stored raw value of the asset being edited: an untouched, non-blank value is never rejected client side. */
+  stored?: AssetAttributeValue,
 ): AttributeIssue | null {
   if (field.type === "boolean") return null
   if (isBlankFormValue(value)) return field.required ? "required" : null
+  if (untouchedStoredValue(field, value, stored) !== undefined) return null
 
   if (field.type === "multiselect") {
     return Array.isArray(value) && value.every((item) => typeof item === "string") ? null : "invalid"
@@ -136,6 +142,7 @@ export function validateAttributeValue(
 export function buildAttributesZodSchema(
   fields: readonly AssetFamilyField[],
   messages?: { required: string; invalid?: string },
+  storedAttributes?: Readonly<Record<string, AssetAttributeValue>> | null,
 ) {
   const shape: Record<string, z.ZodTypeAny> = {}
   const requiredMessage = messages?.required ?? "Required"
@@ -143,7 +150,7 @@ export function buildAttributesZodSchema(
 
   for (const field of fields) {
     shape[field.key] = z.unknown().superRefine((value, ctx) => {
-      const issue = validateAttributeValue(field, value as AttributeFormValue | undefined | null)
+      const issue = validateAttributeValue(field, value as AttributeFormValue | undefined | null, storedAttributes?.[field.key])
       if (issue) {
         ctx.addIssue({ code: "custom", message: issue === "required" ? requiredMessage : invalidMessage })
       }
@@ -166,11 +173,14 @@ export function emptyAttributesFromFields(
 export function attributesToPayload(
   fields: readonly AssetFamilyField[],
   values: Record<string, AttributeFormValue | undefined> | undefined | null,
+  /** Stored raw values of the asset being edited: untouched fields are re-sent exactly as stored. */
+  storedAttributes?: Readonly<Record<string, AssetAttributeValue>> | null,
 ): Record<string, AttributePayloadValue> {
   const source = values ?? {}
   const payload: Record<string, AttributePayloadValue> = {}
   for (const field of fields) {
-    payload[field.key] = toPayloadValue(field, source[field.key])
+    const untouched = untouchedStoredValue(field, source[field.key], storedAttributes?.[field.key])
+    payload[field.key] = untouched !== undefined ? untouched : toPayloadValue(field, source[field.key])
   }
   return payload
 }

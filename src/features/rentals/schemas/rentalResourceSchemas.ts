@@ -9,6 +9,7 @@ import {
 import {
   assetAttributeValueSchema,
   attributeFormValueSchema,
+  type AssetAttributeValue,
   toApiTimeOnly,
 } from "@/features/assets/schemas/assetSchemas"
 import {
@@ -100,6 +101,8 @@ export function createRentalResourceFormSchema(messages: {
   families?: readonly AssetFamily[]
   /** Required attributes that were already blank on a stored asset (legacy); they never block an edit. */
   legacyBlankKeys?: ReadonlySet<string>
+  /** Stored raw attributes of the asset being edited and its family; untouched values skip client validation. */
+  stored?: { familyId: string; attributes: Readonly<Record<string, AssetAttributeValue>> } | null
 } = {}) {
   return z
     .object({
@@ -141,7 +144,11 @@ export function createRentalResourceFormSchema(messages: {
       const family = attributeContext.families?.find((candidate) => candidate.id === values.familyId)
       if (values.attributes && family) {
         for (const field of family.fields) {
-          const issue = validateAttributeValue(field, values.attributes[field.key])
+          const issue = validateAttributeValue(
+            field,
+            values.attributes[field.key],
+            attributeContext.stored?.familyId === values.familyId ? attributeContext.stored.attributes[field.key] : undefined,
+          )
           if (issue === "required" && attributeContext.legacyBlankKeys?.has(field.key)) continue
           if (issue) {
             ctx.addIssue({
@@ -234,6 +241,8 @@ export function toCreateRentableRequest(
   horizon: ResourceHorizonWriteContext = { creating: true, stored: undefined },
   /** Family of the asset: types the attribute values (numbers, arrays). Without it values are sent by shape. */
   family?: AssetFamily | null,
+  /** Stored raw attributes (same family only): untouched fields are re-sent exactly as stored. */
+  storedAttributes?: Readonly<Record<string, AssetAttributeValue>> | null,
 ): CreateRentableRequest {
   const isLocation = values.rentalType === "Location"
   const payload: CreateRentableRequest = {
@@ -279,7 +288,7 @@ export function toCreateRentableRequest(
   }
   if (values.attributes) {
     payload.attributes = family
-      ? attributesToPayload(family.fields, values.attributes)
+      ? attributesToPayload(family.fields, values.attributes, storedAttributes)
       : Object.fromEntries(
           Object.entries(values.attributes).map(([key, value]) => [
             key,

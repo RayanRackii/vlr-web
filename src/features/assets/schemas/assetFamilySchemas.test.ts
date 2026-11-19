@@ -94,3 +94,45 @@ describe("emptyAttributesFromFields and attributesToPayload", () => {
     })
   })
 })
+
+describe("untouched stored values", () => {
+  const fields = [
+    field({ key: "n", type: "number", min: 0, max: 10, decimals: 1 }),
+    field({ key: "u", type: "url" }),
+    field({ key: "t", type: "text", maxLength: 3 }),
+    field({ key: "m", type: "multiselect", options: ["PLA"] }),
+  ]
+  const stored = { n: "12 mm", u: "ftp://old", t: "abcdef", m: "PLA especial, PLA" }
+  const form = { n: "12 mm", u: "ftp://old", t: "abcdef", m: ["PLA especial", "PLA"] }
+
+  it.each([
+    ["n", "12 mm"],
+    ["n", "1.234,5"],
+    ["n", "99"],
+    ["n", "1.2345"],
+    ["u", "ftp://old"],
+    ["t", "abcdef"],
+  ])("does not block an untouched %s value %s, but blocks it once edited", (key, raw) => {
+    const f = fields.find((candidate) => candidate.key === key)!
+    expect(validateAttributeValue(f, raw)).toBe("invalid")
+    expect(validateAttributeValue(f, raw, raw)).toBeNull()
+    expect(validateAttributeValue(f, raw + "x", raw)).toBe("invalid")
+  })
+
+  it("validates the schema skipping untouched fields only", () => {
+    const schema = buildAttributesZodSchema(fields, undefined, stored)
+    expect(schema.safeParse(form).success).toBe(true)
+    expect(schema.safeParse({ ...form, n: "99" }).success).toBe(false)
+  })
+
+  it("keeps the required rule for blank values", () => {
+    const required = field({ key: "r", type: "text", required: true })
+    expect(validateAttributeValue(required, "", "x")).toBe("required")
+  })
+
+  it("re-sends untouched values exactly as stored and normalizes only changed ones", () => {
+    const payload = attributesToPayload(fields, { ...form, n: "0,5" }, stored)
+    expect(payload).toEqual({ n: 0.5, u: "ftp://old", t: "abcdef", m: "PLA especial, PLA" })
+    expect(attributesToPayload([fields[0]!], { n: "1,000" }, { n: "1,000" })).toEqual({ n: "1,000" })
+  })
+})

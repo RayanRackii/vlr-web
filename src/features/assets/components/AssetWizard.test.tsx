@@ -417,6 +417,32 @@ describe("AssetWizard typed attribute values", () => {
   })
 })
 
+describe("AssetWizard untouched legacy attribute values", () => {
+  it("re-sends legacy values verbatim and does not block saving them when only the name changes", async () => {
+    vi.clearAllMocks()
+    const user = userEvent.setup()
+    const asset = assetSchema.parse({ id: CREATED_ID, tenantId: UNIT_ID, unitId: UNIT_ID, categoryId: CATEGORY_ID, familyId: FAMILY_ID, name: "Impressora", tag: "I-01", status: "Active", isRentable: false, requiresMaintenance: false, createdAt: "2026-10-25T00:00:00Z", attributes: { size: "1,000", span: "12 mm", site: "ftp://old" } })
+    vi.mocked(getAssetById).mockResolvedValue(asset)
+    vi.mocked(getAssetPricings).mockResolvedValue([])
+    vi.mocked(updateAsset).mockResolvedValue(asset)
+    renderWizard("edit", [{ ...families[0], fields: [
+      { key: "size", type: "number", required: false, label: "Tamanho" },
+      { key: "span", type: "number", required: false, label: "Vao", max: 10 },
+      { key: "site", type: "url", required: false, label: "Site" },
+    ] }])
+    const name = await screen.findByRole("textbox", { name: /^Nome/ })
+    await waitFor(() => expect(name).toHaveValue("Impressora"))
+    await user.type(name, " 2")
+    while (screen.queryByRole("button", { name: i18n.t("assets.wizard.next") })) {
+      await user.click(nextButton())
+    }
+    await user.click(finishButton())
+
+    await waitFor(() => expect(updateAsset).toHaveBeenCalledTimes(1))
+    expect(vi.mocked(updateAsset).mock.calls[0]![1].attributes).toEqual({ size: "1,000", span: "12 mm", site: "ftp://old" })
+  })
+})
+
 // The wizard uses replacement bulk rows in both create and edit modes.
 describe("AssetWizard pricing units", () => {
   beforeEach(() => {

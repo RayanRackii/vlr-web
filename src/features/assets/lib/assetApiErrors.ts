@@ -33,7 +33,9 @@ export function localizeAssetApiError(
     return denied
   }
 
-  const { code } = readApiErrorBody(payload)
+  const { code, error } = readApiErrorBody(payload)
+  // A 400 carries the API's own explanation (for example an attribute value that is not a valid option).
+  if (status === 400 && error !== null && error.trim() !== "") return error
   return (
     conflictMessage(
       status,

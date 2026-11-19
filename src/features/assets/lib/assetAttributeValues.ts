@@ -89,6 +89,26 @@ export function toFormValue(
   return attributeToInputString(stored)
 }
 
+function sameFormValue(a: AttributeFormValue | undefined | null, b: AttributeFormValue): boolean {
+  if (Array.isArray(a) && Array.isArray(b)) return a.length === b.length && a.every((item, index) => item === b[index])
+  return a === b
+}
+
+/**
+ * The stored raw value when the user did not touch the field (the form value still equals
+ * what loading the stored value produced); undefined when the field was changed or has no
+ * stored value. Untouched values are re-sent and exempt from client validation, so a legacy
+ * value such as "1,000" is never silently rewritten (spec 4.3 rule 3).
+ */
+export function untouchedStoredValue(
+  field: Pick<AssetFamilyField, "type">,
+  value: AttributeFormValue | undefined | null,
+  stored: AssetAttributeValue | undefined,
+): AssetAttributeValue | undefined {
+  if (stored == null || isBlankFormValue(toFormValue(field, stored))) return undefined
+  return sameFormValue(value, toFormValue(field, stored)) ? stored : undefined
+}
+
 /** Form value to API payload value. Blank becomes null so the API treats the key as absent. */
 export function toPayloadValue(
   field: FieldShape,

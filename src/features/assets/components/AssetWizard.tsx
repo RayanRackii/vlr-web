@@ -231,10 +231,13 @@ export function AssetWizard({
   const stepIndex = Math.min(requestedStepIndex, steps.length - 1)
   const currentStepId = steps[stepIndex]?.id ?? "general"
   const isLastStep = stepIndex >= steps.length - 1
+  // Raw stored values only apply while the asset keeps its family.
+  const storedAttributes = loadedAsset && loadedAsset.familyId === form.familyId ? loadedAsset.attributes : undefined
   const stepInput = {
     ...form,
     mode,
     familyFields: selectedFamily?.fields ?? [],
+    storedAttributes,
     pricing,
   }
   const fieldId = useId()
@@ -534,6 +537,7 @@ export function AssetWizard({
       const attributes = attributesToPayload(
         selectedFamily?.fields ?? [],
         form.attributes,
+        storedAttributes,
       )
 
       const pricingRows = form.isRentable
