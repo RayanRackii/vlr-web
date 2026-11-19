@@ -49,7 +49,7 @@ export function PortalAuthHero({ branding, headlineAsParagraph, className }: Por
       <div className="tenant-hero-shade" aria-hidden="true" />
 
       <div className="tenant-hero-inner">
-        <div className="tenant-hero-brand">
+        <div className="tenant-hero-brand max-lg:pr-28" data-testid="portal-hero-brand">
           <TenantLogoMark
             logoSvg={branding.logoSvg}
             displayName={branding.displayName}

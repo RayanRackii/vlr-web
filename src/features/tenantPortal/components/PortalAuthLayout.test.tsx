@@ -88,6 +88,8 @@ describe("PortalAuthLayout", () => {
     expect(screen.queryByRole("heading", { level: 1 })).toBeNull()
     expect(container.querySelector(".tenant-hero-headline")?.tagName).toBe("P")
     expect(container.querySelector(".tenant-hero-subtitle")).not.toBeNull()
+    // Reserves room for the absolutely positioned toggles so the name is never covered.
+    expect(screen.getByTestId("portal-hero-brand")).toHaveClass("max-lg:pr-28")
     expect(container.querySelector("main")).toHaveClass("lg:grid-cols-2")
   })
 

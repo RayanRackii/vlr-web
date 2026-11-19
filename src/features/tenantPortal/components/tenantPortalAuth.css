@@ -25,10 +25,15 @@
   flex-direction: column;
   justify-content: space-between;
   gap: 24px;
-  padding: 24px 132px 24px 20px;
+  padding: 24px 20px;
 }
 .tenant-hero-brand { display: flex; align-items: center; gap: 12px; min-width: 0; }
 .tenant-hero-name {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
   margin: 0;
   font-size: 15px;
   font-weight: 700;
