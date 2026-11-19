@@ -327,7 +327,8 @@
     "deleteTaxonomy": "Could not delete the category or tag.",
     "loadCatalogAgenda": "Could not load the agenda.",
     "timeout": "The connection took too long. Please try again.",
-    "updateReservationNotes": "Could not save the note."
+    "updateReservationNotes": "Could not save the note.",
+    "previewAdminAssetFamily": "Could not calculate the impact of the change."
   },
   "trial": {
     "banner": {
@@ -5214,7 +5215,6 @@
     "assetFamilies": {
       "title": "Asset families",
       "description": "Global catalog for registration forms. The key is unique and cannot change after creation. System families cannot be deactivated or deleted.",
-      "readOnlyNotice": "This family uses field options that the editor does not support yet. It will be editable after the update.",
       "includeInactive": "Include inactive",
       "seedBadge": "System",
       "statusActive": "Active",
@@ -5243,7 +5243,8 @@
         "deleteNamed": "Delete {{label}}",
         "save": "Save",
         "saving": "Saving...",
-        "retry": "Try again"
+        "retry": "Try again",
+        "reload": "Reload family"
       },
       "dialog": {
         "createTitle": "New family",
@@ -5266,12 +5267,34 @@
         "fieldLabel": "Field label",
         "fieldType": "Type",
         "fieldRequired": "Required",
-        "removeField": "Remove field"
+        "removeField": "Remove field",
+        "help": "Help text",
+        "group": "Group",
+        "unit": "Unit",
+        "min": "Minimum",
+        "max": "Maximum",
+        "decimals": "Decimals",
+        "maxLength": "Maximum length",
+        "options": "Options",
+        "optionItem": "Option {{number}}",
+        "addOption": "Add option",
+        "removeOption": "Remove option {{number}}",
+        "archive": "Archive",
+        "restore": "Restore",
+        "archivedBadge": "Archived",
+        "archivedFields": "Archived fields ({{count}})",
+        "preview": "Preview",
+        "unknownType": "Type not supported by this editor: {{type}}. The field is kept as is and can only be archived."
       },
       "types": {
         "text": "Text",
         "number": "Number",
-        "boolean": "Yes/no"
+        "boolean": "Yes/no",
+        "longtext": "Long text",
+        "select": "Select",
+        "multiselect": "Multiselect",
+        "url": "Link",
+        "date": "Date"
       },
       "validation": {
         "key": "The key must start with a letter and use only lowercase letters, digits, and _ (up to 64 characters).",
@@ -5280,7 +5303,22 @@
         "sortOrder": "Enter a whole number.",
         "fieldKey": "Enter the field key.",
         "fieldKeyDuplicate": "This field key is duplicated.",
-        "seedActive": "System families cannot be deactivated."
+        "seedActive": "System families cannot be deactivated.",
+        "fieldKeyPattern": "The field key must start with a letter and use only lowercase letters, numbers and _ (up to 64 characters).",
+        "fieldLabelMax": "The field label must be at most 120 characters.",
+        "helpMax": "The help text must be at most 300 characters.",
+        "groupMax": "The group must be at most 60 characters.",
+        "unitMax": "The unit must be at most 16 characters.",
+        "numberInvalid": "Use numbers only, with a decimal point or comma.",
+        "minGreaterThanMax": "The minimum cannot be greater than the maximum.",
+        "decimalsInvalid": "Decimals must be an integer from 0 to 6.",
+        "maxLengthInvalid": "The maximum length must be an integer within the type limit (text: 1000, long text: 10000).",
+        "optionsRequired": "Add at least one option.",
+        "optionsTooMany": "Use at most 50 options.",
+        "optionInvalid": "Each option must be 1 to 60 characters and cannot contain a comma.",
+        "optionDuplicate": "Options cannot repeat.",
+        "tooManyActive": "A family accepts at most 60 active fields.",
+        "tooManyTotal": "A family accepts at most 200 fields, archived ones included."
       },
       "success": {
         "created": "Family created.",
@@ -5297,6 +5335,28 @@
         "loadFailed": "Could not load families.",
         "saveFailed": "Could not save the family.",
         "deleteFailed": "Could not delete the family."
+      },
+      "impact": {
+        "listLabel": "Impact per field",
+        "blockedTitle": "Cannot save: some stored values do not fit the new definition.",
+        "confirmTitle": "Confirm the field changes",
+        "confirmDescription": "This change affects resources that already exist. Stored values are never deleted.",
+        "confirm": "Save change",
+        "usage": "In use: {{count}} resource(s) in {{tenants}} company(ies).",
+        "unused": "No resource uses this field.",
+        "incompatible": "{{count}} resource(s) with an incompatible value.",
+        "samples": "Examples: {{samples}}.",
+        "constraintViolations": "{{count}} resource(s) with a value outside the new rules; they stay editable.",
+        "change": {
+          "unchanged": "unchanged",
+          "added": "new",
+          "updated": "changed",
+          "typeChanged": "type changed",
+          "archived": "will be archived",
+          "unarchived": "restored",
+          "removed": "will be removed"
+        },
+        "cannotSave": "This change cannot be saved."
       }
     },
     "modules": {
