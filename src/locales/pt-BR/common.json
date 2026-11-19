@@ -2522,7 +2522,8 @@
     "agendasResources": "Agenda de recursos",
     "agendasProduct": "Agenda do produto",
     "pedidos": "Pedidos",
-    "company": "Dados da empresa"
+    "company": "Dados da empresa",
+    "portalAppearance": "Aparência do portal"
   },
   "moduleIntro": {
     "title": "Apresentação",
@@ -6742,5 +6743,55 @@
     },
     "portalHelp": "Endereço do portal dos seus clientes. Só o suporte da Rolvix altera.",
     "saveInvalid": "Confira os dados informados e tente de novo."
+  },
+  "portalAppearance": {
+    "description": "Imagem e textos da tela de entrada do portal dos seus clientes.",
+    "readOnly": "Você pode ver, mas não editar, a aparência do portal.",
+    "trialReadOnly": "Seu período de teste terminou: a aparência do portal está somente para leitura.",
+    "saved": "Aparência do portal salva.",
+    "saveError": "Não foi possível salvar a aparência do portal.",
+    "loadError": "Não foi possível carregar a aparência do portal.",
+    "saveInvalid": "Confira os textos informados e tente de novo.",
+    "preview": {
+      "title": "Prévia da tela de entrada",
+      "description": "Assim seus clientes veem o portal. Atualiza enquanto você digita.",
+      "label": "Prévia da tela de entrada do portal",
+      "fallbackName": "Sua empresa"
+    },
+    "image": {
+      "title": "Imagem de fundo",
+      "hint": "Recomendado: pelo menos {{width}}×{{height}} px, na horizontal.",
+      "empty": "Nenhuma imagem. O portal usa a cor da empresa.",
+      "current": "Imagem atual. Envie outra para trocar.",
+      "formats": "JPG, PNG ou WebP, até 3 MB.",
+      "input": "Escolher imagem de fundo",
+      "choose": "Escolher imagem",
+      "replace": "Trocar imagem",
+      "remove": "Remover imagem",
+      "uploading": "Enviando… {{percent}}%",
+      "uploaded": "Imagem enviada.",
+      "removed": "Imagem removida.",
+      "badType": "Use uma imagem JPG, PNG ou WebP.",
+      "tooLarge": "A imagem deve ter até 3 MB.",
+      "rejected": "Não foi possível usar esta imagem. Confira o formato e o tamanho.",
+      "uploadError": "Não foi possível enviar a imagem.",
+      "removeError": "Não foi possível remover a imagem.",
+      "removeTitle": "Remover a imagem de fundo?",
+      "removeDescription": "O portal volta a usar a cor da empresa no lugar da imagem."
+    },
+    "texts": {
+      "title": "Textos",
+      "description": "Aparecem sobre a imagem. Deixe em branco para usar o padrão."
+    },
+    "fields": {
+      "kicker": "Chamada",
+      "headline": "Título",
+      "subtitle": "Subtítulo"
+    },
+    "validation": {
+      "kickerTooLong": "A chamada deve ter até {{max}} caracteres.",
+      "headlineTooLong": "O título deve ter até {{max}} caracteres.",
+      "subtitleTooLong": "O subtítulo deve ter até {{max}} caracteres."
+    }
   }
 }

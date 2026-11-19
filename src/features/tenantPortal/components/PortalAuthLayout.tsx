@@ -17,15 +17,18 @@ type PortalAuthHeroProps = {
   branding: TenantBranding
   /** The page's own content renders the `<h1>`, so the hero headline must not. */
   headlineAsParagraph?: boolean
+  /** Always use the desktop (lg+) layout, whatever the viewport: for scaled previews only. */
+  forceDesktop?: boolean
   className?: string
 }
 
 /** Left hero: company photo (or solid brand colour), logo + name, and the landing texts. */
-export function PortalAuthHero({ branding, headlineAsParagraph, className }: PortalAuthHeroProps) {
+export function PortalAuthHero({ branding, headlineAsParagraph, forceDesktop, className }: PortalAuthHeroProps) {
   const { t } = useTranslation()
-  const [imageFailed, setImageFailed] = useState(false)
   const imageUrl = branding.landingImageUrl?.trim()
-  const showImage = Boolean(imageUrl) && !imageFailed
+  // Remember which URL failed, so a later (valid) URL is tried again.
+  const [failedUrl, setFailedUrl] = useState<string | null>(null)
+  const showImage = Boolean(imageUrl) && failedUrl !== imageUrl
   const copy = resolveHeroCopy(branding, t("tenantPortal.login.welcomeDefault"))
   const style: CSSProperties = {
     backgroundColor: heroSolidBackground(branding.primaryColor),
@@ -34,22 +37,23 @@ export function PortalAuthHero({ branding, headlineAsParagraph, className }: Por
 
   return (
     <section
-      className={cn("tenant-hero", className)}
+      className={cn("tenant-hero", forceDesktop && "tenant-hero--desktop", className)}
       style={style}
       data-hero-image={showImage ? "true" : "false"}
     >
       {showImage ? (
         <img
+          key={imageUrl}
           src={imageUrl}
           alt=""
           className="tenant-hero-image absolute inset-0 h-full w-full object-cover"
-          onError={() => setImageFailed(true)}
+          onError={() => setFailedUrl(imageUrl ?? null)}
         />
       ) : null}
       <div className="tenant-hero-shade" aria-hidden="true" />
 
       <div className="tenant-hero-inner">
-        <div className="tenant-hero-brand max-lg:pr-28" data-testid="portal-hero-brand">
+        <div className={cn("tenant-hero-brand", !forceDesktop && "max-lg:pr-28")} data-testid="portal-hero-brand">
           <TenantLogoMark
             logoSvg={branding.logoSvg}
             displayName={branding.displayName}

@@ -2522,7 +2522,8 @@
     "agendasResources": "Resource agenda",
     "agendasProduct": "Product agenda",
     "pedidos": "Orders",
-    "company": "Company details"
+    "company": "Company details",
+    "portalAppearance": "Portal appearance"
   },
   "moduleIntro": {
     "title": "Introduction",
@@ -6742,5 +6743,55 @@
     },
     "portalHelp": "The portal address your customers use. Only Rolvix support changes it.",
     "saveInvalid": "Check the details and try again."
+  },
+  "portalAppearance": {
+    "description": "Image and texts of the sign-in screen of your customers' portal.",
+    "readOnly": "You can view, but not edit, the portal appearance.",
+    "trialReadOnly": "Your trial has ended: the portal appearance is read-only.",
+    "saved": "Portal appearance saved.",
+    "saveError": "Could not save the portal appearance.",
+    "loadError": "Could not load the portal appearance.",
+    "saveInvalid": "Check the texts and try again.",
+    "preview": {
+      "title": "Sign-in screen preview",
+      "description": "This is how your customers see the portal. It updates as you type.",
+      "label": "Portal sign-in screen preview",
+      "fallbackName": "Your company"
+    },
+    "image": {
+      "title": "Background image",
+      "hint": "Recommended: at least {{width}}×{{height}} px, landscape.",
+      "empty": "No image. The portal uses the company colour.",
+      "current": "Current image. Upload another to replace it.",
+      "formats": "JPG, PNG or WebP, up to 3 MB.",
+      "input": "Choose background image",
+      "choose": "Choose image",
+      "replace": "Replace image",
+      "remove": "Remove image",
+      "uploading": "Uploading… {{percent}}%",
+      "uploaded": "Image uploaded.",
+      "removed": "Image removed.",
+      "badType": "Use a JPG, PNG or WebP image.",
+      "tooLarge": "The image must be up to 3 MB.",
+      "rejected": "This image could not be used. Check its format and size.",
+      "uploadError": "Could not upload the image.",
+      "removeError": "Could not remove the image.",
+      "removeTitle": "Remove the background image?",
+      "removeDescription": "The portal goes back to the company colour instead of the image."
+    },
+    "texts": {
+      "title": "Texts",
+      "description": "Shown over the image. Leave blank to use the default."
+    },
+    "fields": {
+      "kicker": "Kicker",
+      "headline": "Headline",
+      "subtitle": "Subtitle"
+    },
+    "validation": {
+      "kickerTooLong": "The kicker must be up to {{max}} characters.",
+      "headlineTooLong": "The headline must be up to {{max}} characters.",
+      "subtitleTooLong": "The subtitle must be up to {{max}} characters."
+    }
   }
 }

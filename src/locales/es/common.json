@@ -2522,7 +2522,8 @@
     "agendasResources": "Agenda de recursos",
     "agendasProduct": "Agenda del producto",
     "pedidos": "Pedidos",
-    "company": "Datos de la empresa"
+    "company": "Datos de la empresa",
+    "portalAppearance": "Apariencia del portal"
   },
   "moduleIntro": {
     "title": "Presentación",
@@ -6742,5 +6743,55 @@
     },
     "portalHelp": "La dirección del portal de tus clientes. Solo el soporte de Rolvix la cambia.",
     "saveInvalid": "Revisa los datos e inténtalo de nuevo."
+  },
+  "portalAppearance": {
+    "description": "Imagen y textos de la pantalla de entrada del portal de sus clientes.",
+    "readOnly": "Puede ver, pero no editar, la apariencia del portal.",
+    "trialReadOnly": "Su período de prueba terminó: la apariencia del portal es de solo lectura.",
+    "saved": "Apariencia del portal guardada.",
+    "saveError": "No se pudo guardar la apariencia del portal.",
+    "loadError": "No se pudo cargar la apariencia del portal.",
+    "saveInvalid": "Revise los textos e inténtelo de nuevo.",
+    "preview": {
+      "title": "Vista previa de la pantalla de entrada",
+      "description": "Así ven el portal sus clientes. Se actualiza mientras escribe.",
+      "label": "Vista previa de la pantalla de entrada del portal",
+      "fallbackName": "Su empresa"
+    },
+    "image": {
+      "title": "Imagen de fondo",
+      "hint": "Recomendado: al menos {{width}}×{{height}} px, horizontal.",
+      "empty": "Sin imagen. El portal usa el color de la empresa.",
+      "current": "Imagen actual. Suba otra para reemplazarla.",
+      "formats": "JPG, PNG o WebP, hasta 3 MB.",
+      "input": "Elegir imagen de fondo",
+      "choose": "Elegir imagen",
+      "replace": "Reemplazar imagen",
+      "remove": "Quitar imagen",
+      "uploading": "Subiendo… {{percent}}%",
+      "uploaded": "Imagen subida.",
+      "removed": "Imagen quitada.",
+      "badType": "Use una imagen JPG, PNG o WebP.",
+      "tooLarge": "La imagen debe pesar hasta 3 MB.",
+      "rejected": "No se pudo usar esta imagen. Revise el formato y el tamaño.",
+      "uploadError": "No se pudo subir la imagen.",
+      "removeError": "No se pudo quitar la imagen.",
+      "removeTitle": "¿Quitar la imagen de fondo?",
+      "removeDescription": "El portal vuelve a usar el color de la empresa en lugar de la imagen."
+    },
+    "texts": {
+      "title": "Textos",
+      "description": "Se muestran sobre la imagen. Déjelos en blanco para usar el predeterminado."
+    },
+    "fields": {
+      "kicker": "Llamada",
+      "headline": "Título",
+      "subtitle": "Subtítulo"
+    },
+    "validation": {
+      "kickerTooLong": "La llamada debe tener hasta {{max}} caracteres.",
+      "headlineTooLong": "El título debe tener hasta {{max}} caracteres.",
+      "subtitleTooLong": "El subtítulo debe tener hasta {{max}} caracteres."
+    }
   }
 }
