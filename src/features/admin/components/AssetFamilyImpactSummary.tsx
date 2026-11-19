@@ -20,7 +20,9 @@ export function AssetFamilyImpactSummary({
 }: AssetFamilyImpactSummaryProps) {
   const { t } = useTranslation()
   const rows = preview.fields.filter((row) =>
-    only === "blocking" ? row.blocking : isAttentionRow(row) || row.blocking,
+    only === "blocking"
+      ? row.blocking || row.incompatibleCount > 0
+      : isAttentionRow(row) || row.blocking,
   )
 
   return (

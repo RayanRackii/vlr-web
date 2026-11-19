@@ -100,6 +100,8 @@ export function AdminAssetFamiliesPage() {
     preview: AdminAssetFamilySchemaPreview
   } | null>(null)
   const [hasConflict, setHasConflict] = useState(false)
+  // Form snapshot the preview/error belong to: any edit makes them stale.
+  const [feedbackAt, setFeedbackAt] = useState<string | null>(null)
   const [familyPendingDelete, setFamilyPendingDelete] =
     useState<AdminAssetFamily | null>(null)
   const [deleteError, setDeleteError] = useState<string | null>(null)
@@ -148,10 +150,11 @@ export function AdminAssetFamiliesPage() {
   const watchedValues = useWatch({ control: form.control })
   const parsedForm = formSchema.safeParse(watchedValues)
   const isFormValid = parsedForm.success
+  const feedbackFresh = feedbackAt !== null && feedbackAt === JSON.stringify(watchedValues)
   const watchedKey = typeof watchedValues.key === "string" ? watchedValues.key : ""
   const seedLocked = isSeedAssetFamilyKey(watchedKey.trim().toLowerCase())
   const issueMessages =
-    !parsedForm.success && form.formState.isDirty
+    !parsedForm.success
       ? [...new Set(parsedForm.error.issues.map((issue) => issue.message))]
       : []
 
@@ -203,7 +206,12 @@ export function AdminAssetFamiliesPage() {
     setHasConflict(false)
     setBlockingPreview(null)
     setPendingSave(null)
+    setFeedbackAt(null)
   }, [])
+
+  const markFeedback = useCallback(() => {
+    setFeedbackAt(JSON.stringify(form.getValues()))
+  }, [form])
 
   const openCreate = useCallback(() => {
     resetSaveState()
@@ -418,6 +426,7 @@ export function AdminAssetFamiliesPage() {
     )
     setFormError(message)
     setHasConflict(error instanceof AdminAssetFamilyConflictError)
+    markFeedback()
     toast.error(message)
   }
 
@@ -434,6 +443,7 @@ export function AdminAssetFamiliesPage() {
 
         if (previewHasBlocking(preview)) {
           setBlockingPreview(preview)
+          markFeedback()
           return
         }
 
@@ -483,6 +493,7 @@ export function AdminAssetFamiliesPage() {
       setFormError(
         errorMessage(error, t("admin.assetFamilies.errors.loadFailed")),
       )
+      markFeedback()
     }
   }
 
@@ -821,7 +832,7 @@ export function AdminAssetFamiliesPage() {
                 </ul>
               ) : null}
 
-              {blockingPreview ? (
+              {blockingPreview && feedbackFresh ? (
                 <div className="space-y-2" role="alert">
                   <p className="text-sm font-medium text-destructive">
                     {t("admin.assetFamilies.impact.blockedTitle")}
@@ -831,10 +842,17 @@ export function AdminAssetFamiliesPage() {
                     labelFor={fieldLabelFor}
                     only="blocking"
                   />
+                  {!blockingPreview.fields.some(
+                    (row) => row.blocking || row.incompatibleCount > 0,
+                  ) ? (
+                    <p className="text-sm text-destructive">
+                      {t("admin.assetFamilies.impact.cannotSave")}
+                    </p>
+                  ) : null}
                 </div>
               ) : null}
 
-              {formError ? (
+              {formError && feedbackFresh ? (
                 <div className="space-y-2" role="alert">
                   <p className="text-sm text-destructive">{formError}</p>
                   {hasConflict ? (

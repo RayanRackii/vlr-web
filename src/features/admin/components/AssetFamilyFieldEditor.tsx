@@ -29,6 +29,7 @@ import {
   type AssetFamilyField,
 } from "@/features/assets/schemas/assetFamilySchemas"
 import {
+  isKnownAssetFamilyFieldType,
   type AdminAssetFamilyFormValues,
   type AssetFamilyFieldType,
 } from "@/features/admin/schemas/adminAssetFamilySchemas"
@@ -184,6 +185,34 @@ export function AssetFamilyFieldEditor({
           {t("admin.assetFamilies.form.restore")}
           <span className="sr-only"> {row.key}</span>
         </Button>
+      </div>
+    )
+  }
+
+  if (!isKnownAssetFamilyFieldType(row.type)) {
+    return (
+      <div className="space-y-2 rounded-lg border border-border p-3">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <p className="text-sm font-medium [overflow-wrap:anywhere]">
+            {row.label.trim() !== "" ? row.label : row.key}{" "}
+            <span className="text-xs font-normal text-muted-foreground">{row.key}</span>
+          </p>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={() => {
+              setArchived(true)
+            }}
+          >
+            <Archive data-icon="inline-start" />
+            {t("admin.assetFamilies.form.archive")}
+            <span className="sr-only"> {row.key}</span>
+          </Button>
+        </div>
+        <p className="text-xs text-muted-foreground" role="status">
+          {t("admin.assetFamilies.form.unknownType", { type: row.type })}
+        </p>
       </div>
     )
   }

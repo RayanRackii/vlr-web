@@ -5273,7 +5273,8 @@
         "restore": "Restaurar",
         "archivedBadge": "Arquivado",
         "archivedFields": "Campos arquivados ({{count}})",
-        "preview": "Pré-visualização"
+        "preview": "Pré-visualização",
+        "unknownType": "Tipo não suportado por este editor: {{type}}. O campo é mantido como está e só pode ser arquivado."
       },
       "types": {
         "text": "Texto",
@@ -5344,7 +5345,8 @@
           "archived": "será arquivado",
           "unarchived": "restaurado",
           "removed": "será removido"
-        }
+        },
+        "cannotSave": "Esta alteração não pode ser salva."
       }
     },
     "modules": {

@@ -265,16 +265,12 @@ describe("AdminAssetFamiliesPage", () => {
         sortOrder: 3,
         isActive: true,
         expectedSchemaVersion: 3,
-        fields: [
-          { key: "covered", type: "boolean", required: false, label: null, ...emptyProps },
-        ],
+        fields: [{ key: "covered", type: "boolean", required: false, label: null }],
       })
     })
     expect(updateMock.mock.calls[0]?.[1]).not.toHaveProperty("key")
     expect(previewMock).toHaveBeenCalledWith(courts.id, {
-      fields: [
-        { key: "covered", type: "boolean", required: false, label: null, ...emptyProps },
-      ],
+      fields: [{ key: "covered", type: "boolean", required: false, label: null }],
     })
   })
 
@@ -619,6 +615,94 @@ describe("AdminAssetFamiliesPage", () => {
         name: i18n.t("admin.assetFamilies.actions.reload"),
       }),
     ).not.toBeInTheDocument()
+  })
+
+  const seedShapes: [string, AdminAssetFamily["fields"]][] = [
+    ["spaces", [{ key: "capacity", type: "number", required: false, label: "Capacidade" }]],
+    ["electrical", [
+      { key: "manufacturer", type: "text", required: false, label: "Fabricante" },
+      { key: "voltage", type: "text", required: true, label: "Voltagem" },
+      { key: "model", type: "text", required: false, label: "Modelo" },
+    ]],
+    ["goods", [{ key: "quantity_hint", type: "number", required: false, label: "Quantidade típica" }]],
+    ["generic", []],
+  ]
+
+  it.each(seedShapes)("saves the %s seed shape with no edits and sends the same fields", async (_key, seedFields) => {
+    updateMock.mockResolvedValue(courts)
+    const { user, dialog } = await openEditor({ ...courts, fields: seedFields })
+
+    await save(user, dialog)
+
+    await waitFor(() => expect(updateMock).toHaveBeenCalledTimes(1))
+    expect(updateMock.mock.calls[0]?.[1].fields).toEqual(seedFields)
+    expect(previewMock.mock.calls[0]?.[1].fields).toEqual(seedFields)
+  })
+
+  it("keeps a field with an unknown type read-only and sends its type unchanged", async () => {
+    updateMock.mockResolvedValue(courts)
+    const unknown = { key: "geo", type: "geopoint", required: false, label: "Local", unit: "deg" }
+    const { user, dialog } = await openEditor({ ...courts, fields: [unknown] })
+
+    expect(
+      within(dialog).getByText(i18n.t("admin.assetFamilies.form.unknownType", { type: "geopoint" })),
+    ).toBeInTheDocument()
+    expect(
+      within(dialog).queryByLabelText(i18n.t("admin.assetFamilies.form.fieldType")),
+    ).not.toBeInTheDocument()
+
+    await save(user, dialog)
+
+    await waitFor(() => expect(updateMock).toHaveBeenCalled())
+    expect(updateMock.mock.calls[0]?.[1].fields).toEqual([unknown])
+  })
+
+  it("explains a blocked save when canSave is false and no row blocks", async () => {
+    previewMock.mockResolvedValue({ ...quietPreview, canSave: false })
+    const { user, dialog } = await openEditor()
+
+    await save(user, dialog)
+
+    expect(
+      await within(dialog).findByText(i18n.t("admin.assetFamilies.impact.cannotSave")),
+    ).toBeInTheDocument()
+    expect(updateMock).not.toHaveBeenCalled()
+
+    // Editing anything clears the stale reason.
+    await user.type(within(dialog).getByLabelText(i18n.t("admin.assetFamilies.form.label")), "x")
+    expect(
+      within(dialog).queryByText(i18n.t("admin.assetFamilies.impact.cannotSave")),
+    ).not.toBeInTheDocument()
+  })
+
+  it("refetches before a second edit and sends the fresh schema version", async () => {
+    const user = userEvent.setup()
+    updateMock.mockResolvedValue({ ...courts, schemaVersion: 4 })
+    getMock.mockResolvedValueOnce(courts)
+    await renderLoaded()
+    const openRow = async () => {
+      await user.click(
+        within(screen.getByRole("row", { name: /Quadras/ })).getByRole("button", {
+          name: i18n.t("admin.assetFamilies.actions.edit"),
+        }),
+      )
+      return screen.findByRole("dialog")
+    }
+
+    let dialog = await openRow()
+    await save(user, dialog)
+    await waitFor(() => expect(updateMock).toHaveBeenCalledTimes(1))
+    expect(updateMock.mock.calls[0]?.[1].expectedSchemaVersion).toBe(3)
+    await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument())
+
+    getMock.mockResolvedValueOnce({ ...courts, schemaVersion: 4 })
+    dialog = await openRow()
+    expect(getMock).toHaveBeenCalledTimes(2)
+    await save(user, dialog)
+
+    await waitFor(() => expect(updateMock).toHaveBeenCalledTimes(2))
+    expect(updateMock.mock.calls[1]?.[1].expectedSchemaVersion).toBe(4)
+    expect(toast.error).not.toHaveBeenCalled()
   })
 
   it("does not offer a reload for a non-conflict error", async () => {

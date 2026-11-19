@@ -271,13 +271,8 @@ describe("admin asset family request mapping", () => {
       sortOrder: 1,
       isActive: true,
       expectedSchemaVersion: 4,
-      fields: [
-        {
-          key: "capacity", type: "number", required: true, label: "Capacidade",
-          help: null, unit: null, min: null, max: null, decimals: null, options: null,
-          maxLength: null, group: null, archived: false,
-        },
-      ],
+      // Untouched fields go back exactly as received.
+      fields: [{ key: "capacity", type: "number", required: true, label: "Capacidade" }],
     })
     expect(request).not.toHaveProperty("key")
     expect(isSeedAssetFamilyKey("spaces")).toBe(true)
@@ -297,11 +292,15 @@ describe("admin asset family request mapping", () => {
     ] as const
     const parsed = adminAssetFamilyListSchema.parse([{ ...family, fields }])[0]!
     const values = adminAssetFamilyToFormValues(parsed)
+    expect(toUpdateAdminAssetFamilyRequest(values, 4).fields).toEqual(fields)
+
+    // Touch every field (label edit) so each is rebuilt from the form values.
+    values.fields = values.fields.map((field) => ({ ...field, label: `${field.label}!` }))
     const request = toUpdateAdminAssetFamilyRequest(values, 4)
 
     expect(request.fields).toEqual([
       expect.objectContaining({ key: "name", type: "text", help: "Ajuda", maxLength: 80, group: "Geral", unit: null, options: null }),
-      expect.objectContaining({ key: "notes", type: "longtext", maxLength: 2000, label: null }),
+      expect.objectContaining({ key: "notes", type: "longtext", maxLength: 2000 }),
       expect.objectContaining({ key: "volume", type: "number", required: true, unit: "mm", min: 0, max: 300.5, decimals: 1, group: "Volume", maxLength: null }),
       expect.objectContaining({ key: "covered", type: "boolean" }),
       expect.objectContaining({ key: "size", type: "select", required: true, options: ["P", "M", "G"] }),
@@ -357,7 +356,7 @@ describe("admin asset family request mapping", () => {
     expect(select?.options).toEqual(["PLA", "ABS"])
   })
 
-  it("sends archived fields back explicitly, lists them last and clears required", () => {
+  it("sends archived fields back explicitly, in stored order, and clears required", () => {
     const parsed = adminAssetFamilyListSchema.parse([
       {
         ...family,
@@ -369,16 +368,45 @@ describe("admin asset family request mapping", () => {
     ])[0]!
     const values = adminAssetFamilyToFormValues(parsed)
 
-    expect(values.fields.map((field) => field.key)).toEqual(["capacity", "old"])
+    expect(values.fields.map((field) => field.key)).toEqual(["old", "capacity"])
 
-    const request = toUpdateAdminAssetFamilyRequest(values, 4)
-    expect(request.fields[1]).toMatchObject({ key: "old", archived: true, required: false })
+    // Untouched archived field goes back verbatim.
+    expect(toUpdateAdminAssetFamilyRequest(values, 4).fields[0]).toEqual(parsed.fields[0])
 
-    // Restore round trip: unarchiving sends archived false again.
-    values.fields[1] = { ...values.fields[1]!, archived: false }
-    expect(toUpdateAdminAssetFamilyRequest(values, 4).fields[1]).toMatchObject({
+    // Restore sends archived false; archiving another field sends required false.
+    values.fields[0] = { ...values.fields[0]!, archived: false }
+    expect(toUpdateAdminAssetFamilyRequest(values, 4).fields[0]).toMatchObject({
       key: "old",
       archived: false,
+    })
+    values.fields[1] = { ...values.fields[1]!, archived: true, required: false }
+    expect(toUpdateAdminAssetFamilyRequest(values, 4).fields[1]).toMatchObject({
+      key: "capacity",
+      archived: true,
+      required: false,
+    })
+  })
+
+  it("keeps an unknown field type and its properties unchanged, even when archived", () => {
+    const parsed = adminAssetFamilyListSchema.parse([
+      {
+        ...family,
+        fields: [
+          { key: "geo", type: "geopoint", required: true, label: "Local", help: "h", unit: "deg" },
+        ],
+      },
+    ])[0]!
+    const values = adminAssetFamilyToFormValues(parsed)
+
+    expect(values.fields[0]?.type).toBe("geopoint")
+    expect(schema.safeParse(values).success).toBe(true)
+    expect(toUpdateAdminAssetFamilyRequest(values, 4).fields[0]).toEqual(parsed.fields[0])
+
+    values.fields[0] = { ...values.fields[0]!, label: "Mudou", archived: true }
+    expect(toUpdateAdminAssetFamilyRequest(values, 4).fields[0]).toEqual({
+      ...parsed.fields[0],
+      archived: true,
+      required: false,
     })
   })
 

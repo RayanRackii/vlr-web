@@ -66,20 +66,31 @@ export type AdminAssetFamily = z.infer<typeof adminAssetFamilySchema>
 
 export const adminAssetFamilyListSchema = z.array(adminAssetFamilySchema)
 
+/**
+ * A field as sent to the API. Fields the user did not touch go back verbatim
+ * (properties stay absent or null exactly as received), so `type` may be a
+ * type this editor does not know.
+ */
 export type AdminAssetFamilyFieldInput = {
   key: string
-  type: AssetFamilyFieldType
+  type: string
   required: boolean
-  label: string | null
-  help: string | null
-  unit: string | null
-  min: number | null
-  max: number | null
-  decimals: number | null
-  options: string[] | null
-  maxLength: number | null
-  group: string | null
-  archived: boolean
+  label?: string | null | undefined
+  help?: string | null | undefined
+  unit?: string | null | undefined
+  min?: number | null | undefined
+  max?: number | null | undefined
+  decimals?: number | null | undefined
+  options?: string[] | null | undefined
+  maxLength?: number | null | undefined
+  group?: string | null | undefined
+  archived?: boolean | null | undefined
+}
+
+export function isKnownAssetFamilyFieldType(
+  type: string,
+): type is AssetFamilyFieldType {
+  return assetFamilyFieldTypeSchema.safeParse(type).success
 }
 
 export type CreateAdminAssetFamilyRequest = {
@@ -192,7 +203,8 @@ export function createAdminAssetFamilyFormSchema(
 ) {
   const fieldSchema = z.object({
     key: z.string().trim().min(1, messages.fieldKeyRequired),
-    type: assetFamilyFieldTypeSchema,
+    // Unknown types are kept as received; the editor renders them read-only.
+    type: z.string().min(1),
     required: z.boolean(),
     label: z.string().max(120, messages.fieldLabelMax),
     help: z.string().max(300, messages.helpMax),
@@ -206,6 +218,8 @@ export function createAdminAssetFamilyFormSchema(
     archived: z.boolean(),
     /** True when the field already exists on the server: its key is locked. */
     existing: z.boolean(),
+    /** The field as received from the API; untouched fields are sent back verbatim. */
+    original: z.custom<AdminAssetFamilyField>().nullable(),
   })
 
   return z
@@ -337,7 +351,10 @@ export type AdminAssetFamilyFormValues = z.infer<
   ReturnType<typeof createAdminAssetFamilyFormSchema>
 >
 
-export type AdminAssetFamilyFormField = AdminAssetFamilyFormValues["fields"][number]
+export type AdminAssetFamilyFormField = Omit<
+  AdminAssetFamilyFormValues["fields"][number],
+  "type"
+> & { type: string }
 
 export const emptyAdminAssetFamilyFormValues: AdminAssetFamilyFormValues = {
   key: "",
@@ -363,6 +380,7 @@ export function emptyAdminAssetFamilyFormField(): AdminAssetFamilyFormField {
     options: [],
     archived: false,
     existing: false,
+    original: null,
   }
 }
 
@@ -370,6 +388,27 @@ function numberToText(value: number | null | undefined): string {
   return value == null ? "" : String(value)
 }
 
+function fieldToFormField(field: AdminAssetFamilyField): AdminAssetFamilyFormField {
+  return {
+    key: field.key,
+    type: field.type,
+    required: field.required,
+    label: field.label ?? "",
+    help: field.help ?? "",
+    group: field.group ?? "",
+    unit: field.unit ?? "",
+    min: numberToText(field.min),
+    max: numberToText(field.max),
+    decimals: numberToText(field.decimals),
+    maxLength: numberToText(field.maxLength),
+    options: [...(field.options ?? [])],
+    archived: field.archived === true,
+    existing: true,
+    original: field,
+  }
+}
+
+/** Fields keep the stored order, archived ones included. */
 export function adminAssetFamilyToFormValues(
   family: AdminAssetFamily,
 ): AdminAssetFamilyFormValues {
@@ -378,27 +417,19 @@ export function adminAssetFamilyToFormValues(
     label: family.label,
     sortOrder: family.sortOrder,
     isActive: family.isActive,
-    // Active fields first, archived fields at the end (the API appends them too).
-    fields: [
-      ...family.fields.filter((field) => field.archived !== true),
-      ...family.fields.filter((field) => field.archived === true),
-    ].map((field) => ({
-      key: field.key,
-      type: assetFamilyFieldTypeSchema.catch("text").parse(field.type),
-      required: field.required,
-      label: field.label ?? "",
-      help: field.help ?? "",
-      group: field.group ?? "",
-      unit: field.unit ?? "",
-      min: numberToText(field.min),
-      max: numberToText(field.max),
-      decimals: numberToText(field.decimals),
-      maxLength: numberToText(field.maxLength),
-      options: [...(field.options ?? [])],
-      archived: field.archived === true,
-      existing: true,
-    })),
+    fields: family.fields.map(fieldToFormField),
   }
+}
+
+function isUntouched(field: AdminAssetFamilyFormField): boolean {
+  if (!field.original) {
+    return false
+  }
+
+  const current = JSON.stringify({ ...field, original: null })
+  const baseline = JSON.stringify({ ...fieldToFormField(field.original), original: null })
+
+  return current === baseline
 }
 
 function textOrNull(value: string): string | null {
@@ -414,6 +445,21 @@ function numberOrNull(value: string): number | null {
 export function toFieldInput(
   field: AdminAssetFamilyFormField,
 ): AdminAssetFamilyFieldInput {
+  if (field.original) {
+    if (isUntouched(field)) {
+      return { ...field.original }
+    }
+
+    // A type the editor does not know is never rewritten; only archiving applies.
+    if (!isKnownAssetFamilyFieldType(field.original.type)) {
+      return {
+        ...field.original,
+        archived: field.archived,
+        required: field.archived ? false : field.original.required,
+      }
+    }
+  }
+
   const isNumber = field.type === "number"
   const isText = field.type === "text" || field.type === "longtext"
   const hasOptions = TYPES_WITH_OPTIONS.includes(field.type)
