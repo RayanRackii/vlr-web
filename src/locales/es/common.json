@@ -5052,6 +5052,58 @@
       }
     },
     "edit": {
+      "back": "Empresas",
+      "status": {
+        "active": "Activa",
+        "inactive": "Inactiva",
+        "trial": "Prueba",
+        "trialEnded": "Prueba finalizada"
+      },
+      "tabs": {
+        "label": "Secciones de la empresa",
+        "company": "Empresa",
+        "portal": "Portal",
+        "modules": "Módulos y familias",
+        "users": "Usuarios",
+        "registration": "Registro del portal",
+        "menu": "Menú del portal"
+      },
+      "validation": {
+        "contactEmailInvalid": "Ingresa un correo válido.",
+        "postalCodeInvalid": "El código postal debe tener 8 dígitos.",
+        "stateInvalid": "Usa la sigla del estado con 2 letras."
+      },
+      "company": {
+        "tradeName": "Nombre comercial",
+        "contactTitle": "Contacto",
+        "contactDescription": "Correo y teléfono de la empresa.",
+        "contactEmail": "Correo de contacto",
+        "contactPhone": "Teléfono",
+        "addressTitle": "Dirección",
+        "addressDescription": "Dirección de la empresa.",
+        "postalCode": "Código postal",
+        "street": "Calle",
+        "number": "Número",
+        "complement": "Complemento",
+        "district": "Barrio",
+        "city": "Ciudad",
+        "state": "Estado",
+        "trialTitle": "Período de prueba",
+        "trialDescription": "Solo lectura. La plataforma define el período de prueba.",
+        "trialNone": "Esta empresa no está en período de prueba.",
+        "trialActive": "La empresa está en período de prueba.",
+        "trialEnded": "El período de prueba terminó. La empresa está en solo lectura."
+      },
+      "portal": {
+        "urlPreview": "Dirección del portal",
+        "copyUrl": "Copiar dirección",
+        "logoPreview": "Vista previa del logo",
+        "logoPreviewEmpty": "Pega un SVG para ver la vista previa.",
+        "hintTitle": "Pantalla de acceso del portal",
+        "hintBody": "La imagen y los textos de acceso se editan en Configuración › Apariencia del portal, dentro de la empresa.",
+        "enter": "Entrar en la empresa",
+        "entering": "Entrando..."
+      },
       "title": "Editar empresa",
       "description": "Actualice los datos legales, subdominio y módulos contratados.",
       "successTitle": "Éxito",
@@ -5129,7 +5181,7 @@
       },
       "delete": {
         "title": "Eliminar usuario",
-        "description": "¿Eliminar a {{name}} de {{tenant}}? Su cuenta de autenticación también se eliminará. Esta acción es irreversible.",
+        "description": "¿Eliminar a {{name}} de {{company}}? Su cuenta de autenticación también se eliminará. Esta acción es irreversible.",
         "confirm": "Continuar",
         "deleting": "Eliminando...",
         "successTitle": "Éxito",

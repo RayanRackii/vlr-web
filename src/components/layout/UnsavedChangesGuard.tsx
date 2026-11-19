@@ -12,7 +12,11 @@ import { LeaveConfirmDialog } from "@/components/LeaveConfirmDialog"
  * throws otherwise); the app-level beforeunload guard covers tab/window close.
  */
 function RouterLeaveGuard({ when, message }: { when: boolean; message: string }) {
-  const blocker = useBlocker(when)
+  // Only leaving the page is guarded: search-param changes (e.g. ?tab=) stay on the same page.
+  const blocker = useBlocker(
+    ({ currentLocation, nextLocation }) =>
+      when && currentLocation.pathname !== nextLocation.pathname,
+  )
   const open = blocker.state === "blocked"
   return (
     <LeaveConfirmDialog

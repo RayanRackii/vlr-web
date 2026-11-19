@@ -416,7 +416,7 @@ export function AdminUsersPage() {
               {userPendingDelete
                 ? t("admin.platformUsers.delete.description", {
                     name: userPendingDelete.fullName,
-                    tenant: userPendingDelete.tenantLegalName,
+                    company: userPendingDelete.tenantLegalName,
                   })
                 : null}
             </AlertDialogDescription>

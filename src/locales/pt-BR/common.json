@@ -5052,6 +5052,58 @@
       }
     },
     "edit": {
+      "back": "Empresas",
+      "status": {
+        "active": "Ativa",
+        "inactive": "Inativa",
+        "trial": "Teste",
+        "trialEnded": "Teste encerrado"
+      },
+      "tabs": {
+        "label": "Seções da empresa",
+        "company": "Empresa",
+        "portal": "Portal",
+        "modules": "Módulos e famílias",
+        "users": "Usuários",
+        "registration": "Cadastro do portal",
+        "menu": "Menu do portal"
+      },
+      "validation": {
+        "contactEmailInvalid": "Informe um e-mail válido.",
+        "postalCodeInvalid": "O CEP deve ter 8 dígitos.",
+        "stateInvalid": "Use a sigla da UF com 2 letras."
+      },
+      "company": {
+        "tradeName": "Nome fantasia",
+        "contactTitle": "Contato",
+        "contactDescription": "E-mail e telefone da empresa.",
+        "contactEmail": "E-mail de contato",
+        "contactPhone": "Telefone",
+        "addressTitle": "Endereço",
+        "addressDescription": "Endereço da empresa.",
+        "postalCode": "CEP",
+        "street": "Rua",
+        "number": "Número",
+        "complement": "Complemento",
+        "district": "Bairro",
+        "city": "Cidade",
+        "state": "UF",
+        "trialTitle": "Período de teste",
+        "trialDescription": "Somente leitura. O período de teste é definido pela plataforma.",
+        "trialNone": "Esta empresa não está em período de teste.",
+        "trialActive": "A empresa está em período de teste.",
+        "trialEnded": "O período de teste terminou. A empresa está somente leitura."
+      },
+      "portal": {
+        "urlPreview": "Endereço do portal",
+        "copyUrl": "Copiar endereço",
+        "logoPreview": "Pré-visualização do logo",
+        "logoPreviewEmpty": "Cole um SVG para ver a pré-visualização.",
+        "hintTitle": "Tela de login do portal",
+        "hintBody": "Imagem e textos da tela de login são editados em Configurações › Aparência do portal, dentro da empresa.",
+        "enter": "Entrar na empresa",
+        "entering": "Entrando..."
+      },
       "title": "Editar empresa",
       "description": "Atualize os dados legais, subdomínio e módulos contratados.",
       "successTitle": "Sucesso",
@@ -5129,7 +5181,7 @@
       },
       "delete": {
         "title": "Excluir usuário",
-        "description": "Excluir {{name}} de {{tenant}}? A conta de autenticação também será removida. Esta ação é irreversível.",
+        "description": "Excluir {{name}} de {{company}}? A conta de autenticação também será removida. Esta ação é irreversível.",
         "confirm": "Continuar",
         "deleting": "Excluindo...",
         "successTitle": "Sucesso",
