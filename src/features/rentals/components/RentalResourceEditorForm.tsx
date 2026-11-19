@@ -33,7 +33,6 @@ import {
 } from "@/components/ui/select"
 import { AssetFamilyFields } from "@/features/assets/components/AssetFamilyFields"
 import { emptyAttributesFromFields, type AssetFamily } from "@/features/assets/schemas/assetFamilySchemas"
-import { getAssetById } from "@/features/assets/services/assetsService"
 import type { Unit } from "@/features/assets/schemas/unitSchemas"
 import { getUnits } from "@/features/assets/services/unitsService"
 import { useIsPlatformAdmin } from "@/features/admin/hooks/usePlatformAdmin"
@@ -50,6 +49,7 @@ import { listRentalAssetCategories } from "@/features/rentals/services/rentalRes
 import { InlineCreateCategoryForm, InlineCreateUnitForm, InlineCreateVisualTemplateForm } from "@/features/rentals/components/ResourceDependencyInlineCreateForms"
 import {
   buildRentalResourceFormValues,
+  legacyBlankRequiredKeys,
   getTemplateRevisionFormDefaults,
   mergeTemplateOptions,
   type TemplateDefaultField,
@@ -161,7 +161,6 @@ export function RentalResourceEditorForm({
   const [tagsExpanded, setTagsExpanded] = useState(false)
   const [activeModule, setActiveModule] = useState("basic")
   const [saveSummary, setSaveSummary] = useState<string[]>([])
-  const [legacyBlankKeys, setLegacyBlankKeys] = useState<ReadonlySet<string>>(new Set())
   const editedTemplateFieldsRef = useRef<Set<TemplateDefaultField>>(new Set())
   const TAG_COLLAPSE_COUNT = 6
 
@@ -179,6 +178,8 @@ export function RentalResourceEditorForm({
     setPreviousUnits(units)
     setUnitOptions(units)
   }
+
+  const legacyBlankKeys = useMemo(() => legacyBlankRequiredKeys(editing, families), [editing, families])
 
   const formSchema = useMemo(
     () =>
@@ -216,30 +217,6 @@ export function RentalResourceEditorForm({
     )
     editedTemplateFieldsRef.current = new Set()
   }, [categories, editing, families, form, units])
-
-  // Recursos rows do not carry attributes, so edit loads the stored values and sends them back.
-  // When they cannot be read, attributes stay undefined and the API keeps the stored values.
-  useEffect(() => {
-    if (!editing) return
-    let current = true
-    void getAssetById(editing.assetId)
-      .then((asset) => {
-        if (!current) return
-        const family = families.find((candidate) => candidate.id === (editing.familyId ?? asset.familyId))
-        if (!family) return
-        const values = emptyAttributesFromFields(family.fields)
-        const blank = new Set<string>()
-        for (const field of family.fields) {
-          const stored = asset.attributes[field.key]
-          if (stored != null && stored !== "") values[field.key] = stored
-          else if (field.required) blank.add(field.key)
-        }
-        setLegacyBlankKeys(blank)
-        form.setValue("attributes", values, { shouldDirty: false })
-      })
-      .catch(() => { /* Attributes stay untouched. */ })
-    return () => { current = false }
-  }, [editing, families, form])
 
   const { isDirty } = form.formState
   const [inlineDirty, setInlineDirty] = useState({ unit: false, category: false, template: false })

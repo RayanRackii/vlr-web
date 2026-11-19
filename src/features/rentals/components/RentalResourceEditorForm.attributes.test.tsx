@@ -7,9 +7,7 @@ vi.mock("@/features/rentals/services/resourceVisualService", () => ({
   listPickerTags: vi.fn().mockResolvedValue([]),
   listVisualTemplates: vi.fn().mockResolvedValue({ items: [] }),
 }))
-vi.mock("@/features/assets/services/assetsService", () => ({ getAssetById: vi.fn() }))
 
-import { getAssetById } from "@/features/assets/services/assetsService"
 import { RentalResourceEditorForm } from "@/features/rentals/components/RentalResourceEditorForm"
 import { toCreateRentableRequest, type RentalResourceFormValues } from "@/features/rentals/schemas/rentalResourceSchemas"
 import type { AdminRentalAsset } from "@/features/rentals/services/scheduleService"
@@ -71,11 +69,10 @@ describe("RentalResourceEditorForm family attributes", () => {
   })
 
   it("loads stored attributes on edit and lets a legacy asset with a blank required field save", async () => {
-    vi.mocked(getAssetById).mockResolvedValue({ familyId: id, attributes: { brand: "Acme" } } as never)
     const user = userEvent.setup()
     const editing = {
       id: "22222222-2222-2222-2222-222222222222", assetId: "33333333-3333-3333-3333-333333333333",
-      familyId: id, unitId: id, categoryId: id, name: "Furadeira", tag: "F1", type: "Good", totalQuantity: 1,
+      familyId: id, attributes: { brand: "Acme" }, unitId: id, categoryId: id, name: "Furadeira", tag: "F1", type: "Good", totalQuantity: 1,
     } as unknown as AdminRentalAsset
     const onSubmit = renderForm({ editing })
 

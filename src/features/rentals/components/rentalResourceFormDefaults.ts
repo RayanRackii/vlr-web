@@ -60,6 +60,26 @@ export function mergeTemplateOptions(
   return [...new Map(options.map((option) => [option.value, option])).values()]
 }
 
+function attributesFor(family: AssetFamily, editing: AdminRentalAsset | null): Record<string, string> {
+  const values = emptyAttributesFromFields(family.fields)
+  for (const field of family.fields) {
+    const stored = editing?.attributes?.[field.key]
+    if (stored != null && stored !== "") values[field.key] = stored
+  }
+  return values
+}
+
+/** Required fields that are blank on a stored asset (legacy); they never block an edit. */
+export function legacyBlankRequiredKeys(editing: AdminRentalAsset | null, families: readonly AssetFamily[]): ReadonlySet<string> {
+  const family = families.find((candidate) => candidate.id === editing?.familyId)
+  if (!editing || !family) return new Set()
+  return new Set(
+    family.fields
+      .filter((field) => field.required && !(editing.attributes?.[field.key] ?? "").trim())
+      .map((field) => field.key),
+  )
+}
+
 export function buildRentalResourceFormValues(
   editing: AdminRentalAsset | null,
   units: readonly Unit[],
@@ -98,7 +118,7 @@ export function buildRentalResourceFormValues(
     visualTemplateRevisionId: editing?.visualTemplateRevisionId ?? "",
     capacityPeople: String(editing?.capacityPeople ?? ""),
     confirmVisualSuggestions: false,
-    // Create manages the family fields; edit loads the stored values (undefined keeps them untouched).
-    ...(!editing && family ? { attributes: emptyAttributesFromFields(family.fields) } : {}),
+    // Family fields start empty on create and from the stored values on edit.
+    ...(family ? { attributes: attributesFor(family, editing) } : {}),
   }
 }
