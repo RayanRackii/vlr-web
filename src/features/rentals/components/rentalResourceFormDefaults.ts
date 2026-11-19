@@ -1,5 +1,5 @@
 import { toHtmlTimeInput } from "@/features/assets/schemas/assetSchemas"
-import type { AssetFamily } from "@/features/assets/schemas/assetFamilySchemas"
+import { emptyAttributesFromFields, type AssetFamily } from "@/features/assets/schemas/assetFamilySchemas"
 import type { Unit } from "@/features/assets/schemas/unitSchemas"
 import type {
   RegistryCategoryListItem,
@@ -67,13 +67,15 @@ export function buildRentalResourceFormValues(
   families: readonly AssetFamily[],
 ): RentalResourceFormValues {
   const rentalType = editing?.type === "Good" ? "Good" : "Location"
+  const familyId = editing?.familyId ?? pickSingleId(families)
+  const family = families.find((candidate) => candidate.id === familyId)
 
   return {
     name: editing?.name ?? "",
     tag: editing?.tag ?? "",
     unitId: editing?.unitId ?? pickSingleId(units),
     categoryId: editing?.categoryId ?? pickSingleId(categories),
-    familyId: editing?.familyId ?? pickSingleId(families),
+    familyId,
     rentalType,
     totalQuantity: editing?.totalQuantity ?? 1,
     requiresDeposit: editing?.requiresDeposit ?? true,
@@ -96,5 +98,7 @@ export function buildRentalResourceFormValues(
     visualTemplateRevisionId: editing?.visualTemplateRevisionId ?? "",
     capacityPeople: String(editing?.capacityPeople ?? ""),
     confirmVisualSuggestions: false,
+    // Create manages the family fields; edit loads the stored values (undefined keeps them untouched).
+    ...(!editing && family ? { attributes: emptyAttributesFromFields(family.fields) } : {}),
   }
 }

@@ -31,7 +31,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import type { AssetFamily } from "@/features/assets/schemas/assetFamilySchemas"
+import { AssetFamilyFields } from "@/features/assets/components/AssetFamilyFields"
+import { emptyAttributesFromFields, type AssetFamily } from "@/features/assets/schemas/assetFamilySchemas"
+import { getAssetById } from "@/features/assets/services/assetsService"
 import type { Unit } from "@/features/assets/schemas/unitSchemas"
 import { getUnits } from "@/features/assets/services/unitsService"
 import { useIsPlatformAdmin } from "@/features/admin/hooks/usePlatformAdmin"
@@ -159,6 +161,7 @@ export function RentalResourceEditorForm({
   const [tagsExpanded, setTagsExpanded] = useState(false)
   const [activeModule, setActiveModule] = useState("basic")
   const [saveSummary, setSaveSummary] = useState<string[]>([])
+  const [legacyBlankKeys, setLegacyBlankKeys] = useState<ReadonlySet<string>>(new Set())
   const editedTemplateFieldsRef = useRef<Set<TemplateDefaultField>>(new Set())
   const TAG_COLLAPSE_COUNT = 6
 
@@ -191,8 +194,10 @@ export function RentalResourceEditorForm({
         ),
         cancelCutoffRange: t("rentals.resources.validation.cancelCutoffRange"),
         horizonRange: t("rentals.resources.validation.horizonRange"),
-      }),
-    [t],
+        attributeRequired: t("common.required"),
+        attributeInvalid: t("assets.inventory.validation.attributeInvalid"),
+      }, { families, legacyBlankKeys }),
+    [t, families, legacyBlankKeys],
   )
 
   const form = useForm<RentalResourceFormValues>({
@@ -211,6 +216,30 @@ export function RentalResourceEditorForm({
     )
     editedTemplateFieldsRef.current = new Set()
   }, [categories, editing, families, form, units])
+
+  // Recursos rows do not carry attributes, so edit loads the stored values and sends them back.
+  // When they cannot be read, attributes stay undefined and the API keeps the stored values.
+  useEffect(() => {
+    if (!editing) return
+    let current = true
+    void getAssetById(editing.assetId)
+      .then((asset) => {
+        if (!current) return
+        const family = families.find((candidate) => candidate.id === (editing.familyId ?? asset.familyId))
+        if (!family) return
+        const values = emptyAttributesFromFields(family.fields)
+        const blank = new Set<string>()
+        for (const field of family.fields) {
+          const stored = asset.attributes[field.key]
+          if (stored != null && stored !== "") values[field.key] = stored
+          else if (field.required) blank.add(field.key)
+        }
+        setLegacyBlankKeys(blank)
+        form.setValue("attributes", values, { shouldDirty: false })
+      })
+      .catch(() => { /* Attributes stay untouched. */ })
+    return () => { current = false }
+  }, [editing, families, form])
 
   const { isDirty } = form.formState
   const [inlineDirty, setInlineDirty] = useState({ unit: false, category: false, template: false })
@@ -254,6 +283,7 @@ export function RentalResourceEditorForm({
     value: category.id,
     label: category.name,
   }))
+  const selectedFamily = families.find((family) => family.id === watched.familyId)
   const familyItems = families.map((family) => ({
     value: family.id,
     label: family.label,
@@ -536,6 +566,13 @@ export function RentalResourceEditorForm({
                     onValueChange={(value) => {
                       field.onChange(value)
                       field.onBlur()
+                      const next = families.find((family) => family.id === value)
+                      const current = form.getValues("attributes")
+                      if (next && current) {
+                        const merged = emptyAttributesFromFields(next.fields)
+                        for (const key of Object.keys(merged)) if (current[key] !== undefined) merged[key] = current[key]
+                        form.setValue("attributes", merged, { shouldDirty: true })
+                      }
                     }}
                     value={field.value}
                     items={familyItems}
@@ -563,6 +600,26 @@ export function RentalResourceEditorForm({
                 </FormItem>
               )}
             />
+
+            {selectedFamily && watched.attributes ? (
+              <AssetFamilyFields
+                fields={selectedFamily.fields}
+                values={watched.attributes as Record<string, string>}
+                disabled={readOnly || busy}
+                onChange={(attributes) => form.setValue("attributes", attributes, { shouldDirty: true, shouldTouch: true })}
+                controlProps={(key, required) => {
+                  const error = issueMessageAt(visibleErrors, ["attributes", key])
+                  return {
+                    id: `resource-attribute-${key}`,
+                    "aria-required": required || undefined,
+                    "aria-invalid": error ? true : undefined,
+                    "aria-describedby": error ? `resource-attribute-${key}-error` : undefined,
+                    onBlur: () => form.trigger("attributes"),
+                  }
+                }}
+                errorFor={(key) => issueMessageAt(visibleErrors, ["attributes", key])}
+              />
+            ) : null}
 
             <FormField
               control={form.control}

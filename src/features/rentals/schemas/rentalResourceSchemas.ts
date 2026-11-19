@@ -1,6 +1,6 @@
 import { z } from "zod"
 
-import { guidLikeIdSchema } from "@/features/assets/schemas/assetFamilySchemas"
+import { guidLikeIdSchema, type AssetFamily } from "@/features/assets/schemas/assetFamilySchemas"
 import { toApiTimeOnly } from "@/features/assets/schemas/assetSchemas"
 import {
   cancelCutoffHoursSchema,
@@ -65,6 +65,8 @@ export const createRentableRequestSchema = z.object({
   visualTemplateRevisionId: guidLikeIdSchema.nullable().optional(),
   capacityPeople: z.number().int().positive().nullable().optional(),
   confirmVisualSuggestions: z.boolean().optional(),
+  /** Family attribute values; blank entries travel as null. Absent keeps the stored values on update. */
+  attributes: z.record(z.string(), z.string().nullable()).optional(),
 })
 
 export type CreateRentableRequest = z.infer<typeof createRentableRequestSchema>
@@ -83,7 +85,13 @@ export function createRentalResourceFormSchema(messages: {
   queueOpeningTimeRequired: string
   horizonRange: string
   cancelCutoffRange?: string
-}) {
+  attributeRequired?: string
+  attributeInvalid?: string
+}, attributeContext: {
+  families?: readonly AssetFamily[]
+  /** Required attributes that were already blank on a stored asset (legacy); they never block an edit. */
+  legacyBlankKeys?: ReadonlySet<string>
+} = {}) {
   return z
     .object({
       name: z.string().trim().min(1, messages.nameRequired),
@@ -117,8 +125,21 @@ export function createRentalResourceFormSchema(messages: {
         return Number.isInteger(capacity) && capacity >= 1 && capacity <= RESOURCE_CAPACITY_PEOPLE_MAX
       }, messages.capacityRange),
       confirmVisualSuggestions: z.boolean(),
+      // Family attribute values keyed by field key. Undefined means "not loaded / not managed here".
+      attributes: z.record(z.string(), z.string()).optional(),
     })
     .superRefine((values, ctx) => {
+      const family = attributeContext.families?.find((candidate) => candidate.id === values.familyId)
+      if (values.attributes && family) {
+        for (const field of family.fields) {
+          const raw = (values.attributes[field.key] ?? "").trim()
+          if (field.type !== "boolean" && raw === "" && field.required && !attributeContext.legacyBlankKeys?.has(field.key)) {
+            ctx.addIssue({ code: "custom", path: ["attributes", field.key], message: messages.attributeRequired ?? "Required" })
+          } else if (field.type === "number" && raw !== "" && Number.isNaN(Number(raw))) {
+            ctx.addIssue({ code: "custom", path: ["attributes", field.key], message: messages.attributeInvalid ?? "Invalid" })
+          }
+        }
+      }
       if (values.cancelCutoffMode === "hours" && parseCancelCutoffHoursInput(values.cancelCutoffHours ?? "") === null) {
         ctx.addIssue({ code: "custom", path: ["cancelCutoffHours"], message: messages.cancelCutoffRange })
       }
@@ -241,6 +262,11 @@ export function toCreateRentableRequest(
   }
   if (values.confirmVisualSuggestions) {
     payload.confirmVisualSuggestions = true
+  }
+  if (values.attributes) {
+    payload.attributes = Object.fromEntries(
+      Object.entries(values.attributes).map(([key, value]) => [key, value.trim() === "" ? null : value.trim()]),
+    )
   }
   return createRentableRequestSchema.parse(payload)
 }
