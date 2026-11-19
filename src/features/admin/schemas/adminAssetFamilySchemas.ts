@@ -21,6 +21,28 @@ export const assetFamilyFieldTypeSchema = z.enum(ASSET_FAMILY_FIELD_TYPES)
 
 export type AssetFamilyFieldType = z.infer<typeof assetFamilyFieldTypeSchema>
 
+/**
+ * True when the editor can round-trip this family without losing data: every
+ * field uses a type the editor knows and carries none of the v2 properties.
+ * The update request only sends key/type/required/label, so editing anything
+ * else would silently strip those properties.
+ */
+export function isAdminAssetFamilyEditable(family: AdminAssetFamily): boolean {
+  return family.fields.every(
+    (field) =>
+      assetFamilyFieldTypeSchema.safeParse(field.type).success
+      && field.help == null
+      && field.unit == null
+      && field.min == null
+      && field.max == null
+      && field.decimals == null
+      && field.options == null
+      && field.maxLength == null
+      && field.group == null
+      && !field.archived,
+  )
+}
+
 export function isSeedAssetFamilyKey(key: string): boolean {
   return (SEED_ASSET_FAMILY_KEYS as readonly string[]).includes(key)
 }
@@ -31,6 +53,16 @@ export const adminAssetFamilyFieldSchema = z.object({
   type: assetFamilyFieldTypeSchema.or(z.string()),
   required: z.boolean(),
   label: z.string().nullish(),
+  // v2 properties are parsed only so the editor can detect them and stay read-only.
+  help: z.string().nullish(),
+  unit: z.string().nullish(),
+  min: z.number().nullish(),
+  max: z.number().nullish(),
+  decimals: z.number().int().nullish(),
+  options: z.array(z.string()).nullish(),
+  maxLength: z.number().int().nullish(),
+  group: z.string().nullish(),
+  archived: z.boolean().nullish(),
 })
 
 export type AdminAssetFamilyField = z.infer<typeof adminAssetFamilyFieldSchema>
@@ -154,7 +186,7 @@ export function adminAssetFamilyToFormValues(
     isActive: family.isActive,
     fields: family.fields.map((field) => ({
       key: field.key,
-      type: field.type as AssetFamilyFieldType,
+      type: assetFamilyFieldTypeSchema.catch("text").parse(field.type),
       required: field.required,
       label: field.label ?? "",
     })),

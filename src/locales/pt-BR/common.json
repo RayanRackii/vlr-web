@@ -5143,6 +5143,7 @@
     "assetFamilies": {
       "title": "Famílias de recursos",
       "description": "Catálogo global dos formulários de cadastro. A chave é única e não muda depois de criada. Famílias do sistema não podem ser desativadas nem excluídas.",
+      "readOnlyNotice": "Esta família usa opções de campo que o editor ainda não suporta. Ela poderá ser editada após a atualização.",
       "includeInactive": "Incluir inativas",
       "seedBadge": "Sistema",
       "statusActive": "Ativa",

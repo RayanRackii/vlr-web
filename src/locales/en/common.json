@@ -5143,6 +5143,7 @@
     "assetFamilies": {
       "title": "Asset families",
       "description": "Global catalog for registration forms. The key is unique and cannot change after creation. System families cannot be deactivated or deleted.",
+      "readOnlyNotice": "This family uses field options that the editor does not support yet. It will be editable after the update.",
       "includeInactive": "Include inactive",
       "seedBadge": "System",
       "statusActive": "Active",

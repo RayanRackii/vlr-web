@@ -370,7 +370,6 @@ describe("AssetWizard validity gate", () => {
   })
 })
 
-// The wizard uses replacement bulk rows in both create and edit modes.
 describe("AssetWizard typed attribute values", () => {
   it("shows typed stored values (number, boolean) when editing", async () => {
     vi.clearAllMocks()
@@ -387,6 +386,7 @@ describe("AssetWizard typed attribute values", () => {
   })
 })
 
+// The wizard uses replacement bulk rows in both create and edit modes.
 describe("AssetWizard pricing units", () => {
   beforeEach(() => {
     vi.clearAllMocks()
