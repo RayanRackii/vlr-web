@@ -3475,7 +3475,15 @@
   "assets": {
     "actions": {
       "edit": "Editar",
-      "remove": "Remover"
+      "remove": "Remover",
+      "details": "Detalhes"
+    },
+    "attributes": {
+      "title": "Atributos",
+      "empty": "Nenhum atributo preenchido.",
+      "showMore": "ver mais",
+      "showLess": "ver menos",
+      "extra": "+{{count}}"
     },
     "deletion": {
       "title": "Confirmar exclusão",
@@ -3760,7 +3768,8 @@
         "category": "Tipo",
         "location": "Localização",
         "status": "Status",
-        "actions": "Ações"
+        "actions": "Ações",
+        "attributes": "Atributos"
       },
       "status": {
         "Active": "Ativo",

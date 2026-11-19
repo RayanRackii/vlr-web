@@ -7,7 +7,9 @@ import { useNavigate } from "react-router-dom"
 import { DataList, type DataListColumn } from "@/components/data-table/DataList"
 import { FilterBar } from "@/components/data-table/FilterBar"
 import { Page } from "@/components/layout/Page"
+import { AssetDetailsSheet } from "@/features/assets/components/AssetDetailsSheet"
 import { AssetWizard } from "@/features/assets/components/AssetWizard"
+import { listAttributeChips } from "@/features/assets/lib/assetAttributeSummary"
 import { useAssetCopyTone } from "@/features/assets/hooks/useAssetCopyTone"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -108,7 +110,7 @@ function getStatusLabel(
 }
 
 export function AssetsPage() {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const { tTone } = useAssetCopyTone()
   const { session } = useAuth()
   const { can } = usePermissions()
@@ -144,6 +146,7 @@ export function AssetsPage() {
   const [wizardMode, setWizardMode] = useState<WizardMode | null>(null)
   const [wizardOpen, setWizardOpen] = useState(false)
   const [detailAssetId, setDetailAssetId] = useState<string | null>(null)
+  const [viewAssetId, setViewAssetId] = useState<string | null>(null)
 
   const loadPageData = useCallback(async () => {
     if (!session) {
@@ -289,18 +292,52 @@ export function AssetsPage() {
     setWizardOpen(true)
   }, [])
 
+  const familyById = useMemo(
+    () => new Map(families.map((family) => [family.id, family])),
+    [families],
+  )
+
+  const renderAttributeChips = useCallback(
+    (asset: AssetTableRow) => {
+      const { chips, hidden } = listAttributeChips(
+        familyById.get(asset.familyId)?.fields ?? [],
+        asset.attributes,
+        i18n.language,
+      )
+      if (chips.length === 0) return null
+      return (
+        <div className="flex min-w-0 flex-wrap items-center gap-1">
+          {chips.map((chip) => (
+            <Badge
+              key={chip.id}
+              variant="outline"
+              title={chip.title}
+              className="max-w-[10rem] min-w-0 justify-start"
+            >
+              <span className="truncate">{chip.text}</span>
+            </Badge>
+          ))}
+          {hidden > 0 ? (
+            <Badge variant="secondary">{t("assets.attributes.extra", { count: hidden })}</Badge>
+          ) : null}
+        </div>
+      )
+    },
+    [familyById, i18n.language, t],
+  )
+
   const renderAssetName = useCallback(
     (asset: AssetTableRow) => (
       <Button
         type="button"
         variant="link"
         className="h-auto min-h-11 max-w-full whitespace-normal p-0 text-left [overflow-wrap:anywhere]"
-        onClick={() => openWizard("edit", asset.id)}
+        onClick={() => setViewAssetId(asset.id)}
       >
         {asset.name}
       </Button>
     ),
-    [openWizard],
+    [],
   )
 
   const renderStatusBadges = useCallback(
@@ -342,6 +379,12 @@ export function AssetsPage() {
           <MoreHorizontal aria-hidden="true" />
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
+          <DropdownMenuItem
+            className="min-h-11 py-2.5"
+            onClick={() => setViewAssetId(asset.id)}
+          >
+            {t("assets.actions.details")}
+          </DropdownMenuItem>
           <DropdownMenuItem
             className="min-h-11 py-2.5"
             disabled={isTrialReadOnly}
@@ -459,6 +502,12 @@ export function AssetsPage() {
           {asset.location ?? t("assets.inventory.emptyValue")}
         </span>
       ),
+    },
+    {
+      id: "attributes",
+      header: t("assets.inventory.columns.attributes"),
+      hideBelow: "lg",
+      cell: renderAttributeChips,
     },
     {
       id: "status",
@@ -769,6 +818,7 @@ export function AssetsPage() {
 
   // A failed asset list becomes an error with retry; a failed lookup keeps the rows and shows the alert.
   const listFailed = loadError !== null && assetsFailed
+  const viewAsset = tableRows.find((row) => row.id === viewAssetId) ?? null
 
   const headerActions = canWriteAssets ? (
     <div className="flex flex-wrap gap-2">
@@ -869,6 +919,7 @@ export function AssetsPage() {
         columns={columns}
         rows={filteredRows}
         getRowId={(asset) => asset.id}
+        onRowClick={(asset) => setViewAssetId(asset.id)}
         toolbar={
           <FilterBar
             label={t("assets.inventory.filters.label")}
@@ -938,6 +989,7 @@ export function AssetsPage() {
               {canWriteAssets ? renderRowActions(asset) : null}
             </div>
             {renderStatusBadges(asset)}
+            {renderAttributeChips(asset)}
           </>
         )}
       />
@@ -1078,6 +1130,23 @@ export function AssetsPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <AssetDetailsSheet
+        asset={viewAsset}
+        family={viewAsset ? (familyById.get(viewAsset.familyId) ?? null) : null}
+        open={viewAsset !== null}
+        onOpenChange={(open) => {
+          if (!open) setViewAssetId(null)
+        }}
+        onEdit={
+          canWriteAssets && !isTrialReadOnly
+            ? (assetId) => {
+                setViewAssetId(null)
+                openWizard("edit", assetId)
+              }
+            : undefined
+        }
+      />
 
       {wizardMode !== null ? (
         <AssetWizard
