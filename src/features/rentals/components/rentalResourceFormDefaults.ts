@@ -72,7 +72,7 @@ function attributesFor(family: AssetFamily, editing: AdminRentalAsset | null): R
 /** Required fields that are blank on a stored asset (legacy); they never block an edit. */
 export function legacyBlankRequiredKeys(editing: AdminRentalAsset | null, families: readonly AssetFamily[]): ReadonlySet<string> {
   const family = families.find((candidate) => candidate.id === editing?.familyId)
-  if (!editing || !family) return new Set()
+  if (!editing || !family?.fields) return new Set()
   return new Set(
     family.fields
       .filter((field) => field.required && !(editing.attributes?.[field.key] ?? "").trim())
@@ -119,6 +119,6 @@ export function buildRentalResourceFormValues(
     capacityPeople: String(editing?.capacityPeople ?? ""),
     confirmVisualSuggestions: false,
     // Family fields start empty on create and from the stored values on edit.
-    ...(family ? { attributes: attributesFor(family, editing) } : {}),
+    ...(family?.fields ? { attributes: attributesFor(family, editing) } : {}),
   }
 }
