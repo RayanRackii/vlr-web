@@ -1,4 +1,5 @@
 import { toHtmlTimeInput } from "@/features/assets/schemas/assetSchemas"
+import { attributeToInputString } from "@/features/assets/lib/assetAttributeValues"
 import { emptyAttributesFromFields, type AssetFamily } from "@/features/assets/schemas/assetFamilySchemas"
 import type { Unit } from "@/features/assets/schemas/unitSchemas"
 import type {
@@ -63,8 +64,8 @@ export function mergeTemplateOptions(
 function attributesFor(family: AssetFamily, editing: AdminRentalAsset | null): Record<string, string> {
   const values = emptyAttributesFromFields(family.fields)
   for (const field of family.fields) {
-    const stored = editing?.attributes?.[field.key]
-    if (stored != null && stored !== "") values[field.key] = stored
+    const stored = attributeToInputString(editing?.attributes?.[field.key])
+    if (stored !== "") values[field.key] = stored
   }
   return values
 }
@@ -75,7 +76,7 @@ export function legacyBlankRequiredKeys(editing: AdminRentalAsset | null, famili
   if (!editing || !family?.fields) return new Set()
   return new Set(
     family.fields
-      .filter((field) => field.required && !(editing.attributes?.[field.key] ?? "").trim())
+      .filter((field) => field.required && !attributeToInputString(editing.attributes?.[field.key]).trim())
       .map((field) => field.key),
   )
 }

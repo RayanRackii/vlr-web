@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest"
 import type { AssetFamily } from "@/features/assets/schemas/assetFamilySchemas"
 import type { AdminRentalAsset } from "@/features/rentals/services/scheduleService"
-import { buildRentalResourceFormValues } from "./rentalResourceFormDefaults"
+import { buildRentalResourceFormValues, legacyBlankRequiredKeys } from "./rentalResourceFormDefaults"
 import { rentalAssetSchema } from "@/features/rentals/services/scheduleService"
 
 const SPACES = "11111111-1111-4111-8111-111111111111"
@@ -95,5 +95,40 @@ describe("buildRentalResourceFormValues cancel cutoff", () => {
     expect(values.cancelCutoffMode).toBe(mode)
     expect(values.cancelCutoffHours).toBe(hours)
     expect(values.cancelCutoffStored).toBe(stored)
+  })
+})
+
+describe("typed rental asset attributes", () => {
+  const typed = { capacity: 12, covered: true, materials: ["PLA", "PETG"], model: null, name: "x" }
+  const base = {
+    id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+    assetId: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+    unitId: "cccccccc-cccc-4ccc-8ccc-cccccccccccc",
+    name: "Sala",
+    isActive: true,
+  }
+  const field = (key: string, required = false) => ({ key, required })
+  const family = {
+    id: SPACES,
+    fields: ["capacity", "covered", "materials", "model", "name"].map((k) => field(k)),
+  } as unknown as AssetFamily
+
+  it("parses typed attribute values", () => {
+    const parsed = rentalAssetSchema.safeParse({ ...base, attributes: typed })
+    expect(parsed.success).toBe(true)
+    expect(parsed.data?.attributes).toEqual(typed)
+  })
+
+  it("turns typed values into form strings", () => {
+    const editing = { ...base, familyId: SPACES, attributes: typed } as unknown as AdminRentalAsset
+    const values = buildRentalResourceFormValues(editing, [], [], [family]).attributes
+    expect(values).toMatchObject({ capacity: "12", covered: "true", materials: "PLA, PETG", name: "x" })
+    expect(values?.model ?? "").toBe("")
+  })
+
+  it("still flags required keys that are null or an empty array", () => {
+    const fam = { id: SPACES, fields: [field("model", true), field("materials", true), field("capacity", true)] } as unknown as AssetFamily
+    const editing = { ...base, familyId: SPACES, attributes: { model: null, materials: [], capacity: 0 } } as unknown as AdminRentalAsset
+    expect([...legacyBlankRequiredKeys(editing, [fam])].sort()).toEqual(["materials", "model"])
   })
 })
