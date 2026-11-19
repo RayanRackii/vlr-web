@@ -37,6 +37,30 @@ function BlockFlags({ block, t }: { block: PlacedBlock; t: Translate }) {
   )
 }
 
+/** Resource name; a button that opens its availability settings when the viewer may edit them. */
+function RowLabel({ resource, onEditAvailability }: { resource: { assetId: string; name: string; tag: string; unitName: string }; onEditAvailability?: (assetId: string, name: string) => void }) {
+  const { t } = useTranslation()
+  return (
+    <>
+      {onEditAvailability ? (
+        <button
+          type="button"
+          data-testid="planning-row-label"
+          className="block w-full truncate rounded text-left text-sm font-medium underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          aria-label={t("planning.availability.openFor", { name: resource.name })}
+          title={t("planning.availability.open")}
+          onClick={() => onEditAvailability(resource.assetId, resource.name)}
+        >
+          {resource.name}
+        </button>
+      ) : (
+        <p className="truncate text-sm font-medium">{resource.name}</p>
+      )}
+      <p className="truncate text-xs text-muted-foreground">{[resource.tag, resource.unitName].filter(Boolean).join(" · ")}</p>
+    </>
+  )
+}
+
 type DayProps = {
   rows: DayRowModel[]
   timeZone: string
@@ -44,10 +68,12 @@ type DayProps = {
   canCreate: boolean
   onSelect: (allocation: PlanningAllocation) => void
   onCreate: (assetId: string, minutes: number) => void
+  /** Set when the viewer may edit availability: the resource name opens its settings. */
+  onEditAvailability?: (assetId: string, name: string) => void
 }
 
 /** One row per plannable asset across the 24 hours of the day. Scrolls sideways inside its own container. */
-export function PlanningDayGrid({ rows, timeZone, nowMinutes, canCreate, onSelect, onCreate }: DayProps) {
+export function PlanningDayGrid({ rows, timeZone, nowMinutes, canCreate, onSelect, onCreate, onEditAvailability }: DayProps) {
   const { t, i18n } = useTranslation()
   const locale = i18n.resolvedLanguage ?? i18n.language
   return (
@@ -64,8 +90,7 @@ export function PlanningDayGrid({ rows, timeZone, nowMinutes, canCreate, onSelec
           return (
             <div key={row.resource.assetId} className={cn("grid border-b last:border-b-0", LABEL_COLUMN)} data-testid="planning-row">
               <div className="sticky left-0 z-10 min-w-0 border-r bg-card px-4 py-2">
-                <p className="truncate text-sm font-medium">{row.resource.name}</p>
-                <p className="truncate text-xs text-muted-foreground">{[row.resource.tag, row.resource.unitName].filter(Boolean).join(" · ")}</p>
+                <RowLabel resource={row.resource} onEditAvailability={onEditAvailability} />
               </div>
               <div
                 // Mouse shortcut only: the "New allocation" button is the keyboard path, so the empty area is presentational.
@@ -147,12 +172,13 @@ type WeekProps = {
   onSelect: (allocation: PlanningAllocation) => void
   onOpenDay: (date: string) => void
   onCreate: (assetId: string, date: string) => void
+  onEditAvailability?: (assetId: string, name: string) => void
 }
 
 const MAX_CHIPS = 3
 
 /** Seven days per asset: a compact list of what is booked on each day. */
-export function PlanningWeekGrid({ days, rows, today, timeZone, canCreate, onSelect, onOpenDay, onCreate }: WeekProps) {
+export function PlanningWeekGrid({ days, rows, today, timeZone, canCreate, onSelect, onOpenDay, onCreate, onEditAvailability }: WeekProps) {
   const { t, i18n } = useTranslation()
   const locale = i18n.resolvedLanguage ?? i18n.language
   const columns = "grid-cols-[9.5rem_repeat(7,minmax(7.5rem,1fr))] md:grid-cols-[13rem_repeat(7,minmax(7.5rem,1fr))]"
@@ -176,8 +202,7 @@ export function PlanningWeekGrid({ days, rows, today, timeZone, canCreate, onSel
         {rows.map((row) => (
           <div key={row.resource.assetId} className={cn("grid border-b last:border-b-0", columns)} data-testid="planning-row">
             <div className="sticky left-0 z-10 min-w-0 border-r bg-card px-4 py-2">
-              <p className="truncate text-sm font-medium">{row.resource.name}</p>
-              <p className="truncate text-xs text-muted-foreground">{[row.resource.tag, row.resource.unitName].filter(Boolean).join(" · ")}</p>
+              <RowLabel resource={row.resource} onEditAvailability={onEditAvailability} />
             </div>
             {row.cells.map((cell) => (
               <div

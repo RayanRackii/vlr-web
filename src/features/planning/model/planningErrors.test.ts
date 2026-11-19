@@ -31,6 +31,20 @@ describe("error messages", () => {
     expect(describePlanningError(new Error("boom"), t).code).toBe("unknown")
   })
 
+  it.each(languages)("maps the availability profile errors in %s (409, 422 and 400)", (lng) => {
+    const t = tFor(lng)
+    const authority = describePlanningError(new PlanningApiError(409, "planning.rental_schedule_authority", "x"), t)
+    const required = describePlanningError(new PlanningApiError(422, "planning.working_hours_required", "x"), t)
+    const invalid = describePlanningError(new PlanningApiError(400, "http_400", "x"), t)
+    const version = describePlanningError(new PlanningApiError(409, "planning.version_conflict", "x"), t)
+    expect(authority.code).toBe("planning.rental_schedule_authority")
+    expect(required.code).toBe("planning.working_hours_required")
+    const messages = [authority.message, required.message, invalid.message, version.message]
+    for (const message of messages) expect(message).not.toMatch(/^planning./)
+    expect(new Set(messages).size).toBe(4)
+    expect(invalid.message).not.toBe(t("planning.errors.unknown"))
+  })
+
   it("carries the conflicts of a 409 planning.conflict", () => {
     const conflicts = [{ source: "allocation", allocationId: "x", start: "2026-11-18T12:00:00Z", end: "2026-11-18T13:00:00Z", label: "Peça B" }]
     const described = describePlanningError(new PlanningApiError(409, "planning.conflict", "x", conflicts), tFor("pt-BR"))

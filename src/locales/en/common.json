@@ -6444,10 +6444,81 @@
       "working_hours_required": "Set the resource's working hours.",
       "rental_schedule_authority": "This resource is rentable: its hours come from the reservation schedule.",
       "module_inactive": "The Resource planning module is not active for this company.",
+      "bad_request": "Some of the data sent is not valid. Check the fields.",
       "network": "No connection to the server. Check your internet and try again.",
       "forbidden": "You do not have permission for this action.",
       "server": "The server failed. Try again in a moment.",
       "unknown": "Could not complete. Try again."
+    },
+    "availability": {
+      "section": "Availability",
+      "sectionHint": "Set whether this resource can be planned and during which hours.",
+      "open": "Set up availability",
+      "openFor": "Set up availability of {{name}}",
+      "title": "Availability for planning",
+      "subtitle": "Usage rules of {{name}} in Planning.",
+      "subtitleNoName": "Usage rules of this resource in Planning.",
+      "loading": "Loading availability",
+      "retry": "Try again",
+      "plannable": "Plannable",
+      "plannableHint": "When on, the resource shows up in Planning and accepts allocations. It does not make it rentable.",
+      "policy": "Hours rule",
+      "policies": {
+        "Anytime": {
+          "label": "Open 24 hours",
+          "description": "No time restriction. The resource can be used at any time, every day."
+        },
+        "StartWithinHours": {
+          "label": "Start within hours",
+          "description": "An allocation may only start inside working hours, but can end after them (for example a print that finishes overnight)."
+        },
+        "WithinHours": {
+          "label": "Entirely within hours",
+          "description": "The whole allocation, start to end, must fit inside working hours. Outside them the system rejects it."
+        }
+      },
+      "capacity": "Capacity",
+      "prep": "Default prep (min)",
+      "cleanup": "Default cleanup (min)",
+      "bufferHint": "Extra time held before and after each allocation. Capacity 1: one use at a time.",
+      "hours": "Working hours",
+      "hoursHint": "Enter the windows of each day. A switched-off day is closed. A close at 23:59 means midnight.",
+      "anytimeNote": "With the \"Open 24 hours\" rule there are no working hours: saved hours are not used.",
+      "days": {
+        "0": "Sunday",
+        "1": "Monday",
+        "2": "Tuesday",
+        "3": "Wednesday",
+        "4": "Thursday",
+        "5": "Friday",
+        "6": "Saturday"
+      },
+      "dayOpen": "{{day}}: open",
+      "closedDay": "Closed",
+      "copyToWeekdays": "Copy to weekdays",
+      "copyToWeekdaysFrom": "Copy the hours of {{day}} to Monday through Friday",
+      "addWindow": "Add window",
+      "addWindowTo": "Add a window on {{day}}",
+      "removeWindow": "Remove window of {{day}}",
+      "openAt": "{{day}}: opens at",
+      "closeAt": "{{day}}: closes at",
+      "problems": {
+        "invalidTime": "Use the HH:mm format (24 hours).",
+        "closeBeforeOpen": "The end must be after the start.",
+        "overlap": "This window overlaps another one on the same day.",
+        "hoursRequired": "Add at least one time window, or choose \"Open 24 hours\".",
+        "invalidBuffer": "Enter whole minutes from 0 to 1440."
+      },
+      "rental": {
+        "title": "This resource is rentable",
+        "description": "Its hours come from the Reservations schedule (Rentals module). To change them, adjust the resource's reservation schedule. There are no working hours to edit here."
+      },
+      "versionConflict": "Someone else changed the availability since you opened it. Close and reopen to see the current version.",
+      "saved": "Availability saved.",
+      "save": "Save",
+      "saving": "Saving...",
+      "cancel": "Cancel",
+      "close": "Close"
     },
     "dialog": {
       "createTitle": "New allocation",

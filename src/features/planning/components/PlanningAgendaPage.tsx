@@ -15,11 +15,13 @@ import { usePermissions } from "@/features/users/permissions/PermissionContext"
 import { ICON_SIZE, ICON_STROKE_WIDTH } from "@/lib/icon"
 import { tenantKey } from "@/lib/queryKeys"
 import { canCreateAllocation } from "../model/allocationActions"
+import { canEditAvailability } from "../model/availabilityAccess"
 import { formatMinutes, agendaRange, buildDayModel, buildWeekModel, summarize } from "../model/gridModel"
 import { describePlanningError } from "../model/planningErrors"
 import type { PlanningAgenda, PlanningAllocation } from "../schemas/planningSchemas"
 import { getPlanningAgenda } from "../services/planningService"
 import { AllocationDialog, type AllocationDialogTarget } from "./AllocationDialog"
+import { AssetAvailabilityDialog } from "./AssetAvailabilityDialog"
 import { AllocationSheet } from "./AllocationSheet"
 import { PlanningDayGrid, PlanningWeekGrid } from "./PlanningTimeline"
 import { planningTone } from "./planningTone"
@@ -41,7 +43,7 @@ export function PlanningAgendaPage() {
   const { t, i18n } = useTranslation()
   const timeZone = useTenantTimeZone()
   const queryClient = useQueryClient()
-  const { can, isLoading: permissionsLoading, currentUser } = usePermissions()
+  const { can, activeModules, isLoading: permissionsLoading, currentUser } = usePermissions()
   const tenantId = currentUser?.tenantId ?? null
   const [params, setParams] = useSearchParams()
   const today = civilToday(timeZone)
@@ -50,6 +52,7 @@ export function PlanningAgendaPage() {
   const week = view === "semana"
   const locale = i18n.resolvedLanguage ?? i18n.language
   const canCreate = canCreateAllocation(can)
+  const canEditHours = canEditAvailability(activeModules, can)
   const update = (patch: { date?: string; visao?: View }) => {
     const next = new URLSearchParams(params)
     next.set("date", patch.date ?? date)
@@ -66,6 +69,8 @@ export function PlanningAgendaPage() {
 
   const [dialog, setDialog] = useState<AllocationDialogTarget | null>(null)
   const [selected, setSelected] = useState<PlanningAllocation | null>(null)
+  const [availability, setAvailability] = useState<{ assetId: string; name: string } | null>(null)
+  const openAvailability = canEditHours ? (assetId: string, name: string) => setAvailability({ assetId, name }) : undefined
   // Prefer the freshest copy from the agenda; fall back to the one that was clicked.
   const shown = selected ? agenda.data?.items.find((item) => item.id === selected.id) ?? selected : null
 
@@ -145,6 +150,7 @@ export function PlanningAgendaPage() {
             onSelect={setSelected}
             onOpenDay={(next) => update({ visao: "dia", date: next })}
             onCreate={(assetId, day) => setDialog({ mode: "create", prefill: { assetId, date: day } })}
+            onEditAvailability={openAvailability}
           />
         ) : (
           <PlanningDayGrid
@@ -154,6 +160,7 @@ export function PlanningAgendaPage() {
             canCreate={canCreate}
             onSelect={setSelected}
             onCreate={(assetId, minutes) => setDialog({ mode: "create", prefill: { assetId, date, startTime: formatMinutes(minutes) } })}
+            onEditAvailability={openAvailability}
           />
         )}
         <footer className="flex flex-wrap items-center justify-between gap-x-6 gap-y-1 border-t px-5 py-3 text-xs text-muted-foreground">
@@ -175,6 +182,7 @@ export function PlanningAgendaPage() {
           </div>
         </footer>
       </section>
+      <AssetAvailabilityDialog assetId={availability?.assetId ?? null} assetName={availability?.name ?? ""} onOpenChange={(open) => { if (!open) setAvailability(null) }} />
       <AllocationDialog target={dialog} onOpenChange={(open) => { if (!open) setDialog(null) }} />
       <AllocationSheet
         allocation={shown}

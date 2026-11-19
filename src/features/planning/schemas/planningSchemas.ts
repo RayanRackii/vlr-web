@@ -137,3 +137,27 @@ export type UpdateAllocationRequest = {
 }
 
 export type UsageRequest = { action: UsageAction; expectedVersion: string; reason?: string | null }
+
+/** An asset's planning profile as `GET /api/planning/assets/{id}/profile` returns it. */
+export const assetProfileSchema = z.object({
+  assetId: z.string(),
+  isConfigured: z.boolean().default(false),
+  isPlannable: z.boolean().default(false),
+  isRentalBacked: z.boolean().default(false),
+  capacity: z.number().int().default(1),
+  hoursPolicy: z.string().nullish().transform((value) => value ?? ""),
+  defaultPrepMinutes: z.number().int().default(0),
+  defaultCleanupMinutes: z.number().int().default(0),
+  workingHours: z.array(workingWindowSchema).nullish().transform((value) => value ?? []),
+})
+export type AssetProfile = z.infer<typeof assetProfileSchema>
+
+/** Body of `PUT /api/planning/assets/{id}/profile`. Times are "HH:mm"; day 0 is Sunday. */
+export type PutAssetProfileRequest = {
+  isPlannable: boolean
+  capacity: number
+  hoursPolicy: HoursPolicy
+  defaultPrepMinutes: number
+  defaultCleanupMinutes: number
+  workingHours: { dayOfWeek: number; openTime: string; closeTime: string }[]
+}
