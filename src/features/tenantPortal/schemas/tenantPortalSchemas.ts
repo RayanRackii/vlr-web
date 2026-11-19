@@ -16,6 +16,10 @@ export const tenantBrandingSchema = z.object({
   welcomeText: z.string().nullable().optional(),
   newBookingUiEnabled: z.boolean().optional(),
   timeZoneId: z.string().optional(),
+  landingImageUrl: z.string().nullable().optional(),
+  landingKicker: z.string().nullable().optional(),
+  landingHeadline: z.string().nullable().optional(),
+  landingSubtitle: z.string().nullable().optional(),
 })
 
 export type TenantBranding = z.infer<typeof tenantBrandingSchema>

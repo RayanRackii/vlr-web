@@ -2,18 +2,15 @@ import { Suspense, useEffect, useMemo, useState } from "react"
 import { Navigate, Outlet, useLocation, useParams } from "react-router-dom"
 import { useTranslation } from "react-i18next"
 
-import { AuthSplitShell } from "@/components/layout/AuthSplitShell"
 import { Button } from "@/components/ui/button"
 import { useTenantDocumentMeta } from "@/hooks/useTenantDocumentMeta"
 import { PageContentSkeleton } from "@/components/loading/PageContentSkeleton"
-import { headerTouchTargetClassName } from "@/components/layout/headerTouchTarget"
-import { LanguageSwitcher } from "@/components/layout/LanguageSwitcher"
-import { ThemeToggle } from "@/components/layout/ThemeToggle"
 import { TenantTimeZoneProvider } from "@/contexts/TenantTimeZoneProvider"
 import { useTenantThemeStyle } from "@/lib/useTenantTheme"
 import { inspectTenantLogoSvg } from "@/features/tenantPortal/lib/inspectTenantLogoSvg"
 import { TenantPortalChromeHeader } from "@/features/tenantPortal/components/TenantPortalChromeHeader"
 import { TenantLogoMark } from "@/features/tenantPortal/components/TenantLogoMark"
+import { PortalAuthLayout } from "@/features/tenantPortal/components/PortalAuthLayout"
 import { PortalNotFoundRoute } from "@/features/tenantPortal/components/PortalNotFoundRoute"
 import { isTenantAuthPagePath } from "@/features/tenantPortal/lib/tenantAuthPagePath"
 import { readReturnToParam } from "@/features/tenantPortal/lib/tenantPortalReturnTo"
@@ -33,8 +30,8 @@ type PortalLoadError = "missingSubdomain" | "notFound" | "loadFailed"
 
 /**
  * Auth-shell routes whose own content (a `PortalRecoveryState`) renders the
- * page `<h1>`. On these the brand name must stay a `<p>` so the page keeps a
- * single `<h1>`; the form routes keep the brand name as their `<h1>`.
+ * page `<h1>`. On these the hero headline must stay a `<p>` so the page keeps a
+ * single `<h1>`; the form routes keep the hero headline as their `<h1>`.
  */
 function isTenantAuthRecoveryPath(pathname: string): boolean {
   return /^\/(?:t\/[a-z0-9-]+)?\/?reset-password\/?$/i.test(pathname)
@@ -239,52 +236,16 @@ export function TenantPortalLayout() {
   if (isTenantAuthPagePath(location.pathname)) {
     return (
       <div className="min-h-screen overflow-x-clip text-foreground" style={themeStyle}>
-        <AuthSplitShell
-          variant="tenant"
-          brandPanelClassName="tenant-brand"
-          brandPanel={
-            <div className="tenant-brand-content">
-              <TenantLogoMark
-                logoSvg={branding.logoSvg}
-                displayName={branding.displayName}
-                primaryColor={branding.primaryColor}
-                size="lg"
-                className="tenant-auth-logo"
-              />
-              <div>
-                {isTenantAuthRecoveryPath(location.pathname) ? (
-                  <p className="tenant-brand-name">{branding.displayName}</p>
-                ) : (
-                  <h1 className="tenant-brand-name">{branding.displayName}</h1>
-                )}
-                <p className="tenant-welcome">
-                  {branding.welcomeText?.trim() || branding.welcomeTagline?.trim() || t("tenantPortal.login.welcomeDefault")}
-                </p>
-              </div>
-            </div>
-          }
-          brandFootnote={
-            <p className="tenant-brand-footer">
-              {t("tenantPortal.authPanel.poweredBy")}
-            </p>
-          }
-          mobileBrand={null}
-          headerActions={
-            <>
-              <LanguageSwitcher
-                className={headerTouchTargetClassName}
-                showShortLabel
-              />
-              <ThemeToggle className={headerTouchTargetClassName} />
-            </>
-          }
+        <PortalAuthLayout
+          branding={branding}
+          headlineAsParagraph={isTenantAuthRecoveryPath(location.pathname)}
         >
           <TenantTimeZoneProvider timeZoneId={branding.timeZoneId}>
             <Suspense fallback={<PageContentSkeleton rows={3} />}>
               <Outlet context={{ subdomain, branding, primary: tokens.primary }} />
             </Suspense>
           </TenantTimeZoneProvider>
-        </AuthSplitShell>
+        </PortalAuthLayout>
       </div>
     )
   }
