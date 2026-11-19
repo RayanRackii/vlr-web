@@ -14,7 +14,7 @@
   inset: 0;
   z-index: 0;
   pointer-events: none;
-  background: linear-gradient(to bottom, rgb(0 0 0 / 38%) 0%, rgb(0 0 0 / 0%) 32%, rgb(5 12 8 / 55%) 62%, rgb(5 12 8 / 90%) 100%);
+  background: linear-gradient(to bottom, rgb(0 0 0 / 38%) 0%, rgb(0 0 0 / 30%) 32%, rgb(5 12 8 / 55%) 62%, rgb(5 12 8 / 90%) 100%);
 }
 .tenant-hero-inner {
   position: relative;
@@ -72,6 +72,7 @@
 .tenant-hero .tenant-hero-logo[aria-hidden="true"],
 .tenant-auth .tenant-card-logo[aria-hidden="true"] { color: #fff; }
 .tenant-hero-kicker {
+  text-shadow: 0 1px 8px rgb(0 0 0 / 45%);
   margin: 0 0 12px;
   font-size: 12px;
   font-weight: 800;
@@ -79,6 +80,7 @@
   text-transform: uppercase;
 }
 .tenant-hero-headline {
+  text-shadow: 0 2px 14px rgb(0 0 0 / 45%);
   margin: 0;
   max-width: 16ch;
   font-size: clamp(2.25rem, 4.2vw, 4rem);

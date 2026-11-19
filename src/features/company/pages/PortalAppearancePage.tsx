@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type DragEvent } from "react"
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type DragEvent, type ReactNode } from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { ImagePlus, Palette, Trash2 } from "lucide-react"
 import { useForm, useWatch } from "react-hook-form"
@@ -23,7 +23,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { FormSection } from "@/components/ui/form-layout"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
-import { PortalHeroPreview } from "@/features/company/components/PortalHeroPreview"
+import { PortalAuthHero } from "@/features/tenantPortal/components/PortalAuthLayout"
 import {
   LANDING_IMAGE_ACCEPT,
   LANDING_IMAGE_RECOMMENDED,
@@ -66,6 +66,38 @@ function apiMessage(error: unknown): string {
   return typeof payload === "object" && payload !== null && "error" in payload && typeof payload.error === "string"
     ? payload.error.toLowerCase()
     : ""
+}
+
+const PREVIEW_STAGE = { width: 1200, height: 750 } as const
+
+/** Renders its children at a fixed desktop size and scales them down to the available width. */
+function ScaledStage({ children }: { children: ReactNode }) {
+  const frame = useRef<HTMLDivElement>(null)
+  const [scale, setScale] = useState(0.4)
+  useLayoutEffect(() => {
+    const node = frame.current
+    if (!node) return
+    const update = () => { if (node.clientWidth > 0) setScale(node.clientWidth / PREVIEW_STAGE.width) }
+    update()
+    if (typeof ResizeObserver === "undefined") return
+    const observer = new ResizeObserver(update)
+    observer.observe(node)
+    return () => observer.disconnect()
+  }, [])
+  return (
+    <div
+      ref={frame}
+      data-testid="portal-hero-preview"
+      className="relative aspect-[8/5] w-full overflow-hidden rounded-xl border border-border"
+    >
+      <div
+        className="absolute left-0 top-0 origin-top-left"
+        style={{ width: PREVIEW_STAGE.width, height: PREVIEW_STAGE.height, transform: `scale(${scale})` }}
+      >
+        {children}
+      </div>
+    </div>
+  )
 }
 
 /** Configurações › Aparência do portal: landing image and texts of the customer portal login. */
@@ -282,16 +314,26 @@ export function PortalAppearancePage() {
         <div className="grid min-w-0 gap-6 lg:grid-cols-2 lg:items-start">
           <div className="min-w-0 lg:sticky lg:top-4 lg:order-2">
             <FormSection title={t("portalAppearance.preview.title")} description={t("portalAppearance.preview.description")}>
-              <PortalHeroPreview
-                imageUrl={imageUrl}
-                displayName={displayName}
-                logoSvg={branding?.logoSvg}
-                primaryColor={branding?.primaryColor}
-                kicker={values.landingKicker ?? ""}
-                headline={values.landingHeadline ?? ""}
-                subtitle={values.landingSubtitle ?? ""}
-                fallbackSubtitle={appearance?.welcomeTagline || t("portalAppearance.preview.fallbackSubtitle")}
-              />
+              <div role="img" aria-label={t("portalAppearance.preview.label")}>
+                <ScaledStage>
+                  <PortalAuthHero
+                    className="h-full"
+                    headlineAsParagraph
+                    branding={{
+                      subdomain: branding?.subdomain ?? "",
+                      displayName,
+                      logoSvg: branding?.logoSvg,
+                      primaryColor: branding?.primaryColor ?? null,
+                      accentColor: branding?.accentColor ?? null,
+                      welcomeTagline: appearance?.welcomeTagline || null,
+                      landingImageUrl: imageUrl,
+                      landingKicker: values.landingKicker ?? "",
+                      landingHeadline: values.landingHeadline ?? "",
+                      landingSubtitle: values.landingSubtitle ?? "",
+                    }}
+                  />
+                </ScaledStage>
+              </div>
             </FormSection>
           </div>
 

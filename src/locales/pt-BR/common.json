@@ -6756,9 +6756,7 @@
       "title": "Prévia da tela de entrada",
       "description": "Assim seus clientes veem o portal. Atualiza enquanto você digita.",
       "label": "Prévia da tela de entrada do portal",
-      "customerPortal": "Portal do cliente",
-      "fallbackName": "Sua empresa",
-      "fallbackSubtitle": "Bem-vindo ao portal da sua empresa."
+      "fallbackName": "Sua empresa"
     },
     "image": {
       "title": "Imagem de fundo",

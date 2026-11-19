@@ -6756,9 +6756,7 @@
       "title": "Sign-in screen preview",
       "description": "This is how your customers see the portal. It updates as you type.",
       "label": "Portal sign-in screen preview",
-      "customerPortal": "Customer portal",
-      "fallbackName": "Your company",
-      "fallbackSubtitle": "Welcome to your company's portal."
+      "fallbackName": "Your company"
     },
     "image": {
       "title": "Background image",

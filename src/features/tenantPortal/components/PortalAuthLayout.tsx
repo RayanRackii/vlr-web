@@ -23,9 +23,10 @@ type PortalAuthHeroProps = {
 /** Left hero: company photo (or solid brand colour), logo + name, and the landing texts. */
 export function PortalAuthHero({ branding, headlineAsParagraph, className }: PortalAuthHeroProps) {
   const { t } = useTranslation()
-  const [imageFailed, setImageFailed] = useState(false)
   const imageUrl = branding.landingImageUrl?.trim()
-  const showImage = Boolean(imageUrl) && !imageFailed
+  // Remember which URL failed, so a later (valid) URL is tried again.
+  const [failedUrl, setFailedUrl] = useState<string | null>(null)
+  const showImage = Boolean(imageUrl) && failedUrl !== imageUrl
   const copy = resolveHeroCopy(branding, t("tenantPortal.login.welcomeDefault"))
   const style: CSSProperties = {
     backgroundColor: heroSolidBackground(branding.primaryColor),
@@ -40,10 +41,11 @@ export function PortalAuthHero({ branding, headlineAsParagraph, className }: Por
     >
       {showImage ? (
         <img
+          key={imageUrl}
           src={imageUrl}
           alt=""
           className="tenant-hero-image absolute inset-0 h-full w-full object-cover"
-          onError={() => setImageFailed(true)}
+          onError={() => setFailedUrl(imageUrl ?? null)}
         />
       ) : null}
       <div className="tenant-hero-shade" aria-hidden="true" />

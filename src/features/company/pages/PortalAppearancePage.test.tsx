@@ -46,6 +46,13 @@ function axiosFailure(status: number, error = "x") {
   return new Error("raw english text", { cause: new AxiosError("x", "ERR", undefined, undefined, { status, data: { error }, statusText: "", headers: {}, config: {} as never }) })
 }
 
+const heroOrNull = (selector: string) => screen.getByTestId("portal-hero-preview").querySelector(selector)
+const hero = (selector: string) => {
+  const node = heroOrNull(selector)
+  if (!node) throw new Error(`missing ${selector}`)
+  return node as HTMLElement
+}
+
 const png = () => new File(["a"], "a.png", { type: "image/png" })
 
 describe("PortalAppearancePage", () => {
@@ -62,8 +69,8 @@ describe("PortalAppearancePage", () => {
     expect(screen.getByTestId("portal-counter-landingKicker")).toHaveTextContent("9/60")
     expect(screen.getByTestId("portal-counter-landingHeadline")).toHaveTextContent("15/120")
     expect(screen.getByTestId("portal-counter-landingSubtitle")).toHaveTextContent("14/240")
-    expect(screen.getByTestId("portal-hero-preview-headline")).toHaveTextContent("Clube do Bairro")
-    expect(screen.queryByTestId("portal-hero-preview-image")).not.toBeInTheDocument()
+    expect(hero(".tenant-hero-headline")).toHaveTextContent("Clube do Bairro")
+    expect(heroOrNull("img")).not.toBeInTheDocument()
   })
 
   it("updates the preview as the user types, and falls back to defaults when blank", async () => {
@@ -72,11 +79,11 @@ describe("PortalAppearancePage", () => {
     const headline = await screen.findByLabelText("Título")
     await user.clear(headline)
     await user.type(headline, "Novo titulo")
-    expect(screen.getByTestId("portal-hero-preview-headline")).toHaveTextContent("Novo titulo")
+    expect(hero(".tenant-hero-headline")).toHaveTextContent("Novo titulo")
     await user.clear(screen.getByLabelText("Subtítulo"))
-    expect(screen.getByTestId("portal-hero-preview-subtitle")).toHaveTextContent("Tagline")
+    expect(hero(".tenant-hero-subtitle")).toHaveTextContent("Tagline")
     await user.clear(screen.getByLabelText("Chamada"))
-    expect(screen.queryByTestId("portal-hero-preview-kicker")).not.toBeInTheDocument()
+    expect(heroOrNull(".tenant-hero-kicker")).not.toBeInTheDocument()
   })
 
   it("saves all three texts, blank as null", async () => {
@@ -143,7 +150,7 @@ describe("PortalAppearancePage", () => {
     expect(await screen.findByTestId("portal-image-progress")).toHaveTextContent("40%")
     expect(screen.getByTestId("portal-image-input")).toBeDisabled()
     finish(withImage)
-    expect(await screen.findByTestId("portal-hero-preview-image")).toHaveAttribute("src", withImage.landingImageUrl)
+    expect(await waitFor(() => hero("img"))).toHaveAttribute("src", withImage.landingImageUrl)
     expect(screen.getByLabelText("Título")).toHaveValue("Clube do Bairro!")
     expect(screen.queryByTestId("portal-image-progress")).not.toBeInTheDocument()
     expect(toast.success).toHaveBeenCalledWith(i18n.t("portalAppearance.image.uploaded"))
@@ -184,7 +191,7 @@ describe("PortalAppearancePage", () => {
     vi.mocked(getPortalAppearance).mockResolvedValue(withImage as never)
     vi.mocked(deletePortalLandingImage).mockResolvedValue(base as never)
     renderPage(["core.company.write"])
-    expect(await screen.findByTestId("portal-hero-preview-image")).toBeInTheDocument()
+    expect(await waitFor(() => hero("img"))).toBeInTheDocument()
     expect(screen.getByRole("button", { name: "Trocar imagem" })).toBeInTheDocument()
     await user.click(screen.getByRole("button", { name: "Remover imagem" }))
     await user.click(await screen.findByRole("button", { name: "Cancelar" }))
@@ -193,7 +200,7 @@ describe("PortalAppearancePage", () => {
     const dialog = await screen.findByRole("alertdialog")
     await user.click(within(dialog).getByRole("button", { name: "Remover imagem" }))
     await waitFor(() => expect(deletePortalLandingImage).toHaveBeenCalledTimes(1))
-    await waitFor(() => expect(screen.queryByTestId("portal-hero-preview-image")).not.toBeInTheDocument())
+    await waitFor(() => expect(heroOrNull("img")).not.toBeInTheDocument())
   })
 
   it("is read-only without core.company.write", async () => {
