@@ -73,6 +73,14 @@ describe("PortalAppearancePage", () => {
     expect(heroOrNull("img")).not.toBeInTheDocument()
   })
 
+  it("renders the preview hero in forced desktop mode, whatever the viewport", async () => {
+    renderPage(["core.company.write"])
+    await screen.findByLabelText("Chamada")
+    const heroEl = screen.getByTestId("portal-hero-preview").querySelector(".tenant-hero")
+    expect(heroEl).toHaveClass("tenant-hero--desktop")
+    expect(hero(".tenant-hero-brand")).not.toHaveClass("max-lg:pr-28")
+  })
+
   it("updates the preview as the user types, and falls back to defaults when blank", async () => {
     const user = userEvent.setup()
     renderPage(["core.company.write"])
@@ -233,6 +241,7 @@ describe("PortalAppearancePage", () => {
   it("shows the load error", async () => {
     vi.mocked(getPortalAppearance).mockRejectedValueOnce(new Error("falhou"))
     renderPage(["core.company.write"])
-    expect(await screen.findByText("falhou")).toBeInTheDocument()
+    expect(await screen.findByText(i18n.t("portalAppearance.loadError"))).toBeInTheDocument()
+    expect(screen.queryByText("falhou")).not.toBeInTheDocument()
   })
 })

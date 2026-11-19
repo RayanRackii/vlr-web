@@ -139,8 +139,8 @@ export function PortalAppearancePage() {
     setLoading(false)
   }, [reset])
 
-  const fail = useCallback((error: unknown) => {
-    setLoadError(error instanceof Error ? error.message : t("portalAppearance.loadError"))
+  const fail = useCallback(() => {
+    setLoadError(t("portalAppearance.loadError"))
     setLoading(false)
   }, [t])
 
@@ -154,7 +154,7 @@ export function PortalAppearancePage() {
     let cancelled = false
     getPortalAppearance().then(
       (next) => { if (!cancelled) apply(next) },
-      (error: unknown) => { if (!cancelled) fail(error) },
+      () => { if (!cancelled) fail() },
     )
     return () => { cancelled = true }
   }, [apply, fail])
@@ -319,6 +319,7 @@ export function PortalAppearancePage() {
                   <PortalAuthHero
                     className="h-full"
                     headlineAsParagraph
+                    forceDesktop
                     branding={{
                       subdomain: branding?.subdomain ?? "",
                       displayName,

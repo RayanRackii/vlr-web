@@ -83,6 +83,12 @@ describe("PortalAuthLayout", () => {
     expect(container.querySelector(".tenant-hero")).toHaveAttribute("data-hero-image", "false")
   })
 
+  it("does not force the desktop layout on the real portal hero", () => {
+    const { container } = renderLayout(base)
+    expect(container.querySelector(".tenant-hero")).not.toHaveClass("tenant-hero--desktop")
+    expect(screen.getByTestId("portal-hero-brand")).toHaveClass("max-lg:pr-28")
+  })
+
   it("tries a later valid image URL after an earlier one failed", () => {
     const { container, rerender } = renderLayout({ ...base, landingImageUrl: "https://cdn.example/broken.webp" })
     fireEvent.error(container.querySelector("img")!)
