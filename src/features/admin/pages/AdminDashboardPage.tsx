@@ -40,11 +40,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { StatusBadge } from "@/components/ui/status"
-import {
-  clearPlatformTenantExited,
-  refreshAuthSession,
-  writeActiveTenantLabel,
-} from "@/features/admin/hooks/usePlatformTenantSession"
+import { useEnterTenantEnvironment } from "@/features/admin/hooks/useEnterTenantEnvironment"
 import { moduleNameI18nKey } from "@/features/admin/moduleCatalog"
 import {
   PRICE_PER_MODULE_BRL,
@@ -52,7 +48,6 @@ import {
 } from "@/features/admin/schemas/adminTenantSchemas"
 import {
   deleteAdminTenant,
-  enterTenantEnvironment,
   listAdminTenants,
 } from "@/features/admin/services/adminTenantsService"
 import { tenantPortalHref } from "@/features/tenantPortal/services/tenantPortalService"
@@ -105,7 +100,7 @@ export function AdminDashboardPage() {
     useState<TenantAdmin | null>(null)
   const [deleteError, setDeleteError] = useState<string | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
-  const [enteringId, setEnteringId] = useState<string | null>(null)
+  const { enteringId, enter: handleOpenEnvironment } = useEnterTenantEnvironment()
 
   const normalizedSearch = searchQuery.trim().toLowerCase()
   const filteredTenants = useMemo(
@@ -207,29 +202,6 @@ export function AdminDashboardPage() {
       setDeleteError(message)
     } finally {
       setIsDeleting(false)
-    }
-  }
-
-  async function handleOpenEnvironment(tenant: TenantAdmin) {
-    if (enteringId !== null || !tenant.isActive) {
-      return
-    }
-
-    setEnteringId(tenant.id)
-    try {
-      const result = await enterTenantEnvironment(tenant.id)
-      clearPlatformTenantExited()
-      writeActiveTenantLabel(result.legalName)
-      await refreshAuthSession()
-      void navigate("/dashboard", { replace: true })
-    } catch (error: unknown) {
-      const message =
-        error instanceof Error && error.message.trim().length > 0
-          ? error.message
-          : t("admin.support.enterFailed")
-      toast.error(t("admin.support.enterErrorTitle"), { description: message })
-    } finally {
-      setEnteringId(null)
     }
   }
 

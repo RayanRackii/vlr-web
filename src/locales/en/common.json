@@ -5052,6 +5052,58 @@
       }
     },
     "edit": {
+      "back": "Companies",
+      "status": {
+        "active": "Active",
+        "inactive": "Inactive",
+        "trial": "Trial",
+        "trialEnded": "Trial ended"
+      },
+      "tabs": {
+        "label": "Company sections",
+        "company": "Company",
+        "portal": "Portal",
+        "modules": "Modules and families",
+        "users": "Users",
+        "registration": "Portal sign-up",
+        "menu": "Portal menu"
+      },
+      "validation": {
+        "contactEmailInvalid": "Enter a valid e-mail.",
+        "postalCodeInvalid": "The postal code must have 8 digits.",
+        "stateInvalid": "Use the 2-letter state code."
+      },
+      "company": {
+        "tradeName": "Trade name",
+        "contactTitle": "Contact",
+        "contactDescription": "The company's e-mail and phone.",
+        "contactEmail": "Contact e-mail",
+        "contactPhone": "Phone",
+        "addressTitle": "Address",
+        "addressDescription": "The company's address.",
+        "postalCode": "Postal code",
+        "street": "Street",
+        "number": "Number",
+        "complement": "Complement",
+        "district": "District",
+        "city": "City",
+        "state": "State",
+        "trialTitle": "Trial period",
+        "trialDescription": "Read-only. The trial period is set by the platform.",
+        "trialNone": "This company is not on a trial.",
+        "trialActive": "The company is on a trial.",
+        "trialEnded": "The trial has ended. The company is read-only."
+      },
+      "portal": {
+        "urlPreview": "Portal address",
+        "copyUrl": "Copy address",
+        "logoPreview": "Logo preview",
+        "logoPreviewEmpty": "Paste an SVG to see the preview.",
+        "hintTitle": "Portal sign-in screen",
+        "hintBody": "The sign-in image and texts are edited in Settings › Portal appearance, inside the company.",
+        "enter": "Enter company",
+        "entering": "Entering..."
+      },
       "title": "Edit company",
       "description": "Update legal details, subdomain, and subscribed modules.",
       "successTitle": "Success",
@@ -5129,7 +5181,7 @@
       },
       "delete": {
         "title": "Delete user",
-        "description": "Delete {{name}} from {{tenant}}? Their auth account will also be removed. This cannot be undone.",
+        "description": "Delete {{name}} from {{company}}? Their auth account will also be removed. This cannot be undone.",
         "confirm": "Continue",
         "deleting": "Deleting...",
         "successTitle": "Success",

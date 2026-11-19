@@ -1,91 +1,100 @@
-import { useEffect, useMemo, useRef, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
-import {
-  Check,
-  Layers,
-  Package,
-  Tent,
-  Zap,
-  type LucideIcon,
-} from "lucide-react"
-import { useForm } from "react-hook-form"
+import { useForm, type FieldErrors } from "react-hook-form"
 import { useTranslation } from "react-i18next"
-import { useNavigate } from "react-router-dom"
+import { useSearchParams } from "react-router-dom"
 import { toast } from "sonner"
 
-import {
-  tenantPortalHref,
-  tenantPortalHrefPlaceholder,
-} from "@/features/tenantPortal/services/tenantPortalService"
-import {
-  ROLVIX_ACCENT_COLOR,
-  ROLVIX_PRIMARY_COLOR,
-} from "@/lib/brandColors"
-import { RegistrationFieldsManager } from "@/features/admin/components/RegistrationFieldsManager"
+import { Page } from "@/components/layout/Page"
+import { SaveBar } from "@/components/layout/SaveBar"
+import { UnsavedChangesGuard } from "@/components/layout/UnsavedChangesGuard"
+import { Card, CardContent } from "@/components/ui/card"
+import { Form } from "@/components/ui/form"
+import { StatusBadge } from "@/components/ui/status"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { ModuleMenuItemsManager } from "@/features/admin/components/ModuleMenuItemsManager"
-import { toCanonicalModuleName } from "@/features/catalog/customerNav"
+import { RegistrationFieldsManager } from "@/features/admin/components/RegistrationFieldsManager"
+import { TenantCompanyTab } from "@/features/admin/components/TenantCompanyTab"
+import { TenantModulesTab } from "@/features/admin/components/TenantModulesTab"
+import { TenantPortalTab } from "@/features/admin/components/TenantPortalTab"
 import { TenantUsersManager } from "@/features/admin/components/TenantUsersManager"
-import { CommercialModulePicker } from "@/features/admin/components/CommercialModulePicker"
 import { useAdminModuleCatalog } from "@/features/admin/hooks/useAdminModuleCatalog"
+import { useEnterTenantEnvironment } from "@/features/admin/hooks/useEnterTenantEnvironment"
 import {
   commercialModuleSelections,
   createTenantOnboardingSchemas,
+  tenantAdminToEditFormValues,
   tenantOnboardingMessagesFromT,
-  type TenantOnboardingFormValues,
   toTenantBrandingPayload,
+  toTenantCompanyPayload,
+  type TenantAdmin,
+  type TenantEditFormValues,
 } from "@/features/admin/schemas/adminTenantSchemas"
 import { updateAdminTenant } from "@/features/admin/services/adminTenantsService"
-import { listAdminAssetFamilyCatalog } from "@/features/assets/services/assetFamiliesService"
 import type { AssetFamily } from "@/features/assets/schemas/assetFamilySchemas"
-import { Button } from "@/components/ui/button"
-import { FormPrimaryButton } from "@/components/ui/form-primary-button"
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form"
-import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
-import { cn } from "@/lib/utils"
+import { listAdminAssetFamilyCatalog } from "@/features/assets/services/assetFamiliesService"
+import { toCanonicalModuleName } from "@/features/catalog/customerNav"
 
-const SUCCESS_REDIRECT_MS = 5000
+const TENANT_EDIT_TABS = [
+  "empresa",
+  "portal",
+  "modulos",
+  "usuarios",
+  "cadastro",
+  "menu",
+] as const
 
-const FAMILY_ICONS: Record<string, LucideIcon> = {
-  spaces: Tent,
-  electrical: Zap,
-  goods: Package,
-  generic: Layers,
+type TenantEditTab = (typeof TENANT_EDIT_TABS)[number]
+
+const TAB_LABEL_KEYS: Record<TenantEditTab, string> = {
+  empresa: "admin.edit.tabs.company",
+  portal: "admin.edit.tabs.portal",
+  modulos: "admin.edit.tabs.modules",
+  usuarios: "admin.edit.tabs.users",
+  cadastro: "admin.edit.tabs.registration",
+  menu: "admin.edit.tabs.menu",
 }
 
-function familyIcon(key: string): LucideIcon {
-  return FAMILY_ICONS[key] ?? Layers
+const TAB_BY_FIELD: Partial<Record<keyof TenantEditFormValues, TenantEditTab>> = {
+  legalName: "empresa",
+  tradeName: "empresa",
+  taxId: "empresa",
+  contactEmail: "empresa",
+  contactPhone: "empresa",
+  postalCode: "empresa",
+  street: "empresa",
+  number: "empresa",
+  complement: "empresa",
+  district: "empresa",
+  city: "empresa",
+  state: "empresa",
+  subdomain: "portal",
+  logoSvg: "portal",
+  primaryColor: "portal",
+  accentColor: "portal",
+  welcomeTagline: "portal",
+  activeModules: "modulos",
+  assetFamilyKeys: "modulos",
+}
+
+function isTenantEditTab(value: string | null): value is TenantEditTab {
+  return TENANT_EDIT_TABS.some((tab) => tab === value)
 }
 
 type TenantEditFormProps = {
-  tenantId: string
-  initialValues: TenantOnboardingFormValues
+  tenant: TenantAdmin
   hasLegacyMaintenance?: boolean
 }
 
 export function TenantEditForm({
-  tenantId,
-  initialValues,
+  tenant: initialTenant,
   hasLegacyMaintenance = false,
 }: TenantEditFormProps) {
-  const { t, i18n } = useTranslation()
-  const navigate = useNavigate()
-  const [isSubmitSuccess, setIsSubmitSuccess] = useState(false)
+  const { t } = useTranslation()
+  const [searchParams, setSearchParams] = useSearchParams()
+  const [tenant, setTenant] = useState(initialTenant)
   const [families, setFamilies] = useState<AssetFamily[]>([])
+  const { enteringId, enter } = useEnterTenantEnvironment()
   const {
     selectable: commercialModules,
     error: modulesError,
@@ -93,8 +102,12 @@ export function TenantEditForm({
     retry: retryModules,
     modulesAvailable,
   } = useAdminModuleCatalog()
-  const redirectTimeoutRef = useRef<number | null>(null)
-  const portalUrlPlaceholder = useMemo(() => tenantPortalHrefPlaceholder(), [])
+
+  const tenantId = tenant.id
+  const requestedTab = searchParams.get("tab")
+  const activeTab: TenantEditTab = isTenantEditTab(requestedTab)
+    ? requestedTab
+    : "empresa"
 
   const validationMessages = useMemo(
     () => tenantOnboardingMessagesFromT((key) => t(key)),
@@ -105,19 +118,17 @@ export function TenantEditForm({
     [validationMessages],
   )
 
-  const form = useForm<TenantOnboardingFormValues>({
-    resolver: zodResolver(schemas.tenantOnboardingSchema),
-    defaultValues: initialValues,
+  const form = useForm<TenantEditFormValues>({
+    resolver: zodResolver(schemas.tenantEditSchema),
+    defaultValues: tenantAdminToEditFormValues(initialTenant),
     mode: "onTouched",
   })
 
-  const isSubmitting = form.formState.isSubmitting
-  const isActionLocked = isSubmitting || isSubmitSuccess
-  const values = form.watch()
-
-  useEffect(() => {
-    form.reset(initialValues)
-  }, [form, initialValues])
+  const { isDirty, isSubmitting, dirtyFields } = form.formState
+  const unsavedCount = Object.keys(dirtyFields).length
+  const portalValues = form.watch(["subdomain", "activeModules"])
+  const subdomain = portalValues[0]
+  const activeModules = portalValues[1]
 
   useEffect(() => {
     let cancelled = false
@@ -137,72 +148,61 @@ export function TenantEditForm({
     }
   }, [])
 
-  useEffect(() => {
-    return () => {
-      if (redirectTimeoutRef.current !== null) {
-        window.clearTimeout(redirectTimeoutRef.current)
-      }
+  function selectTab(next: string) {
+    if (!isTenantEditTab(next) || next === activeTab) {
+      return
     }
-  }, [])
+    const params = new URLSearchParams(searchParams)
+    params.set("tab", next)
+    setSearchParams(params, { replace: true })
+  }
 
-  function toggleModule(moduleKey: string) {
-    if (isActionLocked) {
+  function toggleKey(
+    field: "activeModules" | "assetFamilyKeys",
+    key: string,
+  ) {
+    if (isSubmitting) {
       return
     }
 
-    const current = form.getValues("activeModules")
-    const exists = current.includes(moduleKey)
-
+    const current = form.getValues(field)
     form.setValue(
-      "activeModules",
-      exists
-        ? current.filter((item) => item !== moduleKey)
-        : [...current, moduleKey],
+      field,
+      current.includes(key)
+        ? current.filter((item) => item !== key)
+        : [...current, key],
       { shouldDirty: true, shouldValidate: true },
     )
   }
 
-  function toggleFamily(familyKey: string) {
-    if (isActionLocked) {
-      return
+  function handleInvalid(errors: FieldErrors<TenantEditFormValues>) {
+    // The first invalid field may live on a tab that is not visible: bring it forward.
+    const firstInvalid = (Object.keys(errors) as (keyof TenantEditFormValues)[])
+      .map((name) => TAB_BY_FIELD[name])
+      .find((tab): tab is TenantEditTab => tab !== undefined)
+    if (firstInvalid && firstInvalid !== activeTab) {
+      selectTab(firstInvalid)
     }
-
-    const current = form.getValues("assetFamilyKeys")
-    const exists = current.includes(familyKey)
-
-    form.setValue(
-      "assetFamilyKeys",
-      exists
-        ? current.filter((item) => item !== familyKey)
-        : [...current, familyKey],
-      { shouldDirty: true, shouldValidate: true },
-    )
   }
 
-  async function handleSubmit(values: TenantOnboardingFormValues) {
-    if (isSubmitSuccess) {
-      return
-    }
-
+  async function handleSubmit(values: TenantEditFormValues) {
     try {
-      await updateAdminTenant(tenantId, {
+      const saved = await updateAdminTenant(tenantId, {
         legalName: values.legalName.trim(),
         taxId: values.taxId.trim(),
         subdomain: values.subdomain.trim().toLowerCase(),
         ...toTenantBrandingPayload(values),
         activeModules: commercialModuleSelections(values.activeModules),
         assetFamilyKeys: values.assetFamilyKeys,
+        ...toTenantCompanyPayload(values, form.formState.dirtyFields),
       })
 
       toast.success(t("admin.edit.successTitle"), {
         description: t("admin.edit.success"),
       })
 
-      setIsSubmitSuccess(true)
-
-      redirectTimeoutRef.current = window.setTimeout(() => {
-        void navigate("/admin/dashboard", { replace: true })
-      }, SUCCESS_REDIRECT_MS)
+      setTenant(saved)
+      form.reset(tenantAdminToEditFormValues(saved))
     } catch (error: unknown) {
       const message =
         error instanceof Error && error.message.trim().length > 0
@@ -212,390 +212,161 @@ export function TenantEditForm({
       toast.error(t("admin.edit.errorTitle"), {
         description: message,
       })
-
-      setIsSubmitSuccess(false)
     }
   }
 
+  function submit() {
+    void form.handleSubmit(handleSubmit, handleInvalid)()
+  }
+
+  const trialEnded = Boolean(tenant.isTrialReadOnly)
+
+  const description = (
+    <span className="flex flex-wrap items-center gap-2">
+      <span className="min-w-0 break-all">
+        {tenant.subdomain ?? t("admin.dashboard.noSubdomain")}
+      </span>
+      <StatusBadge tone={tenant.isActive ? "success" : "neutral"}>
+        {tenant.isActive
+          ? t("admin.edit.status.active")
+          : t("admin.edit.status.inactive")}
+      </StatusBadge>
+      {tenant.isTrial ? (
+        <StatusBadge tone={trialEnded ? "danger" : "warning"}>
+          {trialEnded
+            ? t("admin.edit.status.trialEnded")
+            : t("admin.edit.status.trial")}
+        </StatusBadge>
+      ) : null}
+    </span>
+  )
+
   return (
-    <div className="mx-auto w-full max-w-2xl space-y-6">
-      <div className="space-y-1">
-        <h1 className="text-2xl font-semibold tracking-tight text-foreground">
-          {t("admin.edit.title")}
-        </h1>
-        <p className="text-sm text-muted-foreground">
-          {t("admin.edit.description")}
-        </p>
-      </div>
-
+    <Page
+      header={{
+        title: tenant.legalName,
+        description,
+        back: { to: "/admin/dashboard", label: t("admin.edit.back") },
+      }}
+    >
+      <UnsavedChangesGuard when={isDirty} />
       <Form {...form}>
-        <form
-          className="space-y-6"
-          onSubmit={(event) => {
-            event.preventDefault()
-            void form.handleSubmit(handleSubmit)()
-          }}
-        >
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base text-foreground">
-                {t("admin.edit.sections.basic")}
-              </CardTitle>
-              <CardDescription>
-                {t("admin.edit.sections.basicDescription")}
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <FormField
-                control={form.control}
-                name="legalName"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{t("admin.wizard.fields.legalName")}</FormLabel>
-                    <FormControl>
-                      <Input
-                        autoComplete="organization"
-                        disabled={isActionLocked}
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="taxId"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{t("admin.wizard.fields.taxId")}</FormLabel>
-                    <FormControl>
-                      <Input
-                        autoComplete="off"
-                        disabled={isActionLocked}
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </CardContent>
-          </Card>
+        <Tabs value={activeTab} onValueChange={selectTab} className="gap-4">
+          <TabsList variant="line" aria-label={t("admin.edit.tabs.label")}>
+            {TENANT_EDIT_TABS.map((tab) => (
+              <TabsTrigger key={tab} value={tab}>
+                {t(TAB_LABEL_KEYS[tab])}
+              </TabsTrigger>
+            ))}
+          </TabsList>
 
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base text-foreground">
-                {t("admin.edit.sections.identity")}
-              </CardTitle>
-              <CardDescription>
-                {t("admin.edit.sections.identityDescription")}
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <FormField
-                control={form.control}
-                name="subdomain"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{t("admin.wizard.fields.subdomain")}</FormLabel>
-                    <FormControl>
-                      <Input
-                        autoComplete="off"
-                        placeholder="acme"
-                        disabled={isActionLocked}
-                        {...field}
-                        onChange={(event) => {
-                          field.onChange(
-                            event.target.value
-                              .toLowerCase()
-                              .replace(/\s+/g, ""),
-                          )
-                        }}
-                      />
-                    </FormControl>
-                    <p className="rounded-md border border-dashed border-border bg-muted/40 px-3 py-2 font-mono text-xs text-muted-foreground">
-                      {field.value
-                        ? tenantPortalHref(field.value)
-                        : portalUrlPlaceholder}
-                    </p>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="logoSvg"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{t("admin.wizard.fields.logoSvg")}</FormLabel>
-                    <FormControl>
-                      <Textarea
-                        rows={6}
-                        className="font-mono text-xs"
-                        placeholder='<svg xmlns="http://www.w3.org/2000/svg" ...>...</svg>'
-                        disabled={isActionLocked}
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <div className="grid gap-4 sm:grid-cols-2">
-                <FormField
-                  control={form.control}
-                  name="primaryColor"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>
-                        {t("admin.wizard.fields.primaryColor")}
-                      </FormLabel>
-                      <FormControl>
-                        <div className="flex items-center gap-2">
-                          <Input
-                            type="color"
-                            className="h-9 w-12 cursor-pointer p-1"
-                            disabled={isActionLocked}
-                            value={
-                              field.value?.startsWith("#")
-                                ? field.value
-                                : field.value
-                                  ? `#${field.value}`
-                                  : ROLVIX_PRIMARY_COLOR
-                            }
-                            onChange={(event) => {
-                              field.onChange(event.target.value.toUpperCase())
-                            }}
-                          />
-                          <Input
-                            autoComplete="off"
-                            placeholder={ROLVIX_PRIMARY_COLOR}
-                            disabled={isActionLocked}
-                            {...field}
-                          />
-                        </div>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="accentColor"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>
-                        {t("admin.wizard.fields.accentColor")}
-                      </FormLabel>
-                      <FormControl>
-                        <div className="flex items-center gap-2">
-                          <Input
-                            type="color"
-                            className="h-9 w-12 cursor-pointer p-1"
-                            disabled={isActionLocked}
-                            value={
-                              field.value?.startsWith("#")
-                                ? field.value
-                                : field.value
-                                  ? `#${field.value}`
-                                  : ROLVIX_ACCENT_COLOR
-                            }
-                            onChange={(event) => {
-                              field.onChange(event.target.value.toUpperCase())
-                            }}
-                          />
-                          <Input
-                            autoComplete="off"
-                            placeholder={ROLVIX_ACCENT_COLOR}
-                            disabled={isActionLocked}
-                            {...field}
-                          />
-                        </div>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-              <FormField
-                control={form.control}
-                name="welcomeTagline"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>
-                      {t("admin.wizard.fields.welcomeTagline")}
-                    </FormLabel>
-                    <FormControl>
-                      <Input
-                        autoComplete="off"
-                        maxLength={120}
-                        disabled={isActionLocked}
-                        placeholder={t(
-                          "admin.wizard.fields.welcomeTaglinePlaceholder",
-                        )}
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </CardContent>
-          </Card>
-
-          <Card id="tenant-modules">
-            <CardHeader>
-              <CardTitle className="text-base text-foreground">
-                {t("admin.edit.sections.modules")}
-              </CardTitle>
-              <CardDescription>
-                {t("admin.edit.sections.modulesDescription")}
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              {hasLegacyMaintenance ? (
-                <p className="text-sm text-muted-foreground" role="note">
-                  {t("admin.modules.legacyMaintenanceNote")}
-                </p>
-              ) : null}
-              <FormField
-                control={form.control}
-                name="activeModules"
-                render={() => (
-                  <FormItem>
-                    <CommercialModulePicker
-                      modules={commercialModules}
-                      selectedKeys={values.activeModules}
-                      isLoading={modulesLoading}
-                      error={modulesError}
-                      onRetry={retryModules}
-                      onToggle={toggleModule}
-                      disabled={isActionLocked}
-                    />
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base text-foreground">
-                {t("admin.edit.sections.families")}
-              </CardTitle>
-              <CardDescription>
-                {t("admin.edit.sections.familiesDescription")}
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <FormField
-                control={form.control}
-                name="assetFamilyKeys"
-                render={() => (
-                  <FormItem>
-                    <div className="grid gap-3 sm:grid-cols-2">
-                      {families.map((family) => {
-                        const selected = values.assetFamilyKeys.includes(
-                          family.key,
-                        )
-                        const Icon = familyIcon(family.key)
-                        const descriptionKey = `admin.wizard.families.descriptions.${family.key}`
-                        const description = i18n.exists(descriptionKey)
-                          ? t(descriptionKey)
-                          : null
-
-                        return (
-                          <button
-                            key={family.id}
-                            type="button"
-                            disabled={isActionLocked}
-                            onClick={() => {
-                              toggleFamily(family.key)
-                            }}
-                            className={cn(
-                              "relative flex flex-col items-start gap-2 rounded-lg border p-4 text-left transition-colors",
-                              selected
-                                ? "border-primary bg-primary/5 ring-1 ring-primary"
-                                : "border-border hover:border-primary/40 hover:bg-muted/40",
-                              isActionLocked && "pointer-events-none opacity-60",
-                            )}
-                          >
-                            {selected ? (
-                              <span className="absolute right-2 top-2 rounded-full bg-primary p-0.5 text-primary-foreground">
-                                <Check className="size-4" />
-                              </span>
-                            ) : null}
-                            <Icon className="size-5 text-foreground" />
-                            <span className="text-sm font-medium">
-                              {family.label}
-                            </span>
-                            {description ? (
-                              <span className="text-xs text-muted-foreground">
-                                {description}
-                              </span>
-                            ) : null}
-                          </button>
-                        )
-                      })}
-                    </div>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="pt-6">
-              <TenantUsersManager tenantId={tenantId} />
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="pt-6">
-              <RegistrationFieldsManager tenantId={tenantId} canWrite />
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="pt-6">
-              <ModuleMenuItemsManager
-                tenantId={tenantId}
-                subdomain={values.subdomain}
-                activeModules={values.activeModules.map(toCanonicalModuleName)}
-                canWrite
-              />
-            </CardContent>
-          </Card>
-
-          <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-            <Button
-              type="button"
-              variant="outline"
-              disabled={isActionLocked}
-              onClick={() => {
-                void navigate("/admin/dashboard")
+          <TabsContent value="empresa">
+            <form
+              noValidate
+              onSubmit={(event) => {
+                event.preventDefault()
+                submit()
               }}
             >
-              {t("common.cancel")}
-            </Button>
-            <FormPrimaryButton
-              type="submit"
-              isValid={
-                modulesAvailable &&
-                schemas.tenantOnboardingSchema.safeParse(values).success
-              }
-              loading={isSubmitting}
-              loadingLabel={t("admin.edit.actions.saving")}
-              disabled={isSubmitSuccess}
+              <TenantCompanyTab
+                form={form}
+                disabled={isSubmitting}
+                isTrial={Boolean(tenant.isTrial)}
+                isTrialReadOnly={trialEnded}
+              />
+            </form>
+          </TabsContent>
+
+          <TabsContent value="portal">
+            <form
+              noValidate
+              onSubmit={(event) => {
+                event.preventDefault()
+                submit()
+              }}
             >
-              {t("admin.edit.actions.save")}
-            </FormPrimaryButton>
-          </div>
-        </form>
+              <TenantPortalTab
+                form={form}
+                disabled={isSubmitting}
+                canEnter={tenant.isActive}
+                isEntering={enteringId === tenantId}
+                onEnter={() => {
+                  void enter(tenant)
+                }}
+              />
+            </form>
+          </TabsContent>
+
+          <TabsContent value="modulos">
+            <form
+              noValidate
+              onSubmit={(event) => {
+                event.preventDefault()
+                submit()
+              }}
+            >
+              <TenantModulesTab
+                form={form}
+                disabled={isSubmitting}
+                hasLegacyMaintenance={hasLegacyMaintenance}
+                commercialModules={commercialModules}
+                modulesLoading={modulesLoading}
+                modulesError={modulesError}
+                onRetryModules={retryModules}
+                families={families}
+                onToggleModule={(key) => {
+                  toggleKey("activeModules", key)
+                }}
+                onToggleFamily={(key) => {
+                  toggleKey("assetFamilyKeys", key)
+                }}
+              />
+            </form>
+          </TabsContent>
+
+          <TabsContent value="usuarios">
+            <Card>
+              <CardContent className="pt-6">
+                <TenantUsersManager tenantId={tenantId} />
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="cadastro">
+            <Card>
+              <CardContent className="pt-6">
+                <RegistrationFieldsManager tenantId={tenantId} canWrite />
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="menu">
+            <Card>
+              <CardContent className="pt-6">
+                <ModuleMenuItemsManager
+                  tenantId={tenantId}
+                  subdomain={subdomain}
+                  activeModules={activeModules.map(toCanonicalModuleName)}
+                  canWrite
+                />
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
       </Form>
-    </div>
+
+      {isDirty ? (
+        <SaveBar
+          dirty={isDirty}
+          unsavedCount={unsavedCount}
+          saving={isSubmitting}
+          saveDisabled={!modulesAvailable}
+          onSave={submit}
+          onDiscard={() => {
+            form.reset(tenantAdminToEditFormValues(tenant))
+          }}
+        />
+      ) : null}
+    </Page>
   )
 }

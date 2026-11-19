@@ -147,7 +147,6 @@ describe("feature manifests", () => {
     expect(adminManifest.routes.platformStandalone.map((route) => route.path)).toEqual([
       "/admin/tenants",
       "/admin/tenants/new",
-      "/admin/tenants/:id/edit",
     ])
     expect(adminManifest.routes.staff.map((route) => route.path)).toEqual([
       "/configuracoes/cadastro",
@@ -157,6 +156,7 @@ describe("feature manifests", () => {
       "/admin",
       "/admin/dashboard",
       "/admin/users",
+      "/admin/tenants/:id/edit",
       "/admin/recursos-visuais",
       "/admin/tenants/:id/recursos-visuais",
       "/admin/asset-families",

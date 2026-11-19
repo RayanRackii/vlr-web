@@ -1,5 +1,6 @@
 import type { LucideIcon } from "lucide-react"
 import {
+  CalendarRange,
   ClipboardList,
   Package,
   ShoppingBag,
@@ -27,6 +28,7 @@ const CATEGORY_BY_KEY: Record<string, ModuleCatalogCategory> = {
   pmoc: "operations",
   inventory: "operations",
   os: "operations",
+  "resource-planning": "operations",
 }
 
 const ICON_BY_KEY: Record<string, LucideIcon> = {
@@ -35,6 +37,7 @@ const ICON_BY_KEY: Record<string, LucideIcon> = {
   os: Wrench,
   rentals: Tent,
   catalog: ShoppingBag,
+  "resource-planning": CalendarRange,
 }
 
 const I18N_PASCAL_BY_KEY: Record<string, string> = {
