@@ -36,16 +36,9 @@ export function resolveAssetCopyTone(
     }
   }
 
+  // A tenant with several families sees a mixed list: use the neutral copy, never one family's title.
   if (nonGeneric.length > 1) {
-    if (familySet.has("spaces") && !familySet.has("goods") && !familySet.has("electrical")) {
-      return "spaces"
-    }
-    if (familySet.has("goods") && !familySet.has("spaces") && !familySet.has("electrical")) {
-      return "goods"
-    }
-    if (familySet.has("electrical") && !familySet.has("spaces") && !familySet.has("goods")) {
-      return "electrical"
-    }
+    return "generic"
   }
 
   const normalizedModules = modules.map((module) => module.trim().toLowerCase())
