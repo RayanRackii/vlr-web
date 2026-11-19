@@ -252,8 +252,10 @@ describe("feature manifests", () => {
   })
 
   it("keeps the company profile route and navigation in its manifest", () => {
-    expect(companyManifest.routes.staff.map((route) => route.path)).toEqual(["/configuracoes/empresa"])
+    expect(companyManifest.routes.staff.map((route) => route.path)).toEqual(["/configuracoes/empresa", "/configuracoes/aparencia"])
+    expect(companyManifest.navigationItems.map((item) => item.to)).toEqual(["/configuracoes/empresa", "/configuracoes/aparencia"])
     expect(appNavigationItems).toContain(companyManifest.navigationItems[0])
+    expect(appNavigationItems).toContain(companyManifest.navigationItems[1])
     expect(navigationSource).toContain("...companyManifest.navigationItems")
     expect(appRoutesSource).toContain("companyManifest.routes.staff")
   })

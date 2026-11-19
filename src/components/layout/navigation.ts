@@ -97,6 +97,7 @@ export type AppNavigationItem = {
     | "nav.catalogCustomerGroups"
     | "nav.catalogNotifications"
     | "nav.company"
+    | "nav.portalAppearance"
   to: string
   tabs?: readonly NavigationTab[]
   icon: LucideIcon
@@ -229,7 +230,7 @@ const productNavigationSections: readonly AppNavigationSection[] = [
   { titleKey: "nav.sections.customers", items: navigationItemsAt("/pessoas-e-acesso", "/grupos") },
   { titleKey: "nav.sections.portal", items: navigationItemsAt("/configuracoes/menu", "/configuracoes/layout") },
   { titleKey: "nav.sections.settings", defaultCollapsed: true, items: navigationItemsAt(
-    "/configuracoes/agenda", "/catalogo/configuracoes", "/notificacoes", "/configuracoes/empresa",
+    "/configuracoes/agenda", "/catalogo/configuracoes", "/notificacoes", "/configuracoes/empresa", "/configuracoes/aparencia",
   ) },
 ]
 
