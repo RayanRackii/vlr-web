@@ -570,10 +570,10 @@
       "fieldRequired": "Preencha este campo."
     },
     "login": {
-      "title": "Entrar",
+      "title": "Bem-vindo de volta",
       "welcomeDefault": "Bem-vindo de volta! Entre para fazer reservas e acompanhar suas novidades.",
       "emailPlaceholder": "voce@email.com",
-      "subtitle": "Use o e-mail e a senha da sua conta nesta empresa.",
+      "subtitle": "Acesse sua conta para fazer reservas e acompanhar suas atividades.",
       "submit": "Entrar",
       "submitting": "Entrando...",
       "toastSuccess": "Login realizado!",

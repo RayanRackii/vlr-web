@@ -570,10 +570,10 @@
       "fieldRequired": "Fill in this field."
     },
     "login": {
-      "title": "Sign in",
+      "title": "Welcome back",
       "welcomeDefault": "Welcome back! Sign in to make bookings and keep up with your updates.",
       "emailPlaceholder": "you@email.com",
-      "subtitle": "Use your email and password for this company.",
+      "subtitle": "Sign in to book and keep track of your activity.",
       "submit": "Sign in",
       "submitting": "Signing in...",
       "toastSuccess": "Signed in!",

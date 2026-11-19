@@ -89,13 +89,13 @@ describe("logged-out portal language switch", () => {
   it("switches login copy immediately and keeps the choice", async () => {
     const first = renderPortal("/t/ficc")
     expect(
-      await screen.findByRole("heading", { name: "Entrar" }),
+      await screen.findByRole("heading", { name: "Bem-vindo de volta" }),
     ).toBeInTheDocument()
 
     await chooseLanguage("English")
 
     expect(
-      await screen.findByRole("heading", { name: "Sign in" }),
+      await screen.findByRole("heading", { name: "Welcome back" }),
     ).toBeInTheDocument()
     expect(window.localStorage.getItem("i18nextLng")).toBe("en")
     expect(document.documentElement.lang).toBe("en")
@@ -103,10 +103,10 @@ describe("logged-out portal language switch", () => {
 
     renderPortal("/t/ficc")
     expect(
-      await screen.findByRole("heading", { name: "Sign in" }),
+      await screen.findByRole("heading", { name: "Welcome back" }),
     ).toBeInTheDocument()
     expect(
-      screen.queryByRole("heading", { name: "Entrar" }),
+      screen.queryByRole("heading", { name: "Bem-vindo de volta" }),
     ).not.toBeInTheDocument()
   })
 

@@ -570,10 +570,10 @@
       "fieldRequired": "Completa este campo."
     },
     "login": {
-      "title": "Entrar",
+      "title": "Bienvenido de nuevo",
       "welcomeDefault": "¡Bienvenido de nuevo! Inicia sesión para hacer reservas y ver tus novedades.",
       "emailPlaceholder": "tu@email.com",
-      "subtitle": "Usa el correo y la contraseña de tu cuenta en esta empresa.",
+      "subtitle": "Accede a tu cuenta para reservar y seguir tu actividad.",
       "submit": "Entrar",
       "submitting": "Entrando...",
       "toastSuccess": "¡Sesión iniciada!",
