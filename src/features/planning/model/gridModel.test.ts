@@ -73,15 +73,26 @@ describe("day positions", () => {
   it("keeps a started job past its end alive until now, and flags it overdue", () => {
     const running = allocation({ status: "Running", isOverdue: true, actualStartAt: at(DAY, "10:00"), plannedWorkEnd: at(DAY, "10:30"), occupiedEnd: at(DAY, "10:30"), occupiedStart: at(DAY, "10:00") })
     const [block] = buildDayModel(agenda([running]), DAY, ZONE, NOW)[0].blocks
-    expect(block.end).toBe(11 * 60)
+    expect(block.end).toBe(1440)
+    expect(block.continuesAfter).toBe(true)
     expect(block.overdue).toBe(true)
     expect(block.tone).toBe("running")
-    expect(effectiveWindow(running, NOW).end).toBe(new Date(NOW).toISOString())
+    expect(effectiveWindow(running, NOW, Date.parse(agenda([]).to)).end).toBe(agenda([]).to)
+  })
+
+  it("shows the asset busy on a future day while a started job is unreleased", () => {
+    const running = allocation({ status: "Running", isOverdue: true, actualStartAt: at(DAY, "10:00"), occupiedStart: at(DAY, "10:00"), occupiedEnd: at(DAY, "10:30"), plannedWorkEnd: at(DAY, "10:30") })
+    const week = { ...agenda([running]), to: at("2026-11-23", "00:00") }
+    const model = buildWeekModel(week, "2026-11-16", ZONE, NOW)
+    const cells = model.rows[0].cells
+    expect(cells[4].busyMinutes).toBe(1440)
+    expect(cells[6].blocks[0].overdue).toBe(true)
+    expect(cells[1].blocks).toEqual([])
   })
 
   it("starts a job that began early at its real start", () => {
     const early = allocation({ status: "Running", actualStartAt: at(DAY, "09:00") })
-    expect(effectiveWindow(early, NOW).start).toBe(at(DAY, "09:00"))
+    expect(effectiveWindow(early, NOW, NOW).start).toBe(at(DAY, "09:00"))
   })
 
   it("marks an expired scheduled row without changing its position", () => {
@@ -156,9 +167,20 @@ describe("working hours shading", () => {
     expect(closedSegments(resource({ hoursPolicy: "WithinHours", workingHours: hours }), "2026-11-19")).toEqual([{ start: 0, end: 1440 }])
   })
 
-  it("reads a close time of midnight as the end of the day", () => {
+  it("skips a window whose close is not after its open, like the API (close 00:00)", () => {
     const night = [{ dayOfWeek: 3, openTime: "18:00:00", closeTime: "00:00:00" }]
-    expect(workingSegments(resource({ hoursPolicy: "WithinHours", workingHours: night }), DAY)).toEqual([{ start: 1080, end: 1440 }])
+    expect(workingSegments(resource({ hoursPolicy: "WithinHours", workingHours: night }), DAY)).toEqual([])
+    expect(closedSegments(resource({ hoursPolicy: "WithinHours", workingHours: night }), DAY)).toEqual([{ start: 0, end: 1440 }])
+  })
+
+  it("reads a close of 23:59 or later as the end of the day", () => {
+    const late = [{ dayOfWeek: 3, openTime: "18:00:00", closeTime: "23:59:00" }]
+    expect(workingSegments(resource({ hoursPolicy: "WithinHours", workingHours: late }), DAY)).toEqual([{ start: 1080, end: 1440 }])
+  })
+
+  it("keeps a normal window as it is", () => {
+    const normal = [{ dayOfWeek: 3, openTime: "08:00:00", closeTime: "17:30:00" }]
+    expect(workingSegments(resource({ hoursPolicy: "WithinHours", workingHours: normal }), DAY)).toEqual([{ start: 480, end: 1050 }])
   })
 
   it("puts the shading on the row", () => {

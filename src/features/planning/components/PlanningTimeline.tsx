@@ -68,7 +68,10 @@ export function PlanningDayGrid({ rows, timeZone, nowMinutes, canCreate, onSelec
                 <p className="truncate text-xs text-muted-foreground">{[row.resource.tag, row.resource.unitName].filter(Boolean).join(" · ")}</p>
               </div>
               <div
+                // Mouse shortcut only: the "New allocation" button is the keyboard path, so the empty area is presentational.
+                role="presentation"
                 className={cn("relative", canCreate && "cursor-pointer")}
+
                 style={{ height }}
                 onClick={(event) => {
                   if (!canCreate || (event.target as HTMLElement).closest("[data-planning-block]")) return
@@ -180,6 +183,7 @@ export function PlanningWeekGrid({ days, rows, today, timeZone, canCreate, onSel
               <div
                 key={cell.date}
                 data-testid="planning-week-cell"
+                role="presentation"
                 className={cn("min-h-[5rem] min-w-0 space-y-1 border-l p-1.5", cell.closedAllDay && "bg-muted/60", canCreate && !cell.closedAllDay && "cursor-pointer hover:bg-muted/30")}
                 onClick={(event) => {
                   if (canCreate && !(event.target as HTMLElement).closest("[data-planning-block]")) onCreate(row.resource.assetId, cell.date)

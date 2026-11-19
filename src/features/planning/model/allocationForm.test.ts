@@ -6,6 +6,7 @@ import {
   isValid,
   previewKey,
   previewView,
+  scheduleChanged,
   toCreateRequest,
   toUpdateRequest,
   validate,
@@ -89,10 +90,9 @@ describe("request body", () => {
     expect(toCreateRequest(filled({ title: "" }), ZONE)).not.toBeNull()
   })
 
-  it("builds the patch with the version and zeroes cleared buffers", () => {
-    expect(toUpdateRequest(filled({ notes: "" }), ZONE, "AAAA")).toEqual({
-      expectedVersion: "AAAA", title: "Peça A", notes: "", workStart: "2026-11-18T12:00:00.000Z", workEnd: "2026-11-18T13:00:00.000Z", prepMinutes: 0, cleanupMinutes: 0,
-    })
+  it("sends no prep or cleanup for an Unavailable block", () => {
+    const body = toCreateRequest(filled({ kind: "Unavailable", prepMinutes: "10", cleanupMinutes: "5" }), ZONE)
+    expect(body).toMatchObject({ kind: "Unavailable", prepMinutes: null, cleanupMinutes: null })
   })
 
   it("keys the preview by what it depends on, not by the title", () => {
@@ -125,6 +125,39 @@ describe("editing", () => {
     const body = toCreateRequest(valuesFromAllocation(stored, ZONE), ZONE)
     expect(body?.workStart).toBe(stored.plannedWorkStart)
     expect(body?.workEnd).toBe(stored.plannedWorkEnd)
+  })
+})
+
+describe("update request shape", () => {
+  const original: PlanningAllocation = {
+    id: "x1", assetId: "a1", assetName: "Impressora", unitId: "u", kind: "Use", title: "Peça A", notes: "obs", quantity: 1,
+    plannedWorkStart: "2026-11-18T12:00:00.000Z", plannedWorkEnd: "2026-11-18T13:00:00.000Z",
+    occupiedStart: "2026-11-18T12:00:00.000Z", occupiedEnd: "2026-11-18T13:00:00.000Z",
+    timeZoneId: ZONE, status: "Scheduled", source: "Manual", referenceLabel: "", createdByUserId: null, cancelReason: "",
+    actualStartAt: null, actualWorkFinishedAt: null, actualReleaseAt: null, isBlocking: true, isExpired: false, isOverdue: false, version: "AAAA",
+  }
+  const form = (over: Partial<AllocationFormValues> = {}) => ({ ...valuesFromAllocation(original, ZONE), ...over })
+
+  it("sends only the title for a title edit", () => {
+    expect(toUpdateRequest(form({ title: "Peça A2" }), ZONE, original)).toEqual({ expectedVersion: "AAAA", title: "Peça A2" })
+  })
+
+  it("sends only the notes for a notes edit, and an empty string when cleared", () => {
+    expect(toUpdateRequest(form({ notes: "outra" }), ZONE, original)).toEqual({ expectedVersion: "AAAA", notes: "outra" })
+    expect(toUpdateRequest(form({ notes: "" }), ZONE, original)).toEqual({ expectedVersion: "AAAA", notes: "" })
+  })
+
+  it("sends the window and buffers together when the schedule changes", () => {
+    expect(toUpdateRequest(form({ endTime: "11:00" }), ZONE, original)).toEqual({
+      expectedVersion: "AAAA", workStart: "2026-11-18T12:00:00.000Z", workEnd: "2026-11-18T14:00:00.000Z", prepMinutes: 0, cleanupMinutes: 0,
+    })
+    expect(toUpdateRequest(form({ prepMinutes: "10" }), ZONE, original)).toMatchObject({ workStart: original.plannedWorkStart, prepMinutes: 10, cleanupMinutes: 0 })
+  })
+
+  it("sends nothing but the version when nothing changed", () => {
+    expect(toUpdateRequest(form(), ZONE, original)).toEqual({ expectedVersion: "AAAA" })
+    expect(scheduleChanged(form(), original, ZONE)).toBe(false)
+    expect(scheduleChanged(form({ startTime: "10:30" }), original, ZONE)).toBe(true)
   })
 })
 

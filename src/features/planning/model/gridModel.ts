@@ -81,9 +81,12 @@ export function workingSegments(resource: Pick<PlanningAgendaResource, "hoursPol
   for (const window of resource.workingHours as readonly WorkingWindow[]) {
     if (window.dayOfWeek !== weekday) continue
     const open = clockToMinutes(window.openTime)
-    const close = clockToMinutes(window.closeTime)
-    if (open === null || close === null) continue
-    segments.push({ start: open, end: close <= open ? DAY_MINUTES : close })
+    const rawClose = clockToMinutes(window.closeTime)
+    if (open === null || rawClose === null) continue
+    // Same reading as the API: close at 23:59 or later is the end of the day; close <= open (including 00:00) is skipped.
+    const close = rawClose >= 23 * 60 + 59 ? DAY_MINUTES : rawClose
+    if (close <= open) continue
+    segments.push({ start: open, end: close })
   }
   return mergeSegments(segments)
 }
@@ -123,15 +126,17 @@ export function blockTone(allocation: Pick<PlanningAllocation, "kind" | "status"
 
 /**
  * The span an allocation takes on the grid. A started allocation holds the asset until it is
- * released, so once it is past its end it keeps growing to "now" instead of vanishing.
+ * released (the API blocks it with no end), so once it is past its end it is drawn to the end of the
+ * visible range, and reported as extended (overdue).
  */
-export function effectiveWindow(allocation: PlanningAllocation, nowMs: number): { start: string; end: string } {
+export function effectiveWindow(allocation: PlanningAllocation, nowMs: number, rangeEndMs: number): { start: string; end: string; extended: boolean } {
   let start = allocation.occupiedStart
   let end = allocation.occupiedEnd
   const held = allocation.status === "Running" || allocation.status === "Cleaning"
   if (held && allocation.actualStartAt && Date.parse(allocation.actualStartAt) < Date.parse(start)) start = allocation.actualStartAt
-  if (held && nowMs > Date.parse(end)) end = new Date(nowMs).toISOString()
-  return { start, end }
+  const extended = held && (allocation.isOverdue || nowMs > Date.parse(end))
+  if (extended && rangeEndMs > Date.parse(end)) end = new Date(rangeEndMs).toISOString()
+  return { start, end, extended }
 }
 
 function segmentsOf(allocation: PlanningAllocation, window: Segment, date: string, zone: string): PlacedBlock["segments"] {
@@ -161,8 +166,8 @@ export function assignLanes<T extends { start: number; end: number; lane: number
   return Math.max(laneEnds.length, 1)
 }
 
-function placeBlock(allocation: PlanningAllocation, resource: PlanningAgendaResource, date: string, zone: string, nowMs: number): PlacedBlock | null {
-  const span = effectiveWindow(allocation, nowMs)
+function placeBlock(allocation: PlanningAllocation, resource: PlanningAgendaResource, date: string, zone: string, nowMs: number, rangeEndMs: number): PlacedBlock | null {
+  const span = effectiveWindow(allocation, nowMs, rangeEndMs)
   const window = dayWindow(span.start, span.end, date, zone)
   if (!window) return null
   const startsBefore = (zonedDayAndMinutes(span.start, zone)?.dayKey ?? date) < date
@@ -180,7 +185,7 @@ function placeBlock(allocation: PlanningAllocation, resource: PlanningAgendaReso
     continuesAfter: endsAfter,
     tone: blockTone(allocation),
     expired: allocation.isExpired,
-    overdue: allocation.isOverdue,
+    overdue: allocation.isOverdue || span.extended,
     segments: segmentsOf(allocation, window, date, zone),
   }
 }
@@ -193,7 +198,7 @@ function blocksFor(agenda: PlanningAgenda, resource: PlanningAgendaResource, dat
   const zone = zoneOf(resource, fallbackZone)
   return agenda.items
     .filter((item) => item.assetId === resource.assetId && item.status !== "Cancelled")
-    .flatMap((item) => placeBlock(item, resource, date, zone, nowMs) ?? [])
+    .flatMap((item) => placeBlock(item, resource, date, zone, nowMs, Date.parse(agenda.to)) ?? [])
 }
 
 export function buildDayModel(agenda: PlanningAgenda, date: string, fallbackZone: string, nowMs: number): DayRowModel[] {

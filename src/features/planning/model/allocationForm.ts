@@ -158,23 +158,37 @@ export function toCreateRequest(values: AllocationFormValues, zone: string): Cre
     notes: values.notes.trim() || null,
     workStart: window.start.toISOString(),
     workEnd: window.end.toISOString(),
-    prepMinutes: buffer(values.prepMinutes),
-    cleanupMinutes: buffer(values.cleanupMinutes),
+    // An Unavailable block has no prep or cleanup.
+    prepMinutes: values.kind === "Unavailable" ? null : buffer(values.prepMinutes),
+    cleanupMinutes: values.kind === "Unavailable" ? null : buffer(values.cleanupMinutes),
   }
 }
 
-export function toUpdateRequest(values: AllocationFormValues, zone: string, expectedVersion: string): UpdateAllocationRequest | null {
+/** Whether the edit moves the work window or the buffers (the only changes the API re-checks for hours and conflicts). */
+export function scheduleChanged(values: AllocationFormValues, original: PlanningAllocation, zone: string): boolean {
+  const before = valuesFromAllocation(original, original.timeZoneId || zone)
+  const keys = ["startDate", "startTime", "endDate", "endTime", "prepMinutes", "cleanupMinutes"] as const
+  return keys.some((key) => values[key].trim() !== before[key])
+}
+
+/**
+ * Patch with only what changed, so a title or notes edit never makes the API re-run the plannable,
+ * working-hours and conflict checks. When the window or a buffer changes, the window and both
+ * buffers go together.
+ */
+export function toUpdateRequest(values: AllocationFormValues, zone: string, original: PlanningAllocation): UpdateAllocationRequest | null {
   const create = toCreateRequest(values, zone)
   if (!create) return null
-  return {
-    expectedVersion,
-    title: create.title,
-    notes: create.notes ?? "",
-    workStart: create.workStart,
-    workEnd: create.workEnd,
-    prepMinutes: create.prepMinutes ?? 0,
-    cleanupMinutes: create.cleanupMinutes ?? 0,
+  const request: UpdateAllocationRequest = { expectedVersion: original.version }
+  if (create.title !== original.title.trim()) request.title = create.title
+  if ((create.notes ?? "") !== original.notes.trim()) request.notes = create.notes ?? ""
+  if (scheduleChanged(values, original, zone)) {
+    request.workStart = create.workStart
+    request.workEnd = create.workEnd
+    request.prepMinutes = create.prepMinutes ?? 0
+    request.cleanupMinutes = create.cleanupMinutes ?? 0
   }
+  return request
 }
 
 export type PreviewView = {

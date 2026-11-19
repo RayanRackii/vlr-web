@@ -20,6 +20,7 @@ import {
   isValid,
   previewKey,
   previewView,
+  scheduleChanged,
   toCreateRequest,
   toUpdateRequest,
   validate,
@@ -89,18 +90,20 @@ function AllocationForm({ target, onOpenChange, onSaved }: Omit<Props, "target">
 
   const errors = validate(values, zone)
   const request = toCreateRequest(values, zone)
-  const key = useDebounced(previewKey(request), 350)
+  // A title or notes edit is not re-checked by the API, so it needs no preview either.
+  const relevant = !editing || scheduleChanged(values, editing, zone)
+  const key = useDebounced(relevant ? previewKey(request) : null, 350)
   const preview = useQuery({
     queryKey: tenantKey("staff", tenantId, "planning-preview", key),
     queryFn: () => previewAllocation(request!),
-    enabled: key !== null && request !== null && previewKey(request) === key,
+    enabled: relevant && key !== null && request !== null && previewKey(request) === key,
     staleTime: 0,
     gcTime: 0,
     retry: false,
   })
-  const view = preview.data ? previewView(preview.data, editing?.id ?? null) : null
+  const view = relevant && preview.data ? previewView(preview.data, editing?.id ?? null) : null
   const previewError = preview.error ? describePlanningError(preview.error) : null
-  const checking = key !== previewKey(request) || preview.isFetching
+  const checking = relevant && (key !== previewKey(request) || preview.isFetching)
   const blocked = view !== null && !view.feasible
   const canSubmit = isValid(errors) && !busy && !checking && !blocked
 
@@ -112,7 +115,7 @@ function AllocationForm({ target, onOpenChange, onSaved }: Omit<Props, "target">
     setFailure(null)
     try {
       const saved = editing
-        ? await updateAllocation(editing.id, toUpdateRequest(values, zone, editing.version)!)
+        ? await updateAllocation(editing.id, toUpdateRequest(values, zone, editing)!)
         : await createAllocation(request)
       await queryClient.invalidateQueries({ queryKey: tenantKey("staff", tenantId, "planning-agenda") }).catch(() => undefined)
       toast.success(t(editing ? "planning.dialog.updated" : "planning.dialog.created"))
@@ -211,10 +214,10 @@ function AllocationForm({ target, onOpenChange, onSaved }: Omit<Props, "target">
 
         <div aria-live="polite" className="space-y-2 text-sm" data-testid="planning-preview">
           {request && checking && !failure && <p className="text-muted-foreground">{t("planning.preview.checking")}</p>}
-          {request && !checking && view?.feasible && !failure && <p className="text-success">{t("planning.preview.feasible")}</p>}
+          {request && relevant && !checking && view?.feasible && !failure && <p className="text-success">{t("planning.preview.feasible")}</p>}
           {hoursReason && <PlanningHoursNotice reason={hoursReason} />}
           <PlanningConflictList conflicts={conflicts} timeZone={zone} />
-          {previewError && !failure && <p className="text-xs text-muted-foreground">{t("planning.preview.unavailable")}</p>}
+          {previewError && !failure && <p className="text-xs text-muted-foreground">{previewError.message}</p>}
         </div>
         {failure && !failure.hoursViolation && failure.conflicts.length === 0 && <p role="alert" className="text-sm text-destructive">{failure.message}</p>}
         {failure && (failure.hoursViolation || failure.conflicts.length > 0) && <p role="alert" className="text-xs text-destructive">{failure.message}</p>}

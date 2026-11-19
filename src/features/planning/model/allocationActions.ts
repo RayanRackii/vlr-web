@@ -36,6 +36,7 @@ export function allocationActions(allocation: PlanningAllocation, can: Can, user
   const isCreator = userId !== null && allocation.createdByUserId === userId
   return {
     ...none,
+    // UX choice: an expired Scheduled allocation no longer blocks and cannot be started, so editing it is hidden too.
     edit: isAdmin && scheduled && !allocation.isExpired,
     start: mayRun && scheduled && !allocation.isExpired,
     workFinished: mayRun && allocation.status === "Running",
