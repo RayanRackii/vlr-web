@@ -2,6 +2,7 @@ import { CalendarDays } from "lucide-react"
 import { lazyPage } from "@/routes/lazyPage"
 import type { AppNavigationItem } from "@/components/layout/navigation"
 import { RedirectKeepingLocation } from "@/routes/legacyScreenRedirect"
+import { planningManifest } from "@/features/planning/manifest"
 
 const AgendasPage = lazyPage(() => import("./AgendasPage"), "AgendasPage")
 
@@ -16,6 +17,7 @@ export const agendaManifest = {
       { labelKey: "nav.agendasOverview", to: "/agendas", modules, permissions, anyOf: true },
       { labelKey: "nav.agendasResources", to: "/agendas/recursos", modules: ["rentals"], permission: "rentals.schedule.read" },
       { labelKey: "nav.agendasProduct", to: "/agendas/produto", modules: ["catalog"], permission: "catalog.orders.read" },
+      planningManifest.navigationChild,
     ] },
   ] satisfies readonly AppNavigationItem[],
   routes: {
@@ -24,6 +26,7 @@ export const agendaManifest = {
       { path: "/agendas", element: <AgendasPage view="overview" />, modules, anyOf: permissions },
       { path: "/agendas/recursos", element: <AgendasPage view="resources" />, modules: ["rentals"], anyOf: ["rentals.schedule.read"] },
       { path: "/agendas/produto", element: <AgendasPage view="product" />, modules: ["catalog"], anyOf: ["catalog.orders.read"] },
+      ...planningManifest.routes.staff,
     ],
   },
 } as const

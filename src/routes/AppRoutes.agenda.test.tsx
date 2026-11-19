@@ -19,6 +19,10 @@ vi.mock("@/features/tenantPortal/services/tenantPortalService", async (original)
 vi.mock("@/features/rentals/services/rentalResourcesService", async (original) => ({
   ...await original<typeof import("@/features/rentals/services/rentalResourcesService")>(), listRentalAssetCategories: vi.fn(async () => []),
 }))
+vi.mock("@/features/planning/services/planningService", async (original) => ({
+  ...await original<typeof import("@/features/planning/services/planningService")>(),
+  getPlanningAgenda: vi.fn(async () => ({ from: "2026-11-18T03:00:00.000Z", to: "2026-11-19T03:00:00.000Z", resources: [], items: [], externalBusy: [] })),
+}))
 vi.mock("@/features/catalog/services/catalogService", async (original) => ({
   ...await original<typeof import("@/features/catalog/services/catalogService")>(), listCatalogProducts: vi.fn(async () => []), listCatalogOrders: vi.fn(async () => []),
 }))
@@ -77,6 +81,24 @@ describe("new staff agenda routes", () => {
   })
 })
 
+
+describe("planning agenda route", () => {
+  it("opens inside the staff layout with only resource-planning and its read permission", async () => {
+    access(["resource-planning"], ["resource-planning.agenda.read"]); visit("/agendas/planejamento")
+    expect(await screen.findByTestId("staff-layout")).toContainElement(await screen.findByRole("heading", { level: 1, name: "Planejamento" }))
+  })
+
+  it.each([
+    [[], ["resource-planning.agenda.read"]],
+    [["resource-planning"], []],
+    [["rentals", "catalog", "inventory"], ["resource-planning.agenda.read"]],
+    [["resource-planning"], ["rentals.schedule.read", "catalog.orders.read"]],
+  ] as const)("denies it without the module or permission: %j %j", async (modules, permissions) => {
+    access([...modules], [...permissions]); visit("/agendas/planejamento")
+    expect(await screen.findByRole("heading", { name: i18n.t("accessDenied.title") })).toBeInTheDocument()
+    expect(screen.queryByRole("heading", { level: 1, name: "Planejamento" })).not.toBeInTheDocument()
+  })
+})
 
 it.each([
   ["/catalogo/agenda-recursos", "rentals", "rentals.schedule.read", "Agenda de recursos"],
