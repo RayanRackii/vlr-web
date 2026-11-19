@@ -49,6 +49,7 @@ export function describePlanningError(error: unknown, t: TFunction = i18n.t.bind
   let message: string
   if (known) message = t(`planning.errors.${keyOf(error.code)}`)
   else if (error.code === "network") message = t("planning.errors.network")
+  else if (error.status === 400) message = t("planning.errors.bad_request")
   else if (error.status === 403) message = t("planning.errors.forbidden")
   else if (error.status >= 500) message = t("planning.errors.server")
   else message = t("planning.errors.unknown")

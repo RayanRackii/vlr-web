@@ -6,7 +6,7 @@ import { TenantTimeZoneContext } from "@/contexts/TenantTimeZoneContext"
 import { usePermissions } from "@/features/users/permissions/PermissionContext"
 import { renderWithQuery } from "@/test/renderWithQuery"
 import type { PlanningAgenda, PlanningAllocation } from "../schemas/planningSchemas"
-import { PlanningApiError, getPlanningAgenda, listPlanningAssets } from "../services/planningService"
+import { PlanningApiError, getAssetProfile, getPlanningAgenda, listPlanningAssets, putAssetProfile } from "../services/planningService"
 import { PlanningAgendaPage } from "./PlanningAgendaPage"
 
 vi.mock("@/features/users/permissions/PermissionContext", () => ({ usePermissions: vi.fn() }))
@@ -14,6 +14,8 @@ vi.mock("../services/planningService", async (importOriginal) => ({
   ...(await importOriginal<typeof import("../services/planningService")>()),
   getPlanningAgenda: vi.fn(),
   listPlanningAssets: vi.fn(),
+  getAssetProfile: vi.fn(),
+  putAssetProfile: vi.fn(),
 }))
 
 const ZONE = "America/Sao_Paulo"
@@ -145,5 +147,47 @@ describe("PlanningAgendaPage week view", () => {
     const cells = await screen.findAllByTestId("planning-week-cell")
     expect(within(cells[0]).getByText("Fora do horário")).toBeInTheDocument()
     expect(within(cells[1 + 6]).queryByText("Fora do horário")).not.toBeInTheDocument()
+  })
+})
+
+describe("availability from the agenda", () => {
+  const loadedProfile = { assetId: "a1", isConfigured: true, isPlannable: true, isRentalBacked: false, capacity: 1, hoursPolicy: "StartWithinHours", defaultPrepMinutes: 0, defaultCleanupMinutes: 0, workingHours: [{ dayOfWeek: 3, openTime: "08:00", closeTime: "18:00" }] }
+
+  beforeEach(() => {
+    vi.mocked(getAssetProfile).mockResolvedValue(loadedProfile)
+    vi.mocked(putAssetProfile).mockResolvedValue(loadedProfile)
+  })
+
+  it("keeps the resource names plain text without the availability permission", async () => {
+    visit()
+    expect(await screen.findByText("Impressora 3D")).toBeInTheDocument()
+    expect(screen.queryByTestId("planning-row-label")).not.toBeInTheDocument()
+  })
+
+  it("does not offer it when the module is not active", async () => {
+    vi.mocked(usePermissions).mockReturnValue({
+      activeModules: [], permissions: [], can: () => true, isLoading: false,
+      currentUser: { id: "u-1", tenantId: "t1" } as never, error: null, refresh: vi.fn(),
+    })
+    visit()
+    expect(await screen.findByText("Impressora 3D")).toBeInTheDocument()
+    expect(screen.queryByTestId("planning-row-label")).not.toBeInTheDocument()
+  })
+
+  it("opens the settings from a resource label and reloads the agenda shading after saving", async () => {
+    access(["resource-planning.agenda.read", "resource-planning.availability.write"])
+    const user = userEvent.setup()
+    visit()
+    const label = await screen.findByRole("button", { name: "Configurar disponibilidade de Impressora 3D" })
+    await waitFor(() => expect(getPlanningAgenda).toHaveBeenCalledTimes(1))
+    await user.click(label)
+    expect(await screen.findByRole("switch", { name: "Planejável" })).toBeChecked()
+    expect(getAssetProfile).toHaveBeenCalledWith("a1")
+
+    await user.click(screen.getByRole("button", { name: "Salvar" }))
+    await waitFor(() => expect(putAssetProfile).toHaveBeenCalledTimes(1))
+    // The agenda is fetched again so the closed hours are shaded from the new profile.
+    await waitFor(() => expect(getPlanningAgenda).toHaveBeenCalledTimes(2))
+    await waitFor(() => expect(screen.queryByRole("switch", { name: "Planejável" })).not.toBeInTheDocument())
   })
 })

@@ -3,16 +3,19 @@ import { api, getAxiosErrorPayload, isAxiosError } from "@/lib/api"
 import {
   allocationListSchema,
   allocationSchema,
+  assetProfileSchema,
   conflictSchema,
   planningAgendaSchema,
   planningAssetListSchema,
   previewSchema,
   type AllocationPreview,
+  type AssetProfile,
   type CreateAllocationRequest,
   type PlanningAgenda,
   type PlanningAllocation,
   type PlanningAsset,
   type PlanningConflict,
+  type PutAssetProfileRequest,
   type UpdateAllocationRequest,
   type UsageRequest,
 } from "../schemas/planningSchemas"
@@ -96,4 +99,12 @@ export function updateAllocation(id: string, body: UpdateAllocationRequest): Pro
 
 export function runAllocationUsage(id: string, body: UsageRequest): Promise<PlanningAllocation> {
   return call(() => api.post<unknown>(`/api/planning/allocations/${encodeURIComponent(id)}/usage`, body), allocationSchema)
+}
+
+export function getAssetProfile(assetId: string): Promise<AssetProfile> {
+  return call(() => api.get<unknown>(`/api/planning/assets/${encodeURIComponent(assetId)}/profile`), assetProfileSchema)
+}
+
+export function putAssetProfile(assetId: string, body: PutAssetProfileRequest): Promise<AssetProfile> {
+  return call(() => api.put<unknown>(`/api/planning/assets/${encodeURIComponent(assetId)}/profile`, body), assetProfileSchema)
 }

@@ -6504,10 +6504,82 @@
       "working_hours_required": "Define el horario de funcionamiento del recurso.",
       "rental_schedule_authority": "Este recurso es alquilable: su horario lo define la agenda de reservas.",
       "module_inactive": "El módulo de Planificación de recursos no está activo para esta empresa.",
+      "bad_request": "Algunos datos enviados no son válidos. Revisa los campos.",
       "network": "Sin conexión con el servidor. Revisa internet e inténtalo de nuevo.",
       "forbidden": "No tienes permiso para esta acción.",
       "server": "El servidor falló. Inténtalo de nuevo en un momento.",
       "unknown": "No se pudo completar. Inténtalo de nuevo."
+    },
+    "availability": {
+      "section": "Disponibilidad",
+      "sectionHint": "Define si este recurso se puede planificar y en qué horarios.",
+      "open": "Configurar disponibilidad",
+      "openFor": "Configurar la disponibilidad de {{name}}",
+      "title": "Disponibilidad para planificación",
+      "subtitle": "Reglas de uso de {{name}} en Planificación.",
+      "subtitleNoName": "Reglas de uso de este recurso en Planificación.",
+      "loading": "Cargando disponibilidad",
+      "retry": "Reintentar",
+      "plannable": "Planificable",
+      "plannableHint": "Si está activado, el recurso aparece en Planificación y acepta asignaciones. No lo vuelve alquilable.",
+      "policy": "Regla de horario",
+      "policies": {
+        "Anytime": {
+          "label": "Libre 24 horas",
+          "description": "Sin restricción de horario. El recurso se puede usar a cualquier hora, todos los días."
+        },
+        "StartWithinHours": {
+          "label": "Empezar en horario",
+          "description": "La asignación solo puede empezar dentro del horario de funcionamiento, pero puede terminar después (por ejemplo, una impresión que acaba de madrugada)."
+        },
+        "WithinHours": {
+          "label": "Todo dentro del horario",
+          "description": "La asignación completa, de inicio a fin, debe caber en el horario de funcionamiento. Fuera de él el sistema la rechaza."
+        }
+      },
+      "capacity": "Capacidad",
+      "prep": "Preparación predeterminada (min)",
+      "cleanup": "Limpieza predeterminada (min)",
+      "bufferHint": "Tiempo extra reservado antes y después de cada asignación. Capacidad 1: un uso a la vez.",
+      "hours": "Horario de funcionamiento",
+      "hoursHint": "Indica las ventanas de cada día. Un día desactivado está cerrado. Un cierre a las 23:59 vale hasta la medianoche.",
+      "anytimeNote": "Con la regla \"Libre 24 horas\" el horario de funcionamiento no se aplica. Los horarios guardados se conservan y vuelven a valer si cambias la regla.",
+      "days": {
+        "0": "Domingo",
+        "1": "Lunes",
+        "2": "Martes",
+        "3": "Miércoles",
+        "4": "Jueves",
+        "5": "Viernes",
+        "6": "Sábado"
+      },
+      "dayOpen": "{{day}}: abierto",
+      "closedDay": "Cerrado",
+      "copyToWeekdays": "Copiar a días hábiles",
+      "copyToWeekdaysFrom": "Copiar el horario de {{day}} de lunes a viernes",
+      "addWindow": "Agregar ventana",
+      "addWindowTo": "Agregar una ventana el {{day}}",
+      "removeWindow": "Quitar ventana de {{day}}",
+      "openAt": "{{day}}: abre a las",
+      "closeAt": "{{day}}: cierra a las",
+      "problems": {
+        "invalidTime": "Usa el formato HH:mm (24 horas).",
+        "closeBeforeOpen": "El fin debe ser posterior al inicio.",
+        "overlap": "Esta ventana se superpone con otra del mismo día.",
+        "hoursRequired": "Agrega al menos una ventana de horario, o elige \"Libre 24 horas\".",
+        "tooManyWindows": "Límite de {{max}} ventanas de horario alcanzado. Quita una para agregar otra.",
+        "invalidBuffer": "Indica minutos enteros de 0 a 1440."
+      },
+      "rental": {
+        "title": "Este recurso es alquilable",
+        "description": "Su horario viene de la agenda de Reservas (módulo Alquileres). Para cambiarlo, ajusta la agenda de reservas del recurso. Aquí no hay horario de funcionamiento para editar."
+      },
+      "versionConflict": "La disponibilidad fue modificada por otra persona desde que la abriste. Ciérrala y ábrela de nuevo para ver la versión actual.",
+      "saved": "Disponibilidad guardada.",
+      "save": "Guardar",
+      "saving": "Guardando...",
+      "cancel": "Cancelar",
+      "close": "Cerrar"
     },
     "dialog": {
       "createTitle": "Nueva asignación",
