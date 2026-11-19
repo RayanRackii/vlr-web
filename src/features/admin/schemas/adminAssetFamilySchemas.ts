@@ -27,7 +27,8 @@ export function isSeedAssetFamilyKey(key: string): boolean {
 
 export const adminAssetFamilyFieldSchema = z.object({
   key: z.string().min(1),
-  type: assetFamilyFieldTypeSchema,
+  // Tolerant: a v2 field type must not crash the admin list before the editor supports it.
+  type: assetFamilyFieldTypeSchema.or(z.string()),
   required: z.boolean(),
   label: z.string().nullish(),
 })
@@ -153,7 +154,7 @@ export function adminAssetFamilyToFormValues(
     isActive: family.isActive,
     fields: family.fields.map((field) => ({
       key: field.key,
-      type: field.type,
+      type: field.type as AssetFamilyFieldType,
       required: field.required,
       label: field.label ?? "",
     })),

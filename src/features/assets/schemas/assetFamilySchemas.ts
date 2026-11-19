@@ -13,6 +13,15 @@ export const assetFamilyFieldSchema = z.object({
   type: z.enum(["text", "number", "boolean"]).or(z.string()),
   required: z.boolean().default(false),
   label: z.string().nullish(),
+  help: z.string().nullish(),
+  unit: z.string().nullish(),
+  min: z.number().nullish(),
+  max: z.number().nullish(),
+  decimals: z.number().int().nullish(),
+  options: z.array(z.string()).nullish(),
+  maxLength: z.number().int().nullish(),
+  group: z.string().nullish(),
+  archived: z.boolean().optional(),
 })
 
 export type AssetFamilyField = z.infer<typeof assetFamilyFieldSchema>
@@ -21,7 +30,10 @@ export const assetFamilySchema = z.object({
   id: guidLikeIdSchema,
   key: z.string().min(1),
   label: z.string().min(1),
-  fields: z.array(assetFamilyFieldSchema).default([]),
+  fields: z
+    .array(assetFamilyFieldSchema)
+    .default([])
+    .transform((fields) => fields.filter((field) => !field.archived)),
   sortOrder: z.number().int(),
   isActive: z.boolean(),
 })

@@ -147,12 +147,12 @@ describe("admin asset family form schema", () => {
 })
 
 describe("admin asset family response schema", () => {
-  it("parses the detail list and rejects an unknown field type", () => {
+  it("parses the detail list and tolerates a v2 field type", () => {
     expect(adminAssetFamilyListSchema.safeParse([family]).success).toBe(true)
     expect(
       adminAssetFamilyListSchema.safeParse([
         { ...family, fields: [{ key: "x", type: "date", required: false, label: null }] },
       ]).success,
-    ).toBe(false)
+    ).toBe(true)
   })
 })

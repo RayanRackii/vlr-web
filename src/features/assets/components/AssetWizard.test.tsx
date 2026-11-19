@@ -371,6 +371,22 @@ describe("AssetWizard validity gate", () => {
 })
 
 // The wizard uses replacement bulk rows in both create and edit modes.
+describe("AssetWizard typed attribute values", () => {
+  it("shows typed stored values (number, boolean) when editing", async () => {
+    vi.clearAllMocks()
+    const asset = assetSchema.parse({ id: CREATED_ID, tenantId: UNIT_ID, unitId: UNIT_ID, categoryId: CATEGORY_ID, familyId: FAMILY_ID, name: "Sala 1", tag: "S-01", status: "Active", isRentable: false, requiresMaintenance: false, createdAt: "2026-10-25T00:00:00Z", attributes: { capacity: 12, covered: true } })
+    vi.mocked(getAssetById).mockResolvedValue(asset)
+    vi.mocked(getAssetPricings).mockResolvedValue([])
+    renderWizard("edit", [{ ...families[0], fields: [
+      { key: "capacity", type: "number", required: false, label: "Capacidade" },
+      { key: "covered", type: "boolean", required: false, label: "Coberta" },
+    ] }])
+    const capacity = await screen.findByRole("spinbutton", { name: /^Capacidade/ })
+    await waitFor(() => expect(capacity).toHaveValue(12))
+    expect(screen.getByRole("switch", { name: /^Coberta/ })).toBeChecked()
+  })
+})
+
 describe("AssetWizard pricing units", () => {
   beforeEach(() => {
     vi.clearAllMocks()

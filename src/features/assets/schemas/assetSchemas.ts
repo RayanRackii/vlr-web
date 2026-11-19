@@ -25,6 +25,20 @@ export const assetStatusResponseSchema = z.union([
     .transform((value) => assetStatusByIndex[value]),
 ])
 
+/**
+ * Stored attribute values may be legacy strings or typed JSON (number, boolean,
+ * array of strings). Readers must accept all shapes.
+ */
+export const assetAttributeValueSchema = z.union([
+  z.string(),
+  z.number(),
+  z.boolean(),
+  z.array(z.string()),
+  z.null(),
+])
+
+export type AssetAttributeValue = z.infer<typeof assetAttributeValueSchema>
+
 export const assetSchema = z.object({
   id: z.string().uuid(),
   tenantId: z.string().uuid(),
@@ -32,7 +46,7 @@ export const assetSchema = z.object({
   categoryId: z.string().uuid(),
   familyId: guidLikeIdSchema,
   attributes: z
-    .record(z.string(), z.string().nullable())
+    .record(z.string(), assetAttributeValueSchema)
     .default({}),
   name: z.string().min(1),
   tag: z.string().min(1),
