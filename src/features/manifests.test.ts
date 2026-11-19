@@ -5,6 +5,8 @@ import { holdsRoutePermission } from "@/features/users/permissions/permissionGro
 import appRoutesSource from "@/routes/AppRoutes.tsx?raw"
 import navigationSource from "@/components/layout/navigation.ts?raw"
 import { appNavigationItems } from "@/components/layout/navigation"
+import { agendaManifest } from "@/features/agenda/manifest"
+import { planningManifest } from "@/features/planning/manifest"
 import { catalogManifest } from "@/features/catalog/manifest"
 import { tenantPortalManifest } from "@/features/tenantPortal/manifest"
 import { assetsManifest } from "@/features/assets/manifest"
@@ -20,6 +22,26 @@ import { onboardingManifest } from "@/features/onboarding/manifest"
 import { dashboardManifest } from "@/features/dashboard/manifest"
 import { usersManifest } from "@/features/users/manifest"
 import { workOrdersManifest } from "@/features/workOrders/manifest"
+
+describe("planning manifest", () => {
+  it("gates the Planejamento agenda by its own module only", () => {
+    expect(planningManifest.modules).toEqual(["resource-planning"])
+    expect(planningManifest.navigationChild).toMatchObject({ labelKey: "nav.agendasPlanning", to: "/agendas/planejamento", modules: ["resource-planning"], permission: "resource-planning.agenda.read" })
+    expect(planningManifest.routes.staff.map((route) => route.path)).toEqual(["/agendas/planejamento"])
+    for (const route of planningManifest.routes.staff) {
+      expect(route.modules).toEqual(["resource-planning"])
+      expect(route.anyOf).toEqual(["resource-planning.agenda.read"])
+    }
+  })
+
+  it("mounts the route and the nav entry through the Agendas group", () => {
+    expect(agendaManifest.routes.staff.map((route) => route.path)).toContain("/agendas/planejamento")
+    const group = agendaManifest.navigationItems[0]
+    expect(group.children.map((child) => child.to)).toEqual(["/agendas", "/agendas/recursos", "/agendas/produto", "/agendas/planejamento"])
+    expect(group.children[3]).toBe(planningManifest.navigationChild)
+    expect(appRoutesSource).toContain("agendaManifest.routes.staff")
+  })
+})
 
 describe("feature manifests", () => {
   it("keeps tenant portal and catalog routes in their manifests", () => {
