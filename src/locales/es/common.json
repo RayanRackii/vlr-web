@@ -5195,6 +5195,7 @@
     "assetFamilies": {
       "title": "Familias de recursos",
       "description": "Catálogo global de los formularios de registro. La clave es única y no cambia después de crearla. Las familias del sistema no se pueden desactivar ni eliminar.",
+      "readOnlyNotice": "Esta familia usa opciones de campo que el editor aún no admite. Podrá editarse después de la actualización.",
       "includeInactive": "Incluir inactivas",
       "seedBadge": "Sistema",
       "statusActive": "Activa",

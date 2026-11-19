@@ -35,6 +35,7 @@ import {
   type PricingEditorState,
 } from "@/features/assets/components/assetWizardPricing"
 import { AssetWizardPricingStep } from "@/features/assets/components/AssetWizardPricingStep"
+import { attributeToInputString } from "@/features/assets/lib/assetAttributeValues"
 import { getAssetWizardStepInvalidFields } from "@/features/assets/components/assetWizardStepSchema"
 import type { AssetCategory } from "@/features/assets/schemas/assetCategorySchemas"
 import {
@@ -47,6 +48,7 @@ import {
   toApiTimeOnly,
   toHtmlTimeInput,
   type Asset,
+  type AssetAttributeValue,
   type AssetStatus,
 } from "@/features/assets/schemas/assetSchemas"
 import type { Unit } from "@/features/assets/schemas/unitSchemas"
@@ -169,13 +171,13 @@ function queueWriteFields(form: WizardFormState): {
 
 function attributesFromAsset(
   fields: readonly AssetFamilyField[],
-  stored: Record<string, string | null> | undefined,
+  stored: Record<string, AssetAttributeValue> | undefined,
 ): Record<string, string> {
   const values = emptyAttributesFromFields(fields)
   for (const field of fields) {
     const raw = stored?.[field.key]
     if (raw != null) {
-      values[field.key] = raw
+      values[field.key] = attributeToInputString(raw)
     }
   }
   return values
