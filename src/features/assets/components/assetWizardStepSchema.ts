@@ -5,12 +5,13 @@ import {
   isPricingEditorValid,
   type PricingEditorState,
 } from "@/features/assets/components/assetWizardPricing"
+import type { AttributeFormValue } from "@/features/assets/lib/assetAttributeValues"
 import {
   buildAttributesZodSchema,
   guidLikeIdSchema,
   type AssetFamilyField,
 } from "@/features/assets/schemas/assetFamilySchemas"
-import { toApiTimeOnly } from "@/features/assets/schemas/assetSchemas"
+import { toApiTimeOnly, type AssetAttributeValue } from "@/features/assets/schemas/assetSchemas"
 
 export type AssetWizardMode = "create" | "bulk" | "edit"
 
@@ -27,8 +28,10 @@ export type AssetWizardStepInput = {
   startNumber: number
   endNumber: number
   totalQuantity: number
-  attributes: Record<string, string>
+  attributes: Record<string, AttributeFormValue>
   familyFields: readonly AssetFamilyField[]
+  /** Stored raw attributes of the asset being edited; untouched values skip client validation. */
+  storedAttributes?: Readonly<Record<string, AssetAttributeValue>> | undefined
   isRentable: boolean
   queueEnabled: boolean
   queueOpeningTime: string
@@ -42,12 +45,13 @@ function generalStepSchema(
   mode: AssetWizardMode,
   rentalType: "Location" | "Good",
   familyFields: readonly AssetFamilyField[],
+  storedAttributes?: Readonly<Record<string, AssetAttributeValue>>,
 ): z.ZodType<unknown> {
   const shared = {
     unitId: guidLikeIdSchema,
     categoryId: guidLikeIdSchema,
     familyId: guidLikeIdSchema,
-    attributes: buildAttributesZodSchema(familyFields),
+    attributes: buildAttributesZodSchema(familyFields, undefined, storedAttributes),
   }
 
   if (mode === "bulk" && rentalType === "Location") {
@@ -178,6 +182,7 @@ function reviewStepSchema(input: AssetWizardStepInput) {
       input.mode,
       input.rentalType,
       input.familyFields,
+      input.storedAttributes,
     ),
     operation: assetWizardOperationStepSchema,
     pricing: input.isRentable ? assetWizardPricingStepSchema : z.unknown(),
@@ -189,7 +194,7 @@ export function getAssetWizardStepInvalidFields(
   input: AssetWizardStepInput,
 ): string[] {
   const result = stepId === "general"
-    ? generalStepSchema(input.mode, input.rentalType, input.familyFields).safeParse(generalValues(input))
+    ? generalStepSchema(input.mode, input.rentalType, input.familyFields, input.storedAttributes).safeParse(generalValues(input))
     : assetWizardOperationStepSchema.safeParse(operationValues(input))
 
   return result.success ? [] : result.error.issues.map((issue) => issue.path.join("."))
@@ -204,6 +209,7 @@ export function isAssetWizardStepValid(
       input.mode,
       input.rentalType,
       input.familyFields,
+      input.storedAttributes,
     ).safeParse(generalValues(input)).success
   }
 
