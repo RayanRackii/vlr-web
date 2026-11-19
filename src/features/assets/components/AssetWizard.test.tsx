@@ -185,7 +185,7 @@ describe("AssetWizard validity gate", () => {
       { key: "voltage", type: "number", required: true, label: "Voltagem" },
       { key: "model", type: "text", required: false, label: "Modelo" },
     ] }])
-    const voltage = screen.getByRole("spinbutton", { name: /^Voltagem/ })
+    const voltage = screen.getByRole("textbox", { name: /^Voltagem/ })
     expect(screen.getByText(i18n.t("assets.wizard.help.voltage"))).toBeInTheDocument()
     expect(voltage).toHaveAttribute("aria-required", "true")
     expect((voltage as HTMLInputElement).labels?.[0]).toHaveTextContent("*")
@@ -380,9 +380,40 @@ describe("AssetWizard typed attribute values", () => {
       { key: "capacity", type: "number", required: false, label: "Capacidade" },
       { key: "covered", type: "boolean", required: false, label: "Coberta" },
     ] }])
-    const capacity = await screen.findByRole("spinbutton", { name: /^Capacidade/ })
-    await waitFor(() => expect(capacity).toHaveValue(12))
+    const capacity = await screen.findByRole("textbox", { name: /^Capacidade/ })
+    await waitFor(() => expect(capacity).toHaveValue("12"))
     expect(screen.getByRole("switch", { name: /^Coberta/ })).toBeChecked()
+  })
+
+  it("sends typed attribute values on update: number, boolean and multiselect from a legacy string", async () => {
+    vi.clearAllMocks()
+    const user = userEvent.setup()
+    const asset = assetSchema.parse({ id: CREATED_ID, tenantId: UNIT_ID, unitId: UNIT_ID, categoryId: CATEGORY_ID, familyId: FAMILY_ID, name: "Impressora", tag: "I-01", status: "Active", isRentable: false, requiresMaintenance: false, createdAt: "2026-10-25T00:00:00Z", attributes: { size: "256", materials: "PLA, PETG" } })
+    vi.mocked(getAssetById).mockResolvedValue(asset)
+    vi.mocked(getAssetPricings).mockResolvedValue([])
+    vi.mocked(updateAsset).mockResolvedValue(asset)
+    renderWizard("edit", [{ ...families[0], fields: [
+      { key: "size", type: "number", required: false, label: "Tamanho", unit: "mm" },
+      { key: "covered", type: "boolean", required: false, label: "Coberta" },
+      { key: "materials", type: "multiselect", required: false, label: "Materiais", options: ["PLA", "PETG", "ABS"] },
+    ] }])
+    const size = await screen.findByRole("textbox", { name: /^Tamanho/ })
+    await waitFor(() => expect(size).toHaveValue("256"))
+    expect(screen.getByRole("button", { name: "PETG" })).toHaveAttribute("aria-pressed", "true")
+    await user.clear(size)
+    await user.type(size, "0,5")
+    await user.click(screen.getByRole("button", { name: "ABS" }))
+    while (screen.queryByRole("button", { name: i18n.t("assets.wizard.next") })) {
+      await user.click(nextButton())
+    }
+    await user.click(finishButton())
+
+    await waitFor(() => expect(updateAsset).toHaveBeenCalledTimes(1))
+    expect(vi.mocked(updateAsset).mock.calls[0]![1].attributes).toEqual({
+      size: 0.5,
+      covered: false,
+      materials: ["PLA", "PETG", "ABS"],
+    })
   })
 })
 

@@ -1,5 +1,5 @@
 import { toHtmlTimeInput } from "@/features/assets/schemas/assetSchemas"
-import { attributeToInputString } from "@/features/assets/lib/assetAttributeValues"
+import { attributeToInputString, toFormValue, type AttributeFormValue } from "@/features/assets/lib/assetAttributeValues"
 import { emptyAttributesFromFields, type AssetFamily } from "@/features/assets/schemas/assetFamilySchemas"
 import type { Unit } from "@/features/assets/schemas/unitSchemas"
 import type {
@@ -61,11 +61,11 @@ export function mergeTemplateOptions(
   return [...new Map(options.map((option) => [option.value, option])).values()]
 }
 
-function attributesFor(family: AssetFamily, editing: AdminRentalAsset | null): Record<string, string> {
+function attributesFor(family: AssetFamily, editing: AdminRentalAsset | null): Record<string, AttributeFormValue> {
   const values = emptyAttributesFromFields(family.fields)
   for (const field of family.fields) {
-    const stored = attributeToInputString(editing?.attributes?.[field.key])
-    if (stored !== "") values[field.key] = stored
+    const stored = editing?.attributes?.[field.key]
+    if (stored != null) values[field.key] = toFormValue(field, stored)
   }
   return values
 }

@@ -27,7 +27,17 @@ const family = {
   isActive: true,
 }
 
-function renderForm(props: { editing?: AdminRentalAsset | null; onSubmit?: (values: RentalResourceFormValues) => Promise<boolean> } = {}) {
+const printerFamily = {
+  ...family,
+  key: "printer_3d",
+  label: "Impressora 3D",
+  fields: [
+    { key: "build_x_mm", type: "number", required: false, label: "Volume X", unit: "mm" },
+    { key: "materials", type: "multiselect", required: false, label: "Materiais", options: ["PLA", "PETG", "ABS"] },
+  ],
+}
+
+function renderForm(props: { editing?: AdminRentalAsset | null; onSubmit?: (values: RentalResourceFormValues) => Promise<boolean>; families?: typeof family[] } = {}) {
   const onSubmit = props.onSubmit ?? vi.fn().mockResolvedValue(true)
   render(
     <TestPermissionProvider permissions={["rentals.assets.write"]}>
@@ -36,7 +46,7 @@ function renderForm(props: { editing?: AdminRentalAsset | null; onSubmit?: (valu
         editing={props.editing ?? null}
         units={[{ id, tenantId: id, name: "Matriz", isActive: true }]}
         categories={[{ id, name: "Quadra" }]}
-        families={[family]}
+        families={(props.families ?? [family]) as never}
         busy={false}
         readOnly={false}
         onSubmit={onSubmit}
@@ -84,5 +94,31 @@ describe("RentalResourceEditorForm family attributes", () => {
 
     await waitFor(() => expect(onSubmit).toHaveBeenCalledTimes(1))
     expect(vi.mocked(onSubmit).mock.calls[0]![0].attributes).toEqual({ voltage: "", brand: "Acme" })
+  })
+
+  it("submits a multiselect as an array and a number as a number, from a legacy string and an array", async () => {
+    const user = userEvent.setup()
+    const editing = {
+      id: "22222222-2222-2222-2222-222222222222", assetId: "33333333-3333-3333-3333-333333333333",
+      familyId: id, attributes: { materials: "PLA, PETG", build_x_mm: "256" }, unitId: id, categoryId: id, name: "Prusa", tag: "P1", type: "Good", totalQuantity: 1,
+    } as unknown as AdminRentalAsset
+    const onSubmit = renderForm({ editing, families: [printerFamily as never] })
+
+    expect(await screen.findByRole("button", { name: "PLA" })).toHaveAttribute("aria-pressed", "true")
+    expect(screen.getByRole("button", { name: "PETG" })).toHaveAttribute("aria-pressed", "true")
+    await user.click(screen.getByRole("button", { name: "ABS" }))
+    await user.clear(screen.getByLabelText(/Volume X/))
+    await user.type(screen.getByLabelText(/Volume X/), "300,5")
+    const save = screen.getByRole("button", { name: i18n.t("rentals.resources.saveEdit") })
+    await waitFor(() => expect(save).toBeEnabled())
+    await user.click(save)
+
+    await waitFor(() => expect(onSubmit).toHaveBeenCalledTimes(1))
+    const values = vi.mocked(onSubmit).mock.calls[0]![0]
+    expect(values.attributes).toEqual({ build_x_mm: "300,5", materials: ["PLA", "PETG", "ABS"] })
+    expect(toCreateRentableRequest(values, undefined, printerFamily as never).attributes).toEqual({
+      build_x_mm: 300.5,
+      materials: ["PLA", "PETG", "ABS"],
+    })
   })
 })

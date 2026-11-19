@@ -5,6 +5,7 @@ import {
   isPricingEditorValid,
   type PricingEditorState,
 } from "@/features/assets/components/assetWizardPricing"
+import type { AttributeFormValue } from "@/features/assets/lib/assetAttributeValues"
 import {
   buildAttributesZodSchema,
   guidLikeIdSchema,
@@ -27,7 +28,7 @@ export type AssetWizardStepInput = {
   startNumber: number
   endNumber: number
   totalQuantity: number
-  attributes: Record<string, string>
+  attributes: Record<string, AttributeFormValue>
   familyFields: readonly AssetFamilyField[]
   isRentable: boolean
   queueEnabled: boolean

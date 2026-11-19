@@ -34,9 +34,9 @@ import {
   pricingEditorFromRows,
   type PricingEditorState,
 } from "@/features/assets/components/assetWizardPricing"
-import { AssetFamilyFields } from "@/features/assets/components/AssetFamilyFields"
+import { AssetAttributeFields } from "@/features/assets/components/AssetAttributeFields"
 import { AssetWizardPricingStep } from "@/features/assets/components/AssetWizardPricingStep"
-import { attributeToInputString } from "@/features/assets/lib/assetAttributeValues"
+import { isBlankFormValue, toFormValue, type AttributeFormValue } from "@/features/assets/lib/assetAttributeValues"
 import { getAssetWizardStepInvalidFields } from "@/features/assets/components/assetWizardStepSchema"
 import type { AssetCategory } from "@/features/assets/schemas/assetCategorySchemas"
 import {
@@ -85,7 +85,7 @@ type WizardFormState = {
   unitId: string
   categoryId: string
   familyId: string
-  attributes: Record<string, string>
+  attributes: Record<string, AttributeFormValue>
   baseLocationName: string
   baseTag: string
   startNumber: number
@@ -128,7 +128,7 @@ function fieldInvalidClass(invalid: boolean): string {
 function emptyForm(defaults?: {
   unitId?: string
   familyId?: string
-  attributes?: Record<string, string>
+  attributes?: Record<string, AttributeFormValue>
 }): WizardFormState {
   return {
     name: "",
@@ -173,12 +173,12 @@ function queueWriteFields(form: WizardFormState): {
 function attributesFromAsset(
   fields: readonly AssetFamilyField[],
   stored: Record<string, AssetAttributeValue> | undefined,
-): Record<string, string> {
+): Record<string, AttributeFormValue> {
   const values = emptyAttributesFromFields(fields)
   for (const field of fields) {
     const raw = stored?.[field.key]
     if (raw != null) {
-      values[field.key] = attributeToInputString(raw)
+      values[field.key] = toFormValue(field, raw)
     }
   }
   return values
@@ -1152,16 +1152,16 @@ export function AssetWizard({
                 )}
 
                 {selectedFamily && selectedFamily.fields.length > 0 ? (
-                  <AssetFamilyFields
+                  <AssetAttributeFields
                     fields={selectedFamily.fields}
                     values={form.attributes}
                     disabled={readOnly}
-                    onChange={(attributes) => patchForm({ attributes })}
+                    onChange={(attribute, value) => patchForm({ attributes: { ...form.attributes, [attribute]: value } })}
                     controlProps={(attribute, required) => fieldProps(`attributes.${attribute}`, required)}
                     errorFor={(attribute) => {
                       const key: FieldErrorKey = `attributes.${attribute}`
                       if (!fieldErrors[key]) return null
-                      return t(form.attributes[attribute]?.trim()
+                      return t(!isBlankFormValue(form.attributes[attribute])
                         ? "assets.inventory.validation.attributeInvalid"
                         : "common.required")
                     }}

@@ -1,7 +1,16 @@
 import { z } from "zod"
 
-import { guidLikeIdSchema, type AssetFamily } from "@/features/assets/schemas/assetFamilySchemas"
-import { toApiTimeOnly } from "@/features/assets/schemas/assetSchemas"
+import {
+  attributesToPayload,
+  guidLikeIdSchema,
+  validateAttributeValue,
+  type AssetFamily,
+} from "@/features/assets/schemas/assetFamilySchemas"
+import {
+  assetAttributeValueSchema,
+  attributeFormValueSchema,
+  toApiTimeOnly,
+} from "@/features/assets/schemas/assetSchemas"
 import {
   cancelCutoffHoursSchema,
   parseCancelCutoffHoursInput,
@@ -66,7 +75,7 @@ export const createRentableRequestSchema = z.object({
   capacityPeople: z.number().int().positive().nullable().optional(),
   confirmVisualSuggestions: z.boolean().optional(),
   /** Family attribute values; blank entries travel as null. Absent keeps the stored values on update. */
-  attributes: z.record(z.string(), z.string().nullable()).optional(),
+  attributes: z.record(z.string(), assetAttributeValueSchema).optional(),
 })
 
 export type CreateRentableRequest = z.infer<typeof createRentableRequestSchema>
@@ -126,17 +135,20 @@ export function createRentalResourceFormSchema(messages: {
       }, messages.capacityRange),
       confirmVisualSuggestions: z.boolean(),
       // Family attribute values keyed by field key. Undefined means "not loaded / not managed here".
-      attributes: z.record(z.string(), z.string()).optional(),
+      attributes: z.record(z.string(), attributeFormValueSchema).optional(),
     })
     .superRefine((values, ctx) => {
       const family = attributeContext.families?.find((candidate) => candidate.id === values.familyId)
       if (values.attributes && family) {
         for (const field of family.fields) {
-          const raw = (values.attributes[field.key] ?? "").trim()
-          if (field.type !== "boolean" && raw === "" && field.required && !attributeContext.legacyBlankKeys?.has(field.key)) {
-            ctx.addIssue({ code: "custom", path: ["attributes", field.key], message: messages.attributeRequired ?? "Required" })
-          } else if (field.type === "number" && raw !== "" && Number.isNaN(Number(raw))) {
-            ctx.addIssue({ code: "custom", path: ["attributes", field.key], message: messages.attributeInvalid ?? "Invalid" })
+          const issue = validateAttributeValue(field, values.attributes[field.key])
+          if (issue === "required" && attributeContext.legacyBlankKeys?.has(field.key)) continue
+          if (issue) {
+            ctx.addIssue({
+              code: "custom",
+              path: ["attributes", field.key],
+              message: issue === "required" ? (messages.attributeRequired ?? "Required") : (messages.attributeInvalid ?? "Invalid"),
+            })
           }
         }
       }
@@ -220,6 +232,8 @@ export function resolveResourceHorizonWrite(
 export function toCreateRentableRequest(
   values: RentalResourceFormValues,
   horizon: ResourceHorizonWriteContext = { creating: true, stored: undefined },
+  /** Family of the asset: types the attribute values (numbers, arrays). Without it values are sent by shape. */
+  family?: AssetFamily | null,
 ): CreateRentableRequest {
   const isLocation = values.rentalType === "Location"
   const payload: CreateRentableRequest = {
@@ -264,9 +278,14 @@ export function toCreateRentableRequest(
     payload.confirmVisualSuggestions = true
   }
   if (values.attributes) {
-    payload.attributes = Object.fromEntries(
-      Object.entries(values.attributes).map(([key, value]) => [key, value.trim() === "" ? null : value.trim()]),
-    )
+    payload.attributes = family
+      ? attributesToPayload(family.fields, values.attributes)
+      : Object.fromEntries(
+          Object.entries(values.attributes).map(([key, value]) => [
+            key,
+            typeof value === "string" ? (value.trim() === "" ? null : value.trim()) : value,
+          ]),
+        )
   }
   return createRentableRequestSchema.parse(payload)
 }
