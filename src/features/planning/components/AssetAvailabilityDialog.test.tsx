@@ -97,19 +97,54 @@ describe("AssetAvailabilityDialog", () => {
     expect(putAssetProfile).not.toHaveBeenCalled()
   })
 
-  it("asks for hours when a plannable asset has none, and sends none under Anytime", async () => {
+  it("asks for hours when a plannable asset has none", async () => {
     const user = userEvent.setup()
     setup(profile({ workingHours: [] }))
     await screen.findByRole("switch", { name: "Planejável" })
     await user.click(save())
     expect(await screen.findByText(/Cadastre ao menos uma janela/)).toBeInTheDocument()
     expect(putAssetProfile).not.toHaveBeenCalled()
-
     await user.click(screen.getByRole("radio", { name: /Livre 24 horas/ }))
-    expect(screen.queryByTestId("availability-day-1")).not.toBeInTheDocument()
     await user.click(save())
     await waitFor(() => expect(putAssetProfile).toHaveBeenCalledTimes(1))
     expect(vi.mocked(putAssetProfile).mock.calls[0][1]).toMatchObject({ hoursPolicy: "Anytime", workingHours: [] })
+  })
+
+  it("keeps the stored windows when switching to Anytime and back", async () => {
+    const user = userEvent.setup()
+    setup()
+    await screen.findByRole("switch", { name: "Planejável" })
+    await user.click(screen.getByRole("radio", { name: /Livre 24 horas/ }))
+    expect(screen.queryByTestId("availability-day-1")).not.toBeInTheDocument()
+    expect(screen.getByText(/ficam guardados/)).toBeInTheDocument()
+    await user.click(screen.getByRole("radio", { name: /Tudo dentro do horário/ }))
+    expect(within(screen.getByTestId("availability-day-1")).getByLabelText("Segunda-feira: abre às")).toHaveValue("08:00")
+    await user.click(screen.getByRole("radio", { name: /Livre 24 horas/ }))
+    await user.click(save())
+    await waitFor(() => expect(putAssetProfile).toHaveBeenCalledTimes(1))
+    expect(vi.mocked(putAssetProfile).mock.calls[0][1]).toMatchObject({
+      hoursPolicy: "Anytime", workingHours: [{ dayOfWeek: 1, openTime: "08:00", closeTime: "18:00" }],
+    })
+  })
+
+  it("keeps the stored windows when plannable is switched off", async () => {
+    const user = userEvent.setup()
+    setup()
+    await user.click(await screen.findByRole("switch", { name: "Planejável" }))
+    await user.click(save())
+    await waitFor(() => expect(putAssetProfile).toHaveBeenCalledTimes(1))
+    expect(vi.mocked(putAssetProfile).mock.calls[0][1]).toMatchObject({
+      isPlannable: false, workingHours: [{ dayOfWeek: 1, openTime: "08:00", closeTime: "18:00" }],
+    })
+  })
+
+  it("shows a broken stored window instead of dropping it, even under Anytime", async () => {
+    const user = userEvent.setup()
+    setup(profile({ hoursPolicy: "Anytime", workingHours: [{ dayOfWeek: 1, openTime: "18:00", closeTime: "08:00" }] }))
+    await screen.findByRole("switch", { name: "Planejável" })
+    await user.click(save())
+    expect(await screen.findByText("O fim precisa ser depois do início.")).toBeInTheDocument()
+    expect(putAssetProfile).not.toHaveBeenCalled()
   })
 
   it("hides the policy and hours while the asset is not plannable", async () => {

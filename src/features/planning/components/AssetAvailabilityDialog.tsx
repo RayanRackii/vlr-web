@@ -14,9 +14,11 @@ import { usePermissions } from "@/features/users/permissions/PermissionContext"
 import { ICON_SIZE, ICON_STROKE_WIDTH } from "@/lib/icon"
 import { tenantKey } from "@/lib/queryKeys"
 import {
+  MAX_WINDOWS,
   WEEK_DAYS,
   addWindow,
   copyToWeekdays,
+  countWindows,
   draftFromProfile,
   policyNeedsHours,
   removeWindow,
@@ -120,7 +122,11 @@ function AvailabilityForm({ assetId, assetName, profile, onOpenChange, onSaved }
   const [rentalBlocked, setRentalBlocked] = useState(profile.isRentalBacked)
   const [serverError, setServerError] = useState<string | null>(null)
   const validation = validateDraft(draft)
-  const showHours = policyNeedsHours(draft.hoursPolicy)
+  const hoursProblems = Object.keys(validation.windows).length > 0
+  // Hidden when unused, except when a stored window is broken: then it is shown so the error can be fixed.
+  const showHours = (draft.isPlannable && policyNeedsHours(draft.hoursPolicy)) || hoursProblems
+  const windowCount = countWindows(draft)
+  const atCap = windowCount >= MAX_WINDOWS
 
   const change = (next: AvailabilityDraft) => { setDraft(next); setServerError(null) }
   const close = () => onOpenChange(false)
@@ -205,8 +211,10 @@ function AvailabilityForm({ assetId, assetName, profile, onOpenChange, onSaved }
               <p className="text-xs text-muted-foreground sm:col-span-3">{t("planning.availability.bufferHint")}</p>
               {bufferInvalid && <p role="alert" className="text-xs text-destructive sm:col-span-3">{problemText("invalidBuffer")}</p>}
             </div>
+          </>
+        )}
 
-            {showHours ? (
+        {showHours ? (
               <section className="min-w-0 space-y-3" aria-labelledby="availability-hours">
                 <div>
                   <h3 id="availability-hours" className="text-sm font-medium">{t("planning.availability.hours")}</h3>
@@ -219,12 +227,12 @@ function AvailabilityForm({ assetId, assetName, profile, onOpenChange, onSaved }
                     <div key={day} data-testid={`availability-day-${day}`} className="min-w-0 space-y-2 rounded-lg border border-border p-3">
                       <div className="flex flex-wrap items-center justify-between gap-2">
                         <div className="flex items-center gap-3">
-                          <Switch size="sm" checked={windows.length > 0} aria-label={t("planning.availability.dayOpen", { day: dayName })} onCheckedChange={(open) => change(setDayOpen(draft, day, open))} />
+                          <Switch size="sm" checked={windows.length > 0} disabled={atCap && windows.length === 0} aria-label={t("planning.availability.dayOpen", { day: dayName })} onCheckedChange={(open) => change(setDayOpen(draft, day, open))} />
                           <span className="text-sm font-medium">{dayName}</span>
                           {windows.length === 0 && <span className="text-xs text-muted-foreground">{t("planning.availability.closedDay")}</span>}
                         </div>
                         {windows.length > 0 && (
-                          <Button type="button" variant="ghost" size="sm" className="min-h-9" onClick={() => change(copyToWeekdays(draft, day))} aria-label={t("planning.availability.copyToWeekdaysFrom", { day: dayName })}>
+                          <Button type="button" variant="ghost" size="sm" className="min-h-9" disabled={copyToWeekdays(draft, day) === draft} onClick={() => change(copyToWeekdays(draft, day))} aria-label={t("planning.availability.copyToWeekdaysFrom", { day: dayName })}>
                             {t("planning.availability.copyToWeekdays")}
                           </Button>
                         )}
@@ -247,7 +255,7 @@ function AvailabilityForm({ assetId, assetName, profile, onOpenChange, onSaved }
                         )
                       })}
                       {windows.length > 0 && (
-                        <Button type="button" variant="outline" size="sm" className="min-h-9" onClick={() => change(addWindow(draft, day))} aria-label={t("planning.availability.addWindowTo", { day: dayName })}>
+                        <Button type="button" variant="outline" size="sm" className="min-h-9" disabled={atCap} onClick={() => change(addWindow(draft, day))} aria-label={t("planning.availability.addWindowTo", { day: dayName })}>
                           <Plus className={ICON_SIZE.sm} strokeWidth={ICON_STROKE_WIDTH} aria-hidden />
                           {t("planning.availability.addWindow")}
                         </Button>
@@ -255,13 +263,12 @@ function AvailabilityForm({ assetId, assetName, profile, onOpenChange, onSaved }
                     </div>
                   )
                 })}
+                {(atCap || validation.draft.includes("tooManyWindows")) && <p role="alert" className="text-xs text-destructive">{t("planning.availability.problems.tooManyWindows", { max: MAX_WINDOWS })}</p>}
                 {touched && validation.draft.includes("hoursRequired") && <p role="alert" className="text-xs text-destructive">{problemText("hoursRequired")}</p>}
               </section>
-            ) : (
+            ) : draft.isPlannable ? (
               <p className="rounded-lg border border-border bg-muted/40 p-3 text-xs text-muted-foreground">{t("planning.availability.anytimeNote")}</p>
-            )}
-          </>
-        )}
+            ) : null}
 
         {serverError && <p role="alert" className="text-sm text-destructive">{serverError}</p>}
         <DialogFooter>

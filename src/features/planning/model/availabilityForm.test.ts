@@ -4,6 +4,7 @@ import {
   WORK_WEEK,
   addWindow,
   closeMinutes,
+  countWindows,
   copyToWeekdays,
   draftFromProfile,
   newWindow,
@@ -63,6 +64,11 @@ describe("close time rule", () => {
     expect(closeMinutes("nope")).toBeNull()
   })
 
+  it("rejects open 23:59 with close 23:59 (raw times, like the API) but accepts 23:30 to 23:59", () => {
+    expect(Object.values(validateDraft(draftWith({ 1: [["23:59", "23:59"]] })).windows)).toEqual(["closeBeforeOpen"])
+    expect(validateDraft(draftWith({ 1: [["23:30", "23:59"]] })).valid).toBe(true)
+  })
+
   it("accepts a window that closes at 23:59 and rejects close <= open (including 00:00)", () => {
     expect(validateDraft(draftWith({ 1: [["08:00", "23:59"]] })).valid).toBe(true)
     const validation = validateDraft(draftWith({ 1: [["08:00", "00:00"], ["09:00", "09:00"], ["10:00", "09:00"]] }))
@@ -106,8 +112,31 @@ describe("draft level rules", () => {
     expect(validateDraft(draftWith({}, { isPlannable: false })).valid).toBe(true)
   })
 
-  it("ignores broken windows that are not in use", () => {
-    expect(validateDraft(draftWith({ 1: [["10:00", "09:00"]] }, { hoursPolicy: "Anytime" })).valid).toBe(true)
+  it("still reports a broken stored window under Anytime or while not plannable, instead of dropping it", () => {
+    expect(validateDraft(draftWith({ 1: [["10:00", "09:00"]] }, { hoursPolicy: "Anytime" })).valid).toBe(false)
+    expect(validateDraft(draftWith({ 1: [["10:00", "09:00"]] }, { isPlannable: false })).valid).toBe(false)
+  })
+
+  it("caps the windows at 100, like the API", () => {
+    const days = [1, 2, 3, 4, 5, 6, 0]
+    const hours: Partial<Record<number, [string, string][]>> = {}
+    // 100 non-overlapping windows spread over the week (15 per day, 10 on the last)
+    let left = 100
+    for (const day of days) {
+      const n = Math.min(15, left)
+      hours[day] = Array.from({ length: n }, (_, i) => [String(i + 6).padStart(2, "0") + ":00", String(i + 6).padStart(2, "0") + ":30"] as [string, string])
+      left -= n
+    }
+    const full = draftWith(hours)
+    expect(countWindows(full)).toBe(100)
+    expect(validateDraft(full).valid).toBe(true)
+    expect(addWindow(full, 1)).toBe(full)
+    expect(setDayOpen(full, 0, false).days[0].windows).toHaveLength(0)
+    const over = { ...full, days: { ...full.days, 0: { windows: [...full.days[0].windows, newWindow("20:00", "21:00")] } } }
+    expect(validateDraft(over).draft).toContain("tooManyWindows")
+    // a copy that would pass the cap is refused
+    const wide = draftWith({ 6: Array.from({ length: 30 }, (_, i) => [String(i % 20).padStart(2, "0") + ":00", String(i % 20).padStart(2, "0") + ":30"] as [string, string]) })
+    expect(copyToWeekdays(wide, 6)).toBe(wide)
   })
 
   it("accepts whole minutes from 0 to 1440 for prep and cleanup", () => {
@@ -180,16 +209,18 @@ describe("request payload", () => {
     })
   })
 
-  it("sends no hours under Anytime", () => {
-    expect(toRequest(draftWith({ 1: [["08:00", "18:00"]] }, { hoursPolicy: "Anytime" })).workingHours).toEqual([])
+  it("keeps the windows under Anytime and while not plannable", () => {
+    const hours = { 1: [["08:00", "18:00"]] as [string, string][] }
+    expect(toRequest(draftWith(hours, { hoursPolicy: "Anytime" })).workingHours).toEqual([{ dayOfWeek: 1, openTime: "08:00", closeTime: "18:00" }])
+    expect(toRequest(draftWith(hours, { isPlannable: false })).workingHours).toEqual([{ dayOfWeek: 1, openTime: "08:00", closeTime: "18:00" }])
+  })
+
+  it("sends an empty list only when every day was cleared", () => {
+    const cleared = setDayOpen(draftWith({ 1: [["08:00", "18:00"]] }), 1, false)
+    expect(toRequest(cleared).workingHours).toEqual([])
   })
 
   it("keeps the asset's capacity", () => {
     expect(toRequest(draftFromProfile(profile({ capacity: 3 }))).capacity).toBe(3)
-  })
-
-  it("drops unusable windows when the asset is not plannable instead of sending a 400", () => {
-    const draft = draftWith({ 1: [["08:00", "12:00"], ["10:00", "09:00"]] }, { isPlannable: false })
-    expect(toRequest(draft).workingHours).toEqual([{ dayOfWeek: 1, openTime: "08:00", closeTime: "12:00" }])
   })
 })

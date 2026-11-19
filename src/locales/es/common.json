@@ -6483,7 +6483,7 @@
       "bufferHint": "Tiempo extra reservado antes y después de cada asignación. Capacidad 1: un uso a la vez.",
       "hours": "Horario de funcionamiento",
       "hoursHint": "Indica las ventanas de cada día. Un día desactivado está cerrado. Un cierre a las 23:59 vale hasta la medianoche.",
-      "anytimeNote": "Con la regla \"Libre 24 horas\" no hay horario de funcionamiento: los horarios guardados no se usan.",
+      "anytimeNote": "Con la regla \"Libre 24 horas\" el horario de funcionamiento no se aplica. Los horarios guardados se conservan y vuelven a valer si cambias la regla.",
       "days": {
         "0": "Domingo",
         "1": "Lunes",
@@ -6507,6 +6507,7 @@
         "closeBeforeOpen": "El fin debe ser posterior al inicio.",
         "overlap": "Esta ventana se superpone con otra del mismo día.",
         "hoursRequired": "Agrega al menos una ventana de horario, o elige \"Libre 24 horas\".",
+        "tooManyWindows": "Límite de {{max}} ventanas de horario alcanzado. Quita una para agregar otra.",
         "invalidBuffer": "Indica minutos enteros de 0 a 1440."
       },
       "rental": {

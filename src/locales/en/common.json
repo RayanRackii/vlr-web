@@ -6483,7 +6483,7 @@
       "bufferHint": "Extra time held before and after each allocation. Capacity 1: one use at a time.",
       "hours": "Working hours",
       "hoursHint": "Enter the windows of each day. A switched-off day is closed. A close at 23:59 means midnight.",
-      "anytimeNote": "With the \"Open 24 hours\" rule there are no working hours: saved hours are not used.",
+      "anytimeNote": "With the \"Open 24 hours\" rule working hours are not applied. Saved hours are kept and apply again if you change the rule.",
       "days": {
         "0": "Sunday",
         "1": "Monday",
@@ -6507,6 +6507,7 @@
         "closeBeforeOpen": "The end must be after the start.",
         "overlap": "This window overlaps another one on the same day.",
         "hoursRequired": "Add at least one time window, or choose \"Open 24 hours\".",
+        "tooManyWindows": "Limit of {{max}} time windows reached. Remove one to add another.",
         "invalidBuffer": "Enter whole minutes from 0 to 1440."
       },
       "rental": {

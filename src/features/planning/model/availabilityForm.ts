@@ -29,7 +29,9 @@ export type AvailabilityDraft = {
 }
 
 export type WindowProblem = "invalidTime" | "closeBeforeOpen" | "overlap"
-export type DraftProblem = "hoursRequired" | "invalidBuffer"
+export type DraftProblem = "hoursRequired" | "invalidBuffer" | "tooManyWindows"
+/** Same cap as the API (MaxWorkingWindows). */
+export const MAX_WINDOWS = 100
 
 export type DraftValidation = {
   /** Problem of each window, by window id. */
@@ -88,8 +90,9 @@ export const closeMinutes = (value: string): number | null => {
 
 function windowProblem(window: WindowDraft): WindowProblem | null {
   const open = toMinutes(window.openTime)
-  const close = closeMinutes(window.closeTime)
+  const close = toMinutes(window.closeTime)
   if (open === null || close === null) return "invalidTime"
+  // Raw times, like the API: close <= open is invalid, so 23:59-23:59 is rejected even though a 23:59 close reads as midnight.
   return close > open ? null : "closeBeforeOpen"
 }
 
@@ -97,6 +100,10 @@ export function parseBuffer(raw: string): number | null {
   if (!/^\d{1,4}$/.test(raw.trim())) return null
   const value = Number(raw)
   return value <= MAX_BUFFER_MINUTES ? value : null
+}
+
+export function countWindows(draft: AvailabilityDraft): number {
+  return WEEK_DAYS.reduce<number>((sum, day) => sum + draft.days[day].windows.length, 0)
 }
 
 export function hasWindows(draft: AvailabilityDraft): boolean {
@@ -124,12 +131,15 @@ function validateDraftWindows(draft: AvailabilityDraft): Record<string, WindowPr
   return windows
 }
 
-/** Hours are only checked while the asset is plannable with a policy that uses them; otherwise they are ignored. */
+/**
+ * Stored hours are always checked, so a bad stored window is shown instead of being dropped.
+ * "Hours required" only applies when they are actually used (plannable, policy other than Anytime).
+ */
 export function validateDraft(draft: AvailabilityDraft): DraftValidation {
   const problems: DraftProblem[] = []
-  const checksHours = draft.isPlannable && policyNeedsHours(draft.hoursPolicy)
-  const windows = checksHours ? validateDraftWindows(draft) : {}
-  if (checksHours && !hasWindows(draft)) problems.push("hoursRequired")
+  const windows = validateDraftWindows(draft)
+  if (draft.isPlannable && policyNeedsHours(draft.hoursPolicy) && !hasWindows(draft)) problems.push("hoursRequired")
+  if (countWindows(draft) > MAX_WINDOWS) problems.push("tooManyWindows")
   if (parseBuffer(draft.prepMinutes) === null || parseBuffer(draft.cleanupMinutes) === null) problems.push("invalidBuffer")
   return { windows, draft: problems, valid: problems.length === 0 && Object.keys(windows).length === 0 }
 }
@@ -141,10 +151,13 @@ export function copyToWeekdays(draft: AvailabilityDraft, source: WeekDay): Avail
     if (day === source) continue
     days[day] = { windows: draft.days[source].windows.map((window) => ({ ...window, id: nextId() })) }
   }
-  return { ...draft, days }
+  const next = { ...draft, days }
+  // Over the cap the copy is refused, the draft stays as it was.
+  return countWindows(next) > MAX_WINDOWS ? draft : next
 }
 
 export function addWindow(draft: AvailabilityDraft, day: WeekDay): AvailabilityDraft {
+  if (countWindows(draft) >= MAX_WINDOWS) return draft
   const windows = draft.days[day].windows
   const last = windows[windows.length - 1]
   // A second window on the same day starts after the previous one closes, when there is room.
@@ -164,6 +177,7 @@ export function removeWindow(draft: AvailabilityDraft, day: WeekDay, id: string)
 
 /** Closed day to open (one default window) or open to closed (no windows). */
 export function setDayOpen(draft: AvailabilityDraft, day: WeekDay, open: boolean): AvailabilityDraft {
+  if (open && countWindows(draft) >= MAX_WINDOWS) return draft
   return { ...draft, days: { ...draft.days, [day]: { windows: open ? [newWindow()] : [] } } }
 }
 
@@ -172,21 +186,16 @@ function minutesToClock(minutes: number): string {
 }
 
 /**
- * Body for the PUT. Under "Anytime" hours do not apply, so none are sent.
+ * Body for the PUT. The windows of the form are always sent (they start as the stored ones), so switching
+ * to Anytime or turning plannable off keeps the hours; the API ignores them when they do not apply.
  * The caller only builds a request from a valid draft.
  */
 export function toRequest(draft: AvailabilityDraft): PutAssetProfileRequest {
-  const sendsHours = policyNeedsHours(draft.hoursPolicy)
-  // Not plannable: hours are not validated, so only the usable ones are kept instead of risking a 400.
-  const bad = draft.isPlannable ? {} : validateDraftWindows(draft)
-  const workingHours = sendsHours
-    ? WEEK_DAYS.flatMap((dayOfWeek) =>
-        draft.days[dayOfWeek].windows
-          .filter((window) => !bad[window.id])
-          .sort((a, b) => (toMinutes(a.openTime) ?? 0) - (toMinutes(b.openTime) ?? 0))
-          .map((window) => ({ dayOfWeek, openTime: window.openTime, closeTime: window.closeTime })),
-      ).sort((a, b) => a.dayOfWeek - b.dayOfWeek)
-    : []
+  const workingHours = WEEK_DAYS.flatMap((dayOfWeek) =>
+    [...draft.days[dayOfWeek].windows]
+      .sort((a, b) => (toMinutes(a.openTime) ?? 0) - (toMinutes(b.openTime) ?? 0))
+      .map((window) => ({ dayOfWeek, openTime: window.openTime, closeTime: window.closeTime })),
+  ).sort((a, b) => a.dayOfWeek - b.dayOfWeek)
   return {
     isPlannable: draft.isPlannable,
     capacity: draft.capacity,

@@ -6483,7 +6483,7 @@
       "bufferHint": "Tempo extra reservado antes e depois de cada alocação. Capacidade 1: um uso por vez.",
       "hours": "Horário de funcionamento",
       "hoursHint": "Informe as janelas de cada dia. Dia desligado fica fechado. Fim às 23:59 vale até a meia-noite.",
-      "anytimeNote": "Com a regra \"Livre 24 horas\" não há horário de funcionamento: os horários cadastrados não são usados.",
+      "anytimeNote": "Com a regra \"Livre 24 horas\" o horário de funcionamento não é aplicado. Os horários cadastrados ficam guardados e voltam a valer se você mudar a regra.",
       "days": {
         "0": "Domingo",
         "1": "Segunda-feira",
@@ -6507,6 +6507,7 @@
         "closeBeforeOpen": "O fim precisa ser depois do início.",
         "overlap": "Esta janela se sobrepõe a outra do mesmo dia.",
         "hoursRequired": "Cadastre ao menos uma janela de horário, ou escolha \"Livre 24 horas\".",
+        "tooManyWindows": "Limite de {{max}} janelas de horário atingido. Remova alguma para adicionar outra.",
         "invalidBuffer": "Informe minutos inteiros de 0 a 1440."
       },
       "rental": {
