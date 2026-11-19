@@ -3476,7 +3476,15 @@
   "assets": {
     "actions": {
       "edit": "Edit",
-      "remove": "Remove"
+      "remove": "Remove",
+      "details": "Details"
+    },
+    "attributes": {
+      "title": "Attributes",
+      "empty": "No attributes filled in.",
+      "showMore": "show more",
+      "showLess": "show less",
+      "extra": "+{{count}}"
     },
     "deletion": {
       "title": "Confirm deletion",
@@ -3761,7 +3769,8 @@
         "category": "Type",
         "location": "Location",
         "status": "Status",
-        "actions": "Actions"
+        "actions": "Actions",
+        "attributes": "Attributes"
       },
       "status": {
         "Active": "Active",
