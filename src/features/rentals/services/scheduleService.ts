@@ -171,6 +171,8 @@ export async function setDirectRental(rentalAssetId: string, directRental: boole
 
 export const rentalAssetSchema = z.object({
   tag: z.string().nullable().optional(),
+  /** Family attribute values; absent on the public catalog. */
+  attributes: z.record(z.string(), z.string().nullable()).nullable().optional(),
   id: z.string().uuid(),
   assetId: z.string().uuid(),
   name: z.string(),

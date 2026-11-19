@@ -2416,6 +2416,14 @@
           "applyTemplateDefaults": {
             "type": "boolean"
           },
+          "attributes": {
+            "additionalProperties": {
+              "nullable": true,
+              "type": "string"
+            },
+            "nullable": true,
+            "type": "object"
+          },
           "cancelCutoffHours": {
             "format": "int32",
             "nullable": true,
@@ -5063,6 +5071,14 @@
           "assetId": {
             "format": "uuid",
             "type": "string"
+          },
+          "attributes": {
+            "additionalProperties": {
+              "nullable": true,
+              "type": "string"
+            },
+            "nullable": true,
+            "type": "object"
           },
           "cancelCutoffHours": {
             "format": "int32",
@@ -7778,6 +7794,14 @@
       "UpdateRentableRequest": {
         "additionalProperties": false,
         "properties": {
+          "attributes": {
+            "additionalProperties": {
+              "nullable": true,
+              "type": "string"
+            },
+            "nullable": true,
+            "type": "object"
+          },
           "cancelCutoffHours": {
             "format": "int32",
             "nullable": true,

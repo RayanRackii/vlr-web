@@ -31,7 +31,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import type { AssetFamily } from "@/features/assets/schemas/assetFamilySchemas"
+import { AssetFamilyFields } from "@/features/assets/components/AssetFamilyFields"
+import { emptyAttributesFromFields, type AssetFamily } from "@/features/assets/schemas/assetFamilySchemas"
 import type { Unit } from "@/features/assets/schemas/unitSchemas"
 import { getUnits } from "@/features/assets/services/unitsService"
 import { useIsPlatformAdmin } from "@/features/admin/hooks/usePlatformAdmin"
@@ -48,6 +49,7 @@ import { listRentalAssetCategories } from "@/features/rentals/services/rentalRes
 import { InlineCreateCategoryForm, InlineCreateUnitForm, InlineCreateVisualTemplateForm } from "@/features/rentals/components/ResourceDependencyInlineCreateForms"
 import {
   buildRentalResourceFormValues,
+  legacyBlankRequiredKeys,
   getTemplateRevisionFormDefaults,
   mergeTemplateOptions,
   type TemplateDefaultField,
@@ -177,6 +179,8 @@ export function RentalResourceEditorForm({
     setUnitOptions(units)
   }
 
+  const legacyBlankKeys = useMemo(() => legacyBlankRequiredKeys(editing, families), [editing, families])
+
   const formSchema = useMemo(
     () =>
       createRentalResourceFormSchema({
@@ -191,8 +195,10 @@ export function RentalResourceEditorForm({
         ),
         cancelCutoffRange: t("rentals.resources.validation.cancelCutoffRange"),
         horizonRange: t("rentals.resources.validation.horizonRange"),
-      }),
-    [t],
+        attributeRequired: t("common.required"),
+        attributeInvalid: t("assets.inventory.validation.attributeInvalid"),
+      }, { families, legacyBlankKeys }),
+    [t, families, legacyBlankKeys],
   )
 
   const form = useForm<RentalResourceFormValues>({
@@ -254,6 +260,7 @@ export function RentalResourceEditorForm({
     value: category.id,
     label: category.name,
   }))
+  const selectedFamily = families.find((family) => family.id === watched.familyId)
   const familyItems = families.map((family) => ({
     value: family.id,
     label: family.label,
@@ -536,6 +543,13 @@ export function RentalResourceEditorForm({
                     onValueChange={(value) => {
                       field.onChange(value)
                       field.onBlur()
+                      const next = families.find((family) => family.id === value)
+                      const current = form.getValues("attributes")
+                      if (next && current) {
+                        const merged = emptyAttributesFromFields(next.fields)
+                        for (const key of Object.keys(merged)) if (current[key] !== undefined) merged[key] = current[key]
+                        form.setValue("attributes", merged, { shouldDirty: true })
+                      }
                     }}
                     value={field.value}
                     items={familyItems}
@@ -563,6 +577,26 @@ export function RentalResourceEditorForm({
                 </FormItem>
               )}
             />
+
+            {selectedFamily && watched.attributes ? (
+              <AssetFamilyFields
+                fields={selectedFamily.fields}
+                values={watched.attributes as Record<string, string>}
+                disabled={readOnly || busy}
+                onChange={(attributes) => form.setValue("attributes", attributes, { shouldDirty: true, shouldTouch: true })}
+                controlProps={(key, required) => {
+                  const error = issueMessageAt(visibleErrors, ["attributes", key])
+                  return {
+                    id: `resource-attribute-${key}`,
+                    "aria-required": required || undefined,
+                    "aria-invalid": error ? true : undefined,
+                    "aria-describedby": error ? `resource-attribute-${key}-error` : undefined,
+                    onBlur: () => form.trigger("attributes"),
+                  }
+                }}
+                errorFor={(key) => issueMessageAt(visibleErrors, ["attributes", key])}
+              />
+            ) : null}
 
             <FormField
               control={form.control}

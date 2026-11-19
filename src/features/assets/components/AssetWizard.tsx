@@ -34,6 +34,7 @@ import {
   pricingEditorFromRows,
   type PricingEditorState,
 } from "@/features/assets/components/assetWizardPricing"
+import { AssetFamilyFields } from "@/features/assets/components/AssetFamilyFields"
 import { AssetWizardPricingStep } from "@/features/assets/components/AssetWizardPricingStep"
 import { attributeToInputString } from "@/features/assets/lib/assetAttributeValues"
 import { getAssetWizardStepInvalidFields } from "@/features/assets/components/assetWizardStepSchema"
@@ -1151,69 +1152,20 @@ export function AssetWizard({
                 )}
 
                 {selectedFamily && selectedFamily.fields.length > 0 ? (
-                  <div className="grid gap-3 rounded-lg border border-border p-3 sm:grid-cols-2">
-                    {selectedFamily.fields.map((familyField) => {
-                      const key: FieldErrorKey = `attributes.${familyField.key}`
-                      return (
-                      <div key={familyField.key} className="space-y-2">
-                        <label htmlFor={idForField(key)} className="text-sm font-medium">
-                          {t(`assets.wizard.familyFields.${familyField.key}`, {
-                            defaultValue:
-                              familyField.label ?? familyField.key,
-                          })}
-                          {familyField.required
-                            ? <span className="ml-1 text-destructive" aria-hidden="true">*</span>
-                            : ` (${t("common.optional")})`}
-                        </label>
-                        {familyField.type === "boolean" ? (
-                          <Switch
-                            disabled={readOnly}
-                            {...fieldProps(key, familyField.required)}
-                            checked={
-                              form.attributes[familyField.key] === "true"
-                            }
-                            onCheckedChange={(checked) => {
-                              patchForm({
-                                attributes: {
-                                  ...form.attributes,
-                                  [familyField.key]: checked
-                                    ? "true"
-                                    : "false",
-                                },
-                              })
-                            }}
-                          />
-                        ) : (
-                          <Input
-                            {...fieldProps(key, familyField.required)}
-                            className={fieldInvalidClass(Boolean(fieldErrors[key]))}
-                            type={
-                              familyField.type === "number" ? "number" : "text"
-                            }
-                            value={form.attributes[familyField.key] ?? ""}
-                            onChange={(event) => {
-                              patchForm({
-                                attributes: {
-                                  ...form.attributes,
-                                  [familyField.key]: event.target.value,
-                                },
-                              })
-                            }}
-                          />
-                        )}
-                        {familyField.key === "voltage" || familyField.key === "volts" ? (
-                          <p id={`${idForField(key)}-help`} className="text-xs text-muted-foreground">{t("assets.wizard.help.voltage")}</p>
-                        ) : null}
-                        {fieldErrors[key] ? (
-                          <p id={`${idForField(key)}-error`} className="text-xs text-destructive">
-                            {t(form.attributes[familyField.key]?.trim()
-                              ? "assets.inventory.validation.attributeInvalid"
-                              : "common.required")}
-                          </p>
-                        ) : null}
-                      </div>
-                    )})}
-                  </div>
+                  <AssetFamilyFields
+                    fields={selectedFamily.fields}
+                    values={form.attributes}
+                    disabled={readOnly}
+                    onChange={(attributes) => patchForm({ attributes })}
+                    controlProps={(attribute, required) => fieldProps(`attributes.${attribute}`, required)}
+                    errorFor={(attribute) => {
+                      const key: FieldErrorKey = `attributes.${attribute}`
+                      if (!fieldErrors[key]) return null
+                      return t(form.attributes[attribute]?.trim()
+                        ? "assets.inventory.validation.attributeInvalid"
+                        : "common.required")
+                    }}
+                  />
                 ) : null}
               </div>
             ) : null}
