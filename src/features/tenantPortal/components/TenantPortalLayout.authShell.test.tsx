@@ -131,7 +131,7 @@ describe("tenant portal auth split shell", () => {
     expect(screen.getAllByText("Acme Club").length).toBeGreaterThan(0)
     expect(screen.getByRole("heading", { level: 1, name: "Acme Club" })).toBeInTheDocument()
     expect(screen.getByText(i18n.t("tenantPortal.login.welcomeDefault"))).toBeInTheDocument()
-    expect(screen.getByText("AC")).toBeInTheDocument()
+    expect(screen.getAllByText("AC")).toHaveLength(2)
     expect(
       screen.getByText(i18n.t("tenantPortal.authPanel.poweredBy")),
     ).toBeInTheDocument()
