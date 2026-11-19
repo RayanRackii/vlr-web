@@ -327,7 +327,8 @@
     "deleteTaxonomy": "No se pudo eliminar la categoría o etiqueta.",
     "loadCatalogAgenda": "No se pudo cargar la agenda.",
     "timeout": "La conexión tardó demasiado. Inténtalo de nuevo.",
-    "updateReservationNotes": "No se pudo guardar la observación."
+    "updateReservationNotes": "No se pudo guardar la observación.",
+    "previewAdminAssetFamily": "No se pudo calcular el impacto del cambio."
   },
   "trial": {
     "banner": {
@@ -5214,7 +5215,6 @@
     "assetFamilies": {
       "title": "Familias de recursos",
       "description": "Catálogo global de los formularios de registro. La clave es única y no cambia después de crearla. Las familias del sistema no se pueden desactivar ni eliminar.",
-      "readOnlyNotice": "Esta familia usa opciones de campo que el editor aún no admite. Podrá editarse después de la actualización.",
       "includeInactive": "Incluir inactivas",
       "seedBadge": "Sistema",
       "statusActive": "Activa",
@@ -5243,7 +5243,8 @@
         "deleteNamed": "Eliminar {{label}}",
         "save": "Guardar",
         "saving": "Guardando...",
-        "retry": "Intentar de nuevo"
+        "retry": "Intentar de nuevo",
+        "reload": "Recargar familia"
       },
       "dialog": {
         "createTitle": "Nueva familia",
@@ -5266,12 +5267,34 @@
         "fieldLabel": "Etiqueta del campo",
         "fieldType": "Tipo",
         "fieldRequired": "Obligatorio",
-        "removeField": "Quitar campo"
+        "removeField": "Quitar campo",
+        "help": "Texto de ayuda",
+        "group": "Grupo",
+        "unit": "Unidad",
+        "min": "Mínimo",
+        "max": "Máximo",
+        "decimals": "Decimales",
+        "maxLength": "Longitud máxima",
+        "options": "Opciones",
+        "optionItem": "Opción {{number}}",
+        "addOption": "Agregar opción",
+        "removeOption": "Quitar opción {{number}}",
+        "archive": "Archivar",
+        "restore": "Restaurar",
+        "archivedBadge": "Archivado",
+        "archivedFields": "Campos archivados ({{count}})",
+        "preview": "Vista previa",
+        "unknownType": "Tipo no admitido por este editor: {{type}}. El campo se mantiene tal cual y solo se puede archivar."
       },
       "types": {
         "text": "Texto",
         "number": "Número",
-        "boolean": "Sí/no"
+        "boolean": "Sí/no",
+        "longtext": "Texto largo",
+        "select": "Selección",
+        "multiselect": "Selección múltiple",
+        "url": "Enlace",
+        "date": "Fecha"
       },
       "validation": {
         "key": "La clave debe empezar con letra y usar solo letras minúsculas, números y _ (hasta 64 caracteres).",
@@ -5280,7 +5303,22 @@
         "sortOrder": "Indique un número entero.",
         "fieldKey": "Indique la clave del campo.",
         "fieldKeyDuplicate": "Esta clave de campo está repetida.",
-        "seedActive": "Las familias del sistema no se pueden desactivar."
+        "seedActive": "Las familias del sistema no se pueden desactivar.",
+        "fieldKeyPattern": "La clave del campo debe empezar con una letra y usar solo minúsculas, números y _ (hasta 64 caracteres).",
+        "fieldLabelMax": "La etiqueta del campo debe tener como máximo 120 caracteres.",
+        "helpMax": "El texto de ayuda debe tener como máximo 300 caracteres.",
+        "groupMax": "El grupo debe tener como máximo 60 caracteres.",
+        "unitMax": "La unidad debe tener como máximo 16 caracteres.",
+        "numberInvalid": "Usa solo números, con punto o coma decimal.",
+        "minGreaterThanMax": "El mínimo no puede ser mayor que el máximo.",
+        "decimalsInvalid": "Los decimales deben ser un entero de 0 a 6.",
+        "maxLengthInvalid": "La longitud máxima debe ser un entero dentro del límite del tipo (texto: 1000, texto largo: 10000).",
+        "optionsRequired": "Agrega al menos una opción.",
+        "optionsTooMany": "Usa como máximo 50 opciones.",
+        "optionInvalid": "Cada opción debe tener de 1 a 60 caracteres y no puede contener comas.",
+        "optionDuplicate": "Las opciones no pueden repetirse.",
+        "tooManyActive": "Una familia admite como máximo 60 campos activos.",
+        "tooManyTotal": "Una familia admite como máximo 200 campos, incluidos los archivados."
       },
       "success": {
         "created": "Familia creada.",
@@ -5297,6 +5335,28 @@
         "loadFailed": "No se pudieron cargar las familias.",
         "saveFailed": "No se pudo guardar la familia.",
         "deleteFailed": "No se pudo eliminar la familia."
+      },
+      "impact": {
+        "listLabel": "Impacto por campo",
+        "blockedTitle": "No se puede guardar: hay valores que no caben en la nueva definición.",
+        "confirmTitle": "Confirmar el cambio de campos",
+        "confirmDescription": "Este cambio afecta recursos ya registrados. Los valores existentes nunca se eliminan.",
+        "confirm": "Guardar cambio",
+        "usage": "En uso: {{count}} recurso(s) en {{tenants}} empresa(s).",
+        "unused": "Ningún recurso usa este campo.",
+        "incompatible": "{{count}} recurso(s) con un valor incompatible.",
+        "samples": "Ejemplos: {{samples}}.",
+        "constraintViolations": "{{count}} recurso(s) con un valor fuera de las nuevas reglas; siguen siendo editables.",
+        "change": {
+          "unchanged": "sin cambios",
+          "added": "nuevo",
+          "updated": "modificado",
+          "typeChanged": "tipo modificado",
+          "archived": "se archivará",
+          "unarchived": "restaurado",
+          "removed": "se eliminará"
+        },
+        "cannotSave": "Este cambio no se puede guardar."
       }
     },
     "modules": {

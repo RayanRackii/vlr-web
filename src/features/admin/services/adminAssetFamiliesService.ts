@@ -3,12 +3,23 @@ import { ZodError } from "zod"
 import {
   adminAssetFamilyListSchema,
   adminAssetFamilySchema,
+  adminAssetFamilySchemaPreviewSchema,
   type AdminAssetFamily,
+  type AdminAssetFamilySchemaPreview,
+  type AdminAssetFamilySchemaPreviewRequest,
   type CreateAdminAssetFamilyRequest,
   type UpdateAdminAssetFamilyRequest,
 } from "@/features/admin/schemas/adminAssetFamilySchemas"
 import { api, getAxiosErrorPayload, isAxiosError, parseApiError } from "@/lib/api"
 import i18n from "@/lib/i18n"
+
+/** The API answered 409: the schema changed since it was loaded, or the change is blocked. */
+export class AdminAssetFamilyConflictError extends Error {
+  constructor(message: string) {
+    super(message)
+    this.name = "AdminAssetFamilyConflictError"
+  }
+}
 
 function throwAdminAssetFamilyError(error: unknown, fallback: string): never {
   if (error instanceof ZodError) {
@@ -17,6 +28,12 @@ function throwAdminAssetFamilyError(error: unknown, fallback: string): never {
 
   if (error instanceof Error && !isAxiosError(error)) {
     throw error
+  }
+
+  if (isAxiosError(error) && error.response?.status === 409) {
+    throw new AdminAssetFamilyConflictError(
+      parseApiError(getAxiosErrorPayload(error), fallback),
+    )
   }
 
   const forbidden =
@@ -98,6 +115,27 @@ export async function updateAdminAssetFamily(
     return parsed.data
   } catch (error: unknown) {
     throwAdminAssetFamilyError(error, i18n.t("apiErrors.updateAdminAssetFamily"))
+  }
+}
+
+export async function previewAdminAssetFamilySchema(
+  id: string,
+  request: AdminAssetFamilySchemaPreviewRequest,
+): Promise<AdminAssetFamilySchemaPreview> {
+  try {
+    const response = await api.post<unknown>(
+      `/api/admin/asset-families/${encodeURIComponent(id)}/schema-preview`,
+      request,
+    )
+    const parsed = adminAssetFamilySchemaPreviewSchema.safeParse(response.data)
+
+    if (!parsed.success) {
+      throw new ZodError(parsed.error.issues)
+    }
+
+    return parsed.data
+  } catch (error: unknown) {
+    throwAdminAssetFamilyError(error, i18n.t("apiErrors.previewAdminAssetFamily"))
   }
 }
 
