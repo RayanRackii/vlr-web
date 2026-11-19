@@ -5,6 +5,7 @@ import {
   adminAssetFamilyListSchema,
   adminAssetFamilyToFormValues,
   createAdminAssetFamilyFormSchema,
+  isAdminAssetFamilyEditable,
   isSeedAssetFamilyKey,
   toCreateAdminAssetFamilyRequest,
   toUpdateAdminAssetFamilyRequest,
@@ -147,12 +148,39 @@ describe("admin asset family form schema", () => {
 })
 
 describe("admin asset family response schema", () => {
-  it("parses the detail list and rejects an unknown field type", () => {
+  it("parses the detail list and tolerates a v2 field type", () => {
     expect(adminAssetFamilyListSchema.safeParse([family]).success).toBe(true)
     expect(
       adminAssetFamilyListSchema.safeParse([
         { ...family, fields: [{ key: "x", type: "date", required: false, label: null }] },
       ]).success,
-    ).toBe(false)
+    ).toBe(true)
+  })
+})
+
+describe("isAdminAssetFamilyEditable", () => {
+  const withField = (field: Record<string, unknown>) =>
+    adminAssetFamilyListSchema.parse([
+      { ...family, fields: [{ key: "x", type: "text", required: false, label: null, ...field }] },
+    ])[0]
+
+  it("allows families with only known types and no v2 properties", () => {
+    expect(isAdminAssetFamilyEditable(withField({}))).toBe(true)
+    expect(isAdminAssetFamilyEditable(withField({ unit: null, archived: false }))).toBe(true)
+  })
+
+  it.each([
+    ["unknown type", { type: "multiselect" }],
+    ["unit", { unit: "mm" }],
+    ["min", { min: 0 }],
+    ["max", { max: 10 }],
+    ["decimals", { decimals: 1 }],
+    ["options", { options: ["PLA"] }],
+    ["maxLength", { maxLength: 10 }],
+    ["group", { group: "Volume" }],
+    ["help", { help: "dica" }],
+    ["archived", { archived: true }],
+  ])("blocks editing when a field has %s", (_name, field) => {
+    expect(isAdminAssetFamilyEditable(withField(field))).toBe(false)
   })
 })

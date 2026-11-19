@@ -203,6 +203,33 @@ describe("AdminAssetFamiliesPage", () => {
     )
   })
 
+  it("shows a read-only notice and no save button for a family with v2 fields", async () => {
+    const user = userEvent.setup()
+    getMock.mockImplementation(async () => ({
+      ...courts,
+      fields: [{ key: "build_x_mm", type: "number", required: false, label: "X", unit: "mm" }],
+    }))
+    await renderLoaded()
+
+    const row = screen.getByRole("row", { name: /Quadras/ })
+    await user.click(
+      within(row).getByRole("button", {
+        name: i18n.t("admin.assetFamilies.actions.edit"),
+      }),
+    )
+
+    const dialog = await screen.findByRole("dialog")
+    expect(
+      within(dialog).getByText(i18n.t("admin.assetFamilies.readOnlyNotice")),
+    ).toBeInTheDocument()
+    expect(
+      within(dialog).queryByRole("button", {
+        name: i18n.t("admin.assetFamilies.actions.save"),
+      }),
+    ).not.toBeInTheDocument()
+    expect(updateMock).not.toHaveBeenCalled()
+  })
+
   it("updates label and fields without sending the key", async () => {
     const user = userEvent.setup()
     updateMock.mockResolvedValue({ ...courts, label: "Quadras cobertas" })

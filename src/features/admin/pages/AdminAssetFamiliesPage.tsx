@@ -49,6 +49,7 @@ import {
 import { Switch } from "@/components/ui/switch"
 import {
   adminAssetFamilyToFormValues,
+  isAdminAssetFamilyEditable,
   createAdminAssetFamilyFormSchema,
   emptyAdminAssetFamilyFormValues,
   isSeedAssetFamilyKey,
@@ -199,7 +200,9 @@ export function AdminAssetFamiliesPage() {
 
       try {
         const detail = await getAdminAssetFamily(family.id)
-        form.reset(adminAssetFamilyToFormValues(detail))
+        if (isAdminAssetFamilyEditable(detail)) {
+          form.reset(adminAssetFamilyToFormValues(detail))
+        }
         setEditor({ mode: "edit", family: detail })
       } catch (error: unknown) {
         toast.error(t("admin.assetFamilies.errors.loadFailed"), {
@@ -424,6 +427,8 @@ export function AdminAssetFamiliesPage() {
   }
 
   const editing = editor?.mode === "edit"
+  const readOnlyFamily =
+    editor?.mode === "edit" && !isAdminAssetFamilyEditable(editor.family)
 
   return (
     <Page
@@ -558,6 +563,25 @@ export function AdminAssetFamiliesPage() {
             </DialogDescription>
           </DialogHeader>
 
+          {readOnlyFamily && editor?.mode === "edit" ? (
+            <div className="space-y-4">
+              <p className="text-sm text-muted-foreground" role="status">
+                {t("admin.assetFamilies.readOnlyNotice")}
+              </p>
+              <ul className="list-disc space-y-1 pl-5 text-sm">
+                {editor.family.fields.map((field) => (
+                  <li key={field.key}>
+                    {field.label ?? field.key} ({field.type})
+                  </li>
+                ))}
+              </ul>
+              <DialogFooter>
+                <Button type="button" variant="outline" onClick={closeEditor}>
+                  {t("common.cancel")}
+                </Button>
+              </DialogFooter>
+            </div>
+          ) : (
           <Form {...form}>
             <form
               className="space-y-4"
@@ -841,6 +865,7 @@ export function AdminAssetFamiliesPage() {
               </DialogFooter>
             </form>
           </Form>
+          )}
         </DialogContent>
       </Dialog>
 

@@ -39,6 +39,9 @@ export type TenantOnboardingValidationMessages = {
   familiesMin: string
   adminNameRequired: string
   adminEmailInvalid: string
+  contactEmailInvalid: string
+  postalCodeInvalid: string
+  stateInvalid: string
 }
 
 export function tenantOnboardingMessagesFromT(
@@ -59,6 +62,9 @@ export function tenantOnboardingMessagesFromT(
     familiesMin: t("admin.wizard.validation.familiesMin"),
     adminNameRequired: t("admin.wizard.validation.adminNameRequired"),
     adminEmailInvalid: t("admin.wizard.validation.adminEmailInvalid"),
+    contactEmailInvalid: t("admin.edit.validation.contactEmailInvalid"),
+    postalCodeInvalid: t("admin.edit.validation.postalCodeInvalid"),
+    stateInvalid: t("admin.edit.validation.stateInvalid"),
   }
 }
 
@@ -155,6 +161,40 @@ export function createTenantOnboardingSchemas(
     .merge(stepFamiliesSchema)
     .merge(stepAdminInviteSchema)
 
+  const tenantCompanySchema = z.object({
+    tradeName: z.string().trim().max(200),
+    contactEmail: z
+      .string()
+      .trim()
+      .max(254)
+      .refine(
+        (value) => value.length === 0 || EMAIL_PATTERN.test(value),
+        messages.contactEmailInvalid,
+      ),
+    contactPhone: z.string().trim().max(30),
+    postalCode: z
+      .string()
+      .trim()
+      .refine(
+        (value) => value.length === 0 || value.replace(/\D/g, "").length === 8,
+        messages.postalCodeInvalid,
+      ),
+    street: z.string().trim().max(200),
+    number: z.string().trim().max(20),
+    complement: z.string().trim().max(100),
+    district: z.string().trim().max(100),
+    city: z.string().trim().max(100),
+    state: z
+      .string()
+      .trim()
+      .refine(
+        (value) => value.length === 0 || /^[A-Za-z]{2}$/.test(value),
+        messages.stateInvalid,
+      ),
+  })
+
+  const tenantEditSchema = tenantOnboardingSchema.and(tenantCompanySchema)
+
   return {
     step1Schema,
     step2Schema,
@@ -162,6 +202,8 @@ export function createTenantOnboardingSchemas(
     stepFamiliesSchema,
     stepAdminInviteSchema,
     tenantOnboardingSchema,
+    tenantCompanySchema,
+    tenantEditSchema,
   }
 }
 
@@ -172,6 +214,14 @@ export type TenantOnboardingSchemas = ReturnType<
 export type TenantOnboardingFormValues = z.infer<
   TenantOnboardingSchemas["tenantOnboardingSchema"]
 >
+
+export type TenantCompanyFormValues = z.infer<
+  TenantOnboardingSchemas["tenantCompanySchema"]
+>
+
+/** Platform-admin edit page: onboarding fields plus the company contact/address fields. */
+export type TenantEditFormValues = TenantOnboardingFormValues &
+  TenantCompanyFormValues
 
 export function isTenantOnboardingStepValid(
   step: number,
@@ -246,6 +296,18 @@ export const tenantModuleSchema = z.object({
   isActive: z.boolean(),
 })
 
+export const tenantAdminAddressSchema = z.object({
+  postalCode: z.string().nullable().optional(),
+  street: z.string().nullable().optional(),
+  number: z.string().nullable().optional(),
+  complement: z.string().nullable().optional(),
+  district: z.string().nullable().optional(),
+  city: z.string().nullable().optional(),
+  state: z.string().nullable().optional(),
+})
+
+export type TenantAdminAddress = z.infer<typeof tenantAdminAddressSchema>
+
 export const tenantAdminSchema = z.object({
   id: z.string().uuid(),
   legalName: z.string(),
@@ -259,6 +321,12 @@ export const tenantAdminSchema = z.object({
   createdAt: z.string(),
   activeModules: z.array(tenantModuleSchema),
   assetFamilyKeys: z.array(z.string()).default([]),
+  tradeName: z.string().nullable().optional(),
+  contactEmail: z.string().nullable().optional(),
+  contactPhone: z.string().nullable().optional(),
+  address: tenantAdminAddressSchema.nullable().optional(),
+  isTrial: z.boolean().optional(),
+  isTrialReadOnly: z.boolean().optional(),
 })
 
 export const tenantAdminListSchema = z.array(tenantAdminSchema)
@@ -283,10 +351,18 @@ export type CreateTenantAdminRequest = z.infer<
   typeof createTenantAdminRequestSchema
 >
 
-export const updateTenantAdminRequestSchema = createTenantAdminRequestSchema.omit({
-  adminFullName: true,
-  adminEmail: true,
-})
+export const updateTenantAdminRequestSchema = createTenantAdminRequestSchema
+  .omit({
+    adminFullName: true,
+    adminEmail: true,
+  })
+  .extend({
+    // Null/undefined means "unchanged" on the API; an empty string clears the value.
+    tradeName: z.string().nullable().optional(),
+    contactEmail: z.string().nullable().optional(),
+    contactPhone: z.string().nullable().optional(),
+    address: tenantAdminAddressSchema.nullable().optional(),
+  })
 
 export type UpdateTenantAdminRequest = z.infer<
   typeof updateTenantAdminRequestSchema
@@ -344,6 +420,63 @@ export function tenantAdminToFormValues(
     assetFamilyKeys: tenant.assetFamilyKeys ?? [],
     adminFullName: "",
     adminEmail: "",
+  }
+}
+
+export function tenantAdminToEditFormValues(
+  tenant: TenantAdmin,
+): TenantEditFormValues {
+  return {
+    ...tenantAdminToFormValues(tenant),
+    tradeName: tenant.tradeName ?? "",
+    contactEmail: tenant.contactEmail ?? "",
+    contactPhone: tenant.contactPhone ?? "",
+    postalCode: tenant.address?.postalCode ?? "",
+    street: tenant.address?.street ?? "",
+    number: tenant.address?.number ?? "",
+    complement: tenant.address?.complement ?? "",
+    district: tenant.address?.district ?? "",
+    city: tenant.address?.city ?? "",
+    state: tenant.address?.state ?? "",
+  }
+}
+
+const COMPANY_ADDRESS_FIELDS = [
+  "postalCode",
+  "street",
+  "number",
+  "complement",
+  "district",
+  "city",
+  "state",
+] as const satisfies readonly (keyof TenantCompanyFormValues)[]
+
+/**
+ * Company contact payload for PUT /api/admin/tenants/{id}. Only touched fields are sent
+ * (undefined = unchanged); the address is replaced as a whole, so it is sent whole.
+ */
+export function toTenantCompanyPayload(
+  values: TenantCompanyFormValues,
+  dirty: Partial<Record<keyof TenantCompanyFormValues, unknown>>,
+) {
+  const isDirty = (key: keyof TenantCompanyFormValues) => Boolean(dirty[key])
+  const addressDirty = COMPANY_ADDRESS_FIELDS.some(isDirty)
+
+  return {
+    tradeName: isDirty("tradeName") ? values.tradeName.trim() : undefined,
+    contactEmail: isDirty("contactEmail") ? values.contactEmail.trim() : undefined,
+    contactPhone: isDirty("contactPhone") ? values.contactPhone.trim() : undefined,
+    address: addressDirty
+      ? {
+          postalCode: values.postalCode.replace(/\D/g, ""),
+          street: values.street.trim(),
+          number: values.number.trim(),
+          complement: values.complement.trim(),
+          district: values.district.trim(),
+          city: values.city.trim(),
+          state: values.state.trim().toUpperCase(),
+        }
+      : undefined,
   }
 }
 

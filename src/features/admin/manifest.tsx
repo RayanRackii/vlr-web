@@ -33,7 +33,6 @@ export const adminManifest = {
     platformStandalone: [
       { path: "/admin/tenants", element: <Navigate to="/admin/dashboard" replace /> },
       { path: "/admin/tenants/new", element: <NewTenantPage /> },
-      { path: "/admin/tenants/:id/edit", element: <EditTenantPage /> },
     ] satisfies readonly FeatureRoute[],
     staff: [
       { path: "/configuracoes/cadastro", element: <PeopleAccessPage />, permission: "core.registration_fields.read" },
@@ -43,6 +42,7 @@ export const adminManifest = {
       { path: "/admin", element: <Navigate to="/admin/dashboard" replace /> },
       { path: "/admin/dashboard", element: <AdminDashboardPage /> },
       { path: "/admin/users", element: <AdminUsersPage /> },
+      { path: "/admin/tenants/:id/edit", element: <EditTenantPage /> },
       { path: "/admin/recursos-visuais", element: <ResourceVisualCatalogPage /> },
       { path: "/admin/tenants/:id/recursos-visuais", element: <ResourceVisualCatalogPage /> },
       { path: "/admin/asset-families", element: <AdminAssetFamiliesPage /> },
