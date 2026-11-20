@@ -56,7 +56,14 @@ it("places portal navigation in the left sidebar and fixes the same navigation t
   const css = parse(readFileSync("src/features/tenantPortal/components/portal/portal.css", "utf8"))
   let desktopColumnNav = false
   let mobileBottomNav = false
+  let desktopSidebarScrolls = false
+  let mobileSidebarUnclipped = false
   css.walkRules((rule) => {
+    if (rule.selector === '.portal-shell [data-shell-part="sidebar"]') {
+      const declarations = Object.fromEntries(rule.nodes.filter((node) => node.type === "decl").map((node) => [node.prop, node.value]))
+      if (rule.parent?.type === "root") desktopSidebarScrolls = declarations["overflow-y"] === "auto"
+      else if (rule.parent?.type === "atrule" && rule.parent.params === "(max-width: 1023px)") mobileSidebarUnclipped = declarations.overflow === "visible" && declarations.width === "0"
+    }
     if (rule.selector === ".portal-nav" && rule.parent?.type === "root") {
       rule.walkDecls("display", (declaration) => { desktopColumnNav = declaration.value === "flex" })
     }
@@ -67,4 +74,7 @@ it("places portal navigation in the left sidebar and fixes the same navigation t
   })
   expect(desktopColumnNav).toBe(true)
   expect(mobileBottomNav).toBe(true)
+  // A long menu scrolls inside the desktop sidebar; on phones the aside never clips the bottom bar.
+  expect(desktopSidebarScrolls).toBe(true)
+  expect(mobileSidebarUnclipped).toBe(true)
 })
