@@ -51,6 +51,7 @@ export type SellableMenuItem = {
 }
 
 export type SellableRequirement = {
+  assetId?: string | null
   rentalAssetId?: string | null
 }
 
@@ -166,7 +167,7 @@ function resourceItem(input: SellableChecklistInput): SellableChecklistItem {
   if (input.resourceCapability !== "ready" || input.requirements === null) {
     return { id: "resource", status: "unavailable", blocksSale: true, action: { kind: "none" } }
   }
-  const incomplete = input.requirements.some((row) => (row.rentalAssetId?.trim().length ?? 0) === 0)
+  const incomplete = input.requirements.some((row) => ((row.assetId ?? row.rentalAssetId)?.trim().length ?? 0) === 0)
   const usesResource = input.requirements.length > 0
   return {
     id: "resource",

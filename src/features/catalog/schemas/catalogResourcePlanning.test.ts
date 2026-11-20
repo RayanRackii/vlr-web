@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest"
 import {
+  catalogAgendaItemSchema,
+  catalogOrderAllocationPreviewResponseSchema,
+  catalogOrderItemAllocationSchema,
   catalogOrderSchema,
   catalogProductResourceRequirementsResponseSchema,
 } from "./catalogSchemas"
@@ -33,6 +36,56 @@ const legacyOrder = {
   ],
   history: [],
 }
+
+const allocationBase = {
+  id: "55555555-5555-4555-8555-555555555555",
+  requirementId: "66666666-6666-4666-8666-666666666666",
+  status: "Scheduled",
+  plannedWorkStart: "2026-11-02T14:00:00Z",
+  plannedWorkEnd: "2026-11-02T15:00:00Z",
+  timeZoneId: "America/Sao_Paulo",
+  actualStartAt: null,
+  actualWorkFinishedAt: null,
+  actualReleaseAt: null,
+  planningRevision: 1,
+}
+const ASSET_ID = "88888888-8888-4888-8888-888888888888"
+const RENTAL_ID = "77777777-7777-4777-8777-777777777777"
+
+describe("non-rentable planning shapes", () => {
+  it("parses an allocation with rentalAssetId null and an assetId", () => {
+    const parsed = catalogOrderItemAllocationSchema.parse({ ...allocationBase, rentalAssetId: null, assetId: ASSET_ID })
+    expect(parsed.rentalAssetId).toBeNull()
+    expect(parsed.assetId).toBe(ASSET_ID)
+  })
+
+  it("still parses the old allocation shape without assetId", () => {
+    const parsed = catalogOrderItemAllocationSchema.parse({ ...allocationBase, rentalAssetId: RENTAL_ID })
+    expect(parsed.assetId).toBeUndefined()
+  })
+
+  it("parses requirements with assetId only, both ids, and the old rentalAssetId-only shape", () => {
+    const row = { assetCategoryId: null, resourceQuantity: 1, durationMinutesPerUnit: 60, prepMinutes: 0, cleanupMinutes: 0 }
+    const parsed = catalogProductResourceRequirementsResponseSchema.parse({
+      expectedVersion: 1,
+      requirements: [
+        { ...row, assetId: ASSET_ID, rentalAssetId: null },
+        { ...row, assetId: ASSET_ID, rentalAssetId: RENTAL_ID },
+        { ...row, rentalAssetId: RENTAL_ID },
+      ],
+    })
+    expect(parsed.requirements.map((r) => r.assetId)).toEqual([ASSET_ID, ASSET_ID, undefined])
+  })
+
+  it("parses a preview and an agenda item for a planning-only asset, and the old shapes", () => {
+    const preview = { isFeasible: true, orderItemId: null, workStart: null, workEnd: null, occupiedStart: null, occupiedEnd: null, estimatedReadyAt: null, conflictCode: "outside_working_hours", reason: null }
+    expect(catalogOrderAllocationPreviewResponseSchema.parse({ ...preview, rentalAssetId: null, assetId: ASSET_ID }).assetId).toBe(ASSET_ID)
+    expect(catalogOrderAllocationPreviewResponseSchema.parse({ ...preview, rentalAssetId: null }).assetId).toBeUndefined()
+    const item = { orderId: "11111111-1111-4111-8111-111111111111", displayNumber: null, orderStatus: "Requested", productId: "22222222-2222-4222-8222-222222222222", productName: "Peca", resourceName: null, customerName: null, workStart: null, workEnd: null, occupiedStart: null, occupiedEnd: null, allocationStatus: null, timeZoneId: "UTC" }
+    expect(catalogAgendaItemSchema.parse({ ...item, rentalAssetId: null, assetId: ASSET_ID }).assetId).toBe(ASSET_ID)
+    expect(catalogAgendaItemSchema.parse({ ...item, rentalAssetId: null }).assetId).toBeUndefined()
+  })
+})
 
 describe("catalog order resource-planning fields", () => {
   it("defaults to the pre-planning contract when fields are absent", () => {

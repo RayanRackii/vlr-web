@@ -153,7 +153,7 @@ function ProductView({ wizard, model }: { wizard: Wizard; model: WizardModel }) 
   const tags = product.taxonomy?.tags ?? []
   const description = product.description?.trim() ?? ""
   const price = formatCatalogMoney(product.price, product.currency, i18n.language)
-  const linkedAssetIds = requirements.flatMap((row) => (row.rentalAssetId ? [row.rentalAssetId] : []))
+  const linkedAssetIds = requirements.flatMap((row) => { const id = row.rentalAssetId ?? row.assetId; return id ? [id] : [] })
   const linkedAssets = assets.filter((asset) => linkedAssetIds.includes(asset.id))
   const assetNames = linkedAssets.map((asset) => asset.name)
   const short = shortDescription(description)
@@ -490,7 +490,8 @@ function OperationTab({ usesAgenda, requirements, assets, linkedAssets, model }:
   const restricted = (access?.visibility ?? model.product.visibility) === "Restricted"
 
   function resourceName(row: CatalogProductResourceRequirement): string {
-    if (row.rentalAssetId) return assets.find((asset) => asset.id === row.rentalAssetId)?.name ?? t("catalog.products.view.operation.unknownResource")
+    const key = row.rentalAssetId ?? row.assetId
+    if (key) return assets.find((asset) => asset.id === key)?.name ?? t("catalog.products.view.operation.unknownResource")
     return t("catalog.products.view.operation.resourceCategory")
   }
 

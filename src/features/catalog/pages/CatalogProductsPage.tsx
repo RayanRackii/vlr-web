@@ -127,7 +127,7 @@ export function CatalogProductsPage({ view = "products" }: { view?: "products" |
         ? await Promise.all(nextProducts.map(async (product) => {
           try {
             const data = await getCatalogProductResourceRequirements(product.id)
-            return [product.id, data.requirements.some((row) => (row.rentalAssetId?.trim().length ?? 0) > 0)] as const
+            return [product.id, data.requirements.some((row) => ((row.assetId ?? row.rentalAssetId)?.trim().length ?? 0) > 0)] as const
           } catch {
             return [product.id, false] as const
           }

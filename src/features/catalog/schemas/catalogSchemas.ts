@@ -151,6 +151,7 @@ export type CatalogProductFormValues = z.infer<typeof catalogProductFormSchema>
 /** Order-resource planning (Phase 0): catalog.products.manage product requirement rows. */
 export const catalogProductResourceRequirementSchema = z.object({
   id: z.string().uuid().nullable().optional(),
+  assetId: z.string().uuid().nullable().optional(),
   rentalAssetId: z.string().uuid().nullable(),
   assetCategoryId: z.string().uuid().nullable(),
   resourceQuantity: z.number().int().min(1),
@@ -199,7 +200,8 @@ export type AllocationStatus = z.infer<typeof allocationStatusSchema>
 export const catalogOrderItemAllocationSchema = z.object({
   id: z.string().uuid(),
   requirementId: z.string().uuid(),
-  rentalAssetId: z.string().uuid(),
+  rentalAssetId: z.string().uuid().nullable(),
+  assetId: z.string().uuid().nullable().optional(),
   status: allocationStatusSchema,
   plannedWorkStart: z.string(),
   plannedWorkEnd: z.string(),
@@ -486,6 +488,7 @@ export type B2BOrderAction =
 export const catalogOrderAllocationPreviewResponseSchema = z.object({
   isFeasible: z.boolean(),
   orderItemId: z.string().uuid().nullable(),
+  assetId: z.string().uuid().nullable().optional(),
   rentalAssetId: z.string().uuid().nullable(),
   workStart: z.string().nullable(),
   workEnd: z.string().nullable(),
@@ -514,6 +517,7 @@ export const catalogAgendaItemSchema = z.object({
   orderStatus: catalogOrderStatusSchema,
   productId: z.string().uuid(),
   productName: z.string(),
+  assetId: z.string().uuid().nullable().optional(),
   rentalAssetId: z.string().uuid().nullable(),
   resourceName: z.string().nullable(),
   customerName: z.string().nullable(),
