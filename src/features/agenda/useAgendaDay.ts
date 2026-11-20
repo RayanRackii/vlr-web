@@ -51,9 +51,13 @@ export function useAgendaDay(state: AgendaState, zone: string, access: AgendaAcc
   // GET /api/catalog/agenda/resources needs the rentals module and rentals.schedule.read (`access.schedule`);
   // order labels only need catalog.orders.read.
   const resourceAgenda = access.orders && access.schedule
+  // Without rentals schedule access the order allocations still come from the product agenda
+  // (catalog module + catalog.orders.read only), so a rentals-off tenant never hits a 403.
+  const productAgenda = access.orders && !access.schedule
   const assets = useQuery({ ...agendaQueries.assets(tenantId), enabled: on(access.assets) })
   const kinds = useQuery({ ...agendaQueries.kinds(tenantId), enabled: on(access.schedule) })
   const catalog = useQuery({ ...agendaQueries.resourceAgenda(tenantId, stableRange), enabled: on(resourceAgenda) })
+  const productItems = useQuery({ ...agendaQueries.productAgenda(tenantId, stableRange), enabled: on(productAgenda) })
   const reservations = useQuery({ ...agendaQueries.reservations(tenantId, stableRange), enabled: on(access.reservations) })
   const orders = useQuery({ ...agendaQueries.orders(tenantId), select: agendaOrderSelect.labels, enabled: on(access.orders) })
   const schedule = useQueries({
@@ -62,11 +66,11 @@ export function useAgendaDay(state: AgendaState, zone: string, access: AgendaAcc
   })
 
   const pending = (on(access.assets) && assets.isPending) || (on(access.schedule) && (kinds.isPending || schedule.pending))
-    || (on(resourceAgenda) && catalog.isPending) || (on(access.orders) && orders.isPending) || (on(access.reservations) && reservations.isPending)
+    || (on(resourceAgenda) && catalog.isPending) || (on(productAgenda) && productItems.isPending) || (on(access.orders) && orders.isPending) || (on(access.reservations) && reservations.isPending)
   const loaded = canLoad && !pending
   const failed: AgendaSourceId[] = []
   if (on(access.assets) && assets.isError) failed.push("assets")
-  if (on(resourceAgenda) && catalog.isError) failed.push("orders")
+  if ((on(resourceAgenda) && catalog.isError) || (on(productAgenda) && productItems.isError)) failed.push("orders")
   if (on(access.reservations) && reservations.isError) failed.push("reservations")
   if (on(access.schedule) && schedule.failed) failed.push("schedule")
   if (on(access.schedule) && kinds.isError) failed.push("kinds")
@@ -75,7 +79,7 @@ export function useAgendaDay(state: AgendaState, zone: string, access: AgendaAcc
   const failedSources = useMemo(() => failed, [failedKey])
 
   const assetsData = on(access.assets) ? assets.data : undefined
-  const catalogData = on(resourceAgenda) ? catalog.data : undefined
+  const catalogData = on(resourceAgenda) ? catalog.data : on(productAgenda) ? productItems.data : undefined
   const reservationsData = on(access.reservations) ? reservations.data : undefined
   const kindsData = on(access.schedule) ? kinds.data : undefined
   const slots = on(access.schedule) ? schedule.slots : undefined
@@ -113,7 +117,7 @@ export function useAgendaDay(state: AgendaState, zone: string, access: AgendaAcc
     }
   }, [ready, labels, stateKey, zone, focusedProductId])
   // When the newest data of any source arrived (react-query `dataUpdatedAt`); null until something loaded.
-  const updatedAt = Math.max(assets.dataUpdatedAt, kinds.dataUpdatedAt, catalog.dataUpdatedAt, reservations.dataUpdatedAt, orders.dataUpdatedAt, schedule.updatedAt) || null
+  const updatedAt = Math.max(assets.dataUpdatedAt, kinds.dataUpdatedAt, catalog.dataUpdatedAt, productItems.dataUpdatedAt, reservations.dataUpdatedAt, orders.dataUpdatedAt, schedule.updatedAt) || null
   return {
     ...derived,
     updatedAt,

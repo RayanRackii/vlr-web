@@ -119,13 +119,15 @@ export function buildAgendaDay(
   const blocks: AgendaBlock[] = []
   const catalogByOrder = new Map(data.catalog.items.map((item) => [item.orderId, item]))
   for (const item of data.catalog.items) {
-    if (!item.rentalAssetId) continue
+    // Planning-only allocations have no rental asset; the planning asset id is the row id then.
+    const resourceId = item.rentalAssetId ?? item.assetId
+    if (!resourceId) continue
     const start = item.occupiedStart ?? item.workStart
     const end = item.occupiedEnd ?? item.workEnd
     const window = dayWindow(start, end, state.date, zone)
     if (!window) continue
-    ensure(item.rentalAssetId, item.resourceName ?? item.rentalAssetId)
-    blocks.push({ key: `pedido:${item.orderId}:${item.rentalAssetId}:${start}:${end}`, resourceId: item.rentalAssetId, kind: "pedido", ...window, startInstant: start!, endInstant: end!, orderId: item.orderId, displayNumber: item.displayNumber, orderStatus: item.orderStatus, productId: item.productId, productName: item.productName, customerName: item.customerName, workStart: item.workStart, workEnd: item.workEnd })
+    ensure(resourceId, item.resourceName ?? resourceId)
+    blocks.push({ key: `pedido:${item.orderId}:${resourceId}:${start}:${end}`, resourceId, kind: "pedido", ...window, startInstant: start!, endInstant: end!, orderId: item.orderId, displayNumber: item.displayNumber, orderStatus: item.orderStatus, productId: item.productId, productName: item.productName, customerName: item.customerName, workStart: item.workStart, workEnd: item.workEnd })
   }
   for (const reservation of data.reservations) {
     if (["cancelled", "canceled"].includes(reservation.status.toLowerCase())) continue

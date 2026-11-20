@@ -2,7 +2,7 @@ import { QueryClientProvider, type QueryClient } from "@tanstack/react-query"
 import { renderHook, waitFor } from "@testing-library/react"
 import type { ReactNode } from "react"
 import { beforeEach, describe, expect, it, vi } from "vitest"
-import { listCatalogOrders, listCatalogResourceAgenda } from "@/features/catalog/services/catalogService"
+import { listCatalogOrders, listCatalogProductAgenda, listCatalogResourceAgenda } from "@/features/catalog/services/catalogService"
 import { listAdminReservations } from "@/features/rentals/services/reservationsService"
 import { fetchAdminScheduleDay, listAdminRentalAssets, listOccupancyKinds } from "@/features/rentals/services/scheduleService"
 import { invalidateCurrentUserCache } from "@/features/users/services/currentUserCache"
@@ -15,6 +15,7 @@ vi.mock("@/features/catalog/services/catalogService", () => ({
   listCatalogProducts: vi.fn(),
   listCatalogOrders: vi.fn(),
   listCatalogResourceAgenda: vi.fn(),
+  listCatalogProductAgenda: vi.fn(),
 }))
 vi.mock("@/features/rentals/services/scheduleService", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/features/rentals/services/scheduleService")>()),
@@ -45,6 +46,7 @@ beforeEach(() => {
   vi.mocked(listAdminReservations).mockResolvedValue([])
   vi.mocked(fetchAdminScheduleDay).mockResolvedValue({ date: "2026-11-10", slots: [] })
   vi.mocked(listCatalogOrders).mockResolvedValue([])
+  vi.mocked(listCatalogProductAgenda).mockResolvedValue([])
 })
 
 describe("useAgendaDay queries", () => {
@@ -65,6 +67,22 @@ describe("useAgendaDay queries", () => {
     await waitFor(() => expect(result.current.loading).toBe(false))
     expect(listCatalogResourceAgenda).not.toHaveBeenCalled()
     expect(result.current.failedSources).toEqual([])
+  })
+
+  it("shows planning-only order allocations from the product agenda when rentals is off", async () => {
+    const planningOnly = { ...order, rentalAssetId: null, assetId: "55555555-5555-4555-8555-555555555555", resourceName: "Impressora 3D" }
+    vi.mocked(listCatalogProductAgenda).mockResolvedValue([planningOnly])
+    const client = createTestQueryClient()
+    const wrapper = ({ children }: { children: ReactNode }) => <QueryClientProvider client={client}>{children}</QueryClientProvider>
+    const catalogOnly = { assets: false, schedule: false, reservations: false, orders: true }
+    const { result } = renderHook(() => useAgendaDay(day, zone, catalogOnly, "t1", true), { wrapper })
+    await waitFor(() => expect(result.current.loading).toBe(false))
+    expect(listCatalogProductAgenda).toHaveBeenCalledTimes(1)
+    expect(listCatalogResourceAgenda).not.toHaveBeenCalled()
+    expect(listAdminRentalAssets).not.toHaveBeenCalled()
+    const rows = result.current.day.rows
+    expect(rows.map((row) => row.name)).toEqual(["Impressora 3D"])
+    expect(rows[0].blocks).toHaveLength(1)
   })
 
   it("labels a block with an order created outside the visible range", async () => {
