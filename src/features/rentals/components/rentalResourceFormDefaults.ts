@@ -1,5 +1,6 @@
 import { toHtmlTimeInput } from "@/features/assets/schemas/assetSchemas"
-import type { AssetFamily } from "@/features/assets/schemas/assetFamilySchemas"
+import { attributeToInputString, toFormValue, type AttributeFormValue } from "@/features/assets/lib/assetAttributeValues"
+import { emptyAttributesFromFields, type AssetFamily } from "@/features/assets/schemas/assetFamilySchemas"
 import type { Unit } from "@/features/assets/schemas/unitSchemas"
 import type {
   RegistryCategoryListItem,
@@ -60,6 +61,26 @@ export function mergeTemplateOptions(
   return [...new Map(options.map((option) => [option.value, option])).values()]
 }
 
+function attributesFor(family: AssetFamily, editing: AdminRentalAsset | null): Record<string, AttributeFormValue> {
+  const values = emptyAttributesFromFields(family.fields)
+  for (const field of family.fields) {
+    const stored = editing?.attributes?.[field.key]
+    if (stored != null) values[field.key] = toFormValue(field, stored)
+  }
+  return values
+}
+
+/** Required fields that are blank on a stored asset (legacy); they never block an edit. */
+export function legacyBlankRequiredKeys(editing: AdminRentalAsset | null, families: readonly AssetFamily[]): ReadonlySet<string> {
+  const family = families.find((candidate) => candidate.id === editing?.familyId)
+  if (!editing || !family?.fields) return new Set()
+  return new Set(
+    family.fields
+      .filter((field) => field.required && !attributeToInputString(editing.attributes?.[field.key]).trim())
+      .map((field) => field.key),
+  )
+}
+
 export function buildRentalResourceFormValues(
   editing: AdminRentalAsset | null,
   units: readonly Unit[],
@@ -67,13 +88,15 @@ export function buildRentalResourceFormValues(
   families: readonly AssetFamily[],
 ): RentalResourceFormValues {
   const rentalType = editing?.type === "Good" ? "Good" : "Location"
+  const familyId = editing?.familyId ?? pickSingleId(families)
+  const family = families.find((candidate) => candidate.id === familyId)
 
   return {
     name: editing?.name ?? "",
     tag: editing?.tag ?? "",
     unitId: editing?.unitId ?? pickSingleId(units),
     categoryId: editing?.categoryId ?? pickSingleId(categories),
-    familyId: editing?.familyId ?? pickSingleId(families),
+    familyId,
     rentalType,
     totalQuantity: editing?.totalQuantity ?? 1,
     requiresDeposit: editing?.requiresDeposit ?? true,
@@ -96,5 +119,7 @@ export function buildRentalResourceFormValues(
     visualTemplateRevisionId: editing?.visualTemplateRevisionId ?? "",
     capacityPeople: String(editing?.capacityPeople ?? ""),
     confirmVisualSuggestions: false,
+    // Family fields start empty on create and from the stored values on edit.
+    ...(family?.fields ? { attributes: attributesFor(family, editing) } : {}),
   }
 }

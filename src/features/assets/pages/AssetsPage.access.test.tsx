@@ -53,7 +53,7 @@ vi.mock("@/features/assets/services/assetFamiliesService", () => ({
 
 import { getCategories } from "@/features/assets/services/assetCategoriesService"
 import { listActiveAssetFamilies } from "@/features/assets/services/assetFamiliesService"
-import { getAssetById, getAssets, updateAsset } from "@/features/assets/services/assetsService"
+import { getAssetById, getAssets } from "@/features/assets/services/assetsService"
 import { getUnits } from "@/features/assets/services/unitsService"
 
 const getAssetsMock = vi.mocked(getAssets)
@@ -116,22 +116,19 @@ describe("AssetsPage permission-aware load", () => {
     expect(await within(table).findByRole("columnheader", { name: /^Nome/ })).toBeInTheDocument()
     const names = await screen.findAllByRole("button", { name: ASSET.name })
     expect(names).toHaveLength(2)
-    // Desktop and mobile both open the same existing wizard.
+    // Desktop and mobile both open the same details sheet; only writers get the way into the wizard.
     await user.click(names[canWrite ? 0 : 1])
+    const sheet = await screen.findByRole("dialog")
+    expect(within(sheet).getByText(ASSET.name)).toBeInTheDocument()
+    expect(getAssetById).not.toHaveBeenCalled()
+    if (!canWrite) {
+      expect(within(sheet).queryByRole("button", { name: "Editar" })).not.toBeInTheDocument()
+      return
+    }
+    await user.click(within(sheet).getByRole("button", { name: "Editar" }))
     const dialog = await screen.findByRole("dialog")
     expect(await within(dialog).findByRole("textbox", { name: /^Nome/ })).toHaveValue(ASSET.name)
     expect(getAssetById).toHaveBeenCalledWith(ASSET.id)
-    if (!canWrite) {
-      expect(within(dialog).getByRole("textbox", { name: /^Nome/ })).toBeDisabled()
-      const toggle = within(dialog).getByRole("switch", { name: /^Protegido/ })
-      expect(toggle).toHaveAttribute("aria-disabled", "true")
-      expect(toggle).toHaveAttribute("aria-checked", "false")
-      await user.click(toggle)
-      toggle.focus()
-      await user.keyboard(" ")
-      expect(toggle).toHaveAttribute("aria-checked", "false")
-      expect(updateAsset).not.toHaveBeenCalled()
-    }
   })
 
   it("keeps the asset list and hides create actions when lookups are forbidden", async () => {

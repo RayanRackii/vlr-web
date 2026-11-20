@@ -43,6 +43,7 @@ export type AppNavigationChildItem = {
     | "nav.agendasOverview"
     | "nav.agendasResources"
     | "nav.agendasProduct"
+    | "nav.agendasPlanning"
     | "nav.catalogProductAgenda"
     | "nav.catalogResourceAgenda"
     | "nav.catalogRequests"
@@ -90,6 +91,7 @@ export type AppNavigationItem = {
     | "nav.agendasOverview"
     | "nav.agendasResources"
     | "nav.agendasProduct"
+    | "nav.agendasPlanning"
     | "nav.catalogProductAgenda"
     | "nav.catalogResourceAgenda"
     | "nav.catalogRequests"
@@ -97,6 +99,7 @@ export type AppNavigationItem = {
     | "nav.catalogCustomerGroups"
     | "nav.catalogNotifications"
     | "nav.company"
+    | "nav.portalAppearance"
   to: string
   tabs?: readonly NavigationTab[]
   icon: LucideIcon
@@ -229,7 +232,7 @@ const productNavigationSections: readonly AppNavigationSection[] = [
   { titleKey: "nav.sections.customers", items: navigationItemsAt("/pessoas-e-acesso", "/grupos") },
   { titleKey: "nav.sections.portal", items: navigationItemsAt("/configuracoes/menu", "/configuracoes/layout") },
   { titleKey: "nav.sections.settings", defaultCollapsed: true, items: navigationItemsAt(
-    "/configuracoes/agenda", "/catalogo/configuracoes", "/notificacoes", "/configuracoes/empresa",
+    "/configuracoes/agenda", "/catalogo/configuracoes", "/notificacoes", "/configuracoes/empresa", "/configuracoes/aparencia",
   ) },
 ]
 
@@ -449,6 +452,7 @@ export function getPageTitleKey(
   if (pathname === "/agenda" || pathname === "/agendas") return "nav.agendasOverview"
   if (pathname === "/catalogo/agenda-recursos" || pathname === "/agendas/recursos") return "nav.agendasResources"
   if (pathname === "/catalogo/agenda-produto" || pathname === "/agendas/produto") return "nav.agendasProduct"
+  if (pathname === "/agendas/planejamento") return "nav.agendasPlanning"
   if (pathname === "/catalogo/pedidos" || pathname === "/catalogo/solicitacoes" || pathname === "/pedidos" || pathname.startsWith("/catalogo/pedidos/")) return "nav.pedidos"
   if (pathname === "/catalogo/grupos" || pathname.startsWith("/catalogo/grupos/")) return "nav.catalogCustomerGroups"
   if (pathname === "/configuracoes/notificacoes" || pathname === "/catalogo/notificacoes" || pathname === "/notificacoes") return "nav.notifications"

@@ -1,7 +1,17 @@
 import { z } from "zod"
 
-import { guidLikeIdSchema } from "@/features/assets/schemas/assetFamilySchemas"
-import { toApiTimeOnly } from "@/features/assets/schemas/assetSchemas"
+import {
+  attributesToPayload,
+  guidLikeIdSchema,
+  validateAttributeValue,
+  type AssetFamily,
+} from "@/features/assets/schemas/assetFamilySchemas"
+import {
+  assetAttributeValueSchema,
+  attributeFormValueSchema,
+  type AssetAttributeValue,
+  toApiTimeOnly,
+} from "@/features/assets/schemas/assetSchemas"
 import {
   cancelCutoffHoursSchema,
   parseCancelCutoffHoursInput,
@@ -65,6 +75,8 @@ export const createRentableRequestSchema = z.object({
   visualTemplateRevisionId: guidLikeIdSchema.nullable().optional(),
   capacityPeople: z.number().int().positive().nullable().optional(),
   confirmVisualSuggestions: z.boolean().optional(),
+  /** Family attribute values; blank entries travel as null. Absent keeps the stored values on update. */
+  attributes: z.record(z.string(), assetAttributeValueSchema).optional(),
 })
 
 export type CreateRentableRequest = z.infer<typeof createRentableRequestSchema>
@@ -83,7 +95,15 @@ export function createRentalResourceFormSchema(messages: {
   queueOpeningTimeRequired: string
   horizonRange: string
   cancelCutoffRange?: string
-}) {
+  attributeRequired?: string
+  attributeInvalid?: string
+}, attributeContext: {
+  families?: readonly AssetFamily[]
+  /** Required attributes that were already blank on a stored asset (legacy); they never block an edit. */
+  legacyBlankKeys?: ReadonlySet<string>
+  /** Stored raw attributes of the asset being edited and its family; untouched values skip client validation. */
+  stored?: { familyId: string; attributes: Readonly<Record<string, AssetAttributeValue>> } | null
+} = {}) {
   return z
     .object({
       name: z.string().trim().min(1, messages.nameRequired),
@@ -117,8 +137,28 @@ export function createRentalResourceFormSchema(messages: {
         return Number.isInteger(capacity) && capacity >= 1 && capacity <= RESOURCE_CAPACITY_PEOPLE_MAX
       }, messages.capacityRange),
       confirmVisualSuggestions: z.boolean(),
+      // Family attribute values keyed by field key. Undefined means "not loaded / not managed here".
+      attributes: z.record(z.string(), attributeFormValueSchema).optional(),
     })
     .superRefine((values, ctx) => {
+      const family = attributeContext.families?.find((candidate) => candidate.id === values.familyId)
+      if (values.attributes && family) {
+        for (const field of family.fields) {
+          const issue = validateAttributeValue(
+            field,
+            values.attributes[field.key],
+            attributeContext.stored?.familyId === values.familyId ? attributeContext.stored.attributes[field.key] : undefined,
+          )
+          if (issue === "required" && attributeContext.legacyBlankKeys?.has(field.key)) continue
+          if (issue) {
+            ctx.addIssue({
+              code: "custom",
+              path: ["attributes", field.key],
+              message: issue === "required" ? (messages.attributeRequired ?? "Required") : (messages.attributeInvalid ?? "Invalid"),
+            })
+          }
+        }
+      }
       if (values.cancelCutoffMode === "hours" && parseCancelCutoffHoursInput(values.cancelCutoffHours ?? "") === null) {
         ctx.addIssue({ code: "custom", path: ["cancelCutoffHours"], message: messages.cancelCutoffRange })
       }
@@ -199,6 +239,10 @@ export function resolveResourceHorizonWrite(
 export function toCreateRentableRequest(
   values: RentalResourceFormValues,
   horizon: ResourceHorizonWriteContext = { creating: true, stored: undefined },
+  /** Family of the asset: types the attribute values (numbers, arrays). Without it values are sent by shape. */
+  family?: AssetFamily | null,
+  /** Stored raw attributes (same family only): untouched fields are re-sent exactly as stored. */
+  storedAttributes?: Readonly<Record<string, AssetAttributeValue>> | null,
 ): CreateRentableRequest {
   const isLocation = values.rentalType === "Location"
   const payload: CreateRentableRequest = {
@@ -241,6 +285,16 @@ export function toCreateRentableRequest(
   }
   if (values.confirmVisualSuggestions) {
     payload.confirmVisualSuggestions = true
+  }
+  if (values.attributes) {
+    payload.attributes = family
+      ? attributesToPayload(family.fields, values.attributes, storedAttributes)
+      : Object.fromEntries(
+          Object.entries(values.attributes).map(([key, value]) => [
+            key,
+            typeof value === "string" ? (value.trim() === "" ? null : value.trim()) : value,
+          ]),
+        )
   }
   return createRentableRequestSchema.parse(payload)
 }

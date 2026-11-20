@@ -132,6 +132,10 @@ export async function updateAdminTenant(
       welcomeTagline: body.welcomeTagline || null,
       activeModules: body.activeModules,
       assetFamilyKeys: body.assetFamilyKeys,
+      tradeName: body.tradeName,
+      contactEmail: body.contactEmail,
+      contactPhone: body.contactPhone,
+      address: body.address,
     })
 
     return tenantAdminSchema.parse(response.data)

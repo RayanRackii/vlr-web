@@ -10,6 +10,12 @@ import i18n from "@/lib/i18n"
 const unexpected = { error: "An unexpected error occurred." }
 
 describe("asset API error copy", () => {
+  it("shows the API explanation of a 400 (for example an invalid attribute option)", () => {
+    const body = { error: "Attribute 'materials' must be one of the listed options." }
+    expect(localizeAssetApiError(body, "fallback", 400)).toBe(body.error)
+    expect(localizeAssetApiError(body, "fallback", 500)).toBe("fallback")
+  })
+
   it("does not treat the generic 500 message as a duplicate tag", () => {
     expect(assetTagConflictMessage(500, unexpected, "fallback")).toBe("fallback")
     expect(assetTagConflictMessage(null, unexpected, "fallback")).toBe("fallback")

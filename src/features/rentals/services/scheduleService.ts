@@ -4,6 +4,7 @@ import { api, getAxiosErrorPayload, parseApiError } from "@/lib/api"
 import { mapRbacErrorMessage } from "@/features/users/permissions/rbacErrors"
 import i18n from "@/lib/i18n"
 import { guidLikeIdSchema } from "@/features/assets/schemas/assetFamilySchemas"
+import { assetAttributeValueSchema } from "@/features/assets/schemas/assetSchemas"
 
 /** Prefers the ASP.NET ProblemDetails `detail`/`errors` fields over the generic `{ error }` shape. */
 function parseProblemDetailsError(error: unknown, fallback: string): string {
@@ -171,6 +172,8 @@ export async function setDirectRental(rentalAssetId: string, directRental: boole
 
 export const rentalAssetSchema = z.object({
   tag: z.string().nullable().optional(),
+  /** Family attribute values; absent on the public catalog. */
+  attributes: z.record(z.string(), assetAttributeValueSchema).nullable().optional(),
   id: z.string().uuid(),
   assetId: z.string().uuid(),
   name: z.string(),

@@ -71,6 +71,11 @@ export function Breadcrumb({ variant = "page", fallback = null }: BreadcrumbProp
   } else if (pedidosChild) {
     crumbs.push({ label: t("nav.pedidos"), to: "/pedidos" })
     crumbs.push({ label: title?.pathname === pathname ? title.value : t("nav.details") })
+  } else if (/^\/admin\/tenants\/[^/]+\/edit$/.test(normalized)) {
+    // Platform-admin company edit page: "Super-Admin / Empresas / <nome>".
+    crumbs.push({ label: t("nav.admin") })
+    crumbs.push({ label: t("nav.adminTenants"), to: "/admin/dashboard" })
+    crumbs.push({ label: title?.pathname === pathname ? title.value : t("nav.details") })
   } else if (intro) {
     crumbs.push({ label: t(intro.titleKey), to: moduleIntroPath(intro.key) })
     crumbs.push({ label: t("moduleIntro.title") })

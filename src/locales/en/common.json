@@ -327,7 +327,8 @@
     "deleteTaxonomy": "Could not delete the category or tag.",
     "loadCatalogAgenda": "Could not load the agenda.",
     "timeout": "The connection took too long. Please try again.",
-    "updateReservationNotes": "Could not save the note."
+    "updateReservationNotes": "Could not save the note.",
+    "previewAdminAssetFamily": "Could not calculate the impact of the change."
   },
   "trial": {
     "banner": {
@@ -570,10 +571,10 @@
       "fieldRequired": "Fill in this field."
     },
     "login": {
-      "title": "Sign in",
+      "title": "Welcome back",
       "welcomeDefault": "Welcome back! Sign in to make bookings and keep up with your updates.",
       "emailPlaceholder": "you@email.com",
-      "subtitle": "Use your email and password for this company.",
+      "subtitle": "Sign in to book and keep track of your activity.",
       "submit": "Sign in",
       "submitting": "Signing in...",
       "toastSuccess": "Signed in!",
@@ -2521,8 +2522,10 @@
     "agendasOverview": "Overview",
     "agendasResources": "Resource agenda",
     "agendasProduct": "Product agenda",
+    "agendasPlanning": "Planning",
     "pedidos": "Orders",
-    "company": "Company details"
+    "company": "Company details",
+    "portalAppearance": "Portal appearance"
   },
   "moduleIntro": {
     "title": "Introduction",
@@ -3474,7 +3477,15 @@
   "assets": {
     "actions": {
       "edit": "Edit",
-      "remove": "Remove"
+      "remove": "Remove",
+      "details": "Details"
+    },
+    "attributes": {
+      "title": "Attributes",
+      "empty": "No attributes filled in.",
+      "showMore": "show more",
+      "showLess": "show less",
+      "extra": "+{{count}}"
     },
     "deletion": {
       "title": "Confirm deletion",
@@ -3759,7 +3770,8 @@
         "category": "Type",
         "location": "Location",
         "status": "Status",
-        "actions": "Actions"
+        "actions": "Actions",
+        "attributes": "Attributes"
       },
       "status": {
         "Active": "Active",
@@ -3855,6 +3867,15 @@
       "missingTitle": "To continue, complete:",
       "familyFields": {
         "capacity": "Capacity"
+      },
+      "attributes": {
+        "counter": "{{count}}/{{max}}",
+        "noSelection": "None",
+        "selectPlaceholder": "Select an option",
+        "legacyValue": "Value saved before this option list changed. You can only remove it.",
+        "rangeBetween": "Between {{min}} and {{max}}",
+        "rangeMin": "Minimum {{min}}",
+        "rangeMax": "Maximum {{max}}"
       },
       "placeholders": {
         "name": "e.g. Equipment 1",
@@ -5051,6 +5072,58 @@
       }
     },
     "edit": {
+      "back": "Companies",
+      "status": {
+        "active": "Active",
+        "inactive": "Inactive",
+        "trial": "Trial",
+        "trialEnded": "Trial ended"
+      },
+      "tabs": {
+        "label": "Company sections",
+        "company": "Company",
+        "portal": "Portal",
+        "modules": "Modules and families",
+        "users": "Users",
+        "registration": "Portal sign-up",
+        "menu": "Portal menu"
+      },
+      "validation": {
+        "contactEmailInvalid": "Enter a valid e-mail.",
+        "postalCodeInvalid": "The postal code must have 8 digits.",
+        "stateInvalid": "Use the 2-letter state code."
+      },
+      "company": {
+        "tradeName": "Trade name",
+        "contactTitle": "Contact",
+        "contactDescription": "The company's e-mail and phone.",
+        "contactEmail": "Contact e-mail",
+        "contactPhone": "Phone",
+        "addressTitle": "Address",
+        "addressDescription": "The company's address.",
+        "postalCode": "Postal code",
+        "street": "Street",
+        "number": "Number",
+        "complement": "Complement",
+        "district": "District",
+        "city": "City",
+        "state": "State",
+        "trialTitle": "Trial period",
+        "trialDescription": "Read-only. The trial period is set by the platform.",
+        "trialNone": "This company is not on a trial.",
+        "trialActive": "The company is on a trial.",
+        "trialEnded": "The trial has ended. The company is read-only."
+      },
+      "portal": {
+        "urlPreview": "Portal address",
+        "copyUrl": "Copy address",
+        "logoPreview": "Logo preview",
+        "logoPreviewEmpty": "Paste an SVG to see the preview.",
+        "hintTitle": "Portal sign-in screen",
+        "hintBody": "The sign-in image and texts are edited in Settings › Portal appearance, inside the company.",
+        "enter": "Enter company",
+        "entering": "Entering..."
+      },
       "title": "Edit company",
       "description": "Update legal details, subdomain, and subscribed modules.",
       "successTitle": "Success",
@@ -5128,7 +5201,7 @@
       },
       "delete": {
         "title": "Delete user",
-        "description": "Delete {{name}} from {{tenant}}? Their auth account will also be removed. This cannot be undone.",
+        "description": "Delete {{name}} from {{company}}? Their auth account will also be removed. This cannot be undone.",
         "confirm": "Continue",
         "deleting": "Deleting...",
         "successTitle": "Success",
@@ -5170,7 +5243,8 @@
         "deleteNamed": "Delete {{label}}",
         "save": "Save",
         "saving": "Saving...",
-        "retry": "Try again"
+        "retry": "Try again",
+        "reload": "Reload family"
       },
       "dialog": {
         "createTitle": "New family",
@@ -5193,12 +5267,34 @@
         "fieldLabel": "Field label",
         "fieldType": "Type",
         "fieldRequired": "Required",
-        "removeField": "Remove field"
+        "removeField": "Remove field",
+        "help": "Help text",
+        "group": "Group",
+        "unit": "Unit",
+        "min": "Minimum",
+        "max": "Maximum",
+        "decimals": "Decimals",
+        "maxLength": "Maximum length",
+        "options": "Options",
+        "optionItem": "Option {{number}}",
+        "addOption": "Add option",
+        "removeOption": "Remove option {{number}}",
+        "archive": "Archive",
+        "restore": "Restore",
+        "archivedBadge": "Archived",
+        "archivedFields": "Archived fields ({{count}})",
+        "preview": "Preview",
+        "unknownType": "Type not supported by this editor: {{type}}. The field is kept as is and can only be archived."
       },
       "types": {
         "text": "Text",
         "number": "Number",
-        "boolean": "Yes/no"
+        "boolean": "Yes/no",
+        "longtext": "Long text",
+        "select": "Select",
+        "multiselect": "Multiselect",
+        "url": "Link",
+        "date": "Date"
       },
       "validation": {
         "key": "The key must start with a letter and use only lowercase letters, digits, and _ (up to 64 characters).",
@@ -5207,7 +5303,22 @@
         "sortOrder": "Enter a whole number.",
         "fieldKey": "Enter the field key.",
         "fieldKeyDuplicate": "This field key is duplicated.",
-        "seedActive": "System families cannot be deactivated."
+        "seedActive": "System families cannot be deactivated.",
+        "fieldKeyPattern": "The field key must start with a letter and use only lowercase letters, numbers and _ (up to 64 characters).",
+        "fieldLabelMax": "The field label must be at most 120 characters.",
+        "helpMax": "The help text must be at most 300 characters.",
+        "groupMax": "The group must be at most 60 characters.",
+        "unitMax": "The unit must be at most 16 characters.",
+        "numberInvalid": "Use numbers only, with a decimal point or comma.",
+        "minGreaterThanMax": "The minimum cannot be greater than the maximum.",
+        "decimalsInvalid": "Decimals must be an integer from 0 to 6.",
+        "maxLengthInvalid": "The maximum length must be an integer within the type limit (text: 1000, long text: 10000).",
+        "optionsRequired": "Add at least one option.",
+        "optionsTooMany": "Use at most 50 options.",
+        "optionInvalid": "Each option must be 1 to 60 characters and cannot contain a comma.",
+        "optionDuplicate": "Options cannot repeat.",
+        "tooManyActive": "A family accepts at most 60 active fields.",
+        "tooManyTotal": "A family accepts at most 200 fields, archived ones included."
       },
       "success": {
         "created": "Family created.",
@@ -5224,6 +5335,28 @@
         "loadFailed": "Could not load families.",
         "saveFailed": "Could not save the family.",
         "deleteFailed": "Could not delete the family."
+      },
+      "impact": {
+        "listLabel": "Impact per field",
+        "blockedTitle": "Cannot save: some stored values do not fit the new definition.",
+        "confirmTitle": "Confirm the field changes",
+        "confirmDescription": "This change affects resources that already exist. Stored values are never deleted.",
+        "confirm": "Save change",
+        "usage": "In use: {{count}} resource(s) in {{tenants}} company(ies).",
+        "unused": "No resource uses this field.",
+        "incompatible": "{{count}} resource(s) with an incompatible value.",
+        "samples": "Examples: {{samples}}.",
+        "constraintViolations": "{{count}} resource(s) with a value outside the new rules; they stay editable.",
+        "change": {
+          "unchanged": "unchanged",
+          "added": "new",
+          "updated": "changed",
+          "typeChanged": "type changed",
+          "archived": "will be archived",
+          "unarchived": "restored",
+          "removed": "will be removed"
+        },
+        "cannotSave": "This change cannot be saved."
       }
     },
     "modules": {
@@ -6291,6 +6424,229 @@
       "portalCatalog": "E.g.: everyday supplies for reception"
     }
   },
+  "planning": {
+    "title": "Planning",
+    "subtitle": "Occupancy of plannable resources by day and by week.",
+    "newAllocation": "New allocation",
+    "empty": {
+      "title": "No plannable resources",
+      "description": "Mark a registered resource as plannable and it will show up here."
+    },
+    "grid": {
+      "dayRegion": "Day timeline",
+      "weekRegion": "Week planning",
+      "asset": "Resource",
+      "closed": "Outside working hours",
+      "externalBusy": "Taken by a customer reservation",
+      "loading": "Loading the planning",
+      "openDay": "Open {{day}}",
+      "more": "+{{count}} more"
+    },
+    "footer": {
+      "resources_one": "{{count}} resource",
+      "resources_other": "{{count}} resources",
+      "allocations_one": "{{count}} allocation",
+      "allocations_other": "{{count}} allocations",
+      "overdue_one": "{{count}} overdue",
+      "overdue_other": "{{count}} overdue",
+      "expired_one": "{{count}} expired",
+      "expired_other": "{{count}} expired"
+    },
+    "flags": {
+      "overdue": "Overdue",
+      "expired": "Expired"
+    },
+    "status": {
+      "Scheduled": "Scheduled",
+      "Running": "In use",
+      "Cleaning": "Cleaning",
+      "Released": "Released",
+      "Cancelled": "Cancelled"
+    },
+    "kind": {
+      "Use": "Use",
+      "Unavailable": "Unavailable"
+    },
+    "conflicts": {
+      "title_one": "Conflicts with {{count}} booking",
+      "title_other": "Conflicts with {{count}} bookings",
+      "noLabel": "Occupied",
+      "source": {
+        "allocation": "allocation",
+        "reservation": "reservation"
+      }
+    },
+    "hours": {
+      "title": "Outside working hours.",
+      "start_outside_working_hours": "The start must fall inside the resource's working hours.",
+      "outside_working_hours": "The whole period must fit inside the resource's working hours.",
+      "invalid_interval": "The period is not valid."
+    },
+    "preview": {
+      "checking": "Checking availability...",
+      "feasible": "The slot is free. You can save.",
+      "unavailable": "Could not check right now. The final check happens when you save."
+    },
+    "errors": {
+      "conflict": "The resource is already occupied in this period.",
+      "version_conflict": "The allocation changed since you opened it. The agenda was reloaded, check it and try again.",
+      "asset_not_plannable": "This resource is not available for planning.",
+      "invalid_transition": "That action is not possible in the allocation's current state.",
+      "outside_working_hours": "The period is outside working hours.",
+      "cancel_forbidden": "Only the person who created the allocation or an administrator can cancel it.",
+      "unavailable_forbidden": "Creating, editing or starting an unavailability block needs administrator permission.",
+      "order_workflow_required": "This allocation belongs to an order. Use the order flow.",
+      "asset_not_found": "Resource not found.",
+      "allocation_not_found": "Allocation not found. It may have been removed.",
+      "invalid_allocation": "The allocation data is not valid. Check the fields.",
+      "invalid_range": "The requested range is not valid.",
+      "invalid_profile": "The resource configuration is not valid.",
+      "working_hours_required": "Set the resource's working hours.",
+      "rental_schedule_authority": "This resource is rentable: its hours come from the reservation schedule.",
+      "module_inactive": "The Resource planning module is not active for this company.",
+      "bad_request": "Some of the data sent is not valid. Check the fields.",
+      "network": "No connection to the server. Check your internet and try again.",
+      "forbidden": "You do not have permission for this action.",
+      "server": "The server failed. Try again in a moment.",
+      "unknown": "Could not complete. Try again."
+    },
+    "availability": {
+      "section": "Availability",
+      "sectionHint": "Set whether this resource can be planned and during which hours.",
+      "open": "Set up availability",
+      "openFor": "Set up availability of {{name}}",
+      "title": "Availability for planning",
+      "subtitle": "Usage rules of {{name}} in Planning.",
+      "subtitleNoName": "Usage rules of this resource in Planning.",
+      "loading": "Loading availability",
+      "retry": "Try again",
+      "plannable": "Plannable",
+      "plannableHint": "When on, the resource shows up in Planning and accepts allocations. It does not make it rentable.",
+      "policy": "Hours rule",
+      "policies": {
+        "Anytime": {
+          "label": "Open 24 hours",
+          "description": "No time restriction. The resource can be used at any time, every day."
+        },
+        "StartWithinHours": {
+          "label": "Start within hours",
+          "description": "An allocation may only start inside working hours, but can end after them (for example a print that finishes overnight)."
+        },
+        "WithinHours": {
+          "label": "Entirely within hours",
+          "description": "The whole allocation, start to end, must fit inside working hours. Outside them the system rejects it."
+        }
+      },
+      "capacity": "Capacity",
+      "prep": "Default prep (min)",
+      "cleanup": "Default cleanup (min)",
+      "bufferHint": "Extra time held before and after each allocation. Capacity 1: one use at a time.",
+      "hours": "Working hours",
+      "hoursHint": "Enter the windows of each day. A switched-off day is closed. A close at 23:59 means midnight.",
+      "anytimeNote": "With the \"Open 24 hours\" rule working hours are not applied. Saved hours are kept and apply again if you change the rule.",
+      "days": {
+        "0": "Sunday",
+        "1": "Monday",
+        "2": "Tuesday",
+        "3": "Wednesday",
+        "4": "Thursday",
+        "5": "Friday",
+        "6": "Saturday"
+      },
+      "dayOpen": "{{day}}: open",
+      "closedDay": "Closed",
+      "copyToWeekdays": "Copy to weekdays",
+      "copyToWeekdaysFrom": "Copy the hours of {{day}} to Monday through Friday",
+      "addWindow": "Add window",
+      "addWindowTo": "Add a window on {{day}}",
+      "removeWindow": "Remove window of {{day}}",
+      "openAt": "{{day}}: opens at",
+      "closeAt": "{{day}}: closes at",
+      "problems": {
+        "invalidTime": "Use the HH:mm format (24 hours).",
+        "closeBeforeOpen": "The end must be after the start.",
+        "overlap": "This window overlaps another one on the same day.",
+        "hoursRequired": "Add at least one time window, or choose \"Open 24 hours\".",
+        "tooManyWindows": "Limit of {{max}} time windows reached. Remove one to add another.",
+        "invalidBuffer": "Enter whole minutes from 0 to 1440."
+      },
+      "rental": {
+        "title": "This resource is rentable",
+        "description": "Its hours come from the Reservations schedule (Rentals module). To change them, adjust the resource's reservation schedule. There are no working hours to edit here."
+      },
+      "versionConflict": "Someone else changed the availability since you opened it. Close and reopen to see the current version.",
+      "saved": "Availability saved.",
+      "save": "Save",
+      "saving": "Saving...",
+      "cancel": "Cancel",
+      "close": "Close"
+    },
+    "dialog": {
+      "createTitle": "New allocation",
+      "editTitle": "Edit allocation",
+      "description": "Reserve a resource for a period. Conflicts and working hours are checked before saving.",
+      "asset": "Resource",
+      "assetPlaceholder": "Choose the resource",
+      "noAssets": "No plannable resources registered.",
+      "kind": "Type",
+      "unavailableHint": "The resource is blocked and unavailable in this period.",
+      "title": "Title",
+      "reason": "Reason",
+      "startDate": "Start date",
+      "startTime": "Start time",
+      "endDate": "End date",
+      "endTime": "End time",
+      "prep": "Preparation (min)",
+      "cleanup": "Cleanup (min)",
+      "notes": "Notes",
+      "cancel": "Cancel",
+      "save": "Create allocation",
+      "saveEdit": "Save changes",
+      "saving": "Saving...",
+      "created": "Allocation created.",
+      "updated": "Allocation updated.",
+      "errors": {
+        "asset": "Choose a resource.",
+        "title": "Enter a title or reason.",
+        "dates": "Enter valid dates and times.",
+        "order": "The end must be after the start.",
+        "tooLong": "An allocation can last at most 30 days.",
+        "buffer": "Preparation and cleanup are whole minutes, up to 1440."
+      }
+    },
+    "sheet": {
+      "done": {
+        "start": "Use started.",
+        "work-finished": "Work finished.",
+        "release": "Resource released.",
+        "cancel": "Allocation cancelled."
+      },
+      "overdueRunning": "The planned time is over and the resource is still in use. Finish the work to move on.",
+      "overdueCleaning": "Cleanup ran past its time. Release the resource to free it again.",
+      "expiredNote": "This allocation was never started and its time is over. It no longer blocks the resource.",
+      "work": "Work",
+      "occupied": "Occupancy",
+      "startedAt": "Started at",
+      "finishedAt": "Work finished at",
+      "releasedAt": "Released at",
+      "reference": "Linked to",
+      "notes": "Notes",
+      "cancelReason": "Cancellation reason",
+      "orderWorkflow": "This allocation is managed by {{label}}. Start, finish or release it from that flow.",
+      "theOrder": "an order",
+      "cancelReasonLabel": "Cancellation reason (optional)",
+      "working": "Please wait...",
+      "actions": {
+        "start": "Start use",
+        "workFinished": "Finish work",
+        "release": "Release resource",
+        "edit": "Edit",
+        "cancel": "Cancel allocation",
+        "confirmCancel": "Confirm cancellation",
+        "keep": "Keep it"
+      }
+    }
+  },
   "agendas": {
     "eyebrow": "Operations · Agendas",
     "overview": {
@@ -6742,5 +7098,55 @@
     },
     "portalHelp": "The portal address your customers use. Only Rolvix support changes it.",
     "saveInvalid": "Check the details and try again."
+  },
+  "portalAppearance": {
+    "description": "Image and texts of the sign-in screen of your customers' portal.",
+    "readOnly": "You can view, but not edit, the portal appearance.",
+    "trialReadOnly": "Your trial has ended: the portal appearance is read-only.",
+    "saved": "Portal appearance saved.",
+    "saveError": "Could not save the portal appearance.",
+    "loadError": "Could not load the portal appearance.",
+    "saveInvalid": "Check the texts and try again.",
+    "preview": {
+      "title": "Sign-in screen preview",
+      "description": "This is how your customers see the portal. It updates as you type.",
+      "label": "Portal sign-in screen preview",
+      "fallbackName": "Your company"
+    },
+    "image": {
+      "title": "Background image",
+      "hint": "Recommended: at least {{width}}×{{height}} px, landscape.",
+      "empty": "No image. The portal uses the company colour.",
+      "current": "Current image. Upload another to replace it.",
+      "formats": "JPG, PNG or WebP, up to 3 MB.",
+      "input": "Choose background image",
+      "choose": "Choose image",
+      "replace": "Replace image",
+      "remove": "Remove image",
+      "uploading": "Uploading… {{percent}}%",
+      "uploaded": "Image uploaded.",
+      "removed": "Image removed.",
+      "badType": "Use a JPG, PNG or WebP image.",
+      "tooLarge": "The image must be up to 3 MB.",
+      "rejected": "This image could not be used. Check its format and size.",
+      "uploadError": "Could not upload the image.",
+      "removeError": "Could not remove the image.",
+      "removeTitle": "Remove the background image?",
+      "removeDescription": "The portal goes back to the company colour instead of the image."
+    },
+    "texts": {
+      "title": "Texts",
+      "description": "Shown over the image. Leave blank to use the default."
+    },
+    "fields": {
+      "kicker": "Kicker",
+      "headline": "Headline",
+      "subtitle": "Subtitle"
+    },
+    "validation": {
+      "kickerTooLong": "The kicker must be up to {{max}} characters.",
+      "headlineTooLong": "The headline must be up to {{max}} characters.",
+      "subtitleTooLong": "The subtitle must be up to {{max}} characters."
+    }
   }
 }

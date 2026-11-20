@@ -25,6 +25,27 @@ export const assetStatusResponseSchema = z.union([
     .transform((value) => assetStatusByIndex[value]),
 ])
 
+/**
+ * Stored attribute values may be legacy strings or typed JSON (number, boolean,
+ * array of strings). Readers must accept all shapes.
+ */
+export const assetAttributeValueSchema = z.union([
+  z.string(),
+  z.number(),
+  z.boolean(),
+  z.array(z.string()),
+  z.null(),
+])
+
+export type AssetAttributeValue = z.infer<typeof assetAttributeValueSchema>
+
+/** Value held by a form control (see `AttributeFormValue`). */
+export const attributeFormValueSchema = z.union([
+  z.string(),
+  z.boolean(),
+  z.array(z.string()),
+])
+
 export const assetSchema = z.object({
   id: z.string().uuid(),
   tenantId: z.string().uuid(),
@@ -32,7 +53,7 @@ export const assetSchema = z.object({
   categoryId: z.string().uuid(),
   familyId: guidLikeIdSchema,
   attributes: z
-    .record(z.string(), z.string().nullable())
+    .record(z.string(), assetAttributeValueSchema)
     .default({}),
   name: z.string().min(1),
   tag: z.string().min(1),
@@ -66,7 +87,7 @@ export const updateAssetRequestSchema = z.object({
   unitId: z.string().uuid(),
   categoryId: z.string().uuid(),
   familyId: guidLikeIdSchema,
-  attributes: z.record(z.string(), z.string().nullable()).default({}),
+  attributes: z.record(z.string(), assetAttributeValueSchema).default({}),
   name: z.string().trim().min(1),
   /** Optional: blank lets the API generate (create) or keep (update) the tag. */
   tag: z.string().trim(),
@@ -89,7 +110,7 @@ export const createAssetRequestSchema = z.object({
   unitId: z.string().uuid(),
   categoryId: z.string().uuid(),
   familyId: guidLikeIdSchema,
-  attributes: z.record(z.string(), z.string().nullable()).default({}),
+  attributes: z.record(z.string(), assetAttributeValueSchema).default({}),
   name: z.string().trim().min(1),
   /** Optional: blank lets the API generate (create) or keep (update) the tag. */
   tag: z.string().trim(),
@@ -119,7 +140,7 @@ export const bulkCreateAssetsRequestSchema = z.object({
   unitId: z.string().uuid(),
   categoryId: z.string().uuid(),
   familyId: guidLikeIdSchema,
-  attributes: z.record(z.string(), z.string().nullable()).default({}),
+  attributes: z.record(z.string(), assetAttributeValueSchema).default({}),
   baseLocationName: z.string().trim().min(1),
   baseTag: z.string().trim().min(1),
   startNumber: z.number().int().nullish(),
@@ -215,7 +236,7 @@ export function createBulkCreateAssetsFormSchema(messages: {
           /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/,
           messages.familyRequired,
         ),
-      attributes: z.record(z.string(), z.string()),
+      attributes: z.record(z.string(), attributeFormValueSchema),
       baseLocationName: z.string().trim().min(1, messages.baseLocationRequired),
       baseTag: z.string().trim().min(1, messages.baseTagRequired),
       rentalType: z.enum(["Location", "Good"]).default("Location"),

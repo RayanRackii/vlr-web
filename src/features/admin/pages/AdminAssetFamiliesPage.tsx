@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { Plus, Shapes, Trash2 } from "lucide-react"
+import { Plus } from "lucide-react"
 import { useFieldArray, useForm, useWatch } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
@@ -10,7 +10,6 @@ import { FilterBar } from "@/components/data-table/FilterBar"
 import { Page } from "@/components/layout/Page"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Checkbox } from "@/components/ui/checkbox"
 import {
   AlertDialog,
   AlertDialogCancel,
@@ -39,34 +38,33 @@ import {
 import { FormPrimaryButton } from "@/components/ui/form-primary-button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
+import { AssetFamilyFieldEditor } from "@/features/admin/components/AssetFamilyFieldEditor"
+import { AssetFamilyImpactSummary } from "@/features/admin/components/AssetFamilyImpactSummary"
 import {
   adminAssetFamilyToFormValues,
   createAdminAssetFamilyFormSchema,
+    emptyAdminAssetFamilyFormField,
   emptyAdminAssetFamilyFormValues,
   isSeedAssetFamilyKey,
+  previewHasBlocking,
+  previewNeedsConfirmation,
+  toAdminAssetFamilySchemaPreviewRequest,
   toCreateAdminAssetFamilyRequest,
   toUpdateAdminAssetFamilyRequest,
   type AdminAssetFamily,
   type AdminAssetFamilyFormValues,
-  type AssetFamilyFieldType,
+  type AdminAssetFamilySchemaPreview,
 } from "@/features/admin/schemas/adminAssetFamilySchemas"
 import {
+  AdminAssetFamilyConflictError,
   createAdminAssetFamily,
   deleteAdminAssetFamily,
   getAdminAssetFamily,
   listAdminAssetFamilies,
+  previewAdminAssetFamilySchema,
   updateAdminAssetFamily,
 } from "@/features/admin/services/adminAssetFamiliesService"
-
-const FIELD_TYPES: readonly AssetFamilyFieldType[] = ["text", "number", "boolean"]
 
 type EditorState =
   | { mode: "create" }
@@ -95,6 +93,15 @@ export function AdminAssetFamiliesPage() {
   const [editor, setEditor] = useState<EditorState | null>(null)
   const [formError, setFormError] = useState<string | null>(null)
   const [isSaving, setIsSaving] = useState(false)
+  const [blockingPreview, setBlockingPreview] =
+    useState<AdminAssetFamilySchemaPreview | null>(null)
+  const [pendingSave, setPendingSave] = useState<{
+    values: AdminAssetFamilyFormValues
+    preview: AdminAssetFamilySchemaPreview
+  } | null>(null)
+  const [hasConflict, setHasConflict] = useState(false)
+  // Form snapshot the preview/error belong to: any edit makes them stale.
+  const [feedbackAt, setFeedbackAt] = useState<string | null>(null)
   const [familyPendingDelete, setFamilyPendingDelete] =
     useState<AdminAssetFamily | null>(null)
   const [deleteError, setDeleteError] = useState<string | null>(null)
@@ -110,7 +117,22 @@ export function AdminAssetFamiliesPage() {
         sortOrderInvalid: t("admin.assetFamilies.validation.sortOrder"),
         fieldKeyRequired: t("admin.assetFamilies.validation.fieldKey"),
         fieldKeyDuplicate: t("admin.assetFamilies.validation.fieldKeyDuplicate"),
+        fieldKeyPattern: t("admin.assetFamilies.validation.fieldKeyPattern"),
         seedActive: t("admin.assetFamilies.validation.seedActive"),
+        fieldLabelMax: t("admin.assetFamilies.validation.fieldLabelMax"),
+        helpMax: t("admin.assetFamilies.validation.helpMax"),
+        groupMax: t("admin.assetFamilies.validation.groupMax"),
+        unitMax: t("admin.assetFamilies.validation.unitMax"),
+        numberInvalid: t("admin.assetFamilies.validation.numberInvalid"),
+        minGreaterThanMax: t("admin.assetFamilies.validation.minGreaterThanMax"),
+        decimalsInvalid: t("admin.assetFamilies.validation.decimalsInvalid"),
+        maxLengthInvalid: t("admin.assetFamilies.validation.maxLengthInvalid"),
+        optionsRequired: t("admin.assetFamilies.validation.optionsRequired"),
+        optionsTooMany: t("admin.assetFamilies.validation.optionsTooMany"),
+        optionInvalid: t("admin.assetFamilies.validation.optionInvalid"),
+        optionDuplicate: t("admin.assetFamilies.validation.optionDuplicate"),
+        tooManyActive: t("admin.assetFamilies.validation.tooManyActive"),
+        tooManyTotal: t("admin.assetFamilies.validation.tooManyTotal"),
       }),
     [t],
   )
@@ -128,21 +150,13 @@ export function AdminAssetFamiliesPage() {
   const watchedValues = useWatch({ control: form.control })
   const parsedForm = formSchema.safeParse(watchedValues)
   const isFormValid = parsedForm.success
+  const feedbackFresh = feedbackAt !== null && feedbackAt === JSON.stringify(watchedValues)
   const watchedKey = typeof watchedValues.key === "string" ? watchedValues.key : ""
   const seedLocked = isSeedAssetFamilyKey(watchedKey.trim().toLowerCase())
   const issueMessages =
-    !parsedForm.success && form.formState.isDirty
+    !parsedForm.success
       ? [...new Set(parsedForm.error.issues.map((issue) => issue.message))]
       : []
-
-  const fieldTypeItems = useMemo(
-    () =>
-      FIELD_TYPES.map((type) => ({
-        value: type,
-        label: t(`admin.assetFamilies.types.${type}`),
-      })),
-    [t],
-  )
 
   const loadFamilies = useCallback(async () => {
     const requestId = loadRequestId.current + 1
@@ -187,15 +201,27 @@ export function AdminAssetFamiliesPage() {
     form.setValue("isActive", true)
   }, [form, seedLocked, watchedValues.isActive])
 
-  const openCreate = useCallback(() => {
+  const resetSaveState = useCallback(() => {
     setFormError(null)
+    setHasConflict(false)
+    setBlockingPreview(null)
+    setPendingSave(null)
+    setFeedbackAt(null)
+  }, [])
+
+  const markFeedback = useCallback(() => {
+    setFeedbackAt(JSON.stringify(form.getValues()))
+  }, [form])
+
+  const openCreate = useCallback(() => {
+    resetSaveState()
     form.reset(emptyAdminAssetFamilyFormValues)
     setEditor({ mode: "create" })
-  }, [form])
+  }, [form, resetSaveState])
 
   const openEdit = useCallback(
     async (family: AdminAssetFamily) => {
-      setFormError(null)
+      resetSaveState()
 
       try {
         const detail = await getAdminAssetFamily(family.id)
@@ -210,7 +236,7 @@ export function AdminAssetFamiliesPage() {
         })
       }
     },
-    [form, t],
+    [form, resetSaveState, t],
   )
 
   const statusLabel = useCallback(
@@ -363,38 +389,111 @@ export function AdminAssetFamiliesPage() {
     }
 
     setEditor(null)
-    setFormError(null)
+    resetSaveState()
     form.reset(emptyAdminAssetFamilyFormValues)
+  }
+
+  function fieldLabelFor(key: string): string {
+    const match = form
+      .getValues("fields")
+      .find((field) => field.key.trim() === key)
+    const label = match?.label.trim() ?? ""
+
+    return label !== "" ? label : key
+  }
+
+  async function persist(values: AdminAssetFamilyFormValues) {
+    if (editor?.mode === "edit") {
+      await updateAdminAssetFamily(
+        editor.family.id,
+        toUpdateAdminAssetFamilyRequest(values, editor.family.schemaVersion),
+      )
+      toast.success(t("admin.assetFamilies.success.updated"))
+    } else {
+      await createAdminAssetFamily(toCreateAdminAssetFamilyRequest(values))
+      toast.success(t("admin.assetFamilies.success.created"))
+    }
+
+    setEditor(null)
+    form.reset(emptyAdminAssetFamilyFormValues)
+    await loadFamilies()
+  }
+
+  function reportSaveError(error: unknown) {
+    const message = errorMessage(
+      error,
+      t("admin.assetFamilies.errors.saveFailed"),
+    )
+    setFormError(message)
+    setHasConflict(error instanceof AdminAssetFamilyConflictError)
+    markFeedback()
+    toast.error(message)
   }
 
   async function onSubmit(values: AdminAssetFamilyFormValues) {
     setIsSaving(true)
-    setFormError(null)
+    resetSaveState()
 
     try {
       if (editor?.mode === "edit") {
-        await updateAdminAssetFamily(
+        const preview = await previewAdminAssetFamilySchema(
           editor.family.id,
-          toUpdateAdminAssetFamilyRequest(values),
+          toAdminAssetFamilySchemaPreviewRequest(values),
         )
-        toast.success(t("admin.assetFamilies.success.updated"))
-      } else {
-        await createAdminAssetFamily(toCreateAdminAssetFamilyRequest(values))
-        toast.success(t("admin.assetFamilies.success.created"))
+
+        if (previewHasBlocking(preview)) {
+          setBlockingPreview(preview)
+          markFeedback()
+          return
+        }
+
+        if (previewNeedsConfirmation(preview)) {
+          setPendingSave({ values, preview })
+          return
+        }
       }
 
-      setEditor(null)
-      form.reset(emptyAdminAssetFamilyFormValues)
-      await loadFamilies()
+      await persist(values)
     } catch (error: unknown) {
-      const message = errorMessage(
-        error,
-        t("admin.assetFamilies.errors.saveFailed"),
-      )
-      setFormError(message)
-      toast.error(message)
+      reportSaveError(error)
     } finally {
       setIsSaving(false)
+    }
+  }
+
+  async function confirmPendingSave() {
+    if (!pendingSave) {
+      return
+    }
+
+    const { values } = pendingSave
+    setPendingSave(null)
+    setIsSaving(true)
+
+    try {
+      await persist(values)
+    } catch (error: unknown) {
+      reportSaveError(error)
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
+  async function reloadEditedFamily() {
+    if (editor?.mode !== "edit") {
+      return
+    }
+
+    try {
+      const detail = await getAdminAssetFamily(editor.family.id)
+      resetSaveState()
+      form.reset(adminAssetFamilyToFormValues(detail))
+      setEditor({ mode: "edit", family: detail })
+    } catch (error: unknown) {
+      setFormError(
+        errorMessage(error, t("admin.assetFamilies.errors.loadFailed")),
+      )
+      markFeedback()
     }
   }
 
@@ -424,6 +523,12 @@ export function AdminAssetFamiliesPage() {
   }
 
   const editing = editor?.mode === "edit"
+  const activeIndexes = fields.flatMap((_, index) =>
+    watchedValues.fields?.[index]?.archived === true ? [] : [index],
+  )
+  const archivedIndexes = fields.flatMap((_, index) =>
+    watchedValues.fields?.[index]?.archived === true ? [index] : [],
+  )
 
   return (
     <Page
@@ -544,7 +649,7 @@ export function AdminAssetFamiliesPage() {
           }
         }}
       >
-        <DialogContent className="max-h-[85vh] gap-4 overflow-y-auto sm:max-w-lg">
+        <DialogContent className="max-h-[85vh] gap-4 overflow-y-auto sm:max-w-2xl">
           <DialogHeader>
             <DialogTitle>
               {editing
@@ -672,12 +777,7 @@ export function AdminAssetFamiliesPage() {
                     variant="outline"
                     size="sm"
                     onClick={() => {
-                      append({
-                        key: "",
-                        label: "",
-                        type: "text",
-                        required: false,
-                      })
+                      append(emptyAdminAssetFamilyFormField())
                     }}
                   >
                     {t("admin.assetFamilies.form.addField")}
@@ -690,124 +790,38 @@ export function AdminAssetFamiliesPage() {
                   </p>
                 ) : null}
 
-                {fields.map((fieldRow, index) => (
-                  <div
-                    key={fieldRow.id}
-                    className="space-y-3 rounded-lg border border-border p-3"
-                  >
-                    <div className="flex items-center justify-between gap-3">
-                      <p className="text-sm font-medium">
-                        {t("admin.assetFamilies.form.fieldItem", {
-                          number: index + 1,
-                        })}
-                      </p>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon-sm"
-                        aria-label={t("admin.assetFamilies.form.removeField")}
-                        onClick={() => {
+                {activeIndexes.map((index, position) => (
+                  <AssetFamilyFieldEditor
+                    key={fields[index]?.id}
+                    form={form}
+                    index={index}
+                    number={position + 1}
+                    onRemove={() => {
+                      remove(index)
+                    }}
+                  />
+                ))}
+
+                {archivedIndexes.length > 0 ? (
+                  <div className="space-y-2">
+                    <h3 className="text-xs font-medium uppercase text-muted-foreground">
+                      {t("admin.assetFamilies.form.archivedFields", {
+                        count: archivedIndexes.length,
+                      })}
+                    </h3>
+                    {archivedIndexes.map((index) => (
+                      <AssetFamilyFieldEditor
+                        key={fields[index]?.id}
+                        form={form}
+                        index={index}
+                        number={index + 1}
+                        onRemove={() => {
                           remove(index)
                         }}
-                      >
-                        <Trash2 aria-hidden="true" />
-                      </Button>
-                    </div>
-
-                    <FormField
-                      control={form.control}
-                      name={`fields.${index}.key`}
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>
-                            {t("admin.assetFamilies.form.fieldKey")}
-                          </FormLabel>
-                          <FormControl>
-                            <Input autoComplete="off" spellCheck={false} {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name={`fields.${index}.label`}
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>
-                            {t("admin.assetFamilies.form.fieldLabel")}
-                          </FormLabel>
-                          <FormControl>
-                            <Input autoComplete="off" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name={`fields.${index}.type`}
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>
-                            {t("admin.assetFamilies.form.fieldType")}
-                          </FormLabel>
-                          <Select
-                            modal={false}
-                            value={field.value}
-                            items={fieldTypeItems}
-                            onValueChange={(value) => {
-                              if (
-                                value === "text" ||
-                                value === "number" ||
-                                value === "boolean"
-                              ) {
-                                field.onChange(value)
-                              }
-                            }}
-                          >
-                            <FormControl>
-                              <SelectTrigger icon={Shapes} className="w-full">
-                                <SelectValue />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              {fieldTypeItems.map((item) => (
-                                <SelectItem key={item.value} value={item.value}>
-                                  {item.label}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name={`fields.${index}.required`}
-                      render={({ field }) => (
-                        <FormItem>
-                          <Label className="flex items-center gap-2 text-sm font-normal">
-                            <Checkbox
-                              checked={field.value}
-                              onChange={(event) => {
-                                field.onChange(event.target.checked)
-                              }}
-                              onBlur={field.onBlur}
-                              name={field.name}
-                              ref={field.ref}
-                            />
-                            {t("admin.assetFamilies.form.fieldRequired")}
-                          </Label>
-                        </FormItem>
-                      )}
-                    />
+                      />
+                    ))}
                   </div>
-                ))}
+                ) : null}
               </div>
 
               {issueMessages.length > 0 ? (
@@ -818,10 +832,42 @@ export function AdminAssetFamiliesPage() {
                 </ul>
               ) : null}
 
-              {formError ? (
-                <p className="text-sm text-destructive" role="alert">
-                  {formError}
-                </p>
+              {blockingPreview && feedbackFresh ? (
+                <div className="space-y-2" role="alert">
+                  <p className="text-sm font-medium text-destructive">
+                    {t("admin.assetFamilies.impact.blockedTitle")}
+                  </p>
+                  <AssetFamilyImpactSummary
+                    preview={blockingPreview}
+                    labelFor={fieldLabelFor}
+                    only="blocking"
+                  />
+                  {!blockingPreview.fields.some(
+                    (row) => row.blocking || row.incompatibleCount > 0,
+                  ) ? (
+                    <p className="text-sm text-destructive">
+                      {t("admin.assetFamilies.impact.cannotSave")}
+                    </p>
+                  ) : null}
+                </div>
+              ) : null}
+
+              {formError && feedbackFresh ? (
+                <div className="space-y-2" role="alert">
+                  <p className="text-sm text-destructive">{formError}</p>
+                  {hasConflict ? (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        void reloadEditedFamily()
+                      }}
+                    >
+                      {t("admin.assetFamilies.actions.reload")}
+                    </Button>
+                  ) : null}
+                </div>
               ) : null}
 
               <DialogFooter>
@@ -843,6 +889,44 @@ export function AdminAssetFamiliesPage() {
           </Form>
         </DialogContent>
       </Dialog>
+
+      <AlertDialog
+        open={pendingSave !== null}
+        onOpenChange={(open) => {
+          if (!open) {
+            setPendingSave(null)
+          }
+        }}
+      >
+        <AlertDialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-lg">
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {t("admin.assetFamilies.impact.confirmTitle")}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {t("admin.assetFamilies.impact.confirmDescription")}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          {pendingSave ? (
+            <AssetFamilyImpactSummary
+              preview={pendingSave.preview}
+              labelFor={fieldLabelFor}
+              only="attention"
+            />
+          ) : null}
+          <AlertDialogFooter>
+            <AlertDialogCancel />
+            <Button
+              type="button"
+              onClick={() => {
+                void confirmPendingSave()
+              }}
+            >
+              {t("admin.assetFamilies.impact.confirm")}
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <AlertDialog
         open={familyPendingDelete !== null}

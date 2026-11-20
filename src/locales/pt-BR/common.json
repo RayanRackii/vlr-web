@@ -327,7 +327,8 @@
     "deleteTaxonomy": "Não foi possível excluir a categoria ou tag.",
     "loadCatalogAgenda": "Não foi possível carregar a agenda.",
     "timeout": "A conexão demorou demais. Tente novamente.",
-    "updateReservationNotes": "Não foi possível salvar a observação."
+    "updateReservationNotes": "Não foi possível salvar a observação.",
+    "previewAdminAssetFamily": "Não foi possível calcular o impacto da alteração."
   },
   "trial": {
     "banner": {
@@ -570,10 +571,10 @@
       "fieldRequired": "Preencha este campo."
     },
     "login": {
-      "title": "Entrar",
+      "title": "Bem-vindo de volta",
       "welcomeDefault": "Bem-vindo de volta! Entre para fazer reservas e acompanhar suas novidades.",
       "emailPlaceholder": "voce@email.com",
-      "subtitle": "Use o e-mail e a senha da sua conta nesta empresa.",
+      "subtitle": "Acesse sua conta para fazer reservas e acompanhar suas atividades.",
       "submit": "Entrar",
       "submitting": "Entrando...",
       "toastSuccess": "Login realizado!",
@@ -2521,8 +2522,10 @@
     "agendasOverview": "Visão geral",
     "agendasResources": "Agenda de recursos",
     "agendasProduct": "Agenda do produto",
+    "agendasPlanning": "Planejamento",
     "pedidos": "Pedidos",
-    "company": "Dados da empresa"
+    "company": "Dados da empresa",
+    "portalAppearance": "Aparência do portal"
   },
   "moduleIntro": {
     "title": "Apresentação",
@@ -3474,7 +3477,15 @@
   "assets": {
     "actions": {
       "edit": "Editar",
-      "remove": "Remover"
+      "remove": "Remover",
+      "details": "Detalhes"
+    },
+    "attributes": {
+      "title": "Atributos",
+      "empty": "Nenhum atributo preenchido.",
+      "showMore": "ver mais",
+      "showLess": "ver menos",
+      "extra": "+{{count}}"
     },
     "deletion": {
       "title": "Confirmar exclusão",
@@ -3759,7 +3770,8 @@
         "category": "Tipo",
         "location": "Localização",
         "status": "Status",
-        "actions": "Ações"
+        "actions": "Ações",
+        "attributes": "Atributos"
       },
       "status": {
         "Active": "Ativo",
@@ -3855,6 +3867,15 @@
       "missingTitle": "Para continuar, falta:",
       "familyFields": {
         "capacity": "Capacidade"
+      },
+      "attributes": {
+        "counter": "{{count}}/{{max}}",
+        "noSelection": "Nenhum",
+        "selectPlaceholder": "Selecione uma opção",
+        "legacyValue": "Valor salvo antes da lista de opções mudar. Só é possível removê-lo.",
+        "rangeBetween": "Entre {{min}} e {{max}}",
+        "rangeMin": "Mínimo {{min}}",
+        "rangeMax": "Máximo {{max}}"
       },
       "placeholders": {
         "name": "Ex.: Equipamento 1",
@@ -5051,6 +5072,58 @@
       }
     },
     "edit": {
+      "back": "Empresas",
+      "status": {
+        "active": "Ativa",
+        "inactive": "Inativa",
+        "trial": "Teste",
+        "trialEnded": "Teste encerrado"
+      },
+      "tabs": {
+        "label": "Seções da empresa",
+        "company": "Empresa",
+        "portal": "Portal",
+        "modules": "Módulos e famílias",
+        "users": "Usuários",
+        "registration": "Cadastro do portal",
+        "menu": "Menu do portal"
+      },
+      "validation": {
+        "contactEmailInvalid": "Informe um e-mail válido.",
+        "postalCodeInvalid": "O CEP deve ter 8 dígitos.",
+        "stateInvalid": "Use a sigla da UF com 2 letras."
+      },
+      "company": {
+        "tradeName": "Nome fantasia",
+        "contactTitle": "Contato",
+        "contactDescription": "E-mail e telefone da empresa.",
+        "contactEmail": "E-mail de contato",
+        "contactPhone": "Telefone",
+        "addressTitle": "Endereço",
+        "addressDescription": "Endereço da empresa.",
+        "postalCode": "CEP",
+        "street": "Rua",
+        "number": "Número",
+        "complement": "Complemento",
+        "district": "Bairro",
+        "city": "Cidade",
+        "state": "UF",
+        "trialTitle": "Período de teste",
+        "trialDescription": "Somente leitura. O período de teste é definido pela plataforma.",
+        "trialNone": "Esta empresa não está em período de teste.",
+        "trialActive": "A empresa está em período de teste.",
+        "trialEnded": "O período de teste terminou. A empresa está somente leitura."
+      },
+      "portal": {
+        "urlPreview": "Endereço do portal",
+        "copyUrl": "Copiar endereço",
+        "logoPreview": "Pré-visualização do logo",
+        "logoPreviewEmpty": "Cole um SVG para ver a pré-visualização.",
+        "hintTitle": "Tela de login do portal",
+        "hintBody": "Imagem e textos da tela de login são editados em Configurações › Aparência do portal, dentro da empresa.",
+        "enter": "Entrar na empresa",
+        "entering": "Entrando..."
+      },
       "title": "Editar empresa",
       "description": "Atualize os dados legais, subdomínio e módulos contratados.",
       "successTitle": "Sucesso",
@@ -5128,7 +5201,7 @@
       },
       "delete": {
         "title": "Excluir usuário",
-        "description": "Excluir {{name}} de {{tenant}}? A conta de autenticação também será removida. Esta ação é irreversível.",
+        "description": "Excluir {{name}} de {{company}}? A conta de autenticação também será removida. Esta ação é irreversível.",
         "confirm": "Continuar",
         "deleting": "Excluindo...",
         "successTitle": "Sucesso",
@@ -5170,7 +5243,8 @@
         "deleteNamed": "Excluir {{label}}",
         "save": "Salvar",
         "saving": "Salvando...",
-        "retry": "Tentar novamente"
+        "retry": "Tentar novamente",
+        "reload": "Recarregar família"
       },
       "dialog": {
         "createTitle": "Nova família",
@@ -5193,12 +5267,34 @@
         "fieldLabel": "Rótulo do campo",
         "fieldType": "Tipo",
         "fieldRequired": "Obrigatório",
-        "removeField": "Remover campo"
+        "removeField": "Remover campo",
+        "help": "Texto de ajuda",
+        "group": "Grupo",
+        "unit": "Unidade",
+        "min": "Mínimo",
+        "max": "Máximo",
+        "decimals": "Casas decimais",
+        "maxLength": "Tamanho máximo",
+        "options": "Opções",
+        "optionItem": "Opção {{number}}",
+        "addOption": "Adicionar opção",
+        "removeOption": "Remover opção {{number}}",
+        "archive": "Arquivar",
+        "restore": "Restaurar",
+        "archivedBadge": "Arquivado",
+        "archivedFields": "Campos arquivados ({{count}})",
+        "preview": "Pré-visualização",
+        "unknownType": "Tipo não suportado por este editor: {{type}}. O campo é mantido como está e só pode ser arquivado."
       },
       "types": {
         "text": "Texto",
         "number": "Número",
-        "boolean": "Sim/não"
+        "boolean": "Sim/não",
+        "longtext": "Texto longo",
+        "select": "Seleção",
+        "multiselect": "Seleção múltipla",
+        "url": "Link",
+        "date": "Data"
       },
       "validation": {
         "key": "A chave deve começar com letra e usar só letras minúsculas, números e _ (até 64 caracteres).",
@@ -5207,7 +5303,22 @@
         "sortOrder": "Informe um número inteiro.",
         "fieldKey": "Informe a chave do campo.",
         "fieldKeyDuplicate": "Esta chave de campo está repetida.",
-        "seedActive": "Famílias do sistema não podem ser desativadas."
+        "seedActive": "Famílias do sistema não podem ser desativadas.",
+        "fieldKeyPattern": "A chave do campo deve começar com letra e usar só letras minúsculas, números e _ (até 64 caracteres).",
+        "fieldLabelMax": "O rótulo do campo deve ter no máximo 120 caracteres.",
+        "helpMax": "O texto de ajuda deve ter no máximo 300 caracteres.",
+        "groupMax": "O grupo deve ter no máximo 60 caracteres.",
+        "unitMax": "A unidade deve ter no máximo 16 caracteres.",
+        "numberInvalid": "Use apenas números, com ponto ou vírgula decimal.",
+        "minGreaterThanMax": "O mínimo não pode ser maior que o máximo.",
+        "decimalsInvalid": "As casas decimais devem ser um inteiro de 0 a 6.",
+        "maxLengthInvalid": "O tamanho máximo deve ser um inteiro dentro do limite do tipo (texto: 1000, texto longo: 10000).",
+        "optionsRequired": "Informe ao menos uma opção.",
+        "optionsTooMany": "Use no máximo 50 opções.",
+        "optionInvalid": "Cada opção deve ter de 1 a 60 caracteres e não pode conter vírgula.",
+        "optionDuplicate": "As opções não podem se repetir.",
+        "tooManyActive": "Uma família aceita no máximo 60 campos ativos.",
+        "tooManyTotal": "Uma família aceita no máximo 200 campos, contando os arquivados."
       },
       "success": {
         "created": "Família criada.",
@@ -5224,6 +5335,28 @@
         "loadFailed": "Não foi possível carregar as famílias.",
         "saveFailed": "Não foi possível salvar a família.",
         "deleteFailed": "Não foi possível excluir a família."
+      },
+      "impact": {
+        "listLabel": "Impacto por campo",
+        "blockedTitle": "Não é possível salvar: há valores que não cabem na nova definição.",
+        "confirmTitle": "Confirmar alteração dos campos",
+        "confirmDescription": "Esta alteração afeta recursos já cadastrados. Os valores existentes nunca são apagados.",
+        "confirm": "Salvar alteração",
+        "usage": "Em uso: {{count}} recurso(s) em {{tenants}} empresa(s).",
+        "unused": "Nenhum recurso usa este campo.",
+        "incompatible": "{{count}} recurso(s) com valor incompatível.",
+        "samples": "Exemplos: {{samples}}.",
+        "constraintViolations": "{{count}} recurso(s) com valor fora das novas regras; continuam editáveis.",
+        "change": {
+          "unchanged": "sem alteração",
+          "added": "novo",
+          "updated": "alterado",
+          "typeChanged": "tipo alterado",
+          "archived": "será arquivado",
+          "unarchived": "restaurado",
+          "removed": "será removido"
+        },
+        "cannotSave": "Esta alteração não pode ser salva."
       }
     },
     "modules": {
@@ -6291,6 +6424,229 @@
       "portalCatalog": "Ex.: materiais de uso diário para a recepção"
     }
   },
+  "planning": {
+    "title": "Planejamento",
+    "subtitle": "Ocupação dos recursos planejáveis por dia e por semana.",
+    "newAllocation": "Nova alocação",
+    "empty": {
+      "title": "Nenhum recurso planejável",
+      "description": "Marque um recurso do cadastro como planejável para ele aparecer aqui."
+    },
+    "grid": {
+      "dayRegion": "Linha do tempo do dia",
+      "weekRegion": "Planejamento da semana",
+      "asset": "Recurso",
+      "closed": "Fora do horário",
+      "externalBusy": "Ocupado por reserva de cliente",
+      "loading": "Carregando o planejamento",
+      "openDay": "Abrir {{day}}",
+      "more": "+{{count}} mais"
+    },
+    "footer": {
+      "resources_one": "{{count}} recurso",
+      "resources_other": "{{count}} recursos",
+      "allocations_one": "{{count}} alocação",
+      "allocations_other": "{{count}} alocações",
+      "overdue_one": "{{count}} atrasada",
+      "overdue_other": "{{count}} atrasadas",
+      "expired_one": "{{count}} expirada",
+      "expired_other": "{{count}} expiradas"
+    },
+    "flags": {
+      "overdue": "Atrasada",
+      "expired": "Expirada"
+    },
+    "status": {
+      "Scheduled": "Agendada",
+      "Running": "Em uso",
+      "Cleaning": "Em limpeza",
+      "Released": "Liberada",
+      "Cancelled": "Cancelada"
+    },
+    "kind": {
+      "Use": "Uso",
+      "Unavailable": "Indisponível"
+    },
+    "conflicts": {
+      "title_one": "Conflito com {{count}} ocupação",
+      "title_other": "Conflito com {{count}} ocupações",
+      "noLabel": "Ocupado",
+      "source": {
+        "allocation": "alocação",
+        "reservation": "reserva"
+      }
+    },
+    "hours": {
+      "title": "Fora do horário de funcionamento.",
+      "start_outside_working_hours": "O início precisa cair dentro do horário de funcionamento do recurso.",
+      "outside_working_hours": "O período inteiro precisa caber no horário de funcionamento do recurso.",
+      "invalid_interval": "O período informado é inválido."
+    },
+    "preview": {
+      "checking": "Verificando a disponibilidade...",
+      "feasible": "Horário livre. Pode salvar.",
+      "unavailable": "Não foi possível verificar agora. A checagem final acontece ao salvar."
+    },
+    "errors": {
+      "conflict": "O recurso já está ocupado nesse período.",
+      "version_conflict": "A alocação mudou desde que você a abriu. A agenda foi recarregada, confira e tente de novo.",
+      "asset_not_plannable": "Este recurso não está disponível para planejamento.",
+      "invalid_transition": "Essa ação não é possível no estado atual da alocação.",
+      "outside_working_hours": "O período está fora do horário de funcionamento.",
+      "cancel_forbidden": "Só quem criou a alocação ou um administrador pode cancelá-la.",
+      "unavailable_forbidden": "Criar, editar ou iniciar um bloqueio de indisponibilidade exige permissão de administrador.",
+      "order_workflow_required": "Esta alocação pertence a um pedido. Use o fluxo do pedido.",
+      "asset_not_found": "Recurso não encontrado.",
+      "allocation_not_found": "Alocação não encontrada. Ela pode ter sido removida.",
+      "invalid_allocation": "Os dados da alocação são inválidos. Confira os campos.",
+      "invalid_range": "O intervalo pedido é inválido.",
+      "invalid_profile": "A configuração do recurso é inválida.",
+      "working_hours_required": "Defina o horário de funcionamento do recurso.",
+      "rental_schedule_authority": "Este recurso é alugável: o horário é definido pela agenda de reservas.",
+      "module_inactive": "O módulo de Planejamento de recursos não está ativo para esta empresa.",
+      "bad_request": "Alguns dados enviados não são válidos. Confira os campos.",
+      "network": "Sem conexão com o servidor. Verifique a internet e tente de novo.",
+      "forbidden": "Você não tem permissão para esta ação.",
+      "server": "O servidor falhou. Tente de novo em instantes.",
+      "unknown": "Não foi possível concluir. Tente de novo."
+    },
+    "availability": {
+      "section": "Disponibilidade",
+      "sectionHint": "Defina se este recurso pode ser planejado e em quais horários.",
+      "open": "Configurar disponibilidade",
+      "openFor": "Configurar disponibilidade de {{name}}",
+      "title": "Disponibilidade para planejamento",
+      "subtitle": "Regras de uso de {{name}} no Planejamento.",
+      "subtitleNoName": "Regras de uso deste recurso no Planejamento.",
+      "loading": "Carregando disponibilidade",
+      "retry": "Tentar de novo",
+      "plannable": "Planejável",
+      "plannableHint": "Quando ligado, o recurso aparece no Planejamento e aceita alocações. Não o torna alugável.",
+      "policy": "Regra de horário",
+      "policies": {
+        "Anytime": {
+          "label": "Livre 24 horas",
+          "description": "Sem restrição de horário. O recurso pode ser usado a qualquer hora, todos os dias."
+        },
+        "StartWithinHours": {
+          "label": "Começar no horário",
+          "description": "A alocação só pode começar dentro do horário de funcionamento, mas pode terminar depois (por exemplo, uma impressão que acaba de madrugada)."
+        },
+        "WithinHours": {
+          "label": "Tudo dentro do horário",
+          "description": "A alocação inteira, do início ao fim, precisa caber no horário de funcionamento. Fora dele o sistema recusa."
+        }
+      },
+      "capacity": "Capacidade",
+      "prep": "Preparo padrão (min)",
+      "cleanup": "Limpeza padrão (min)",
+      "bufferHint": "Tempo extra reservado antes e depois de cada alocação. Capacidade 1: um uso por vez.",
+      "hours": "Horário de funcionamento",
+      "hoursHint": "Informe as janelas de cada dia. Dia desligado fica fechado. Fim às 23:59 vale até a meia-noite.",
+      "anytimeNote": "Com a regra \"Livre 24 horas\" o horário de funcionamento não é aplicado. Os horários cadastrados ficam guardados e voltam a valer se você mudar a regra.",
+      "days": {
+        "0": "Domingo",
+        "1": "Segunda-feira",
+        "2": "Terça-feira",
+        "3": "Quarta-feira",
+        "4": "Quinta-feira",
+        "5": "Sexta-feira",
+        "6": "Sábado"
+      },
+      "dayOpen": "{{day}}: aberto",
+      "closedDay": "Fechado",
+      "copyToWeekdays": "Copiar para dias úteis",
+      "copyToWeekdaysFrom": "Copiar o horário de {{day}} para segunda a sexta",
+      "addWindow": "Adicionar janela",
+      "addWindowTo": "Adicionar janela em {{day}}",
+      "removeWindow": "Remover janela de {{day}}",
+      "openAt": "{{day}}: abre às",
+      "closeAt": "{{day}}: fecha às",
+      "problems": {
+        "invalidTime": "Use o formato HH:mm (24 horas).",
+        "closeBeforeOpen": "O fim precisa ser depois do início.",
+        "overlap": "Esta janela se sobrepõe a outra do mesmo dia.",
+        "hoursRequired": "Cadastre ao menos uma janela de horário, ou escolha \"Livre 24 horas\".",
+        "tooManyWindows": "Limite de {{max}} janelas de horário atingido. Remova alguma para adicionar outra.",
+        "invalidBuffer": "Informe minutos inteiros de 0 a 1440."
+      },
+      "rental": {
+        "title": "Este recurso é alugável",
+        "description": "O horário dele vem da agenda de Reservas (módulo Aluguéis). Para mudar os horários, ajuste a agenda de reservas do recurso. Aqui não há horário de funcionamento para editar."
+      },
+      "versionConflict": "A disponibilidade foi alterada por outra pessoa desde que você abriu. Feche e abra de novo para ver a versão atual.",
+      "saved": "Disponibilidade salva.",
+      "save": "Salvar",
+      "saving": "Salvando...",
+      "cancel": "Cancelar",
+      "close": "Fechar"
+    },
+    "dialog": {
+      "createTitle": "Nova alocação",
+      "editTitle": "Editar alocação",
+      "description": "Reserve um recurso por um período. Conflitos e horário de funcionamento são verificados antes de salvar.",
+      "asset": "Recurso",
+      "assetPlaceholder": "Escolha o recurso",
+      "noAssets": "Nenhum recurso planejável cadastrado.",
+      "kind": "Tipo",
+      "unavailableHint": "O recurso fica bloqueado e indisponível nesse período.",
+      "title": "Título",
+      "reason": "Motivo",
+      "startDate": "Data de início",
+      "startTime": "Hora de início",
+      "endDate": "Data de término",
+      "endTime": "Hora de término",
+      "prep": "Preparo (min)",
+      "cleanup": "Limpeza (min)",
+      "notes": "Observações",
+      "cancel": "Cancelar",
+      "save": "Criar alocação",
+      "saveEdit": "Salvar alterações",
+      "saving": "Salvando...",
+      "created": "Alocação criada.",
+      "updated": "Alocação atualizada.",
+      "errors": {
+        "asset": "Escolha um recurso.",
+        "title": "Informe um título ou motivo.",
+        "dates": "Informe datas e horas válidas.",
+        "order": "O término precisa ser depois do início.",
+        "tooLong": "A alocação pode durar no máximo 30 dias.",
+        "buffer": "Preparo e limpeza são minutos inteiros, até 1440."
+      }
+    },
+    "sheet": {
+      "done": {
+        "start": "Uso iniciado.",
+        "work-finished": "Trabalho concluído.",
+        "release": "Recurso liberado.",
+        "cancel": "Alocação cancelada."
+      },
+      "overdueRunning": "O horário previsto acabou e o recurso continua em uso. Conclua o trabalho para seguir.",
+      "overdueCleaning": "A limpeza passou do horário. Libere o recurso para ele voltar a ficar livre.",
+      "expiredNote": "Esta alocação nunca foi iniciada e o prazo acabou. Ela não bloqueia mais o recurso.",
+      "work": "Trabalho",
+      "occupied": "Ocupação",
+      "startedAt": "Iniciada em",
+      "finishedAt": "Trabalho concluído em",
+      "releasedAt": "Liberada em",
+      "reference": "Vínculo",
+      "notes": "Observações",
+      "cancelReason": "Motivo do cancelamento",
+      "orderWorkflow": "Esta alocação é gerenciada por {{label}}. Inicie, conclua ou libere pelo fluxo dele.",
+      "theOrder": "um pedido",
+      "cancelReasonLabel": "Motivo do cancelamento (opcional)",
+      "working": "Aguarde...",
+      "actions": {
+        "start": "Iniciar uso",
+        "workFinished": "Concluir trabalho",
+        "release": "Liberar recurso",
+        "edit": "Editar",
+        "cancel": "Cancelar alocação",
+        "confirmCancel": "Confirmar cancelamento",
+        "keep": "Manter"
+      }
+    }
+  },
   "agendas": {
     "eyebrow": "Operação · Agendas",
     "overview": {
@@ -6742,5 +7098,55 @@
     },
     "portalHelp": "Endereço do portal dos seus clientes. Só o suporte da Rolvix altera.",
     "saveInvalid": "Confira os dados informados e tente de novo."
+  },
+  "portalAppearance": {
+    "description": "Imagem e textos da tela de entrada do portal dos seus clientes.",
+    "readOnly": "Você pode ver, mas não editar, a aparência do portal.",
+    "trialReadOnly": "Seu período de teste terminou: a aparência do portal está somente para leitura.",
+    "saved": "Aparência do portal salva.",
+    "saveError": "Não foi possível salvar a aparência do portal.",
+    "loadError": "Não foi possível carregar a aparência do portal.",
+    "saveInvalid": "Confira os textos informados e tente de novo.",
+    "preview": {
+      "title": "Prévia da tela de entrada",
+      "description": "Assim seus clientes veem o portal. Atualiza enquanto você digita.",
+      "label": "Prévia da tela de entrada do portal",
+      "fallbackName": "Sua empresa"
+    },
+    "image": {
+      "title": "Imagem de fundo",
+      "hint": "Recomendado: pelo menos {{width}}×{{height}} px, na horizontal.",
+      "empty": "Nenhuma imagem. O portal usa a cor da empresa.",
+      "current": "Imagem atual. Envie outra para trocar.",
+      "formats": "JPG, PNG ou WebP, até 3 MB.",
+      "input": "Escolher imagem de fundo",
+      "choose": "Escolher imagem",
+      "replace": "Trocar imagem",
+      "remove": "Remover imagem",
+      "uploading": "Enviando… {{percent}}%",
+      "uploaded": "Imagem enviada.",
+      "removed": "Imagem removida.",
+      "badType": "Use uma imagem JPG, PNG ou WebP.",
+      "tooLarge": "A imagem deve ter até 3 MB.",
+      "rejected": "Não foi possível usar esta imagem. Confira o formato e o tamanho.",
+      "uploadError": "Não foi possível enviar a imagem.",
+      "removeError": "Não foi possível remover a imagem.",
+      "removeTitle": "Remover a imagem de fundo?",
+      "removeDescription": "O portal volta a usar a cor da empresa no lugar da imagem."
+    },
+    "texts": {
+      "title": "Textos",
+      "description": "Aparecem sobre a imagem. Deixe em branco para usar o padrão."
+    },
+    "fields": {
+      "kicker": "Chamada",
+      "headline": "Título",
+      "subtitle": "Subtítulo"
+    },
+    "validation": {
+      "kickerTooLong": "A chamada deve ter até {{max}} caracteres.",
+      "headlineTooLong": "O título deve ter até {{max}} caracteres.",
+      "subtitleTooLong": "O subtítulo deve ter até {{max}} caracteres."
+    }
   }
 }

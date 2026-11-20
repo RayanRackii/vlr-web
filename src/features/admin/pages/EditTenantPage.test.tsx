@@ -114,9 +114,9 @@ const listMenuItemsMock = vi.mocked(listAdminModuleMenuItems)
 const rentalAssetsMock = vi.mocked(fetchPortalRentalAssets)
 const brandingMock = vi.mocked(fetchTenantBranding)
 
-function renderEditPage() {
+function renderEditPage(search = "?tab=modulos") {
   return render(
-    <MemoryRouter initialEntries={[`/admin/tenants/${TENANT_ID}/edit`]}>
+    <MemoryRouter initialEntries={[`/admin/tenants/${TENANT_ID}/edit${search}`]}>
       <Routes>
         <Route path="/admin/tenants/:id/edit" element={<EditTenantPage />} />
       </Routes>
@@ -171,9 +171,7 @@ describe("EditTenantPage Super-Admin edit without PermissionProvider", () => {
     renderEditPage()
 
     expect(
-      await screen.findByRole("heading", {
-        name: i18n.t("admin.edit.title"),
-      }),
+      await screen.findByRole("heading", { level: 1, name: "Clube Acme" }),
     ).toBeInTheDocument()
 
     expect(
@@ -218,6 +216,16 @@ describe("EditTenantPage Super-Admin edit without PermissionProvider", () => {
     ).toBeInTheDocument()
     expect(
       screen.queryByRole("button", { name: /^Manutenção$/i }),
+    ).not.toBeInTheDocument()
+  })
+
+  it("shows the load error with a retry instead of the form", async () => {
+    getAdminTenantMock.mockRejectedValueOnce(new Error("falha ao carregar"))
+    renderEditPage("")
+
+    expect(await screen.findByText("falha ao carregar")).toBeInTheDocument()
+    expect(
+      screen.queryByLabelText(i18n.t("admin.edit.company.tradeName")),
     ).not.toBeInTheDocument()
   })
 })

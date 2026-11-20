@@ -580,7 +580,7 @@ describe("staff sidebar groups", () => {
       ["/configuracoes/recursos", "/catalogo/produtos", "/ativos"],
       ["/pessoas-e-acesso", "/grupos"],
       ["/configuracoes/menu", "/configuracoes/layout"],
-      ["/configuracoes/agenda", "/catalogo/configuracoes", "/notificacoes", "/configuracoes/empresa"],
+      ["/configuracoes/agenda", "/catalogo/configuracoes", "/notificacoes", "/configuracoes/empresa", "/configuracoes/aparencia"],
     ])
     const destinations = sections.flatMap((section) => section.items.flatMap((item) =>
       item.children ? item.children.map((child) => child.to) : [item.to],
@@ -670,6 +670,13 @@ describe("new agendas group", () => {
     [[], ["rentals.schedule.read", "catalog.orders.read"], []],
     [["rentals", "catalog"], [], []],
     [["rentals"], ["catalog.orders.read"], ["/agendas"]],
+    // Planning stands alone: only its own module and permission, never rentals, catalog or inventory.
+    [["resource-planning"], ["resource-planning.agenda.read"], ["/agendas/planejamento"]],
+    [["resource-planning"], [], []],
+    [["resource-planning"], ["rentals.schedule.read", "catalog.orders.read"], []],
+    [["rentals"], ["resource-planning.agenda.read"], []],
+    [["rentals", "resource-planning"], ["rentals.schedule.read", "resource-planning.agenda.read"], ["/agendas", "/agendas/recursos", "/agendas/planejamento"]],
+    [["catalog", "resource-planning"], ["catalog.orders.read", "resource-planning.agenda.read"], ["/agendas", "/agendas/produto", "/agendas/planejamento"]],
   ])("filters each child by module and permission", (modules, permissions, expected) => {
     const group = buildProductSections(modules, permissions).flatMap((section) => section.items).find((item) => item.labelKey === "nav.agendas")
     expect(group?.children?.map((child) => child.to) ?? []).toEqual(expected)
@@ -678,6 +685,7 @@ describe("new agendas group", () => {
   it.each([
     ["/agendas", "nav.agendasOverview"], ["/agendas/recursos", "nav.agendasResources"], ["/agendas/produto", "nav.agendasProduct"],
     ["/agenda", "nav.agendasOverview"], ["/catalogo/agenda-recursos", "nav.agendasResources"], ["/catalogo/agenda-produto", "nav.agendasProduct"],
+    ["/agendas/planejamento", "nav.agendasPlanning"],
   ])("keeps the title at %s", (path, title) => expect(getPageTitleKey(path)).toBe(title))
 })
 
