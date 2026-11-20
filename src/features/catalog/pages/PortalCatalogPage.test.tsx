@@ -101,7 +101,12 @@ describe("PortalCatalogPage search", () => {
 
     await screen.findByRole("heading", { name: "Equipamento" })
     expect(screen.getByText("Loja")).toBeInTheDocument()
-    expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent(title)
+    const h1 = screen.getByRole("heading", { level: 1 })
+    // The item count is a sibling of the h1, not part of the heading.
+    const [heading, ...count] = title.split(" ")
+    expect(h1.textContent?.trim()).toBe(heading)
+    expect(screen.getByText(count.join(" "))).not.toBe(h1)
+    expect(h1).not.toContainElement(screen.getByText(count.join(" ")))
     expect(screen.getByRole("complementary", { name: sidebar })).toBeInTheDocument()
   })
 

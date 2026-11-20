@@ -1,3 +1,4 @@
+import { useTenantDocumentMeta } from "@/hooks/useTenantDocumentMeta"
 import "./portal/portal.css"
 
 import { X } from "lucide-react"
@@ -120,6 +121,14 @@ export function CustomerAppLayout() {
     }
   }, [subdomain, signedIn])
 
+  useTenantDocumentMeta(
+    branding && {
+      slug: branding.subdomain || subdomain,
+      name: branding.displayName,
+      logoSvg: branding.logoSvg,
+      primaryColor: branding.primaryColor,
+    },
+  )
   const { tokens, style: themeStyle } = useTenantThemeCssVars(
     branding?.primaryColor,
     branding?.accentColor,

@@ -430,7 +430,7 @@ describe("firstPermittedProductPath", () => {
 
   it("uses the first allowed child when the parent path is not permitted", () => {
     expect(
-      firstPermittedProductPath(["inventory"], ["inventory.categories.read"]),
+      firstPermittedProductPath(["inventory", "rentals"], ["inventory.categories.read"]),
     ).toBe("/ativos/tipos")
   })
 
@@ -604,10 +604,12 @@ describe("staff sidebar groups", () => {
     ["rentals", "rentals.booking_policy.read", "nav.reservations", "/configuracoes/politica-reservas"],
     ["catalog", "core.registration_fields.read", "nav.peopleAccess", "/configuracoes/cadastro"],
   ])("keeps %s alternate-tab access without granting the main tab", (module, permission, label, path) => {
-    const visible = filterNavigationItemsByAccess(appNavigationItems, [module], [permission])
+    // Resource types are a rentals feature: that tab needs the rentals module next to inventory.
+    const modules = module === "inventory" ? ["inventory", "rentals"] : [module]
+    const visible = filterNavigationItemsByAccess(appNavigationItems, modules, [permission])
     expect(visible).toHaveLength(1)
     expect(visible[0]).toMatchObject({ labelKey: label, to: path })
-    expect(firstPermittedProductPath([module], [permission])).toBe(path)
+    expect(firstPermittedProductPath(modules, [permission])).toBe(path)
     expect(filterNavigationItemsByAccess(appNavigationItems, [], [permission])).toEqual([])
   })
 

@@ -23,6 +23,13 @@ describe("resolveTenantDocumentMeta", () => {
     })
   })
 
+  it("puts the page title before the tenant and Rolvix", () => {
+    expect(resolveTenantDocumentMeta({ slug: "acme", name: "Acme", pageTitle: "Agendas" }).title).toBe(
+      "Agendas · ACME · Rolvix",
+    )
+    expect(resolveTenantDocumentMeta({ slug: "acme", name: "Acme", pageTitle: " " }).title).toBe("ACME · Rolvix")
+  })
+
   it("uses the sanitized logo svg as favicon", () => {
     const r = resolveTenantDocumentMeta({
       name: "FICC",

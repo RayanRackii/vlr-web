@@ -572,9 +572,9 @@
     },
     "login": {
       "title": "Bem-vindo de volta",
-      "welcomeDefault": "Bem-vindo de volta! Entre para fazer reservas e acompanhar suas novidades.",
+      "welcomeDefault": "Bem-vindo de volta! Entre para acompanhar seus pedidos e novidades.",
       "emailPlaceholder": "voce@email.com",
-      "subtitle": "Acesse sua conta para fazer reservas e acompanhar suas atividades.",
+      "subtitle": "Acesse sua conta para acompanhar seus pedidos e atividades.",
       "submit": "Entrar",
       "submitting": "Entrando...",
       "toastSuccess": "Login realizado!",
@@ -3489,7 +3489,7 @@
     },
     "deletion": {
       "title": "Confirmar exclusão",
-      "pendingBadge": "Exclusão Pendente",
+      "pendingBadge": "Exclusão pendente",
       "scheduleWarning": "Esta ação agendará a exclusão do tipo \"{{name}}\" e de todos os {{count}} recursos vinculados para daqui a 30 dias. Digite o nome do tipo para confirmar.",
       "scheduleWarningNone": "Esta ação agendará a exclusão do tipo \"{{name}}\" para daqui a 30 dias. Não há recursos vinculados. Digite o nome do tipo para confirmar.",
       "scheduleWarningOne": "Esta ação agendará a exclusão do tipo \"{{name}}\" e do recurso vinculado para daqui a 30 dias. Digite o nome do tipo para confirmar.",
@@ -3518,7 +3518,7 @@
       "rowMenu": "Ações de {{name}}",
       "all": "Todos",
       "title": "Tipos de recurso",
-      "subtitle": "Famílias do que a sua empresa reserva. O comportamento vem das capacidades, não do nome.",
+      "subtitle": "Famílias de recursos da sua empresa. O comportamento vem das capacidades, não do nome.",
       "search": "Buscar tipo",
       "capability": "Capacidade",
       "new": "Novo tipo",
@@ -3548,7 +3548,9 @@
         "articleUm": "um",
         "articleUma": "uma",
         "choose": "Escolha {{article}} {{singular}}",
+        "chooseGeneric": "Escolha um recurso",
         "available": "{{count}} {{plural}} disponíveis",
+        "availableGeneric": "{{count}} recursos disponíveis",
         "missingTitle": "Falta preencher",
         "missingName": "Nome do tipo",
         "missingSingular": "Como o cliente fala de um",
@@ -4417,7 +4419,7 @@
     "tabs": {
       "Open": "Abertas",
       "Pending": "Pendentes",
-      "InProgress": "Em Andamento",
+      "InProgress": "Em andamento",
       "Completed": "Concluídas",
       "Canceled": "Canceladas",
       "withCount": "{{label}}, {{count}}"
@@ -4445,7 +4447,7 @@
     },
     "status": {
       "Pending": "Pendente",
-      "InProgress": "Em Andamento",
+      "InProgress": "Em andamento",
       "Completed": "Concluída",
       "Canceled": "Cancelada"
     },
@@ -4514,7 +4516,7 @@
       "breadcrumb": "{{title}}",
       "numberPrefix": "OS",
       "title": "Execução da OS",
-      "subtitle": "{{tag}} · {{code}}",
+      "subtitle": "{{asset}} · {{tag}}",
       "details": "Detalhes da OS",
       "loading": "Carregando OS...",
       "back": "Voltar para lista",
@@ -4613,6 +4615,11 @@
       "loadTechnicians": "Não foi possível carregar os técnicos.",
       "invalidResponse": "Resposta inválida da API."
     }
+  },
+  "moduleInactive": {
+    "title": "Este módulo não está ativo para esta empresa",
+    "description": "Ative o módulo para usar esta página ou escolha outra opção no menu.",
+    "back": "Voltar ao início"
   },
   "accessDenied": {
     "title": "Acesso negado",
@@ -4895,7 +4902,7 @@
   "admin": {
     "registrationFields": {
       "title": "Campos do cadastro (portal)",
-      "description": "Defina campos extras do cadastro do portal B2C.",
+      "description": "Defina campos extras do cadastro do portal do cliente.",
       "empty": "Nenhum campo personalizado ainda.",
       "emptyDescription": "Adicione informações extras que o cliente preenche no cadastro.",
       "fieldKey": "Chave (ex.: cpf, temBagagem)",
@@ -4920,7 +4927,7 @@
       "deleteError": "Não foi possível remover o campo.",
       "loadError": "Não foi possível carregar os campos.",
       "tenantPageTitle": "Formulário de cadastro",
-      "tenantPageDescription": "Configure as informações solicitadas no cadastro do portal B2C.",
+      "tenantPageDescription": "Configure as informações solicitadas no cadastro do portal do cliente.",
       "builtIn": {
         "title": "Campos padrão",
         "description": "Estes campos fazem parte do cadastro padrão do portal.",
@@ -4945,7 +4952,7 @@
       }
     },
     "moduleMenu": {
-      "title": "Itens do menu (portal B2C)",
+      "title": "Itens do menu (portal do cliente)",
       "description": "Atalhos da sidebar que o cliente vê após entrar no portal.",
       "empty": "Nenhum item de menu. O portal autenticado ficará sem opções até você criar um.",
       "emptyDescription": "Adicione atalhos para agenda e catálogo. O cliente só vê o que estiver ativo e com o módulo contratado.",
@@ -6924,7 +6931,7 @@
     "notApplicable": "Não se aplica",
     "timeTitle": "No seu tempo",
     "timeBody": "O produto só ficará disponível aos clientes depois da publicação.",
-    "productDescription": "Configure seu produto e deixe tudo pronto para receber reservas.",
+    "productDescription": "Configure seu produto e deixe tudo pronto para receber pedidos.",
     "saveAndContinue": "Salvar e continuar",
     "saveAndExit": "Salvar e sair",
     "editTitle": "Editar produto",

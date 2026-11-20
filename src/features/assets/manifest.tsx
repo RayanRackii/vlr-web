@@ -15,6 +15,8 @@ type FeatureRoute = {
   path: string
   element: ReactElement
   permission: string
+  /** Tenant modules that must be active (any of). */
+  modules?: readonly string[]
 }
 
 export const assetsManifest = {
@@ -45,16 +47,19 @@ export const assetsManifest = {
         path: "/ativos/tipos/novo",
         element: <ResourceTypeWizardPage />,
         permission: "inventory.categories.write",
+        modules: ["rentals"],
       },
       {
         path: "/ativos/tipos/:typeId",
         element: <ResourceTypeWizardPage />,
         permission: "inventory.categories.write",
+        modules: ["rentals"],
       },
       {
         path: "/ativos/tipos",
         element: <EquipmentPage />,
         permission: "inventory.categories.read",
+        modules: ["rentals"],
       },
       {
         path: "/ativos/categorias/novo",

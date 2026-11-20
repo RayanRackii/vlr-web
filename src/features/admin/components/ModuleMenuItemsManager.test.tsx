@@ -683,6 +683,13 @@ describe("ModuleMenuItemsManager", () => {
       screen.queryByLabelText(i18n.t("admin.moduleMenu.functionality")),
     ).not.toBeInTheDocument()
   })
+
+  it("does not call the rental assets endpoint when rentals is not active", async () => {
+    renderManager({ activeModules: ["catalog"] })
+    await waitForLoaded()
+
+    expect(apiGetMock).not.toHaveBeenCalled()
+  })
 })
 
 describe("TenantModuleMenuPage", () => {

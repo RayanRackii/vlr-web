@@ -156,7 +156,7 @@ it("marks steps from the saved data, not from visits", async () => {
 it("renders the header, the vertical progress copy and one panel with the step title", () => {
   setup({}, "/c")
   expect(screen.getByRole("heading", { level: 1, name: "Diária" })).toBeInTheDocument()
-  expect(screen.getByText("Configure seu produto e deixe tudo pronto para receber reservas.")).toBeInTheDocument()
+  expect(screen.getByText("Configure seu produto e deixe tudo pronto para receber pedidos.")).toBeInTheDocument()
   expect(screen.getByText("Rascunho")).toBeInTheDocument()
   expect(screen.getByText("Configuração do produto")).toBeInTheDocument()
   expect(screen.getByText("No seu tempo")).toBeInTheDocument()
@@ -350,4 +350,10 @@ it("edit mode of an unpublished product ends with Publicar on the last step", as
   expect(screen.queryByRole("button", { name: "Salvar alterações" })).not.toBeInTheDocument()
   await user.click(screen.getByRole("button", { name: "Publicar" }))
   await waitFor(() => expect(onPublish).toHaveBeenCalledTimes(1))
+})
+
+it("keeps the scrolling step list as the containing block of its sr-only labels (no page overflow at 375px)", () => {
+  render(<MemoryRouter><CadastroStepper step="dados" kind="product" /></MemoryRouter>)
+  const list = screen.getByTestId("cadastro-stepper-steps")
+  expect(list).toHaveClass("relative", "overflow-x-auto")
 })

@@ -572,9 +572,9 @@
     },
     "login": {
       "title": "Welcome back",
-      "welcomeDefault": "Welcome back! Sign in to make bookings and keep up with your updates.",
+      "welcomeDefault": "Welcome back! Sign in to follow your orders and updates.",
       "emailPlaceholder": "you@email.com",
-      "subtitle": "Sign in to book and keep track of your activity.",
+      "subtitle": "Sign in to follow your orders and activity.",
       "submit": "Sign in",
       "submitting": "Signing in...",
       "toastSuccess": "Signed in!",
@@ -3489,7 +3489,7 @@
     },
     "deletion": {
       "title": "Confirm deletion",
-      "pendingBadge": "Pending Deletion",
+      "pendingBadge": "Pending deletion",
       "scheduleWarning": "This will schedule deletion of type \"{{name}}\" and all {{count}} linked resources in 30 days. Type the type name to confirm.",
       "scheduleWarningNone": "This will schedule deletion of type \"{{name}}\" in 30 days. No resources are linked. Type the type name to confirm.",
       "scheduleWarningOne": "This will schedule deletion of type \"{{name}}\" and the linked resource in 30 days. Type the type name to confirm.",
@@ -3518,7 +3518,7 @@
       "rowMenu": "Actions for {{name}}",
       "all": "All",
       "title": "Resource types",
-      "subtitle": "Families of what your company books. Behavior comes from capabilities, not from the name.",
+      "subtitle": "Families of resources in your company. Behavior comes from capabilities, not from the name.",
       "search": "Search types",
       "capability": "Capability",
       "new": "New type",
@@ -3548,7 +3548,9 @@
         "articleUm": "um",
         "articleUma": "uma",
         "choose": "Choose {{article}} {{singular}}",
+        "chooseGeneric": "Choose a resource",
         "available": "{{count}} {{plural}} available",
+        "availableGeneric": "{{count}} resources available",
         "missingTitle": "Still needed",
         "missingName": "Type name",
         "missingSingular": "How the customer says one",
@@ -4417,7 +4419,7 @@
     "tabs": {
       "Open": "Open",
       "Pending": "Pending",
-      "InProgress": "In Progress",
+      "InProgress": "In progress",
       "Completed": "Completed",
       "Canceled": "Canceled",
       "withCount": "{{label}}, {{count}}"
@@ -4445,7 +4447,7 @@
     },
     "status": {
       "Pending": "Pending",
-      "InProgress": "In Progress",
+      "InProgress": "In progress",
       "Completed": "Completed",
       "Canceled": "Canceled"
     },
@@ -4514,7 +4516,7 @@
       "breadcrumb": "{{title}}",
       "numberPrefix": "WO",
       "title": "Work Order Execution",
-      "subtitle": "{{tag}} · {{code}}",
+      "subtitle": "{{asset}} · {{tag}}",
       "details": "Work order details",
       "loading": "Loading work order...",
       "back": "Back to list",
@@ -4613,6 +4615,11 @@
       "loadTechnicians": "Could not load technicians.",
       "invalidResponse": "Invalid API response."
     }
+  },
+  "moduleInactive": {
+    "title": "This module is not active for this company",
+    "description": "Activate the module to use this page, or pick another option in the menu.",
+    "back": "Back to home"
   },
   "accessDenied": {
     "title": "Access denied",
@@ -4895,7 +4902,7 @@
   "admin": {
     "registrationFields": {
       "title": "Registration fields (portal)",
-      "description": "Define extra fields for the B2C portal registration.",
+      "description": "Define extra fields for the customer portal registration.",
       "empty": "No custom fields yet.",
       "emptyDescription": "Add extra information customers fill in during registration.",
       "fieldKey": "Key (e.g. cpf, hasLuggage)",
@@ -4920,7 +4927,7 @@
       "deleteError": "Could not remove the field.",
       "loadError": "Could not load fields.",
       "tenantPageTitle": "Registration form",
-      "tenantPageDescription": "Configure the information requested in B2C portal registration.",
+      "tenantPageDescription": "Configure the information requested in customer portal registration.",
       "builtIn": {
         "title": "Standard fields",
         "description": "These fields are part of the portal’s standard registration.",
@@ -4945,7 +4952,7 @@
       }
     },
     "moduleMenu": {
-      "title": "Menu items (B2C portal)",
+      "title": "Menu items (customer portal)",
       "description": "Sidebar shortcuts customers see after they sign in to the portal.",
       "empty": "No menu items. The signed-in portal will have no options until you add one.",
       "emptyDescription": "Add shortcuts for the schedule and catalog. Customers only see active items whose module is subscribed.",
@@ -6924,7 +6931,7 @@
     "notApplicable": "Not applicable",
     "timeTitle": "At your own pace",
     "timeBody": "The product only becomes available to customers after it is published.",
-    "productDescription": "Set up your product and get everything ready to receive bookings.",
+    "productDescription": "Set up your product and get everything ready to receive orders.",
     "saveAndContinue": "Save and continue",
     "saveAndExit": "Save and exit",
     "editTitle": "Edit product",

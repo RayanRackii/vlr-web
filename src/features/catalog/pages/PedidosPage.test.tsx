@@ -132,4 +132,9 @@ describe("unified Pedidos", () => {
     await user.click(screen.getByRole("button", { name: i18n.t("pedidos.clear") }))
     expect(screen.getAllByText("PED-12").length).toBeGreaterThan(0)
   })
+  it("request detail never shows the customer id", async () => {
+    mount(["catalog.products.read"], "/pedidos/solicitacoes/request-1")
+    expect((await screen.findAllByText("Personalizar caneca")).length).toBeGreaterThan(0)
+    expect(screen.queryByText("customer-1")).not.toBeInTheDocument()
+  })
 })

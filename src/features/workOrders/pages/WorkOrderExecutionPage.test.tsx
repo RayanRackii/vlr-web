@@ -1226,9 +1226,13 @@ describe("WorkOrderExecutionPage mobile-first layout", () => {
       checklist.compareDocumentPosition(details as Element) &
         Node.DOCUMENT_POSITION_FOLLOWING,
     ).toBeTruthy()
-    expect(
-      screen.getByRole("heading", { level: 1, name: /Split sala 1/ }),
-    ).toBeInTheDocument()
+    const h1 = screen.getByRole("heading", { level: 1 })
+    expect(h1).toHaveTextContent(/^OS /)
+    expect(h1).not.toHaveTextContent(/Split sala 1/)
+    expect(h1).not.toHaveTextContent(i18n.t("workOrders.status.Pending"))
+    expect(h1.parentElement).toHaveTextContent(/Split sala 1/)
+    expect(within(h1).queryByText(i18n.t("workOrders.status.Pending"))).not.toBeInTheDocument()
+    expect(screen.getAllByText(i18n.t("workOrders.status.Pending")).length).toBeGreaterThan(0)
     expect(document.body.textContent).not.toContain(WORK_ORDER_ID)
     expect(screen.queryByText(i18n.t("workOrders.columns.id"))).not.toBeInTheDocument()
     expect(

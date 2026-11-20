@@ -7,6 +7,9 @@ import i18n from "@/lib/i18n"
 import { renderWithQuery } from "@/test/renderWithQuery"
 import { AppRoutes } from "./AppRoutes"
 
+/** A route is blocked either for a missing permission or, when its module is off, with the module-inactive page. */
+const blockedTitle = () => new RegExp(`^(${i18n.t("accessDenied.title")}|${i18n.t("moduleInactive.title")})$`)
+
 vi.mock("@/components/layout/MainLayout", () => ({ MainLayout: () => <div data-testid="staff-layout"><Outlet /></div> }))
 vi.mock("@/components/layout/ProtectedRoute", () => ({ ProtectedRoute: () => <Outlet /> }))
 vi.mock("@/features/users/permissions/PermissionContext", () => ({ usePermissions: vi.fn() }))
@@ -45,7 +48,7 @@ describe("staff agenda route", () => {
   it.each([{ modules: [], permissions: ["rentals.schedule.read"] }, { modules: ["rentals", "catalog"], permissions: [] }])("denies missing module or permission: $modules $permissions", async ({ modules, permissions }) => {
     access(modules, permissions)
     visit("/agenda")
-    expect(await screen.findByRole("heading", { name: i18n.t("accessDenied.title") })).toBeInTheDocument()
+    expect(await screen.findByRole("heading", { name: blockedTitle() })).toBeInTheDocument()
     expect(screen.queryByRole("heading", { name: "Visão geral das agendas" })).not.toBeInTheDocument()
   })
 
@@ -77,7 +80,7 @@ describe("new staff agenda routes", () => {
     ["/agendas/produto", ["rentals"], ["catalog.orders.read"]], ["/agendas/produto", ["catalog"], ["catalog.products.read"]],
   ] as const)("denies %s without its module or permission", async (path, modules, permissions) => {
     access([...modules], [...permissions]); visit(path)
-    expect(await screen.findByRole("heading", { name: i18n.t("accessDenied.title") })).toBeInTheDocument()
+    expect(await screen.findByRole("heading", { name: blockedTitle() })).toBeInTheDocument()
   })
 })
 
@@ -95,7 +98,7 @@ describe("planning agenda route", () => {
     [["resource-planning"], ["rentals.schedule.read", "catalog.orders.read"]],
   ] as const)("denies it without the module or permission: %j %j", async (modules, permissions) => {
     access([...modules], [...permissions]); visit("/agendas/planejamento")
-    expect(await screen.findByRole("heading", { name: i18n.t("accessDenied.title") })).toBeInTheDocument()
+    expect(await screen.findByRole("heading", { name: blockedTitle() })).toBeInTheDocument()
     expect(screen.queryByRole("heading", { level: 1, name: "Planejamento" })).not.toBeInTheDocument()
   })
 })

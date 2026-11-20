@@ -57,6 +57,16 @@ describe("useAgendaDay queries", () => {
     expect(options?.signal).toBeInstanceOf(AbortSignal)
   })
 
+  it("does not call the rentals-only resource agenda when rentals access is off", async () => {
+    const client = createTestQueryClient()
+    const wrapper = ({ children }: { children: ReactNode }) => <QueryClientProvider client={client}>{children}</QueryClientProvider>
+    const catalogOnly = { assets: false, schedule: false, reservations: false, orders: true }
+    const { result } = renderHook(() => useAgendaDay(day, zone, catalogOnly, "t1", true), { wrapper })
+    await waitFor(() => expect(result.current.loading).toBe(false))
+    expect(listCatalogResourceAgenda).not.toHaveBeenCalled()
+    expect(result.current.failedSources).toEqual([])
+  })
+
   it("labels a block with an order created outside the visible range", async () => {
     // Created long before the service date; the label still resolves because orders are not range-filtered.
     vi.mocked(listCatalogResourceAgenda).mockResolvedValue({ resources: [], items: [{ ...order, customerName: "", displayNumber: "" }] })

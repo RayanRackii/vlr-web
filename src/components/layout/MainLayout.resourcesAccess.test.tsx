@@ -119,6 +119,24 @@ describe("Recursos permission before layout", () => {
     ).not.toBeInTheDocument()
   })
 
+  it("shows the module-inactive page, not Acesso negado, when rentals is off", async () => {
+    apiGet.mockImplementation(async (url: string) => {
+      if (String(url).includes("/api/users/me")) {
+        return { data: { ...mePayload, activeModules: ["catalog"] } }
+      }
+      return { data: [] }
+    })
+
+    renderResources()
+
+    expect(
+      await screen.findByRole("heading", { name: i18n.t("moduleInactive.title") }),
+    ).toBeInTheDocument()
+    expect(
+      screen.queryByRole("heading", { name: i18n.t("accessDenied.title") }),
+    ).not.toBeInTheDocument()
+  })
+
   it("denies Recursos when only one of the required permissions is present", async () => {
     apiGet.mockImplementation(async (url: string) => {
       if (String(url).includes("/api/users/me")) {

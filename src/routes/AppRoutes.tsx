@@ -188,7 +188,7 @@ function AppRoutesTree() {
             ))}
           </Route>
           {assetsManifest.routes.staff.map((route) => (
-            <Route key={route.path} element={<PermissionRoute permission={route.permission} />}>
+            <Route key={route.path} element={<PermissionRoute permission={route.permission} modules={"modules" in route ? route.modules : undefined} />}>
               <Route path={route.path} element={route.element} />
             </Route>
           ))}
@@ -230,7 +230,7 @@ function AppRoutesTree() {
             </Route>
           ))}
           {rentalsManifest.routes.staff.map((route) => (
-            <Route key={route.path} element={<PermissionRoute permissions={route.permissions} />}>
+            <Route key={route.path} element={<PermissionRoute permissions={route.permissions} modules={rentalsManifest.modules} />}>
               <Route path={route.path} element={route.element} />
             </Route>
           ))}

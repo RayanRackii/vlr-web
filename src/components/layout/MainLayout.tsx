@@ -34,6 +34,7 @@ import type { TenantBranding } from "@/features/tenantPortal/schemas/tenantPorta
 import { BreadcrumbTitleContext } from "@/components/layout/useBreadcrumbTitle"
 import { useTenantDocumentMeta } from "@/hooks/useTenantDocumentMeta"
 import { resolvePermissionRouteAccess } from "@/features/users/permissions/permissionGroups"
+import { ModuleInactivePage } from "@/components/layout/ModuleInactivePage"
 import { PermissionProvider, usePermissions } from "@/features/users/permissions/PermissionContext"
 import {
   markPlatformTenantExited,
@@ -78,7 +79,7 @@ function MainLayoutShell({ children }: { children?: ReactNode }) {
   const location = useLocation()
   const { isPlatformAdmin, isInTenantEnvironment, activeTenantLabel } =
     usePlatformTenantSession()
-  const { can, currentUser, isLoading: permissionsLoading } = usePermissions()
+  const { can, currentUser, activeModules, isLoading: permissionsLoading } = usePermissions()
   const { sections } = useAppNavigationSections("module-intros")
   const introKeys = availableModuleIntros(sections).map((intro) => intro.key)
   const [isExiting, setIsExiting] = useState(false)
@@ -102,6 +103,8 @@ function MainLayoutShell({ children }: { children?: ReactNode }) {
     }
   }, [hostSubdomain])
   const staffTenantName = staffHeaderContextLabel(currentUser, "")
+  const pageTitleKey = getPageTitleKey(location.pathname)
+  const documentPageTitle = pageTitleKey === "app.name" ? null : t(pageTitleKey)
   useTenantDocumentMeta(
     staffTenantName || hostSubdomain
       ? {
@@ -109,6 +112,7 @@ function MainLayoutShell({ children }: { children?: ReactNode }) {
           name: staffTenantName,
           logoSvg: hostBranding?.logoSvg,
           primaryColor: hostBranding?.primaryColor,
+          pageTitle: documentPageTitle,
         }
       : null,
   )
@@ -128,8 +132,10 @@ function MainLayoutShell({ children }: { children?: ReactNode }) {
       <main className="mx-auto w-full max-w-3xl p-6">
         {resourcesAccess === "loading" ? (
           <PageContentSkeleton rows={3} />
-        ) : (
+        ) : activeModules.includes("rentals") ? (
           <AccessDeniedPage />
+        ) : (
+          <ModuleInactivePage />
         )}
       </main>
     )
@@ -140,7 +146,7 @@ function MainLayoutShell({ children }: { children?: ReactNode }) {
     user?.email,
     t("account.userFallback"),
   )
-  const pageTitle = t(getPageTitleKey(location.pathname))
+  const pageTitle = t(pageTitleKey)
   const cadastro = isCadastroFocusPath(location.pathname)
   const initials = getUserInitials(currentUser?.fullName, user?.email)
   const onPlatformPanel = isPlatformAdmin && location.pathname.startsWith("/admin")

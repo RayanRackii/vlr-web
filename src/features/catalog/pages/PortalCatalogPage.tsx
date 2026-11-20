@@ -236,14 +236,14 @@ export function PortalCatalogPage() {
         <header className="portal-booking-header portal-catalog-header">
           <div className="min-w-0">
             <p className="portal-eyebrow break-words">{branding.displayName}</p>
-            <h1>
-              {t("tenantPortal.catalog.title")}{" "}
+            <div className="portal-catalog-title-row">
+              <h1>{t("tenantPortal.catalog.title")}</h1>
               {!loading && !loadError && products.length > 0 ? (
                 <span className="portal-catalog-item-count">
                   {t(hasActiveFilters ? "tenantPortal.catalog.resultCount" : "tenantPortal.catalog.itemCount", { count: products.length })}
                 </span>
               ) : null}
-            </h1>
+            </div>
             <p className="text-muted-foreground">{t("tenantPortal.catalog.subtitle")}</p>
           </div>
           <div className="portal-catalog-actions">
