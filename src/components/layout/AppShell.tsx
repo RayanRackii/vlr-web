@@ -45,7 +45,7 @@ export type SidebarRenderOptions = {
 }
 
 export type AppShellProps = {
-  /** Portal uses top navigation that becomes bottom navigation on mobile. */
+  /** Portal uses a left sidebar on desktop (no collapse); on phones the same nav is fixed to the bottom by portal.css. */
   variant?: "staff" | "portal"
   sidebar: (opts: SidebarRenderOptions) => ReactNode
   pageTitle: string
@@ -179,7 +179,7 @@ export function AppShell({
   return (
     <ShellContext.Provider value={shellContext}>
     <div data-shell-part="root" data-shell-variant={variant} className="flex min-h-screen max-w-full bg-background text-foreground">
-      {variant === "staff" && <aside
+      {variant === "staff" ? <aside
         data-shell-part="sidebar"
         className={cn(
           "hidden shrink-0 border-r border-sidebar-border bg-sidebar text-sidebar-foreground lg:block",
@@ -192,7 +192,16 @@ export function AppShell({
           onToggleCollapsed: collapsible ? toggleCollapsed : undefined,
           account: renderAccount({ collapsed }),
         })}
-      </aside>}
+      </aside> : (
+        // Portal: below lg the aside takes no width but must stay rendered (and free of
+        // overflow/transform/contain) so its nav can be position:fixed as the bottom tab bar.
+        <aside
+          data-shell-part="sidebar"
+          className="block w-64 shrink-0 border-r border-border bg-card max-lg:w-0 max-lg:border-0"
+        >
+          {sidebar({})}
+        </aside>
+      )}
 
       {variant === "staff" && <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
         <SheetContent side="left" className="w-72 p-0 sm:max-w-72">
@@ -246,8 +255,6 @@ export function AppShell({
               )}
             </div>
           </div>
-
-          {variant === "portal" && sidebar({})}
 
           <div className="flex shrink-0 items-center gap-0.5">
             <LanguageSwitcher
