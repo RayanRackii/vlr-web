@@ -85,7 +85,8 @@ export function CadastroStepper({ step, go, disabled = false, kind = "resource",
     <ol className="mt-2 flex items-center gap-1.5 lg:hidden" aria-hidden="true" data-testid="cadastro-stepper-dots">
       {applicableSteps(notApplicable, kind).map((item) => <li key={item} data-testid="cadastro-stepper-dot" data-current={item === step || undefined} className={cn("size-2 rounded-full", item === step ? "bg-primary" : "bg-border")} />)}
     </ol>
-    <ol className="mt-2 flex min-w-0 max-w-full gap-1 overflow-x-auto lg:mt-3 lg:flex-col lg:overflow-visible">
+    {/* `relative` makes the list the containing block of the absolutely positioned sr-only labels, so its scroll clips them instead of widening the page. */}
+    <ol data-testid="cadastro-stepper-steps" className="relative mt-2 flex min-w-0 max-w-full gap-1 overflow-x-auto lg:mt-3 lg:flex-col lg:overflow-visible">
       {stepsOf(kind).map((item, i) => {
         const current = step === item
         const skipped = notApplicable.includes(item)
