@@ -1,9 +1,10 @@
 /// <reference types="node" />
 
 import { readFileSync } from "node:fs"
-import { fireEvent, render, screen } from "@testing-library/react"
+import { fireEvent, render, screen, waitFor } from "@testing-library/react"
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest"
-import { MemoryRouter, Route, Routes } from "react-router-dom"
+import { AxiosError, AxiosHeaders } from "axios"
+import { Link, MemoryRouter, Route, Routes } from "react-router-dom"
 
 import { ThemeProvider } from "@/components/ThemeProvider"
 import i18n from "@/lib/i18n"
@@ -243,5 +244,42 @@ describe("tenant portal auth split shell", () => {
     // same brand panel element: the layout stayed mounted instead of falling back to the loading skeleton
     expect(screen.getByRole("heading", { level: 1, name: "Acme Club" })).toBe(brandPanel)
     expect(fetchTenantBranding).toHaveBeenCalledTimes(1)
+  })
+
+  it("reloads branding after switching to an unknown tenant and back", async () => {
+    const acme = await fetchTenantBranding("acme")
+    vi.mocked(fetchTenantBranding).mockImplementation(async (subdomain: string) => {
+      if (subdomain === "ghost") {
+        throw new AxiosError("not found", "ERR_BAD_REQUEST", undefined, undefined, {
+          status: 404, statusText: "Not Found", headers: {}, config: { headers: new AxiosHeaders() }, data: {},
+        })
+      }
+      return acme
+    })
+    render(
+      <ThemeProvider>
+        <MemoryRouter initialEntries={["/t/acme"]}>
+          <Link to="/t/ghost">go ghost</Link>
+          <Link to="/t/acme">go acme</Link>
+          <Routes>
+            <Route path="/t/:subdomain" element={<TenantPortalLayout />}>
+              <Route index element={<TenantPortalLoginPage />} />
+            </Route>
+          </Routes>
+        </MemoryRouter>
+      </ThemeProvider>,
+    )
+    await screen.findByRole("heading", { name: i18n.t("tenantPortal.login.title") })
+
+    fireEvent.click(screen.getByRole("link", { name: "go ghost" }))
+    await waitFor(() => expect(fetchTenantBranding).toHaveBeenLastCalledWith("ghost"))
+    await waitFor(() =>
+      expect(screen.queryByRole("heading", { name: i18n.t("tenantPortal.login.title") })).not.toBeInTheDocument(),
+    )
+
+    fireEvent.click(screen.getByRole("link", { name: "go acme" }))
+    expect(await screen.findByRole("heading", { name: i18n.t("tenantPortal.login.title") })).toBeInTheDocument()
+    expect(fetchTenantBranding).toHaveBeenLastCalledWith("acme")
+    vi.mocked(fetchTenantBranding).mockReset()
   })
 })

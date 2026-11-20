@@ -49,8 +49,9 @@ export function TenantPortalLoginPage() {
   useEffect(() => {
     // Warm the chunks of the pages linked from here so "Cadastre-se" / "Esqueci a senha" swap the form
     // without a loading flash. Same module paths as the lazy routes, so Vite reuses the chunks.
-    void import("@/features/tenantPortal/pages/TenantPortalRegisterPage")
-    void import("@/features/tenantPortal/pages/TenantPortalForgotPasswordPage")
+    // A failed prefetch is harmless: the lazy route loads the chunk again on navigation.
+    void import("@/features/tenantPortal/pages/TenantPortalRegisterPage").catch(() => undefined)
+    void import("@/features/tenantPortal/pages/TenantPortalForgotPasswordPage").catch(() => undefined)
   }, [])
   const schema = useMemo(
     () =>

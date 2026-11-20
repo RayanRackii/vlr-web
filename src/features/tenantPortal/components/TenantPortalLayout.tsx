@@ -96,8 +96,12 @@ export function TenantPortalLayout() {
 
     const loadKey = `${subdomain}:${retryNonce}`
     if (brandingLoadedFor.current === loadKey) {
+      setLoading(false)
       return
     }
+    // Forget the previous tenant before fetching, so a failed or cancelled load (tenant switch,
+    // 404, quick back-navigation) can never be mistaken for "already loaded" later.
+    brandingLoadedFor.current = null
 
     let cancelled = false
     setLoading(true)
