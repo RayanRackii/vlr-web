@@ -1,10 +1,14 @@
 import { AxiosError, type AxiosResponse, type InternalAxiosRequestConfig } from "axios"
+import { setOfflineSyncScope } from "@/lib/offlineSyncScope"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 const syncStore = new Map<string, unknown>()
 
 vi.mock("idb-keyval", () => ({
   get: vi.fn(async (key: string) => syncStore.get(key)),
+  del: vi.fn(async (key: string) => {
+    syncStore.delete(key)
+  }),
   set: vi.fn(async (key: string, value: unknown) => {
     syncStore.set(key, value)
   }),
@@ -77,6 +81,8 @@ function axiosError(status: number, data: unknown): AxiosError {
   } as AxiosResponse
   return error
 }
+
+setOfflineSyncScope({ userId: "user-a", tenantId: "tenant-1" })
 
 describe("workOrdersService registry assets", () => {
   beforeEach(() => {
@@ -268,7 +274,7 @@ describe("updateTaskValue online errors", () => {
     if (!task) {
       throw new Error("missing task")
     }
-    syncStore.set("os_sync_conflicts", [
+    syncStore.set("os_sync_conflicts:user-a|tenant-1", [
       {
         id: `${order.id}:${task.id}`,
         workOrderId: order.id,

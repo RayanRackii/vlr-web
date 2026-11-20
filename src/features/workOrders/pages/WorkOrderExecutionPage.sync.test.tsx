@@ -1,4 +1,5 @@
 import { AxiosError, type AxiosResponse, type InternalAxiosRequestConfig } from "axios"
+import { setOfflineSyncScope } from "@/lib/offlineSyncScope"
 import { act, render, screen, waitFor } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import type { ReactNode } from "react"
@@ -24,6 +25,9 @@ const TASK_ID = "16161616-1616-4161-8161-161616161616"
 
 vi.mock("idb-keyval", () => ({
   get: vi.fn(async (key: string) => store.get(key)),
+  del: vi.fn(async (key: string) => {
+    store.delete(key)
+  }),
   set: vi.fn(async (key: string, value: unknown) => {
     store.set(key, value)
   }),
@@ -103,6 +107,8 @@ function renderExecution() {
     </MemoryRouter>,
   )
 }
+
+setOfflineSyncScope({ userId: "user-a", tenantId: "tenant-1" })
 
 describe("WorkOrderExecutionPage offline sync", () => {
   beforeEach(() => {
@@ -295,7 +301,7 @@ describe("WorkOrderExecutionPage offline sync", () => {
     vi.spyOn(navigator, "onLine", "get").mockReturnValue(true)
     await act(async () => { window.dispatchEvent(new Event("online")) })
     await waitFor(() => expect(apiGet).toHaveBeenCalledTimes(2))
-    expect(store.get("os_sync_queue")).toEqual([])
+    expect(store.get("os_sync_queue:user-a|tenant-1")).toEqual([])
     expect(field).toHaveValue("A")
     expect(screen.queryByText(i18n.t("workOrders.execution.save.saved"))).not.toBeInTheDocument()
     await act(async () => { releaseRefresh() })

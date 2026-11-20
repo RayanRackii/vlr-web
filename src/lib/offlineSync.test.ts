@@ -1,10 +1,19 @@
 import { AxiosError, type AxiosResponse, type InternalAxiosRequestConfig } from "axios"
-import { beforeEach, describe, expect, it, vi } from "vitest"
+import {
+  clearOfflineSyncScope,
+  offlineSyncScopeKeys,
+  resetOfflineSyncScopeForTests,
+  setOfflineSyncScope,
+} from "@/lib/offlineSyncScope"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 const store = new Map<string, unknown>()
 
 vi.mock("idb-keyval", () => ({
   get: vi.fn(async (key: string) => store.get(key)),
+  del: vi.fn(async (key: string) => {
+    store.delete(key)
+  }),
   set: vi.fn(async (key: string, value: unknown) => {
     store.set(key, value)
   }),
@@ -36,6 +45,7 @@ import {
   processSyncQueue,
   retrySyncConflict,
   subscribeSyncQueue,
+  syncBackoffDelayMs,
   type OsSyncQueueItem,
 } from "@/lib/offlineSync"
 
@@ -44,7 +54,7 @@ const setMock = vi.mocked(set)
 const setManyMock = vi.mocked(setMany)
 
 function readStoredQueue(): OsSyncQueueItem[] {
-  const raw = store.get("os_sync_queue")
+  const raw = store.get("os_sync_queue:user-a|tenant-1")
   return Array.isArray(raw) ? (raw as OsSyncQueueItem[]) : []
 }
 
@@ -70,6 +80,8 @@ function axiosError(status: number, data: unknown): AxiosError {
   } as AxiosResponse
   return error
 }
+
+setOfflineSyncScope({ userId: "user-a", tenantId: "tenant-1" })
 
 describe("processSyncQueue", () => {
   beforeEach(() => {
@@ -175,7 +187,7 @@ describe("processSyncQueue", () => {
 
   it("does not let retry replace a newer queued version with the rejected value", async () => {
     const id = `${workOrderId}:${taskId}`
-    store.set("os_sync_queue", [
+    store.set("os_sync_queue:user-a|tenant-1", [
       {
         id,
         workOrderId,
@@ -185,7 +197,7 @@ describe("processSyncQueue", () => {
         clientSequence: 5,
       },
     ])
-    store.set("os_sync_conflicts", [
+    store.set("os_sync_conflicts:user-a|tenant-1", [
       {
         id,
         workOrderId,
@@ -216,7 +228,7 @@ describe("processSyncQueue", () => {
 
   it("does not let retry replace a queued value when the conflict sequence is higher", async () => {
     const id = `${workOrderId}:${taskId}`
-    store.set("os_sync_queue", [
+    store.set("os_sync_queue:user-a|tenant-1", [
       {
         id,
         workOrderId,
@@ -226,7 +238,7 @@ describe("processSyncQueue", () => {
         clientSequence: 1,
       },
     ])
-    store.set("os_sync_conflicts", [
+    store.set("os_sync_conflicts:user-a|tenant-1", [
       {
         id,
         workOrderId,
@@ -258,7 +270,7 @@ describe("processSyncQueue", () => {
 
   it("keeps a queued value whose queuedAt is earlier than the conflict", async () => {
     const id = `${workOrderId}:${taskId}`
-    store.set("os_sync_queue", [
+    store.set("os_sync_queue:user-a|tenant-1", [
       {
         id,
         workOrderId,
@@ -268,7 +280,7 @@ describe("processSyncQueue", () => {
         clientSequence: 1,
       },
     ])
-    store.set("os_sync_conflicts", [
+    store.set("os_sync_conflicts:user-a|tenant-1", [
       {
         id,
         workOrderId,
@@ -382,7 +394,7 @@ describe("processSyncQueue", () => {
     })
 
     apiPatch.mockImplementation(async () => {
-      const current = store.get("os_sync_queue")
+      const current = store.get("os_sync_queue:user-a|tenant-1")
       const queue = Array.isArray(current) ? (current as OsSyncQueueItem[]) : []
       const sent = queue.find((item) => item.taskId === taskId)
       const sequence = sent?.clientSequence ?? 0
@@ -402,7 +414,7 @@ describe("processSyncQueue", () => {
         queuedAt: "2026-10-17T01:00:01.000Z",
         clientSequence: sequence + 2,
       }
-      store.set("os_sync_queue", [newerSameField, otherField])
+      store.set("os_sync_queue:user-a|tenant-1", [newerSameField, otherField])
       return { data: {} }
     })
 
@@ -411,7 +423,7 @@ describe("processSyncQueue", () => {
     expect(result.processed).toBe(1)
     expect(result.remaining).toBe(2)
     expect(await listQueuedTaskIds()).toEqual([taskId, otherTaskId])
-    const persisted = store.get("os_sync_queue")
+    const persisted = store.get("os_sync_queue:user-a|tenant-1")
     expect(persisted).toEqual([
       expect.objectContaining({ taskId, value: "newer-same-field" }),
       expect.objectContaining({ taskId: otherTaskId, value: "other" }),
@@ -438,8 +450,8 @@ describe("processSyncQueue", () => {
     expect(setManyMock).toHaveBeenCalledTimes(1)
     const entries = setManyMock.mock.calls[0]?.[0]
     expect(entries?.map(([key]) => key)).toEqual([
-      "os_sync_queue",
-      "os_sync_conflicts",
+      "os_sync_queue:user-a|tenant-1",
+      "os_sync_conflicts:user-a|tenant-1",
     ])
     expect(await listQueuedTaskIds()).toEqual([taskId])
     expect(await listSyncConflicts()).toEqual([])
@@ -684,7 +696,7 @@ describe("commitDirectTaskValuePatch", () => {
         const sent = readStoredQueue().find((item) => item.taskId === taskId)
         const sequence = sent?.clientSequence ?? 0
         newerSequence = sequence + 1
-        store.set("os_sync_queue", [
+        store.set("os_sync_queue:user-a|tenant-1", [
           {
             id: `${workOrderId}:${taskId}`,
             workOrderId,
@@ -728,6 +740,8 @@ describe("commitDirectTaskValuePatch", () => {
 
     vi.resetModules()
     const reloaded = await import("@/lib/offlineSync")
+    const reloadedScope = await import("@/lib/offlineSyncScope")
+    reloadedScope.setOfflineSyncScope({ userId: "user-a", tenantId: "tenant-1" })
     const apiModule = await import("@/lib/api")
     expect(await reloaded.listQueuedTaskIds()).toEqual([taskId])
 
@@ -741,5 +755,175 @@ describe("commitDirectTaskValuePatch", () => {
       { signal: expect.any(AbortSignal) },
     )
     expect(await reloaded.listQueuedTaskIds()).toEqual([])
+  })
+})
+
+const scopeA = { userId: "user-a", tenantId: "tenant-1" }
+const scopeB = { userId: "user-b", tenantId: "tenant-1" }
+const scopeATenant2 = { userId: "user-a", tenantId: "tenant-2" }
+const workOrderB = "88888888-8888-4888-8888-888888888888"
+
+describe("offline queue scoping", () => {
+  beforeEach(() => {
+    store.clear()
+    apiPatch.mockReset()
+    setOfflineSyncScope(scopeA)
+    vi.spyOn(navigator, "onLine", "get").mockReturnValue(true)
+  })
+
+  it("stores the queue under userId and tenantId keys", async () => {
+    await enqueueTaskValuePatch({ workOrderId, taskId, value: "a" })
+
+    const keys = offlineSyncScopeKeys(scopeA)
+    expect(keys.queue).toBe("os_sync_queue:user-a|tenant-1")
+    expect(store.get(keys.queue)).toEqual([expect.objectContaining({ taskId, value: "a" })])
+    expect(store.has("os_sync_queue")).toBe(false)
+  })
+
+  it("does not show or flush user A's edits to user B, or to the same user in another tenant", async () => {
+    await enqueueTaskValuePatch({ workOrderId, taskId, value: "a" })
+
+    for (const other of [scopeB, scopeATenant2]) {
+      setOfflineSyncScope(other)
+      expect(await listQueuedTaskIds()).toEqual([])
+      apiPatch.mockResolvedValue({ data: {} })
+      const result = await processSyncQueue()
+      expect(result.processed).toBe(0)
+      expect(apiPatch).not.toHaveBeenCalled()
+    }
+
+    setOfflineSyncScope(scopeA)
+    expect(await listQueuedTaskIds()).toEqual([taskId])
+  })
+
+  it("drops the legacy unscoped queue instead of flushing it for whoever signs in", async () => {
+    store.set("os_sync_queue", [
+      { id: `${workOrderId}:${taskId}`, workOrderId, taskId, value: "old", queuedAt: "2026-01-01T00:00:00Z" },
+    ])
+    resetOfflineSyncScopeForTests()
+    setOfflineSyncScope(scopeA)
+    await Promise.resolve()
+
+    expect(store.has("os_sync_queue")).toBe(false)
+    expect(await listQueuedTaskIds()).toEqual([])
+  })
+
+  it("clears the signed-in scope's queue and conflicts on sign-out, leaving other scopes", async () => {
+    await enqueueTaskValuePatch({ workOrderId, taskId, value: "a" })
+    store.set(offlineSyncScopeKeys(scopeA).conflicts, [])
+    store.set(offlineSyncScopeKeys(scopeB).queue, [
+      { id: `${workOrderId}:${taskId}`, workOrderId, taskId, value: "b", queuedAt: "x", clientSequence: 1 },
+    ])
+
+    await clearOfflineSyncScope()
+
+    expect(store.has(offlineSyncScopeKeys(scopeA).queue)).toBe(false)
+    expect(store.has(offlineSyncScopeKeys(scopeA).conflicts)).toBe(false)
+    expect(store.has(offlineSyncScopeKeys(scopeB).queue)).toBe(true)
+    setOfflineSyncScope(scopeA)
+    expect(await listQueuedTaskIds()).toEqual([])
+  })
+})
+
+describe("offline queue HTTP status handling", () => {
+  beforeEach(() => {
+    store.clear()
+    apiPatch.mockReset()
+    setOfflineSyncScope(scopeA)
+    vi.spyOn(navigator, "onLine", "get").mockReturnValue(true)
+    vi.spyOn(Date, "now").mockReturnValue(1_000_000)
+  })
+
+  afterEach(() => {
+    vi.restoreAllMocks()
+  })
+
+  it("backoff schedule is 1 s doubling up to 60 s", () => {
+    expect([1, 2, 3, 4, 5, 6, 7, 8, 20].map(syncBackoffDelayMs)).toEqual([
+      1000, 2000, 4000, 8000, 16000, 32000, 60000, 60000, 60000,
+    ])
+  })
+
+  it("401 pauses the flush and keeps every item queued", async () => {
+    await enqueueTaskValuePatch({ workOrderId, taskId, value: "a" })
+    await enqueueTaskValuePatch({ workOrderId: workOrderB, taskId, value: "b" })
+    apiPatch.mockRejectedValue(axiosError(401, { error: "Unauthorized" }))
+
+    const result = await processSyncQueue()
+
+    expect(result.remaining).toBe(2)
+    expect(result.conflicts).toEqual([])
+    expect(apiPatch).toHaveBeenCalledTimes(1)
+
+    // Paused: the next flush does not hit the API again until the pause ends.
+    await processSyncQueue()
+    expect(apiPatch).toHaveBeenCalledTimes(1)
+
+    // A fresh auth state (sign-in / token refresh) resumes and delivers.
+    setOfflineSyncScope(scopeA)
+    apiPatch.mockReset()
+    apiPatch.mockResolvedValue({ data: {} })
+    const resumed = await processSyncQueue()
+    expect(resumed.processed).toBe(2)
+    expect(resumed.remaining).toBe(0)
+  })
+
+  it("403 and 404 become visible conflicts", async () => {
+    await enqueueTaskValuePatch({ workOrderId, taskId, value: "a" })
+    await enqueueTaskValuePatch({ workOrderId: workOrderB, taskId, value: "b" })
+    apiPatch
+      .mockRejectedValueOnce(axiosError(403, { error: "Forbidden" }))
+      .mockRejectedValueOnce(axiosError(404, { error: "Not found" }))
+
+    const result = await processSyncQueue()
+
+    expect(result.remaining).toBe(0)
+    expect(result.conflicts.map((conflict) => conflict.status).sort()).toEqual([403, 404])
+  })
+
+  it.each([408, 429, 500])("%i is retried with backoff, not turned into a conflict", async (status) => {
+    await enqueueTaskValuePatch({ workOrderId, taskId, value: "a" })
+    apiPatch.mockRejectedValue(axiosError(status, { error: "later" }))
+
+    const first = await processSyncQueue()
+    expect(first.remaining).toBe(1)
+    expect(first.conflicts).toEqual([])
+    expect(apiPatch).toHaveBeenCalledTimes(1)
+
+    // Inside the 1 s window: no request.
+    vi.mocked(Date.now).mockReturnValue(1_000_000 + 999)
+    await processSyncQueue()
+    expect(apiPatch).toHaveBeenCalledTimes(1)
+
+    // After 1 s: retried, next wait is 2 s.
+    vi.mocked(Date.now).mockReturnValue(1_000_000 + 1_000)
+    await processSyncQueue()
+    expect(apiPatch).toHaveBeenCalledTimes(2)
+    vi.mocked(Date.now).mockReturnValue(1_000_000 + 2_999)
+    await processSyncQueue()
+    expect(apiPatch).toHaveBeenCalledTimes(2)
+    vi.mocked(Date.now).mockReturnValue(1_000_000 + 3_000)
+    await processSyncQueue()
+    expect(apiPatch).toHaveBeenCalledTimes(3)
+  })
+
+  it("a failing work order does not block other work orders, but keeps its own order", async () => {
+    await enqueueTaskValuePatch({ workOrderId, taskId, value: "a1" })
+    await enqueueTaskValuePatch({ workOrderId, taskId: otherTaskId, value: "a2" })
+    await enqueueTaskValuePatch({ workOrderId: workOrderB, taskId, value: "b1" })
+    apiPatch.mockImplementation(async (url: string) => {
+      if (url.includes(workOrderId)) throw axiosError(503, { error: "down" })
+      return { data: {} }
+    })
+
+    const result = await processSyncQueue()
+
+    expect(result.processed).toBe(1)
+    expect(result.remaining).toBe(2)
+    const urls = apiPatch.mock.calls.map(([url]) => url)
+    expect(urls).toEqual([
+      `/api/work-orders/${workOrderId}/tasks/${taskId}`,
+      `/api/work-orders/${workOrderB}/tasks/${taskId}`,
+    ])
   })
 })

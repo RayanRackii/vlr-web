@@ -1,4 +1,5 @@
 import { AxiosError, CanceledError } from "axios"
+import { setOfflineSyncScope } from "@/lib/offlineSyncScope"
 import { act, fireEvent, render, screen } from "@testing-library/react"
 import type { ReactNode } from "react"
 import { MemoryRouter, Route, Routes } from "react-router-dom"
@@ -22,6 +23,9 @@ const authSession = vi.hoisted(() => ({ current: { access_token: "test" } }))
 
 vi.mock("idb-keyval", () => ({
   get: vi.fn(async (key: string) => store.get(key)),
+  del: vi.fn(async (key: string) => {
+    store.delete(key)
+  }),
   set: vi.fn(async (key: string, value: unknown) => {
     store.set(key, value)
   }),
@@ -56,6 +60,8 @@ function connection(online: boolean) {
   vi.spyOn(navigator, "onLine", "get").mockReturnValue(online)
   act(() => { window.dispatchEvent(new Event(online ? "online" : "offline")) })
 }
+
+setOfflineSyncScope({ userId: "user-a", tenantId: "tenant-1" })
 
 describe("execution reconnect with the real Axios interceptors and global sync host", () => {
   beforeEach(() => {
@@ -139,7 +145,7 @@ describe("execution reconnect with the real Axios interceptors and global sync h
     if (scenario === "transport recovers late" || scenario === "PATCH recovers late") expect(failedPatches).toBeGreaterThan(0)
     if (scenario === "transport recovers late" || scenario === "GET recovers late") expect(failedGets).toBeGreaterThan(1)
     expect(screen.getByRole("textbox")).toHaveValue("nota sem reload")
-    expect(store.get("os_sync_queue")).toEqual([])
+    expect(store.get("os_sync_queue:user-a|tenant-1")).toEqual([])
     expect(screen.getByText(i18n.t("workOrders.execution.save.saved"))).toBeInTheDocument()
     expect(screen.queryByText(i18n.t("workOrders.offline.title"))).not.toBeInTheDocument()
     expect(screen.queryByText(i18n.t("workOrders.execution.save.retrying"))).not.toBeInTheDocument()
@@ -255,7 +261,7 @@ describe("execution reconnect with the real Axios interceptors and global sync h
       if (scenario === "network failure" || scenario === "timeout") {
         await act(async () => { await vi.advanceTimersByTimeAsync(scenario === "timeout" ? 10_000 : 50) })
         expect(toast.success).not.toHaveBeenCalled()
-        expect(store.get("os_sync_queue")).toEqual([expect.objectContaining({ value: "nota offline" })])
+        expect(store.get("os_sync_queue:user-a|tenant-1")).toEqual([expect.objectContaining({ value: "nota offline" })])
         expect(screen.queryByText(i18n.t("workOrders.execution.save.saved"))).not.toBeInTheDocument()
       }
       connection(false)
@@ -264,7 +270,7 @@ describe("execution reconnect with the real Axios interceptors and global sync h
     expect(screen.getByText(i18n.t("workOrders.offline.title"))).toBeInTheDocument()
     expect(screen.getByText(i18n.t("workOrders.execution.save.retrying"))).toBeInTheDocument()
     expect(screen.queryByText(i18n.t("workOrders.execution.save.saved"))).not.toBeInTheDocument()
-    expect(store.get("os_sync_queue")).toEqual([expect.objectContaining({ value: "nota offline" })])
+    expect(store.get("os_sync_queue:user-a|tenant-1")).toEqual([expect.objectContaining({ value: "nota offline" })])
     expect(toast.success).not.toHaveBeenCalled()
     connection(true)
     await settle()
@@ -278,6 +284,6 @@ describe("execution reconnect with the real Axios interceptors and global sync h
     connection(true)
     await settle()
     expect(toast.success).toHaveBeenCalledTimes(1)
-    expect(store.get("os_sync_queue")).toEqual([])
+    expect(store.get("os_sync_queue:user-a|tenant-1")).toEqual([])
   })
 })
