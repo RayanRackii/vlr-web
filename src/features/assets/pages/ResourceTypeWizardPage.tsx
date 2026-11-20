@@ -152,6 +152,27 @@ function writeFromDraft(draft: Draft): ResourceTypeWrite {
   }
 }
 
+/** Preview sentences; an unnamed type falls back to a generic noun instead of an ellipsis. */
+export function ResourceTypeSentences({ view }: { view: Pick<ResourceTypeView, "article" | "singular" | "plural"> }) {
+  const { t } = useTranslation()
+  const singular = view.singular.trim()
+  const plural = view.plural.trim()
+  return (
+    <>
+      <p>
+        {singular
+          ? t("assets.resourceTypes.wizard.choose", { article: view.article, singular })
+          : t("assets.resourceTypes.wizard.chooseGeneric")}
+      </p>
+      <p>
+        {plural
+          ? t("assets.resourceTypes.wizard.available", { count: 3, plural })
+          : t("assets.resourceTypes.wizard.availableGeneric", { count: 3 })}
+      </p>
+    </>
+  )
+}
+
 export function ResourceTypeWizardPage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
@@ -308,8 +329,7 @@ export function ResourceTypeWizardPage() {
                 </Label>
               ))}
             </div>
-            <p>{t("assets.resourceTypes.wizard.choose", { article: draft.article, singular: draft.singular || "…" })}</p>
-            <p>{t("assets.resourceTypes.wizard.available", { count: 3, plural: draft.plural || "…" })}</p>
+            <ResourceTypeSentences view={draft} />
           </FormGrid>
         </FormSection>
       )
@@ -407,8 +427,7 @@ export function ResourceTypeWizardPage() {
 
       <aside aria-label={t("assets.resourceTypes.wizard.previewTitle")} className="rounded-lg border p-4">
         <h2 className="font-medium">{t("assets.resourceTypes.wizard.previewTitle")}</h2>
-        <p>{t("assets.resourceTypes.wizard.choose", { article: view.article, singular: view.singular || "…" })}</p>
-        <p>{t("assets.resourceTypes.wizard.available", { count: 3, plural: view.plural || "…" })}</p>
+        <ResourceTypeSentences view={view} />
         {preview.filters.map((filter) => (
           <div key={filter.name}>
             <p>{t("assets.resourceTypes.wizard.filterBy", { name: filter.name.toLocaleLowerCase() })}</p>

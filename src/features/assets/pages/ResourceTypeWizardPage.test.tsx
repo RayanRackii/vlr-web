@@ -3,7 +3,7 @@ import userEvent from "@testing-library/user-event"
 import { MemoryRouter, Route, Routes } from "react-router-dom"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 
-import { ResourceTypeWizardPage } from "@/features/assets/pages/ResourceTypeWizardPage"
+import { ResourceTypeSentences, ResourceTypeWizardPage } from "@/features/assets/pages/ResourceTypeWizardPage"
 
 const createResourceType = vi.fn()
 const updateResourceType = vi.fn()
@@ -119,5 +119,20 @@ describe("ResourceTypeWizardPage", () => {
     await user.click(screen.getByRole("button", { name: "Continuar" }))
     await waitFor(() => expect(screen.getByRole("textbox", { name: "Nome do campo" })).toHaveFocus())
     await user.type(screen.getByRole("textbox", { name: "Nome do campo" }), "Cor")
+  })
+})
+
+describe("ResourceTypeSentences", () => {
+  it("falls back to a generic noun when the names are empty", () => {
+    render(<ResourceTypeSentences view={{ article: "um", singular: "", plural: "" }} />)
+    expect(screen.getByText("Escolha um recurso")).toBeInTheDocument()
+    expect(screen.getByText("3 recursos disponíveis")).toBeInTheDocument()
+    expect(screen.queryByText(/…/)).not.toBeInTheDocument()
+  })
+
+  it("uses the typed names when present", () => {
+    render(<ResourceTypeSentences view={{ article: "uma", singular: "quadra", plural: "quadras" }} />)
+    expect(screen.getByText("Escolha uma quadra")).toBeInTheDocument()
+    expect(screen.getByText("3 quadras disponíveis")).toBeInTheDocument()
   })
 })
