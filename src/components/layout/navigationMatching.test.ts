@@ -37,7 +37,7 @@ describe("navigation route matching", () => {
   )
 
   it("matches a permitted tab when it is the parent's first available destination", () => {
-    const items = filterNavigationItemsByAccess(appNavigationItems, ["inventory"], ["inventory.categories.read"])
+    const items = filterNavigationItemsByAccess(appNavigationItems, ["inventory", "rentals"], ["inventory.categories.read"])
     expect(matchNavigationPath(items, "/ativos/tipos")?.item.labelKey).toBe("nav.assets")
     expect(matchNavigationPath(items, "/ativos/private-asset")).toBeUndefined()
   })

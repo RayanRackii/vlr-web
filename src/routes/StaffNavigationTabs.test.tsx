@@ -13,6 +13,9 @@ import { TestPermissionProvider } from "@/features/users/permissions/PermissionC
 import { listRoles } from "@/features/users/services/rolesService"
 import i18n from "@/lib/i18n"
 
+/** A route is blocked either for a missing permission or, when its module is off, with the module-inactive page. */
+const blockedTitle = () => new RegExp(`^(${i18n.t("accessDenied.title")}|${i18n.t("moduleInactive.title")})$`)
+
 vi.mock("@/features/admin/hooks/usePlatformTenantSession", () => ({
   usePlatformTenantSession: () => ({ isPlatformAdmin: false, isInTenantEnvironment: true }),
 }))
@@ -61,7 +64,7 @@ function renderRoute(path: string, permissions: string[], modules: string[] = ["
 }
 
 const legacyTabs = [
-  { path: "/ativos/categorias", permission: "inventory.categories.read", content: "resource types content", tab: "nav.assetsResourceTypes", hidden: "nav.assetsInventory", module: "inventory" },
+  { path: "/ativos/categorias", permission: "inventory.categories.read", content: "resource types content", tab: "nav.assetsResourceTypes", hidden: "nav.assetsInventory", module: "rentals" },
   { path: "/configuracoes/politica-reservas", permission: "rentals.booking_policy.read", content: "booking rules content", tab: "nav.bookingPolicy", hidden: "nav.reservations", module: "rentals" },
   { path: "/pmoc/biblioteca", permission: "pmoc.templates.read", content: "library content", tab: "nav.pmocLibrary", hidden: "nav.pmocCustom", module: "pmoc" },
 ]
@@ -78,7 +81,7 @@ describe("legacy sidebar URLs rendered inside their new screens", () => {
   ])("keeps the existing trailing-slash URL %s usable", async (path, permission, content) => {
     renderRoute(path, [permission])
     expect(await screen.findByText(content)).toBeInTheDocument()
-    expect(screen.queryByRole("heading", { name: i18n.t("accessDenied.title") })).not.toBeInTheDocument()
+    expect(screen.queryByRole("heading", { name: blockedTitle() })).not.toBeInTheDocument()
   })
 
   it.each(legacyTabs)("opens $path as a gated tab with only its original permission", async ({ path, permission, content, tab, hidden }) => {
@@ -93,13 +96,13 @@ describe("legacy sidebar URLs rendered inside their new screens", () => {
 
   it.each(legacyTabs)("denies $path without its original permission", async ({ path, content }) => {
     renderRoute(path, [])
-    expect(await screen.findByRole("heading", { name: i18n.t("accessDenied.title") })).toBeInTheDocument()
+    expect(await screen.findByRole("heading", { name: blockedTitle() })).toBeInTheDocument()
     expect(screen.queryByText(content)).not.toBeInTheDocument()
   })
 
   it.each(legacyTabs)("does not mount $path content while its module is off", async ({ path, permission, content, module }) => {
     renderRoute(path, [permission], ["catalog", "rentals", "pmoc", "inventory"].filter((entry) => entry !== module))
-    expect(await screen.findByRole("heading", { name: i18n.t("accessDenied.title") })).toBeInTheDocument()
+    expect(await screen.findByRole("heading", { name: blockedTitle() })).toBeInTheDocument()
     expect(screen.queryByText(content)).not.toBeInTheDocument()
   })
 
@@ -151,13 +154,13 @@ describe("legacy sidebar URLs rendered inside their new screens", () => {
 
   it("denies the registration content when neither supported module is enabled", async () => {
     renderRoute("/configuracoes/cadastro", ["core.registration_fields.read"], ["inventory"])
-    expect(await screen.findByRole("heading", { name: i18n.t("accessDenied.title") })).toBeInTheDocument()
+    expect(await screen.findByRole("heading", { name: blockedTitle() })).toBeInTheDocument()
     expect(screen.queryByText("registration content")).not.toBeInTheDocument()
   })
 
   it("denies the old registration URL when only people access is granted", async () => {
     renderRoute("/configuracoes/cadastro", ["core.users.read"])
-    expect(await screen.findByRole("heading", { name: i18n.t("accessDenied.title") })).toBeInTheDocument()
+    expect(await screen.findByRole("heading", { name: blockedTitle() })).toBeInTheDocument()
     expect(screen.queryByText("registration content")).not.toBeInTheDocument()
   })
 

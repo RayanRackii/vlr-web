@@ -85,7 +85,8 @@ describe("module introductions", () => {
     renderIntro("/modulos/maintenance", { permissions: allPermissions, modules: ["inventory"] })
     const shortcuts = screen.getByRole("region", { name: "Atalhos" })
     expect(within(shortcuts).getByRole("link", { name: "Equipamentos" })).toHaveAttribute("href", "/ativos")
-    expect(within(shortcuts).getByRole("link", { name: "Tipos de recurso" })).toBeInTheDocument()
+    // Resource types need the rentals module, which is off here.
+    expect(within(shortcuts).queryByRole("link", { name: "Tipos de recurso" })).not.toBeInTheDocument()
     expect(within(shortcuts).queryByRole("link", { name: "Meus planos" })).not.toBeInTheDocument()
     expect(within(shortcuts).queryByRole("link", { name: "Ordens de serviço" })).not.toBeInTheDocument()
     expect(screen.queryByRole("link", { name: "Reservas" })).not.toBeInTheDocument()

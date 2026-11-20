@@ -115,7 +115,7 @@ describe("DashboardHomeRoute", () => {
   it("lands on the first allowed child route", async () => {
     getCurrentUserMock.mockResolvedValue({
       ...profile,
-      activeModules: ["inventory"],
+      activeModules: ["inventory", "rentals"],
       permissions: ["inventory.categories.read"],
     })
 

@@ -5,6 +5,9 @@ import { AppRoutes } from "./AppRoutes"
 import { TestPermissionProvider } from "@/features/users/permissions/PermissionContext"
 import i18n from "@/lib/i18n"
 
+/** A route is blocked either for a missing permission or, when its module is off, with the module-inactive page. */
+const blockedTitle = () => new RegExp(`^(${i18n.t("accessDenied.title")}|${i18n.t("moduleInactive.title")})$`)
+
 vi.mock("@/components/layout/ProtectedRoute", () => ({ ProtectedRoute: () => <Outlet /> }))
 vi.mock("@/components/layout/MainLayout", () => ({ MainLayout: () => <Outlet /> }))
 vi.mock("@/features/admin/hooks/usePlatformTenantSession", () => ({ usePlatformTenantSession: () => ({ isPlatformAdmin: false, isInTenantEnvironment: false }) }))
@@ -38,6 +41,6 @@ describe("Pedidos staff route selection and access", () => {
     ["/pedidos/solicitacoes/request-1", ["catalog"], ["catalog.orders.read"]],
   ])("blocks %s without its module/permission", async (path, modules, permissions) => {
     mount(path as string, modules as string[], permissions as string[])
-    expect(await screen.findByRole("heading", { name: i18n.t("accessDenied.title") })).toBeInTheDocument()
+    expect(await screen.findByRole("heading", { name: blockedTitle() })).toBeInTheDocument()
   })
 })
