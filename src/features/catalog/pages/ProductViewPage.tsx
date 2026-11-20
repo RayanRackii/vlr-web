@@ -39,6 +39,8 @@ import {
   getCatalogProductFileUrl,
 } from "@/features/catalog/services/catalogService"
 import { listAdminRentalAssets, type AdminRentalAsset } from "@/features/rentals/services/scheduleService"
+import { listCatalogResourceNames } from "@/features/catalog/lib/resourceNames"
+import type { NamedAsset } from "@/features/catalog/lib/orderResourceFact"
 import { usePermissions } from "@/features/users/permissions/PermissionContext"
 import { cn } from "@/lib/utils"
 
@@ -97,7 +99,7 @@ type WizardModel = NonNullable<Wizard["model"]>
 function ProductView({ wizard, model }: { wizard: Wizard; model: WizardModel }) {
   const { t, i18n } = useTranslation()
   const navigate = useNavigate()
-  const { can } = usePermissions()
+  const { can, activeModules } = usePermissions()
   const timeZoneId = useTenantTimeZone()
   const { product } = model
   const canManage = wizard.canManage
@@ -109,6 +111,7 @@ function ProductView({ wizard, model }: { wizard: Wizard; model: WizardModel }) 
   const [deleteError, setDeleteError] = useState<string | null>(null)
   const [signedUrls, setSignedUrls] = useState<Record<string, string>>({})
   const [assets, setAssets] = useState<AdminRentalAsset[]>([])
+  const [resourceNames, setResourceNames] = useState<NamedAsset[]>([])
   const requestedUrls = useRef(new Set<string>())
 
   const requirements = useMemo(() => requirementRows(model.requirements), [model.requirements])
@@ -121,6 +124,15 @@ function ProductView({ wizard, model }: { wizard: Wizard; model: WizardModel }) 
     void listAdminRentalAssets().then((rows) => { if (active) setAssets(rows) }).catch(() => { if (active) setAssets([]) })
     return () => { active = false }
   }, [showAgendaData])
+
+  // Names for planning assets (resource-planning) and rental assets, each only when its module is on.
+  const modulesKey = activeModules.join(",")
+  useEffect(() => {
+    if (!usesAgenda) return
+    let active = true
+    void listCatalogResourceNames(modulesKey.split(",")).then((rows) => { if (active) setResourceNames(rows) })
+    return () => { active = false }
+  }, [usesAgenda, modulesKey])
 
   // Photos may come without a URL: sign them once each.
   useEffect(() => {
@@ -258,7 +270,7 @@ function ProductView({ wizard, model }: { wizard: Wizard; model: WizardModel }) 
     {
       value: "operation",
       label: t("catalog.products.view.tabs.operation"),
-      content: <OperationTab usesAgenda={usesAgenda} requirements={requirements} assets={assets} linkedAssets={linkedAssets} model={model} />,
+      content: <OperationTab usesAgenda={usesAgenda} requirements={requirements} assets={assets} resourceNames={resourceNames} linkedAssets={linkedAssets} model={model} />,
     },
     ...(documents.length > 0
       ? [{
@@ -476,10 +488,11 @@ function OverviewTab({ description, rows }: { description: string; rows: { label
   )
 }
 
-function OperationTab({ usesAgenda, requirements, assets, linkedAssets, model }: {
+function OperationTab({ usesAgenda, requirements, assets, resourceNames, linkedAssets, model }: {
   usesAgenda: boolean
   requirements: readonly CatalogProductResourceRequirement[]
   assets: readonly AdminRentalAsset[]
+  resourceNames: readonly NamedAsset[]
   linkedAssets: readonly AdminRentalAsset[]
   model: WizardModel
 }) {
@@ -491,7 +504,7 @@ function OperationTab({ usesAgenda, requirements, assets, linkedAssets, model }:
 
   function resourceName(row: CatalogProductResourceRequirement): string {
     const key = row.rentalAssetId ?? row.assetId
-    if (key) return assets.find((asset) => asset.id === key)?.name ?? t("catalog.products.view.operation.unknownResource")
+    if (key) return resourceNames.find((asset) => asset.id === key)?.name ?? assets.find((asset) => asset.id === key)?.name ?? t("catalog.products.view.operation.unknownResource")
     return t("catalog.products.view.operation.resourceCategory")
   }
 
