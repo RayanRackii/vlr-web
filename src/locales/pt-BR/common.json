@@ -572,9 +572,9 @@
     },
     "login": {
       "title": "Bem-vindo de volta",
-      "welcomeDefault": "Bem-vindo de volta! Entre para fazer reservas e acompanhar suas novidades.",
+      "welcomeDefault": "Bem-vindo de volta! Entre para acompanhar seus pedidos e novidades.",
       "emailPlaceholder": "voce@email.com",
-      "subtitle": "Acesse sua conta para fazer reservas e acompanhar suas atividades.",
+      "subtitle": "Acesse sua conta para acompanhar seus pedidos e atividades.",
       "submit": "Entrar",
       "submitting": "Entrando...",
       "toastSuccess": "Login realizado!",
@@ -4902,7 +4902,7 @@
   "admin": {
     "registrationFields": {
       "title": "Campos do cadastro (portal)",
-      "description": "Defina campos extras do cadastro do portal B2C.",
+      "description": "Defina campos extras do cadastro do portal do cliente.",
       "empty": "Nenhum campo personalizado ainda.",
       "emptyDescription": "Adicione informações extras que o cliente preenche no cadastro.",
       "fieldKey": "Chave (ex.: cpf, temBagagem)",
@@ -4927,7 +4927,7 @@
       "deleteError": "Não foi possível remover o campo.",
       "loadError": "Não foi possível carregar os campos.",
       "tenantPageTitle": "Formulário de cadastro",
-      "tenantPageDescription": "Configure as informações solicitadas no cadastro do portal B2C.",
+      "tenantPageDescription": "Configure as informações solicitadas no cadastro do portal do cliente.",
       "builtIn": {
         "title": "Campos padrão",
         "description": "Estes campos fazem parte do cadastro padrão do portal.",
@@ -4952,7 +4952,7 @@
       }
     },
     "moduleMenu": {
-      "title": "Itens do menu (portal B2C)",
+      "title": "Itens do menu (portal do cliente)",
       "description": "Atalhos da sidebar que o cliente vê após entrar no portal.",
       "empty": "Nenhum item de menu. O portal autenticado ficará sem opções até você criar um.",
       "emptyDescription": "Adicione atalhos para agenda e catálogo. O cliente só vê o que estiver ativo e com o módulo contratado.",
@@ -6931,7 +6931,7 @@
     "notApplicable": "Não se aplica",
     "timeTitle": "No seu tempo",
     "timeBody": "O produto só ficará disponível aos clientes depois da publicação.",
-    "productDescription": "Configure seu produto e deixe tudo pronto para receber reservas.",
+    "productDescription": "Configure seu produto e deixe tudo pronto para receber pedidos.",
     "saveAndContinue": "Salvar e continuar",
     "saveAndExit": "Salvar e sair",
     "editTitle": "Editar produto",

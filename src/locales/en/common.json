@@ -572,9 +572,9 @@
     },
     "login": {
       "title": "Welcome back",
-      "welcomeDefault": "Welcome back! Sign in to make bookings and keep up with your updates.",
+      "welcomeDefault": "Welcome back! Sign in to follow your orders and updates.",
       "emailPlaceholder": "you@email.com",
-      "subtitle": "Sign in to book and keep track of your activity.",
+      "subtitle": "Sign in to follow your orders and activity.",
       "submit": "Sign in",
       "submitting": "Signing in...",
       "toastSuccess": "Signed in!",
@@ -4902,7 +4902,7 @@
   "admin": {
     "registrationFields": {
       "title": "Registration fields (portal)",
-      "description": "Define extra fields for the B2C portal registration.",
+      "description": "Define extra fields for the customer portal registration.",
       "empty": "No custom fields yet.",
       "emptyDescription": "Add extra information customers fill in during registration.",
       "fieldKey": "Key (e.g. cpf, hasLuggage)",
@@ -4927,7 +4927,7 @@
       "deleteError": "Could not remove the field.",
       "loadError": "Could not load fields.",
       "tenantPageTitle": "Registration form",
-      "tenantPageDescription": "Configure the information requested in B2C portal registration.",
+      "tenantPageDescription": "Configure the information requested in customer portal registration.",
       "builtIn": {
         "title": "Standard fields",
         "description": "These fields are part of the portal’s standard registration.",
@@ -4952,7 +4952,7 @@
       }
     },
     "moduleMenu": {
-      "title": "Menu items (B2C portal)",
+      "title": "Menu items (customer portal)",
       "description": "Sidebar shortcuts customers see after they sign in to the portal.",
       "empty": "No menu items. The signed-in portal will have no options until you add one.",
       "emptyDescription": "Add shortcuts for the schedule and catalog. Customers only see active items whose module is subscribed.",
@@ -6931,7 +6931,7 @@
     "notApplicable": "Not applicable",
     "timeTitle": "At your own pace",
     "timeBody": "The product only becomes available to customers after it is published.",
-    "productDescription": "Set up your product and get everything ready to receive bookings.",
+    "productDescription": "Set up your product and get everything ready to receive orders.",
     "saveAndContinue": "Save and continue",
     "saveAndExit": "Save and exit",
     "editTitle": "Edit product",

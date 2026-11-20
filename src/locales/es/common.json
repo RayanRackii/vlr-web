@@ -572,9 +572,9 @@
     },
     "login": {
       "title": "Bienvenido de nuevo",
-      "welcomeDefault": "¡Bienvenido de nuevo! Inicia sesión para hacer reservas y ver tus novedades.",
+      "welcomeDefault": "¡Bienvenido de nuevo! Inicia sesión para seguir tus pedidos y novedades.",
       "emailPlaceholder": "tu@email.com",
-      "subtitle": "Accede a tu cuenta para reservar y seguir tu actividad.",
+      "subtitle": "Accede a tu cuenta para seguir tus pedidos y tu actividad.",
       "submit": "Entrar",
       "submitting": "Entrando...",
       "toastSuccess": "¡Sesión iniciada!",
@@ -4902,7 +4902,7 @@
   "admin": {
     "registrationFields": {
       "title": "Campos del registro (portal)",
-      "description": "Defina campos extra del registro del portal B2C.",
+      "description": "Defina campos extra del registro del portal del cliente.",
       "empty": "Aún no hay campos personalizados.",
       "emptyDescription": "Agregue información extra que el cliente completa en el registro.",
       "fieldKey": "Clave (ej.: cpf, tieneEquipaje)",
@@ -4927,7 +4927,7 @@
       "deleteError": "No se pudo eliminar el campo.",
       "loadError": "No se pudieron cargar los campos.",
       "tenantPageTitle": "Formulario de registro",
-      "tenantPageDescription": "Configure la información solicitada en el registro del portal B2C.",
+      "tenantPageDescription": "Configure la información solicitada en el registro del portal del cliente.",
       "builtIn": {
         "title": "Campos estándar",
         "description": "Estos campos forman parte del registro estándar del portal.",
@@ -4952,7 +4952,7 @@
       }
     },
     "moduleMenu": {
-      "title": "Ítems del menú (portal B2C)",
+      "title": "Ítems del menú (portal del cliente)",
       "description": "Accesos de la barra lateral que el cliente ve al entrar en el portal.",
       "empty": "Sin ítems de menú. El portal autenticado no tendrá opciones hasta que cree uno.",
       "emptyDescription": "Añada accesos para la agenda y el catálogo. El cliente solo ve lo que está activo y con el módulo contratado.",
@@ -6931,7 +6931,7 @@
     "notApplicable": "No aplica",
     "timeTitle": "A tu ritmo",
     "timeBody": "El producto solo estará disponible para los clientes después de publicarlo.",
-    "productDescription": "Configura tu producto y deja todo listo para recibir reservas.",
+    "productDescription": "Configura tu producto y deja todo listo para recibir pedidos.",
     "saveAndContinue": "Guardar y continuar",
     "saveAndExit": "Guardar y salir",
     "editTitle": "Editar producto",
