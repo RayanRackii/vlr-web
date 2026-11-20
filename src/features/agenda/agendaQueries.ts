@@ -1,12 +1,12 @@
 import { queryOptions } from "@tanstack/react-query"
 import { addCivilDays, startOfCivilWeek } from "@/features/catalog/components/agenda/agendaLayout"
 import type { CatalogOrder } from "@/features/catalog/schemas/catalogSchemas"
-import { listCatalogOrders, listCatalogProducts, listCatalogResourceAgenda } from "@/features/catalog/services/catalogService"
+import { listCatalogOrders, listCatalogProductAgenda, listCatalogProducts, listCatalogResourceAgenda } from "@/features/catalog/services/catalogService"
 import { listAdminReservations } from "@/features/rentals/services/reservationsService"
 import { fetchAdminScheduleDay, listAdminRentalAssets, listOccupancyKinds } from "@/features/rentals/services/scheduleService"
 import { tenantKey } from "@/lib/queryKeys"
 import { tenantCivilInstant } from "@/lib/tenantTimeZone"
-import type { AgendaOrderLabel } from "./dayGridModel"
+import type { AgendaDaySources, AgendaOrderLabel } from "./dayGridModel"
 import type { AgendaState } from "./urlState"
 
 export type AgendaRange = {
@@ -60,6 +60,13 @@ export const agendaQueries = {
   resourceAgenda: (tenantId: string | null, { from, to }: AgendaRange) => queryOptions({
     queryKey: tenantKey("staff", tenantId, "catalog-resource-agenda", from, to),
     queryFn: ({ signal }) => listCatalogResourceAgenda({ from, to }, { signal }),
+    ...rangeData,
+  }),
+  /** Order allocations without the rentals resource list: works for tenants with rentals off. */
+  productAgenda: (tenantId: string | null, { from, to }: AgendaRange) => queryOptions({
+    queryKey: tenantKey("staff", tenantId, "catalog-product-agenda", from, to),
+    queryFn: ({ signal }) => listCatalogProductAgenda({ from, to }, { signal }),
+    select: (items): AgendaDaySources["catalog"] => ({ resources: [], items }),
     ...rangeData,
   }),
   reservations: (tenantId: string | null, { rangeStart, reservationTo }: AgendaRange) => queryOptions({

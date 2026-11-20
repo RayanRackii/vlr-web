@@ -24,7 +24,7 @@ export function productNotApplicableSteps(usesSchedule: boolean, rentalsActive: 
 /** Read-only setup summary shared by the cadastro wizard and the product editor. */
 export function productSetupFromModel(model: ProductWizardModel, rentalsActive: boolean): ProductSetup {
   const { product } = model
-  const linkedAssetIds = (model.requirements ?? []).flatMap((row) => row.rentalAssetId ? [row.rentalAssetId] : [])
+  const linkedAssetIds = (model.requirements ?? []).flatMap((row) => { const id = row.rentalAssetId ?? row.assetId; return id ? [id] : [] })
   const audienceReady = (model.access?.visibility ?? product.visibility) !== "Restricted"
     || (model.access !== null && model.groups !== null && !audienceBlocksSale(model.access, model.groups))
   const steps = productSetupSteps({

@@ -1871,6 +1871,7 @@
         "noMatches": "Nenhum recurso encontrado.",
         "alreadyAdded": "Já adicionado",
         "pickPrompt": "Selecione um recurso para configurar a quantidade e os tempos.",
+        "noPlannable": "Nenhum recurso disponível para planejamento. Ative o planejamento em um ativo primeiro.",
         "selectedHint": "Defina a quantidade e os tempos para este produto.",
         "summaryTotal": "{{total}} min de ocupação por unidade",
         "note": "O recurso só será incluído ao confirmar abaixo.",

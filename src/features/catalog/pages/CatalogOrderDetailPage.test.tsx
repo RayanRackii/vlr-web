@@ -46,9 +46,9 @@ const ALLOCATED_ITEM = {
 async function openMenu(user: ReturnType<typeof userEvent.setup>) {
   await user.click(await screen.findByRole("button", { name: i18n.t("catalog.orders.moreActions") }))
 }
-function renderDetail(unified = false, permissions: readonly string[] = ["catalog.orders.read", "catalog.orders.manage"]) {
+function renderDetail(unified = false, permissions: readonly string[] = ["catalog.orders.read", "catalog.orders.manage"], activeModules: readonly string[] = ["catalog", "rentals"]) {
   return render(<MemoryRouter initialEntries={[unified ? "/pedidos/order-1" : "/catalogo/pedidos/order-1"]}>
-    <TestPermissionProvider permissions={permissions}>
+    <TestPermissionProvider permissions={permissions} activeModules={activeModules}>
       <Routes><Route path={unified ? "/pedidos/:orderId" : "/catalogo/pedidos/:orderId"} element={<CatalogOrderDetailPage unified={unified} />} /></Routes>
     </TestPermissionProvider>
   </MemoryRouter>)

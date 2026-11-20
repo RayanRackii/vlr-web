@@ -17,7 +17,25 @@ import {
   replaceCatalogProductResourceRequirements,
 } from "@/features/catalog/services/catalogService"
 import type { CatalogProductResourceRequirement } from "@/features/catalog/schemas/catalogSchemas"
-import { listAdminRentalAssets, type AdminRentalAsset } from "@/features/rentals/services/scheduleService"
+import { listPlanningAssets } from "@/features/planning/services/planningService"
+import { listAdminRentalAssets } from "@/features/rentals/services/scheduleService"
+import { usePermissions } from "@/features/users/permissions/PermissionContext"
+
+/** Longest single job on a rental-backed asset (the rental schedule caps it at one day). */
+const RENTAL_MAX_DURATION_MINUTES = 1440
+/** Longest single allocation on a planning-only asset (30 days). */
+const PLANNING_MAX_DURATION_MINUTES = 43200
+
+/** One selectable resource, whichever service it comes from. */
+type PickerAsset = {
+  id: string
+  name: string
+  /** Filter group (resource type for rentals, category for planning assets). */
+  group: string
+  subtitle: string
+  isActive: boolean
+  maxDurationMinutes: number
+}
 
 type CatalogProductResourceRequirementsProps = {
   productId: string
@@ -44,8 +62,14 @@ function nextClientId(): string {
   return `requirement-${clientIdCounter}`
 }
 
+/** The identity a row is picked by: the planning asset when present, else the rental asset. */
+function rowKey(row: Pick<CatalogProductResourceRequirement, "assetId" | "rentalAssetId">): string | null {
+  return row.assetId ?? row.rentalAssetId ?? null
+}
+
 function rowSnapshot(rows: readonly DraftRow[]): string {
   return JSON.stringify(rows.map((row) => ({
+    assetId: row.assetId ?? null,
     rentalAssetId: row.rentalAssetId,
     resourceQuantity: row.resourceQuantity,
     durationMinutesPerUnit: row.durationMinutesPerUnit,
@@ -54,25 +78,22 @@ function rowSnapshot(rows: readonly DraftRow[]): string {
   })))
 }
 
-function newRow(rentalAssetId: string, values: RequirementValues): DraftRow {
+function newRow(source: "planning" | "rental", assetId: string, values: RequirementValues): DraftRow {
   return {
     clientId: nextClientId(),
     id: null,
-    rentalAssetId,
+    assetId: source === "planning" ? assetId : null,
+    rentalAssetId: source === "planning" ? null : assetId,
     assetCategoryId: null,
     ...values,
   }
 }
 
-function assetTypeLabel(t: (key: string) => string, asset: AdminRentalAsset | undefined): string {
-  if (!asset) return ""
-  const type = t(`agendas.grid.resourceType.${asset.type}`)
-  return asset.categoryName ? `${type} · ${asset.categoryName}` : type
-}
 
 type RequirementDialogProps = {
   mode: "add" | "edit"
-  assets: readonly AdminRentalAsset[]
+  assets: readonly PickerAsset[]
+  planning: boolean
   takenIds: ReadonlySet<string>
   initialAssetId: string | null
   initialValues: RequirementValues | null
@@ -83,6 +104,7 @@ type RequirementDialogProps = {
 function RequirementDialog({
   mode,
   assets,
+  planning,
   takenIds,
   initialAssetId,
   initialValues,
@@ -100,25 +122,26 @@ function RequirementDialog({
 
   const editing = mode === "edit"
   const selected = assets.find((asset) => asset.id === selectedId)
-  const types = useMemo(() => [...new Set(assets.map((asset) => asset.type))], [assets])
-  const typeItems = useMemo(() => [{ value: "all", label: t("catalog.resourcePlanning.dialog.allTypes") }, ...types.map((type) => ({ value: type, label: t(`agendas.grid.resourceType.${type}`) }))], [types, t])
+  const types = useMemo(() => [...new Set(assets.map((asset) => asset.group).filter((group) => group !== ""))], [assets])
+  const typeItems = useMemo(() => [{ value: "all", label: t("catalog.resourcePlanning.dialog.allTypes") }, ...types.map((type) => ({ value: type, label: type }))], [types, t])
   const visible = useMemo(() => {
     const needle = search.trim().toLowerCase()
     return assets.filter(
       (asset) =>
-        (typeFilter === "all" || asset.type === typeFilter) &&
+        (typeFilter === "all" || asset.group === typeFilter) &&
         (needle === "" || asset.name.toLowerCase().includes(needle)),
     )
   }, [assets, search, typeFilter])
 
   const quantityValue = Number(quantity)
   const durationValue = Number(duration)
+  const maxDuration = selected?.maxDurationMinutes ?? RENTAL_MAX_DURATION_MINUTES
   const prepValue = Number(prep)
   const cleanupValue = Number(cleanup)
   const valid =
     selectedId !== null &&
     quantity.trim() !== "" && Number.isInteger(quantityValue) && quantityValue >= 1 &&
-    duration.trim() !== "" && Number.isInteger(durationValue) && durationValue >= 1 &&
+    duration.trim() !== "" && Number.isInteger(durationValue) && durationValue >= 1 && durationValue <= maxDuration &&
     prep.trim() !== "" && Number.isInteger(prepValue) && prepValue >= 0 &&
     cleanup.trim() !== "" && Number.isInteger(cleanupValue) && cleanupValue >= 0
   const total = (prepValue || 0) + (durationValue || 0) + (cleanupValue || 0)
@@ -130,6 +153,7 @@ function RequirementDialog({
     value: string,
     setValue: (next: string) => void,
     min: number,
+    max?: number,
   ) => (
     <div className="grid gap-1.5 text-sm font-medium">
       <label htmlFor={id}>{label}</label>
@@ -138,6 +162,7 @@ function RequirementDialog({
           id={id}
           type="number"
           min={min}
+          max={max}
           step={1}
           value={value}
           className="pr-10"
@@ -188,7 +213,7 @@ function RequirementDialog({
                 </Select>
               </div>
               {assets.length === 0 ? (
-                <p className="text-sm text-muted-foreground">{t("catalog.productWizard.noResources")}</p>
+                <p className="text-sm text-muted-foreground">{t(planning ? "catalog.resourcePlanning.dialog.noPlannable" : "catalog.productWizard.noResources")}</p>
               ) : visible.length === 0 ? (
                 <p className="text-sm text-muted-foreground">{t("catalog.resourcePlanning.dialog.noMatches")}</p>
               ) : (
@@ -212,7 +237,7 @@ function RequirementDialog({
                         <span className="min-w-0">
                           <span className="block truncate font-medium">{asset.name}</span>
                           <span className="block truncate text-xs text-muted-foreground">
-                            {taken ? t("catalog.resourcePlanning.dialog.alreadyAdded") : assetTypeLabel(t, asset)}
+                            {taken ? t("catalog.resourcePlanning.dialog.alreadyAdded") : asset.subtitle}
                           </span>
                         </span>
                       </label>
@@ -232,7 +257,7 @@ function RequirementDialog({
                 </div>
                 <div className="grid gap-3 sm:grid-cols-2">
                   {numberField("requirement-quantity", t("catalog.resourcePlanning.fields.resourceQuantity"), t("catalog.resourcePlanning.fields.unitSuffix"), quantity, setQuantity, 1)}
-                  {numberField("requirement-duration", t("catalog.resourcePlanning.fields.durationMinutesPerUnit"), t("catalog.resourcePlanning.fields.minuteSuffix"), duration, setDuration, 1)}
+                  {numberField("requirement-duration", t("catalog.resourcePlanning.fields.durationMinutesPerUnit"), t("catalog.resourcePlanning.fields.minuteSuffix"), duration, setDuration, 1, maxDuration)}
                   {numberField("requirement-prep", t("catalog.resourcePlanning.fields.prepMinutes"), t("catalog.resourcePlanning.fields.minuteSuffix"), prep, setPrep, 0)}
                   {numberField("requirement-cleanup", t("catalog.resourcePlanning.fields.cleanupMinutes"), t("catalog.resourcePlanning.fields.minuteSuffix"), cleanup, setCleanup, 0)}
                 </div>
@@ -283,6 +308,18 @@ function RequirementDialog({
   )
 }
 
+/** Edit keeps showing the row resource even when it is inactive or outside the current source. */
+function withEditedAsset(
+  assets: readonly PickerAsset[],
+  row: DraftRow | undefined,
+  assetFor: (row: DraftRow) => PickerAsset | undefined,
+): readonly PickerAsset[] {
+  const key = row ? rowKey(row) : null
+  if (!row || !key || assets.some((asset) => asset.id === key)) return assets
+  const known = assetFor(row)
+  return [...assets, { ...(known ?? { name: key, group: "", subtitle: "", isActive: true, maxDurationMinutes: RENTAL_MAX_DURATION_MINUTES }), id: key }]
+}
+
 export function CatalogProductResourceRequirements({
   productId,
   readOnly = false,
@@ -295,7 +332,12 @@ export function CatalogProductResourceRequirements({
   const [loadError, setLoadError] = useState<string | null>(null)
   const [expectedVersion, setExpectedVersion] = useState(0)
   const [rows, setRows] = useState<DraftRow[]>([])
-  const [assets, setAssets] = useState<AdminRentalAsset[]>([])
+  const { activeModules } = usePermissions()
+  const planningActive = activeModules.some((module) => module.trim().toLowerCase() === "resource-planning")
+  const rentalsActive = activeModules.some((module) => module.trim().toLowerCase() === "rentals")
+  const source: "planning" | "rental" = planningActive ? "planning" : "rental"
+  const [planningAssets, setPlanningAssets] = useState<PickerAsset[]>([])
+  const [rentalAssets, setRentalAssets] = useState<PickerAsset[]>([])
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState<{ message: string; blocking: boolean } | null>(null)
   const [baseline, setBaseline] = useState<string | null>(null)
@@ -312,15 +354,39 @@ export function CatalogProductResourceRequirements({
     let cancelled = false
     Promise.all([
       getCatalogProductResourceRequirements(productId),
-      listAdminRentalAssets().catch(() => []),
+      planningActive
+        ? listPlanningAssets("true").catch(() => [])
+        : Promise.resolve([]),
+      // Rentals can be off for planning-only tenants: never call it then (it would 403).
+      rentalsActive
+        ? listAdminRentalAssets().catch(() => [])
+        : Promise.resolve([]),
     ])
-      .then(([response, assetList]) => {
+      .then(([response, planningList, rentalList]) => {
         if (cancelled) return
         setExpectedVersion(response.expectedVersion)
         const nextRows = response.requirements.map((row) => ({ ...row, clientId: nextClientId() }))
         setRows(nextRows)
         setBaseline(rowSnapshot(nextRows))
-        setAssets(assetList)
+        setPlanningAssets(planningList.map((asset) => ({
+          id: asset.id,
+          name: asset.name,
+          group: asset.categoryName,
+          subtitle: [asset.categoryName, asset.unitName].filter((part) => part !== "").join(" · "),
+          isActive: true,
+          maxDurationMinutes: asset.isRentalBacked ? RENTAL_MAX_DURATION_MINUTES : PLANNING_MAX_DURATION_MINUTES,
+        })))
+        setRentalAssets(rentalList.map((asset) => {
+          const type = t(`agendas.grid.resourceType.${asset.type}`)
+          return {
+            id: asset.id,
+            name: asset.name,
+            group: type,
+            subtitle: asset.categoryName ? `${type} · ${asset.categoryName}` : type,
+            isActive: asset.isActive !== false,
+            maxDurationMinutes: RENTAL_MAX_DURATION_MINUTES,
+          }
+        }))
         setLoadError(null)
       })
       .catch((error: unknown) => {
@@ -385,16 +451,21 @@ export function CatalogProductResourceRequirements({
     if (dialog?.mode === "edit") {
       const { clientId } = dialog
       setRows((current) =>
-        current.map((row) => (row.clientId === clientId ? { ...row, rentalAssetId: assetId, ...values } : row)),
+        current.map((row) => {
+          if (row.clientId !== clientId) return row
+          // Same resource: keep whichever identifiers the row already carries.
+          if (rowKey(row) === assetId) return { ...row, ...values }
+          return { ...newRow(source, assetId, values), clientId: row.clientId, id: row.id ?? null }
+        }),
       )
     } else {
-      setRows((current) => [...current, newRow(assetId, values)])
+      setRows((current) => [...current, newRow(source, assetId, values)])
     }
     setDialog(null)
   }
 
   async function save(): Promise<boolean> {
-    const invalid = rowsRef.current.some((row) => !row.rentalAssetId)
+    const invalid = rowsRef.current.some((row) => !rowKey(row))
     if (invalid) {
       const message = t("catalog.resourcePlanning.errors.resourceRequired")
       setSaveError({ message, blocking: false })
@@ -410,6 +481,8 @@ export function CatalogProductResourceRequirements({
       const response = await replaceCatalogProductResourceRequirements(productId, {
         expectedVersion,
         requirements: rowsRef.current.map((row) => ({
+          // Old shape (rentalAssetId only) stays byte-identical for rental-only rows.
+          ...(row.assetId ? { assetId: row.assetId } : {}),
           rentalAssetId: row.rentalAssetId,
           assetCategoryId: null,
           resourceQuantity: row.resourceQuantity,
@@ -471,9 +544,15 @@ export function CatalogProductResourceRequirements({
     return <p className="text-sm text-destructive">{loadError}</p>
   }
 
-  const assetById = new Map(assets.map((asset) => [asset.id, asset]))
-  const selectableAssets = assets.filter((asset) => asset.isActive !== false)
-  const takenIds = new Set(rows.map((row) => row.rentalAssetId).filter((id): id is string => !!id))
+  const assets = source === "planning" ? planningAssets : rentalAssets
+  const nameLookup = new Map<string, PickerAsset>([
+    ...rentalAssets.map((asset) => [asset.id, asset] as const),
+    ...planningAssets.map((asset) => [asset.id, asset] as const),
+  ])
+  const assetFor = (row: Pick<CatalogProductResourceRequirement, "assetId" | "rentalAssetId">): PickerAsset | undefined =>
+    (row.assetId ? nameLookup.get(row.assetId) : undefined) ?? (row.rentalAssetId ? nameLookup.get(row.rentalAssetId) : undefined)
+  const selectableAssets = assets.filter((asset) => asset.isActive)
+  const takenIds = new Set(rows.map(rowKey).filter((id): id is string => !!id))
   const editingRow = dialog?.mode === "edit" ? rows.find((row) => row.clientId === dialog.clientId) : undefined
 
   return (
@@ -512,8 +591,8 @@ export function CatalogProductResourceRequirements({
       ) : (
         <ul className="space-y-3">
           {rows.map((row) => {
-            const asset = row.rentalAssetId ? assetById.get(row.rentalAssetId) : undefined
-            const name = asset?.name ?? row.rentalAssetId ?? ""
+            const asset = assetFor(row)
+            const name = asset?.name ?? rowKey(row) ?? ""
             const total = row.prepMinutes + row.durationMinutesPerUnit + row.cleanupMinutes
             const stats: Array<[string, string]> = [
               [t("catalog.resourcePlanning.fields.resourceQuantity"), t("catalog.resourcePlanning.card.units", { count: row.resourceQuantity })],
@@ -529,7 +608,7 @@ export function CatalogProductResourceRequirements({
                   </span>
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-medium">{name}</p>
-                    <p className="truncate text-xs text-muted-foreground">{assetTypeLabel(t, asset)}</p>
+                    <p className="truncate text-xs text-muted-foreground">{asset?.subtitle ?? ""}</p>
                   </div>
                   {readOnly ? null : (
                     <div className="flex shrink-0 items-center gap-1">
@@ -608,9 +687,10 @@ export function CatalogProductResourceRequirements({
       {dialog && !readOnly && (dialog.mode === "add" || editingRow) ? (
         <RequirementDialog
           mode={dialog.mode}
-          assets={dialog.mode === "edit" ? assets : selectableAssets}
+          planning={source === "planning"}
+          assets={dialog.mode === "edit" ? withEditedAsset(assets, editingRow, assetFor) : selectableAssets}
           takenIds={dialog.mode === "edit" ? new Set<string>() : takenIds}
-          initialAssetId={editingRow?.rentalAssetId ?? null}
+          initialAssetId={editingRow ? rowKey(editingRow) : null}
           initialValues={editingRow ?? null}
           onCancel={() => setDialog(null)}
           onConfirm={confirmDialog}

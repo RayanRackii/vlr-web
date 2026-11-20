@@ -1,4 +1,5 @@
 import i18n from "@/lib/i18n"
+import { hoursViolationMessage } from "@/features/planning/model/planningErrors"
 import {
   isModuleInactiveValue,
   isUnexpectedApiError,
@@ -71,6 +72,11 @@ export function localizeCatalogApiError(
   if (notReady != null) return notReady
 
   const { code, error } = readApiErrorBody(payload)
+
+  if (code === "planning.outside_working_hours") {
+    const violation = (payload as { hoursViolation?: unknown }).hoursViolation
+    return `${i18n.t("planning.errors.outside_working_hours")} ${hoursViolationMessage(typeof violation === "string" ? violation : null)}`
+  }
 
   if (isModuleInactiveValue(code) || isModuleInactiveValue(error)) {
     return i18n.t("apiErrors.moduleInactive")

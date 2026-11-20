@@ -14,6 +14,7 @@ import {
   getCatalogProductHistory,
 } from "@/features/catalog/services/catalogService"
 import { TestPermissionProvider } from "@/features/users/permissions/PermissionContext"
+import { listPlanningAssets } from "@/features/planning/services/planningService"
 import i18n from "@/lib/i18n"
 
 vi.mock("sonner", () => ({ toast: { success: vi.fn(), error: vi.fn() } }))
@@ -36,6 +37,8 @@ vi.mock("@/features/rentals/services/scheduleService", async (importOriginal) =>
     { id: "asset-1", name: "Impressora 3D", queueEnabled: false, queueOpeningTime: null },
   ]),
 }))
+
+vi.mock("@/features/planning/services/planningService", () => ({ listPlanningAssets: vi.fn() }))
 
 const ID = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"
 const COPY_ID = "cccccccc-cccc-4ccc-8ccc-cccccccccccc"
@@ -106,10 +109,10 @@ function LocationProbe() {
   return <p data-testid="location">{location.pathname}{location.search}</p>
 }
 
-function renderPage(permissions = ["catalog.products.read", "catalog.products.manage", "catalog.orders.read"]) {
+function renderPage(permissions = ["catalog.products.read", "catalog.products.manage", "catalog.orders.read"], activeModules: string[] = []) {
   return render(
     <MemoryRouter initialEntries={[`/catalogo/produtos/${ID}`]}>
-      <TestPermissionProvider permissions={permissions}>
+      <TestPermissionProvider permissions={permissions} activeModules={activeModules}>
         <Routes>
           <Route path="/catalogo/produtos/:id" element={<><ProductViewPage /><LocationProbe /></>} />
           <Route path="/catalogo/produtos/:id/*" element={<LocationProbe />} />
@@ -336,6 +339,18 @@ describe("ProductViewPage states", () => {
     expect(await within(panel).findByText("Impressora 3D")).toBeInTheDocument()
     expect(within(panel).getByText("Qtd 2 · 60 min por unidade · Preparo 10 min · Limpeza 5 min")).toBeInTheDocument()
     expect(within(panel).getByText("Público: todos os clientes veem este produto.")).toBeInTheDocument()
+  })
+
+  it("names a planning-only requirement through the planning assets", async () => {
+    vi.mocked(listPlanningAssets).mockResolvedValue([{ id: "plan-1", name: "Impressora de bancada", unitId: "u1" }] as never)
+    mockWizard({
+      product: { usesSchedule: true },
+      requirements: [{ id: "r1", assetId: "plan-1", rentalAssetId: null, assetCategoryId: null, resourceQuantity: 1, durationMinutesPerUnit: 600, prepMinutes: 0, cleanupMinutes: 0 }],
+    })
+    const user = userEvent.setup()
+    renderPage(["catalog.products.read", "catalog.products.manage", "catalog.orders.read"], ["catalog", "resource-planning"])
+    await user.click(await screen.findByRole("tab", { name: "Operação" }))
+    expect(await within(screen.getByRole("tabpanel")).findByText("Impressora de bancada")).toBeInTheDocument()
   })
 
   it("says the product is sold without a schedule and hides Ver agenda", async () => {

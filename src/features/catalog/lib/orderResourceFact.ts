@@ -1,4 +1,5 @@
 export type RequirementRow = {
+  assetId?: string | null
   rentalAssetId?: string | null
   durationMinutesPerUnit: number
   resourceQuantity: number
@@ -26,11 +27,11 @@ export function orderResourceFact(
   requirements: readonly RequirementRow[],
   assets: readonly NamedAsset[],
 ): OrderResourceFact {
-  const row = requirements.find((item) => (item.rentalAssetId?.trim().length ?? 0) > 0) ?? requirements[0]
+  const row = requirements.find((item) => ((item.assetId ?? item.rentalAssetId)?.trim().length ?? 0) > 0) ?? requirements[0]
   if (!row) {
     return { kind: "none" }
   }
-  const assetId = row.rentalAssetId?.trim() ?? ""
+  const assetId = (row.assetId ?? row.rentalAssetId)?.trim() ?? ""
   if (assetId.length === 0) {
     return {
       kind: "unset",
