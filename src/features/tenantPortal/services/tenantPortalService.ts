@@ -31,6 +31,7 @@ import {
   RESERVATION_QUEUE_ERROR_CODES,
   type ReservationQueueErrorCode,
 } from "@/features/tenantPortal/lib/portalBookingError"
+import { idempotencyHeaders, idempotencyKeyErrorMessage, retryWhileInProgress } from "@/lib/idempotency"
 import { getTenantBaseDomain, isProductHostname } from "@/lib/tenantDomain"
 
 export { RESERVATION_QUEUE_ERROR_CODES, type ReservationQueueErrorCode }
@@ -1105,15 +1106,20 @@ export async function createPortalReservation(body: {
   endTime: string
   items: { assetId: string; quantity: number }[]
   expectedTotalAmount?: number | null
-}): Promise<PortalReservation> {
+}, options?: { idempotencyKey?: string }): Promise<PortalReservation> {
   try {
-    const response = await customerApi.post("/api/reservations", body)
+    const headers = idempotencyHeaders(options?.idempotencyKey)
+    const response = await retryWhileInProgress(() =>
+      headers ? customerApi.post("/api/reservations", body, { headers }) : customerApi.post("/api/reservations", body),
+    )
     const parsed = reservationSchema.safeParse(response.data)
     if (!parsed.success) {
       throw new Error(i18n.t("apiErrors.invalidPayload"))
     }
     return parsed.data
   } catch (error) {
+    const keyMessage = idempotencyKeyErrorMessage(error)
+    if (keyMessage) throw new Error(keyMessage)
     throwPortalBookingFailure(error, "apiErrors.createReservation")
   }
 }

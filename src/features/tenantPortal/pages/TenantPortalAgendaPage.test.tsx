@@ -1326,7 +1326,7 @@ describe("TenantPortalAgendaPage time selector", () => {
         endTime: "09:30",
         items: [{ assetId: ASSET_A_ASSET_ID, quantity: 1 }],
         expectedTotalAmount: 80,
-      })
+      }, { idempotencyKey: expect.any(String) })
     })
     expect(bookSlot).not.toHaveBeenCalled()
   })
@@ -2644,6 +2644,7 @@ describe("TenantPortalAgendaPage time selector", () => {
           items: [{ assetId: ASSET_A_ASSET_ID, quantity: 1 }],
           expectedTotalAmount: 240,
         }),
+        { idempotencyKey: expect.any(String) },
       )
     })
     expect(bookSlot).not.toHaveBeenCalled()
@@ -2771,6 +2772,7 @@ describe("TenantPortalAgendaPage time selector", () => {
           items: [{ assetId: ASSET_A_ASSET_ID, quantity: 2 }],
           expectedTotalAmount: 480,
         }),
+        { idempotencyKey: expect.any(String) },
       )
     })
   })
