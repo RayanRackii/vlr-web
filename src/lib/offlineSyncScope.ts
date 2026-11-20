@@ -66,7 +66,13 @@ export function setOfflineSyncScope(scope: OfflineSyncScope | null): void {
   scopeEpoch += 1
   if (scope !== null && !legacyDropped) {
     legacyDropped = true
-    void Promise.all([del(QUEUE_KEY_PREFIX), del(CONFLICTS_KEY_PREFIX)]).catch(() => undefined)
+    void (async () => {
+      try {
+        await Promise.all([del(QUEUE_KEY_PREFIX), del(CONFLICTS_KEY_PREFIX)])
+      } catch {
+        // Storage unavailable (private mode, no IndexedDB): nothing to drop.
+      }
+    })()
   }
 }
 
