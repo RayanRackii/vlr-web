@@ -11,6 +11,8 @@ export type TenantDocumentMeta = {
   name?: string | null
   logoSvg?: string | null
   primaryColor?: string | null
+  /** Current page title; the tab reads "<page> · <tenant> · Rolvix". */
+  pageTitle?: string | null
 }
 
 const HEX_COLOR = /^#[0-9a-f]{3,8}$/i
@@ -57,10 +59,11 @@ export function resolveTenantDocumentMeta(meta: TenantDocumentMeta | null | unde
   if (name.length === 0) {
     return { title: DEFAULT_DOCUMENT_TITLE, iconHref: DEFAULT_FAVICON_HREF }
   }
+  const pageTitle = meta?.pageTitle?.trim() ?? ""
   const sanitized = sanitizeTenantLogoSvg(meta?.logoSvg)
   const logo = sanitized ? toFaviconSvg(sanitized) : null
   return {
-    title: `${slug || name} · ${DEFAULT_DOCUMENT_TITLE}`,
+    title: [pageTitle, slug || name, DEFAULT_DOCUMENT_TITLE].filter(Boolean).join(" · "),
     iconHref: logo ? svgDataUri(logo) : tenantLetterIcon(name, meta?.primaryColor),
   }
 }
@@ -88,9 +91,10 @@ export function useTenantDocumentMeta(meta: TenantDocumentMeta | null | undefine
   const name = meta?.name ?? null
   const logoSvg = meta?.logoSvg ?? null
   const primaryColor = meta?.primaryColor ?? null
+  const pageTitle = meta?.pageTitle ?? null
   useEffect(() => {
-    const { title, iconHref } = resolveTenantDocumentMeta({ slug, name, logoSvg, primaryColor })
+    const { title, iconHref } = resolveTenantDocumentMeta({ slug, name, logoSvg, primaryColor, pageTitle })
     applyDocumentMeta(title, iconHref)
     return () => applyDocumentMeta(DEFAULT_DOCUMENT_TITLE, DEFAULT_FAVICON_HREF)
-  }, [slug, name, logoSvg, primaryColor])
+  }, [slug, name, logoSvg, primaryColor, pageTitle])
 }
