@@ -37,7 +37,7 @@ import { formatOrderTotalText } from "@/features/catalog/lib/catalogPriceSummary
 import { orderResourceFact, type OrderResourceFact } from "@/features/catalog/lib/orderResourceFact"
 import { CatalogOrderAllocationPanel } from "@/features/catalog/components/CatalogOrderAllocationPanel"
 import {
-  allocationAgendaPath,
+  allocationAgendaLink,
   useAllocationUsage,
   type OrderAllocation,
 } from "@/features/catalog/lib/orderAllocationUsage"
@@ -71,7 +71,7 @@ import {
   rejectCatalogOrder,
   startPreparingCatalogOrder,
 } from "@/features/catalog/services/catalogService"
-import { listAdminRentalAssets } from "@/features/rentals/services/scheduleService"
+import { listCatalogResourceNames } from "@/features/catalog/lib/resourceNames"
 
 
 /** History reason codes that describe a usage milestone rather than a status change. */
@@ -152,7 +152,7 @@ export function CatalogOrderDetailPage({ unified = false }: { unified?: boolean 
   const timeZoneId = useTenantTimeZone()
   const params = useParams()
   const navigate = useNavigate()
-  const { can } = usePermissions()
+  const { can, activeModules } = usePermissions()
   const orderId = params.orderId ?? ""
 
   const [order, setOrder] = useState<CatalogOrder | null>(null)
@@ -239,6 +239,8 @@ export function CatalogOrderDetailPage({ unified = false }: { unified?: boolean 
     .map((item) => item.productId)
     .join(",") ?? ""
 
+  const modulesKey = activeModules.join(",")
+
   useEffect(() => {
     const ids = resourceProductIds.split(",").filter((id) => id.length > 0)
     if (ids.length === 0) {
@@ -246,7 +248,7 @@ export function CatalogOrderDetailPage({ unified = false }: { unified?: boolean 
     }
     let cancelled = false
     void (async () => {
-      const assets = await listAdminRentalAssets().catch(() => [])
+      const assets = await listCatalogResourceNames(modulesKey.split(","))
       const entries = await Promise.all(ids.map(async (productId) => {
         try {
           const data = await getCatalogProductResourceRequirements(productId)
@@ -262,7 +264,7 @@ export function CatalogOrderDetailPage({ unified = false }: { unified?: boolean 
     return () => {
       cancelled = true
     }
-  }, [resourceProductIds])
+  }, [resourceProductIds, modulesKey])
 
   const inactiveNamesForApproval =
     order != null &&
@@ -374,10 +376,7 @@ export function CatalogOrderDetailPage({ unified = false }: { unified?: boolean 
   const showCancel = canManage && actions.includes("cancel")
   const menuFinish = usage.canFinish && usagePrimary !== "work-finished"
   const menuRelease = usage.canRelease && usagePrimary !== "release"
-  const agendaPath =
-    usage.allocation && can("rentals.schedule.read")
-      ? allocationAgendaPath(usage.allocation)
-      : null
+  const agendaPath = allocationAgendaLink(usage.allocation, can)
   const hasMenu = showReject || showCancel || menuFinish || menuRelease || agendaPath != null
   const primaryLabel = orderPrimary
     ? t(`catalog.orders.actions.${orderPrimary}`)

@@ -3,6 +3,23 @@ import { describe, expect, it } from "vitest"
 import { localizeCatalogApiError } from "@/features/catalog/lib/catalogApiErrors"
 import i18n from "@/lib/i18n"
 
+describe("localizeCatalogApiError planning errors", () => {
+  it("explains a working-hours refusal with the violation", () => {
+    const message = localizeCatalogApiError(
+      { code: "planning.outside_working_hours", hoursViolation: "start_outside_working_hours" },
+      "fallback",
+    )
+    expect(message).toContain(i18n.t("planning.errors.outside_working_hours"))
+    expect(message).toContain(i18n.t("planning.hours.start_outside_working_hours"))
+  })
+
+  it("maps a module_inactive code to the module message", () => {
+    expect(localizeCatalogApiError({ code: "module_inactive", module: "resource-planning" }, "fallback")).toBe(
+      i18n.t("apiErrors.moduleInactive"),
+    )
+  })
+})
+
 describe("localizeCatalogApiError", () => {
   it("lists what is missing when activation is refused as not ready", () => {
     const message = localizeCatalogApiError(

@@ -48,6 +48,7 @@ import {
   type NotificationDeliveryStatus,
   type ProductRequest,
 } from "@/features/catalog/schemas/catalogSchemas"
+import { readApiErrorBody } from "@/lib/apiErrorText"
 import { taxonomyQueryParams, type TaxonomyQuery } from "@/features/taxonomy/lib/taxonomyQuery"
 
 export type CatalogProductQuery = {
@@ -516,7 +517,12 @@ export async function approveCatalogOrderWithPlanning(
       )
     }
     if (isForbidden(error)) {
-      throw new CatalogForbiddenError(i18n.t("catalog.resourcePlanning.errors.forbidden"), { cause: error })
+      // A 403 module_inactive names the module, not a missing permission.
+      const inactive = readApiErrorBody(getAxiosErrorPayload(error)).code === "module_inactive"
+      throw new CatalogForbiddenError(
+        i18n.t(inactive ? "apiErrors.moduleInactive" : "catalog.resourcePlanning.errors.forbidden"),
+        { cause: error },
+      )
     }
     throwCatalogError(error, "apiErrors.transitionCatalogOrder")
   }

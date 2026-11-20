@@ -158,7 +158,7 @@ function ApprovalPanel({
       }
       const message =
         error instanceof CatalogForbiddenError
-          ? t("catalog.resourcePlanning.errors.forbidden")
+          ? error.message || t("catalog.resourcePlanning.errors.forbidden")
           : error instanceof Error
             ? error.message
             : t("apiErrors.transitionCatalogOrder")
@@ -269,7 +269,9 @@ function ApprovalPanel({
         ) : (
           <Alert variant="destructive">
             <AlertDescription>
-              {preview.reason ?? t("catalog.resourcePlanning.approvalPanel.notFeasible")}
+              {preview.conflictCode === "outside_working_hours"
+                ? t("planning.errors.outside_working_hours")
+                : preview.reason ?? t("catalog.resourcePlanning.approvalPanel.notFeasible")}
             </AlertDescription>
           </Alert>
         )
