@@ -1871,6 +1871,7 @@
         "noMatches": "No resources found.",
         "alreadyAdded": "Already added",
         "pickPrompt": "Select a resource to set its quantity and times.",
+        "noPlannable": "No resources are available for planning. Turn on planning for an asset first.",
         "selectedHint": "Set the quantity and times for this product.",
         "summaryTotal": "{{total}} min occupied per unit",
         "note": "The resource is only included when you confirm below.",

@@ -10,6 +10,8 @@ import {
   replaceCatalogProductResourceRequirements,
 } from "@/features/catalog/services/catalogService"
 import { listAdminRentalAssets } from "@/features/rentals/services/scheduleService"
+import { listPlanningAssets } from "@/features/planning/services/planningService"
+import { usePermissions } from "@/features/users/permissions/PermissionContext"
 import i18n from "@/lib/i18n"
 import { createStepShell } from "@/features/assistant/testStepShell"
 import { toast } from "sonner"
@@ -26,6 +28,20 @@ vi.mock("@/features/catalog/services/catalogService", () => ({
 vi.mock("@/features/rentals/services/scheduleService", () => ({
   listAdminRentalAssets: vi.fn(),
 }))
+
+vi.mock("@/features/planning/services/planningService", () => ({
+  listPlanningAssets: vi.fn(),
+}))
+
+vi.mock("@/features/users/permissions/PermissionContext", () => ({
+  usePermissions: vi.fn(),
+}))
+
+function withModules(...activeModules: string[]) {
+  vi.mocked(usePermissions).mockReturnValue({ activeModules } as never)
+}
+
+const PRINTER = { id: "99999999-9999-4999-8999-999999999999", name: "Impressora 3D", tag: "P3D", categoryName: "Oficina", unitId: "u1", unitName: "Sede", status: "Active", isPlannable: true, isRentalBacked: false, hoursPolicy: "StartWithinHours", workingWindowCount: 1 }
 
 const RESOURCE = { id: "77777777-7777-4777-8777-777777777777", name: "Churrasqueira 1", type: "Location", categoryName: "Lazer", isActive: true }
 const GOOD = { id: "88888888-8888-4888-8888-888888888888", name: "Cortadora Laser", type: "Good", categoryName: "QA goods", isActive: true }
@@ -62,6 +78,68 @@ describe("CatalogProductResourceRequirements", () => {
   beforeEach(() => {
     vi.clearAllMocks()
     vi.mocked(listAdminRentalAssets).mockResolvedValue([RESOURCE, GOOD] as never)
+    vi.mocked(listPlanningAssets).mockResolvedValue([PRINTER] as never)
+    withModules("rentals")
+  })
+
+  it("lists rental assets and sends rentalAssetId when resource planning is off", async () => {
+    vi.mocked(getCatalogProductResourceRequirements).mockResolvedValue({ expectedVersion: 0, requirements: [] })
+    vi.mocked(replaceCatalogProductResourceRequirements).mockResolvedValue({ expectedVersion: 1, requirements: [] })
+    const user = userEvent.setup()
+    render(<CatalogProductResourceRequirements productId="product-1" />)
+    await user.click(await screen.findByRole("button", { name: tr("catalog.resourcePlanning.empty.action") }))
+    await user.click(dialogScope().getByRole("radio", { name: new RegExp(GOOD.name) }))
+    await user.click(dialogScope().getByRole("button", { name: tr("catalog.resourcePlanning.dialog.confirmAdd") }))
+    await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument())
+    expect(listPlanningAssets).not.toHaveBeenCalled()
+    await user.click(screen.getByRole("button", { name: tr("catalog.resourcePlanning.save") }))
+    await waitFor(() => expect(replaceCatalogProductResourceRequirements).toHaveBeenCalledWith(
+      "product-1",
+      expect.objectContaining({ requirements: [expect.objectContaining({ rentalAssetId: GOOD.id })] }),
+    ))
+  })
+
+  it("lists plannable assets, sends assetId and skips the rentals call when rentals is off", async () => {
+    withModules("catalog", "resource-planning")
+    vi.mocked(getCatalogProductResourceRequirements).mockResolvedValue({ expectedVersion: 0, requirements: [] })
+    vi.mocked(replaceCatalogProductResourceRequirements).mockResolvedValue({ expectedVersion: 1, requirements: [] })
+    const user = userEvent.setup()
+    render(<CatalogProductResourceRequirements productId="product-1" />)
+    await user.click(await screen.findByRole("button", { name: tr("catalog.resourcePlanning.empty.action") }))
+    const dialog = dialogScope()
+    expect(dialog.getAllByRole("radio")).toHaveLength(1)
+    await user.click(dialog.getByRole("radio", { name: new RegExp(PRINTER.name) }))
+    expect(dialog.getByLabelText(tr("catalog.resourcePlanning.fields.durationMinutesPerUnit"))).toHaveAttribute("max", "43200")
+    await fillNumber(user, tr("catalog.resourcePlanning.fields.durationMinutesPerUnit"), "5000")
+    expect(dialog.getByRole("button", { name: tr("catalog.resourcePlanning.dialog.confirmAdd") })).toBeEnabled()
+    await user.click(dialog.getByRole("button", { name: tr("catalog.resourcePlanning.dialog.confirmAdd") }))
+    await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument())
+    await user.click(screen.getByRole("button", { name: tr("catalog.resourcePlanning.save") }))
+    await waitFor(() => expect(replaceCatalogProductResourceRequirements).toHaveBeenCalledWith(
+      "product-1",
+      expect.objectContaining({ requirements: [expect.objectContaining({ assetId: PRINTER.id, rentalAssetId: null, durationMinutesPerUnit: 5000 })] }),
+    ))
+    expect(listAdminRentalAssets).not.toHaveBeenCalled()
+  })
+
+  it("shows an existing requirement that only carries assetId", async () => {
+    withModules("catalog", "resource-planning")
+    vi.mocked(getCatalogProductResourceRequirements).mockResolvedValue({
+      expectedVersion: 1,
+      requirements: [{ ...REQUIREMENT, assetId: PRINTER.id, rentalAssetId: null }],
+    })
+    render(<CatalogProductResourceRequirements productId="product-1" />)
+    expect(await screen.findByText(PRINTER.name)).toBeInTheDocument()
+  })
+
+  it("caps the duration at one day for a rental asset", async () => {
+    vi.mocked(getCatalogProductResourceRequirements).mockResolvedValue({ expectedVersion: 0, requirements: [] })
+    const user = userEvent.setup()
+    render(<CatalogProductResourceRequirements productId="product-1" />)
+    await user.click(await screen.findByRole("button", { name: tr("catalog.resourcePlanning.empty.action") }))
+    await user.click(dialogScope().getByRole("radio", { name: new RegExp(GOOD.name) }))
+    await fillNumber(user, tr("catalog.resourcePlanning.fields.durationMinutesPerUnit"), "1441")
+    expect(dialogScope().getByRole("button", { name: tr("catalog.resourcePlanning.dialog.confirmAdd") })).toBeDisabled()
   })
 
   it("shows the empty state with both open buttons", async () => {
