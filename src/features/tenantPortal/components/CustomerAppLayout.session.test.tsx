@@ -321,8 +321,8 @@ describe("CustomerAppLayout session tenant", () => {
       }
     })
 
-    expect(screen.getAllByTitle("Beatriz Souza")).toHaveLength(1)
-    expect(screen.getAllByText("BS")).toHaveLength(1)
+    expect(screen.getAllByTitle("Beatriz Souza")).toHaveLength(2)
+    expect(screen.getAllByText("BS")).toHaveLength(2)
     expect(screen.getAllByText(i18n.t("tenantPortal.redesign.greetingName", { name: "Beatriz" }))).toHaveLength(2)
     expect(screen.queryByTitle("ana.email@example.test")).not.toBeInTheDocument()
   })
@@ -384,7 +384,7 @@ describe("CustomerAppLayout session tenant", () => {
     })
   })
 
-  it("renders the portal top navigation and mobile bottom tabs without a hamburger", async () => {
+  it("renders the portal sidebar (brand, nav, user chip) and mobile bottom tabs without a hamburger", async () => {
     const menuItemId = "11111111-1111-4111-8111-111111111111"
     persistCustomerSession("customer-token", "ficc", "Ana")
     fetchBranding.mockResolvedValue({
@@ -412,7 +412,12 @@ describe("CustomerAppLayout session tenant", () => {
     expect(screen.queryByRole("button", { name: i18n.t("nav.openMenu") })).not.toBeInTheDocument()
     const navigation = screen.getByRole("navigation", { name: i18n.t("nav.menu") })
     expect(navigation).toHaveClass("portal-nav")
-    expect(navigation.closest('[data-shell-part="header"]')).toBeInTheDocument()
+    const sidebar = navigation.closest('[data-shell-part="sidebar"]') as HTMLElement
+    expect(sidebar).toBeInTheDocument()
+    expect(navigation.closest('[data-shell-part="header"]')).not.toBeInTheDocument()
+    expect(within(sidebar).getByText("Club")).toBeInTheDocument()
+    expect(within(sidebar).getByText(i18n.t("tenantPortal.redesign.customer"))).toBeInTheDocument()
+    expect(within(sidebar).getByText("Ana", { selector: "p" })).toBeInTheDocument()
     expect(navigation.closest('[data-shell-variant="portal"]')).toBeInTheDocument()
     expect(
       screen.getByRole("button", { name: i18n.t("theme.toggle") }),
