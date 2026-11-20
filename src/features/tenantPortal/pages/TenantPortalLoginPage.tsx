@@ -1,6 +1,6 @@
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Lock, Mail } from "lucide-react"
-import { useMemo, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { useForm, useWatch } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 import {
@@ -46,6 +46,12 @@ export function TenantPortalLoginPage() {
   const returnTo = readReturnToParam(searchParams)
   const [submitting, setSubmitting] = useState(false)
   const [loginError, setLoginError] = useState<string | null>(null)
+  useEffect(() => {
+    // Warm the chunks of the pages linked from here so "Cadastre-se" / "Esqueci a senha" swap the form
+    // without a loading flash. Same module paths as the lazy routes, so Vite reuses the chunks.
+    void import("@/features/tenantPortal/pages/TenantPortalRegisterPage")
+    void import("@/features/tenantPortal/pages/TenantPortalForgotPasswordPage")
+  }, [])
   const schema = useMemo(
     () =>
       buildCustomerLoginSchema({

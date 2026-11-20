@@ -1,7 +1,7 @@
 /// <reference types="node" />
 
 import { readFileSync } from "node:fs"
-import { render, screen } from "@testing-library/react"
+import { fireEvent, render, screen } from "@testing-library/react"
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest"
 import { MemoryRouter, Route, Routes } from "react-router-dom"
 
@@ -228,5 +228,20 @@ describe("tenant portal auth split shell", () => {
     expect(level1).toHaveLength(1)
     expect(level1[0]).toHaveTextContent(i18n.t("notFound.title"))
     expect(screen.getAllByText("Acme Club").length).toBeGreaterThan(0)
+  })
+
+  it("switches from login to register without reloading the shell or refetching branding", async () => {
+    vi.mocked(fetchTenantBranding).mockClear()
+    renderPortal("/t/acme")
+    await screen.findByRole("heading", { name: i18n.t("tenantPortal.login.title") })
+    const brandPanel = screen.getByRole("heading", { level: 1, name: "Acme Club" })
+    expect(fetchTenantBranding).toHaveBeenCalledTimes(1)
+
+    fireEvent.click(screen.getByRole("link", { name: i18n.t("tenantPortal.login.registerLink") }))
+
+    expect(await screen.findByRole("heading", { name: i18n.t("tenantPortal.register.title") })).toBeInTheDocument()
+    // same brand panel element: the layout stayed mounted instead of falling back to the loading skeleton
+    expect(screen.getByRole("heading", { level: 1, name: "Acme Club" })).toBe(brandPanel)
+    expect(fetchTenantBranding).toHaveBeenCalledTimes(1)
   })
 })
