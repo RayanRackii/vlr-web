@@ -4516,7 +4516,7 @@
       "breadcrumb": "{{title}}",
       "numberPrefix": "WO",
       "title": "Work Order Execution",
-      "subtitle": "{{tag}} · {{code}}",
+      "subtitle": "{{asset}} · {{tag}}",
       "details": "Work order details",
       "loading": "Loading work order...",
       "back": "Back to list",

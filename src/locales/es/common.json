@@ -4516,7 +4516,7 @@
       "breadcrumb": "{{title}}",
       "numberPrefix": "OT",
       "title": "Ejecución de OT",
-      "subtitle": "{{tag}} · {{code}}",
+      "subtitle": "{{asset}} · {{tag}}",
       "details": "Detalles de la OT",
       "loading": "Cargando OT...",
       "back": "Volver a la lista",

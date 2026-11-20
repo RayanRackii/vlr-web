@@ -85,6 +85,7 @@ describe("WorkOrderExecutionPage breadcrumb", () => {
     await waitFor(() =>
       expect(screen.getByTestId("crumb")).toHaveTextContent(`OS #12 · ${workOrder.asset.name}`),
     )
-    expect(await screen.findByText(/AC-01 · OS #12/)).toBeInTheDocument()
+    expect(await screen.findByRole("heading", { level: 1, name: "OS #12" })).toBeInTheDocument()
+    expect(screen.getByText(new RegExp(`${workOrder.asset.name} · AC-01`))).toBeInTheDocument()
   })
 })

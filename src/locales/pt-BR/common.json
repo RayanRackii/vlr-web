@@ -4516,7 +4516,7 @@
       "breadcrumb": "{{title}}",
       "numberPrefix": "OS",
       "title": "Execução da OS",
-      "subtitle": "{{tag}} · {{code}}",
+      "subtitle": "{{asset}} · {{tag}}",
       "details": "Detalhes da OS",
       "loading": "Carregando OS...",
       "back": "Voltar para lista",

@@ -1144,9 +1144,12 @@ export function WorkOrderExecutionPage() {
       />
 
       <PageHeader
-        title={
+        title={<span className="break-words">{formatWorkOrderNumber(workOrder, t("workOrders.execution.numberPrefix"))}</span>}
+        description={
           <span className="flex flex-wrap items-center gap-2">
-            <span className="min-w-0 break-words">{workOrder.asset.name}</span>
+            <span className="min-w-0 break-words">
+              {t("workOrders.execution.subtitle", { asset: workOrder.asset.name, tag: workOrder.asset.tag })}
+            </span>
             <Badge
               variant={
                 workOrder.status === "Completed"
@@ -1160,10 +1163,6 @@ export function WorkOrderExecutionPage() {
             </Badge>
           </span>
         }
-        description={t("workOrders.execution.subtitle", {
-          tag: workOrder.asset.tag,
-          code: formatWorkOrderNumber(workOrder, t("workOrders.execution.numberPrefix")),
-        })}
         actions={headerActions}
         className="mb-0 sm:mb-0"
       />
