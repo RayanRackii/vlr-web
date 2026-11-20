@@ -26,6 +26,8 @@ export type PermissionContextValue = {
   activeModules: readonly string[]
   isLoading: boolean
   error: string | null
+  /** `/me` failed for a reason other than 401 (network, 5xx, bad payload): offer a retry, not a deny. */
+  loadFailed?: boolean
   can: (permission: string) => boolean
   refresh: () => Promise<void>
 }
@@ -47,11 +49,17 @@ function profileMatchesSession(profile: CurrentUser, fingerprint: string): boole
   return actingTenant.length === 0 || profileTenantId(profile) === actingTenant
 }
 
+function readErrorStatus(error: unknown): number | null {
+  const status = (error as { status?: unknown } | null)?.status
+  return typeof status === "number" ? status : null
+}
+
 function buildValue(
   currentUser: CurrentUser | null,
   isLoading: boolean,
   error: string | null,
   refresh: () => Promise<void>,
+  loadFailed = false,
 ): PermissionContextValue {
   const permissions = currentUser?.permissions ?? []
   const activeModules = currentUser?.activeModules ?? []
@@ -62,6 +70,7 @@ function buildValue(
     activeModules,
     isLoading,
     error,
+    loadFailed,
     can: (permission: string) => hasPermission(permissions, permission),
     refresh,
   }
@@ -83,6 +92,7 @@ export function PermissionProvider({ children }: PermissionProviderProps) {
   const [appliedFingerprint, setAppliedFingerprint] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [loadFailed, setLoadFailed] = useState(false)
   const loadGenerationRef = useRef(0)
   const seenFingerprintRef = useRef<string | null>(null)
   const mismatchRetryRef = useRef<string | null>(null)
@@ -94,6 +104,7 @@ export function PermissionProvider({ children }: PermissionProviderProps) {
     const requestedFingerprint = sessionFingerprintRef.current
     setIsLoading(true)
     setError(null)
+    setLoadFailed(false)
 
     try {
       let profile = await getCurrentUser(force ? { force: true } : undefined)
@@ -122,6 +133,8 @@ export function PermissionProvider({ children }: PermissionProviderProps) {
       setCurrentUser(null)
       setAppliedFingerprint(requestedFingerprint)
       setError(caught instanceof Error ? caught.message : null)
+      // 401 keeps the session-expired flow; anything else is retryable.
+      setLoadFailed(readErrorStatus(caught) !== 401)
     } finally {
       if (requestId === loadGenerationRef.current) {
         setIsLoading(false)
@@ -152,9 +165,10 @@ export function PermissionProvider({ children }: PermissionProviderProps) {
         isLoading || profilePending,
         profilePending ? null : error,
         refresh,
+        !profilePending && loadFailed,
       )
     },
-    [appliedFingerprint, currentUser, error, isLoading, refresh, sessionFingerprint],
+    [appliedFingerprint, currentUser, error, isLoading, loadFailed, refresh, sessionFingerprint],
   )
 
   return (

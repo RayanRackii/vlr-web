@@ -4625,6 +4625,11 @@
     "title": "Acceso denegado",
     "description": "No tiene permiso para ver esta página."
   },
+  "permissionLoadError": {
+    "title": "No se pudo cargar su acceso",
+    "description": "No pudimos cargar sus permisos. Revise la conexión e intente de nuevo.",
+    "retry": "Intentar de nuevo"
+  },
   "notFound": {
     "staffDescription": "No encontramos esta página. Usa el enlace de abajo para continuar.",
     "dashboard": "Volver al panel",

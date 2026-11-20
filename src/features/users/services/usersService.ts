@@ -1,5 +1,5 @@
 import i18n from "@/lib/i18n"
-import { api } from "@/lib/api"
+import { api, isAxiosError } from "@/lib/api"
 import { throwRbacServiceError } from "@/features/users/permissions/rbacErrors"
 import {
   invalidateCurrentUserCache,
@@ -53,7 +53,15 @@ async function loadCurrentUserFromApi(): Promise<CurrentUser> {
       "users.errors.invalidResponse",
     )
   } catch (error: unknown) {
-    throwRbacServiceError(error, "users.errors.loadCurrent")
+    try {
+      throwRbacServiceError(error, "users.errors.loadCurrent")
+    } catch (wrapped: unknown) {
+      // Keep the HTTP status so the permission guard can tell 401 from a retryable failure.
+      if (wrapped instanceof Error && isAxiosError(error) && error.response) {
+        Object.assign(wrapped, { status: error.response.status })
+      }
+      throw wrapped
+    }
   }
 }
 

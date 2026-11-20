@@ -4625,6 +4625,11 @@
     "title": "Access denied",
     "description": "You do not have permission to view this page."
   },
+  "permissionLoadError": {
+    "title": "Could not load your access",
+    "description": "We could not load your permissions. Check your connection and try again.",
+    "retry": "Try again"
+  },
   "notFound": {
     "staffDescription": "We could not find this page. Use the link below to continue.",
     "dashboard": "Back to dashboard",
