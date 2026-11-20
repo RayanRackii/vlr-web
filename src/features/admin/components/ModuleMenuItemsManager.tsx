@@ -245,6 +245,11 @@ export function ModuleMenuItemsManager({
   const previewSubdomain = subdomain?.trim() || "preview"
 
   async function loadAssets() {
+    // Rental destinations only exist when the module is active; otherwise the API answers 403.
+    if (!isModuleInTenant("rentals", activeModules)) {
+      setAssets([])
+      return
+    }
     try {
       if (tenantId && subdomain) {
         const list = await fetchPortalRentalAssets(subdomain)

@@ -3518,7 +3518,7 @@
       "rowMenu": "Actions for {{name}}",
       "all": "All",
       "title": "Resource types",
-      "subtitle": "Families of what your company books. Behavior comes from capabilities, not from the name.",
+      "subtitle": "Families of resources in your company. Behavior comes from capabilities, not from the name.",
       "search": "Search types",
       "capability": "Capability",
       "new": "New type",
@@ -4613,6 +4613,11 @@
       "loadTechnicians": "Could not load technicians.",
       "invalidResponse": "Invalid API response."
     }
+  },
+  "moduleInactive": {
+    "title": "This module is not active for this company",
+    "description": "Activate the module to use this page, or pick another option in the menu.",
+    "back": "Back to home"
   },
   "accessDenied": {
     "title": "Access denied",

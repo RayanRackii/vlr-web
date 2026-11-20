@@ -155,4 +155,28 @@ describe("PermissionRoute PMOC coverage gate", () => {
       screen.queryByRole("heading", { name: "Plan detail" }),
     ).not.toBeInTheDocument()
   })
+
+  it("shows the module-inactive page, not access denied, when the module is off", async () => {
+    getCurrentUserMock.mockResolvedValue({
+      ...profile,
+      permissions: ["rentals.assets.read", "core.units.read"],
+      activeModules: ["catalog"],
+    })
+
+    render(
+      <MemoryRouter initialEntries={["/configuracoes/recursos"]}>
+        <PermissionProvider>
+          <Routes>
+            <Route element={<PermissionRoute permissions={["rentals.assets.read"]} modules={["rentals"]} />}>
+              <Route path="/configuracoes/recursos" element={<h1>Recursos</h1>} />
+            </Route>
+          </Routes>
+        </PermissionProvider>
+      </MemoryRouter>,
+    )
+
+    expect(await screen.findByRole("heading", { name: "Este módulo não está ativo para esta empresa" })).toBeInTheDocument()
+    expect(screen.queryByRole("heading", { name: "Acesso negado" })).not.toBeInTheDocument()
+    expect(screen.queryByRole("heading", { name: "Recursos" })).not.toBeInTheDocument()
+  })
 })

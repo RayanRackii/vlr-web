@@ -3518,7 +3518,7 @@
       "rowMenu": "Acciones de {{name}}",
       "all": "Todos",
       "title": "Tipos de recurso",
-      "subtitle": "Familias de lo que su empresa reserva. El comportamiento viene de las capacidades, no del nombre.",
+      "subtitle": "Familias de recursos de su empresa. El comportamiento viene de las capacidades, no del nombre.",
       "search": "Buscar tipo",
       "capability": "Capacidad",
       "new": "Nuevo tipo",
@@ -4613,6 +4613,11 @@
       "loadTechnicians": "No se pudieron cargar los técnicos.",
       "invalidResponse": "Respuesta inválida de la API."
     }
+  },
+  "moduleInactive": {
+    "title": "Este módulo no está activo para esta empresa",
+    "description": "Active el módulo para usar esta página o elija otra opción en el menú.",
+    "back": "Volver al inicio"
   },
   "accessDenied": {
     "title": "Acceso denegado",

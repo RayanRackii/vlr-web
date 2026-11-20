@@ -1,6 +1,7 @@
 import { Outlet } from "react-router-dom"
 
 import { AccessDeniedPage } from "@/components/layout/AccessDeniedPage"
+import { ModuleInactivePage } from "@/components/layout/ModuleInactivePage"
 import { PageContentSkeleton } from "@/components/loading/PageContentSkeleton"
 import { usePlatformTenantSession } from "@/features/admin/hooks/usePlatformTenantSession"
 import { holdsRoutePermission, resolvePermissionRouteAccess } from "@/features/users/permissions/permissionGroups"
@@ -47,13 +48,17 @@ export function PermissionRoute({
 
   const access = resolvePermissionRouteAccess({
     isLoading,
-    hasPermission: moduleEnabled && holdsRoutePermission({ permission, permissions, anyOf }, can),
+    hasPermission: holdsRoutePermission({ permission, permissions, anyOf }, can),
     isPlatformAdminOutsideTenant: isPlatformAdmin && !isInTenantEnvironment,
     permission: required[0] ?? anyOf?.[0] ?? "",
   })
 
   if (access === "loading") {
     return <PageContentSkeleton />
+  }
+
+  if (!moduleEnabled) {
+    return <ModuleInactivePage />
   }
 
   if (access === "deny") {
