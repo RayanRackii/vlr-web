@@ -75,7 +75,7 @@ describe("staff breadcrumb", () => {
     ["/ativos/tipos", "Equipamentos", "Tipos de recurso", "/ativos"],
     ["/configuracoes/politica-reservas", "Reservas", "Regras de reserva", "/configuracoes/reservas"],
     ["/configuracoes/cadastro", "Pessoas e acesso", "Formulário de cadastro", "/pessoas-e-acesso"],
-    ["/pmoc/biblioteca", "Novo plano", "Biblioteca Rolvix", "/pmoc/novo"],
+    ["/pmoc/biblioteca", "Manutenção", "Biblioteca Rolvix", "/manutencao"],
   ])("renders parent and tab for %s", (path, parent, tab, href) => {
     renderBreadcrumb(path)
     const nav = screen.getByRole("navigation", { name: "Caminho de navegação" })

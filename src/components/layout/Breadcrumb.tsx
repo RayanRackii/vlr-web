@@ -61,6 +61,13 @@ export function Breadcrumb({ variant = "page", fallback = null }: BreadcrumbProp
   if (normalized === "/pmoc/novo") {
     crumbs.push({ label: t("nav.manutencao"), to: "/manutencao" })
     crumbs.push({ label: t("maintenance.newPlan") })
+  } else if (normalized === "/pmoc/biblioteca") {
+    crumbs.push({ label: t("nav.manutencao"), to: "/manutencao" })
+    crumbs.push({ label: t("nav.pmocLibrary") })
+  } else if (normalized.startsWith("/pmoc/biblioteca/")) {
+    crumbs.push({ label: t("nav.manutencao"), to: "/manutencao" })
+    crumbs.push({ label: t("nav.pmocLibrary"), to: "/pmoc/biblioteca" })
+    crumbs.push({ label: title?.pathname === pathname ? title.value : t("nav.pmocTemplatePreview") })
   } else if (pmocPlanDetail) {
     crumbs.push({ label: t("nav.manutencao"), to: "/manutencao" })
     crumbs.push({ label: t("maintenance.tabs.planos"), to: "/manutencao?aba=planos" })
