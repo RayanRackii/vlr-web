@@ -1,4 +1,4 @@
-import { Suspense, useEffect, useMemo, useState } from "react"
+import { Suspense, useEffect, useMemo, useRef, useState } from "react"
 import { Navigate, Outlet, useLocation, useParams } from "react-router-dom"
 import { useTranslation } from "react-i18next"
 
@@ -78,6 +78,10 @@ export function TenantPortalLayout() {
     isCustomerAuthEntryPath(location.pathname) &&
     isCustomerSignedInForTenant(subdomain ?? "")
 
+  // Branding belongs to the tenant, not to the page: load it once per subdomain (or retry) and keep
+  // the shell mounted while customers move between login, register and recovery pages.
+  const brandingLoadedFor = useRef<string | null>(null)
+
   useEffect(() => {
     if (!subdomain) {
       setError("missingSubdomain")
@@ -85,19 +89,26 @@ export function TenantPortalLayout() {
       return
     }
 
-    if (
-      isCustomerAuthEntryPath(location.pathname) &&
-      isCustomerSignedInForTenant(subdomain)
-    ) {
+    if (redirectSignedIn) {
       setLoading(false)
       return
     }
+
+    const loadKey = `${subdomain}:${retryNonce}`
+    if (brandingLoadedFor.current === loadKey) {
+      setLoading(false)
+      return
+    }
+    // Forget the previous tenant before fetching, so a failed or cancelled load (tenant switch,
+    // 404, quick back-navigation) can never be mistaken for "already loaded" later.
+    brandingLoadedFor.current = null
 
     let cancelled = false
     setLoading(true)
     void fetchTenantBranding(subdomain)
       .then((data) => {
         if (!cancelled) {
+          brandingLoadedFor.current = loadKey
           setBranding(data)
           setError(null)
         }
@@ -121,7 +132,7 @@ export function TenantPortalLayout() {
     return () => {
       cancelled = true
     }
-  }, [location.pathname, subdomain, retryNonce])
+  }, [subdomain, retryNonce, redirectSignedIn])
 
   const errorMessage =
     error === "missingSubdomain"
