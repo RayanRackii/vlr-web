@@ -3489,7 +3489,7 @@
     },
     "deletion": {
       "title": "Confirm deletion",
-      "pendingBadge": "Pending Deletion",
+      "pendingBadge": "Pending deletion",
       "scheduleWarning": "This will schedule deletion of type \"{{name}}\" and all {{count}} linked resources in 30 days. Type the type name to confirm.",
       "scheduleWarningNone": "This will schedule deletion of type \"{{name}}\" in 30 days. No resources are linked. Type the type name to confirm.",
       "scheduleWarningOne": "This will schedule deletion of type \"{{name}}\" and the linked resource in 30 days. Type the type name to confirm.",
@@ -4419,7 +4419,7 @@
     "tabs": {
       "Open": "Open",
       "Pending": "Pending",
-      "InProgress": "In Progress",
+      "InProgress": "In progress",
       "Completed": "Completed",
       "Canceled": "Canceled",
       "withCount": "{{label}}, {{count}}"
@@ -4447,7 +4447,7 @@
     },
     "status": {
       "Pending": "Pending",
-      "InProgress": "In Progress",
+      "InProgress": "In progress",
       "Completed": "Completed",
       "Canceled": "Canceled"
     },

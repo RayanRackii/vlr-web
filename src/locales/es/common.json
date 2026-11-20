@@ -4419,7 +4419,7 @@
     "tabs": {
       "Open": "Abiertas",
       "Pending": "Pendientes",
-      "InProgress": "En Curso",
+      "InProgress": "En curso",
       "Completed": "Completadas",
       "Canceled": "Canceladas",
       "withCount": "{{label}}, {{count}}"
@@ -4447,7 +4447,7 @@
     },
     "status": {
       "Pending": "Pendiente",
-      "InProgress": "En Curso",
+      "InProgress": "En curso",
       "Completed": "Completada",
       "Canceled": "Cancelada"
     },

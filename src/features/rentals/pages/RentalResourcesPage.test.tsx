@@ -345,7 +345,7 @@ describe("RentalResourcesPage", () => {
 
     expect(await screen.findByText("3 recursos")).toBeInTheDocument()
     expect(screen.getByText("3 recursos").parentElement).toHaveTextContent("3 recursos · 2 espaços, 1 item")
-    expect(screen.getAllByRole("link", { name: "Projetor" })[0]!.parentElement).toHaveTextContent("Exclusão Pendente")
+    expect(screen.getAllByRole("link", { name: "Projetor" })[0]!.parentElement).toHaveTextContent("Exclusão pendente")
   })
 
   it("lists rentables and offers create without inventory endpoints", async () => {

@@ -3489,7 +3489,7 @@
     },
     "deletion": {
       "title": "Confirmar exclusão",
-      "pendingBadge": "Exclusão Pendente",
+      "pendingBadge": "Exclusão pendente",
       "scheduleWarning": "Esta ação agendará a exclusão do tipo \"{{name}}\" e de todos os {{count}} recursos vinculados para daqui a 30 dias. Digite o nome do tipo para confirmar.",
       "scheduleWarningNone": "Esta ação agendará a exclusão do tipo \"{{name}}\" para daqui a 30 dias. Não há recursos vinculados. Digite o nome do tipo para confirmar.",
       "scheduleWarningOne": "Esta ação agendará a exclusão do tipo \"{{name}}\" e do recurso vinculado para daqui a 30 dias. Digite o nome do tipo para confirmar.",
@@ -4419,7 +4419,7 @@
     "tabs": {
       "Open": "Abertas",
       "Pending": "Pendentes",
-      "InProgress": "Em Andamento",
+      "InProgress": "Em andamento",
       "Completed": "Concluídas",
       "Canceled": "Canceladas",
       "withCount": "{{label}}, {{count}}"
@@ -4447,7 +4447,7 @@
     },
     "status": {
       "Pending": "Pendente",
-      "InProgress": "Em Andamento",
+      "InProgress": "Em andamento",
       "Completed": "Concluída",
       "Canceled": "Cancelada"
     },
