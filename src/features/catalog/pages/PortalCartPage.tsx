@@ -1,3 +1,4 @@
+import { createAttemptKey } from "@/lib/idempotency"
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react"
 import { useForm, useWatch } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -66,6 +67,7 @@ export function PortalCartPage() {
   const [submitBar, setSubmitBar] = useState<HTMLDivElement | null>(null)
   const [submitBarHeight, setSubmitBarHeight] = useState(144)
   const noteGroupRef = useRef<HTMLDivElement>(null)
+  const attemptKey = useRef(createAttemptKey()).current
 
   useEffect(() => {
     if (!submitBar) return
@@ -172,7 +174,7 @@ export function PortalCartPage() {
     setSubmitting(true)
     setSubmitError(null)
     try {
-      const order = await createPortalCatalogOrder({
+      const orderBody = {
         items: cart.items.map((item) => ({
           productId: item.productId,
           quantity: item.quantity,
@@ -181,7 +183,11 @@ export function PortalCartPage() {
           values.customerNote.trim().length > 0
             ? values.customerNote.trim()
             : undefined,
+      }
+      const order = await createPortalCatalogOrder(orderBody, {
+        idempotencyKey: attemptKey.keyFor(JSON.stringify(orderBody)),
       })
+      attemptKey.reset()
       if (generation !== getAgendaSessionGeneration()) {
         return
       }

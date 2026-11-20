@@ -338,6 +338,37 @@ describe("PortalCartPage validity gate", () => {
     expect(note).toHaveValue("Entregar na portaria")
   })
 
+  it("reuses the Idempotency-Key when retrying the same order and uses a new one after the cart changes", async () => {
+    seedCart()
+    createOrderMock.mockRejectedValue(new Error("Tempo esgotado."))
+    const user = userEvent.setup()
+    renderCart()
+
+    const submitName = i18n.t("tenantPortal.catalog.submitOrder")
+    await user.click(await screen.findByRole("button", { name: submitName }))
+    await waitFor(() => expect(createOrderMock).toHaveBeenCalledTimes(1))
+    const panel = await screen.findByRole("alert")
+    await user.click(within(panel).getByRole("button", { name: "Tentar novamente" }))
+    await waitFor(() => expect(createOrderMock).toHaveBeenCalledTimes(2))
+
+    const firstKey = createOrderMock.mock.calls[0][1]?.idempotencyKey
+    expect(firstKey).toEqual(expect.any(String))
+    expect(createOrderMock.mock.calls[1][1]?.idempotencyKey).toBe(firstKey)
+
+    const quantity = screen.getByRole("spinbutton", {
+      name: i18n.t("tenantPortal.catalog.quantityFor", { name: "Raquete" }),
+    })
+    await user.clear(quantity)
+    await user.type(quantity, "3")
+    await waitFor(() => expect(quantity).toHaveValue(3))
+    await waitFor(() => expect(screen.getByRole("button", { name: submitName })).toBeEnabled())
+    await user.click(screen.getByRole("button", { name: submitName }))
+    await waitFor(() => expect(createOrderMock).toHaveBeenCalledTimes(3))
+    const thirdKey = createOrderMock.mock.calls[2][1]?.idempotencyKey
+    expect(thirdKey).toEqual(expect.any(String))
+    expect(thirdKey).not.toBe(firstKey)
+  })
+
   it("navigates with one-shot confirmation state after success without a redundant toast", async () => {
     seedCart()
     createOrderMock.mockResolvedValue({
