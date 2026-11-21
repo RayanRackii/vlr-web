@@ -31,13 +31,14 @@ export function TenantAdvancedSettings({ tenantId }: TenantAdvancedSettingsProps
 
   useEffect(() => {
     let cancelled = false
-    setIsLoading(true)
-    setLoadError(null)
-    getAdminTenantBooleanSetting(tenantId, BOOKING_UI_ENABLED_KEY)
-      .then((value) => {
+
+    async function load() {
+      setIsLoading(true)
+      setLoadError(null)
+      try {
+        const value = await getAdminTenantBooleanSetting(tenantId, BOOKING_UI_ENABLED_KEY)
         if (!cancelled) setEnabled(value)
-      })
-      .catch((error: unknown) => {
+      } catch (error: unknown) {
         if (!cancelled) {
           setLoadError(
             error instanceof Error && error.message.trim().length > 0
@@ -45,10 +46,12 @@ export function TenantAdvancedSettings({ tenantId }: TenantAdvancedSettingsProps
               : t("admin.edit.advanced.errors.loadFailed"),
           )
         }
-      })
-      .finally(() => {
+      } finally {
         if (!cancelled) setIsLoading(false)
-      })
+      }
+    }
+
+    void load()
     return () => {
       cancelled = true
     }

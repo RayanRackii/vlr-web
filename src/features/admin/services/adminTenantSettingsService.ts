@@ -33,6 +33,7 @@ export async function getAdminTenantBooleanSetting(
         getAxiosErrorPayload(error),
         i18n.t("admin.edit.advanced.errors.loadFailed"),
       ),
+      { cause: error },
     )
   }
 }
@@ -53,6 +54,7 @@ export async function putAdminTenantBooleanSetting(
         getAxiosErrorPayload(error),
         i18n.t("admin.edit.advanced.errors.saveFailed"),
       ),
+      { cause: error },
     )
   }
 }
