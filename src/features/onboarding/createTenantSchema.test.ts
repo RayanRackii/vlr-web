@@ -114,15 +114,18 @@ describe("createTenant schemas", () => {
   )
 
   it("gates each public onboarding step without later empty fields", () => {
+    // Step 0 is the optional package choice: it never blocks.
+    expect(isPublicOnboardingStepValid(0, { ...validRequest, legalName: "" })).toBe(true)
+
     expect(
-      isPublicOnboardingStepValid(0, {
+      isPublicOnboardingStepValid(1, {
         ...validRequest,
         legalName: "",
         taxId: "",
       }),
     ).toBe(false)
     expect(
-      isPublicOnboardingStepValid(0, {
+      isPublicOnboardingStepValid(1, {
         ...validRequest,
         legalName: "   ",
         taxId: "123",
@@ -131,7 +134,7 @@ describe("createTenant schemas", () => {
       }),
     ).toBe(false)
     expect(
-      isPublicOnboardingStepValid(0, {
+      isPublicOnboardingStepValid(1, {
         ...validRequest,
         adminFullName: "",
         adminEmail: "not-an-email",
@@ -140,28 +143,42 @@ describe("createTenant schemas", () => {
     ).toBe(true)
 
     expect(
-      isPublicOnboardingStepValid(1, {
+      isPublicOnboardingStepValid(2, {
         ...validRequest,
         adminEmail: "not-an-email",
       }),
     ).toBe(false)
     expect(
-      isPublicOnboardingStepValid(1, {
+      isPublicOnboardingStepValid(2, {
         ...validRequest,
         adminPhone: "119999999",
         legalName: "",
       }),
     ).toBe(false)
-    expect(isPublicOnboardingStepValid(1, validRequest)).toBe(true)
+    expect(isPublicOnboardingStepValid(2, validRequest)).toBe(true)
 
     expect(
-      isPublicOnboardingStepValid(2, {
+      isPublicOnboardingStepValid(3, {
         ...validRequest,
         legalName: "",
       }),
     ).toBe(false)
-    expect(isPublicOnboardingStepValid(2, validRequest)).toBe(true)
-    expect(isPublicOnboardingStepValid(3, validRequest)).toBe(false)
+    expect(isPublicOnboardingStepValid(3, validRequest)).toBe(true)
+    expect(isPublicOnboardingStepValid(4, validRequest)).toBe(false)
+  })
+
+  it("accepts only known package keys and sanitized lead fields", () => {
+    const base = { ...validRequest }
+    expect(
+      createTenantRequestSchema.parse({
+        ...base,
+        packageKey: "manutencao",
+        leadSource: "google",
+        leadCampaign: "beach-tennis_2026",
+      }),
+    ).toMatchObject({ packageKey: "manutencao", leadSource: "google" })
+    expect(createTenantRequestSchema.safeParse({ ...base, packageKey: "enterprise" }).success).toBe(false)
+    expect(createTenantRequestSchema.safeParse({ ...base, leadSource: "x".repeat(101) }).success).toBe(false)
   })
 
   it("replaces an unknown API error with the generic signup message", () => {

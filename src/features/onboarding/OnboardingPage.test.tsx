@@ -13,9 +13,9 @@ vi.mock("@/features/onboarding/createTenant", () => ({
 
 const createTenantMock = vi.mocked(createTenant)
 
-function renderOnboarding() {
+function renderOnboarding(url = "/onboarding") {
   return render(
-    <MemoryRouter initialEntries={["/onboarding"]}>
+    <MemoryRouter initialEntries={[url]}>
       <Routes>
         <Route path="/onboarding" element={<OnboardingPage />} />
         <Route path="/login" element={<div>login-page</div>} />
@@ -43,6 +43,7 @@ describe("OnboardingPage", () => {
     })
 
     renderOnboarding()
+    await user.click(screen.getByRole("button", { name: "Próximo" }))
 
     await user.type(screen.getByLabelText("Razão social"), "Clube Quadras")
     await user.type(screen.getByLabelText("CNPJ/CPF"), "12345678000199")
@@ -94,6 +95,7 @@ describe("OnboardingPage", () => {
     )
 
     renderOnboarding()
+    await user.click(screen.getByRole("button", { name: "Próximo" }))
 
     await user.type(screen.getByLabelText("Razão social"), "Clube Quadras")
     await user.type(screen.getByLabelText("CNPJ/CPF"), "12345678000199")
@@ -146,8 +148,11 @@ describe("OnboardingPage validity gate", () => {
     renderOnboarding()
 
     const next = screen.getByRole("button", { name: "Próximo" })
-    expect(next).toBeDisabled()
+    // The package step is optional, so it never blocks.
+    expect(next).toBeEnabled()
     expect(screen.getByRole("button", { name: "Voltar" })).toBeDisabled()
+    await user.click(next)
+    expect(screen.getByRole("button", { name: "Próximo" })).toBeDisabled()
 
     await user.type(screen.getByLabelText("Razão social"), "   ")
     await user.type(screen.getByLabelText("CNPJ/CPF"), "12345678000199")
@@ -207,14 +212,16 @@ describe("OnboardingPage locale", () => {
     ).toBeInTheDocument()
     expect(
       screen.getByText(
-        "14 days full access, then read-only until day 30. No WhatsApp; up to 10 assets and 20 users.",
+        "30 days of use, no credit card, with the Professional plan limits of the package you choose. Then read-only until day 90.",
       ),
     ).toBeInTheDocument()
     expect(
       screen.getByRole("navigation", { name: "Progress" }),
     ).toBeInTheDocument()
-    expect(screen.getByRole("button", { name: "Next" })).toBeDisabled()
+    expect(screen.getByRole("button", { name: "Next" })).toBeEnabled()
     expect(screen.getByRole("button", { name: "Back" })).toBeDisabled()
+    await user.click(screen.getByRole("button", { name: "Next" }))
+    expect(screen.getByRole("button", { name: "Next" })).toBeDisabled()
     expect(
       screen.queryByRole("heading", { name: "Comece seu teste grátis" }),
     ).not.toBeInTheDocument()
@@ -250,5 +257,78 @@ describe("OnboardingPage locale", () => {
         "A password is not collected here. After you create the account, we email an invite to this address.",
       ),
     ).toBeInTheDocument()
+  })
+})
+
+describe("OnboardingPage package and lead capture", () => {
+  beforeEach(() => {
+    createTenantMock.mockReset()
+    window.sessionStorage.clear()
+  })
+
+  async function fillAndSubmit(user: ReturnType<typeof userEvent.setup>) {
+    await user.click(screen.getByRole("button", { name: "Próximo" }))
+    await user.type(screen.getByLabelText("Razão social"), "Clube Quadras")
+    await user.type(screen.getByLabelText("CNPJ/CPF"), "12345678000199")
+    await user.click(screen.getByRole("button", { name: "Próximo" }))
+    await user.type(screen.getByLabelText("Nome do administrador"), "Ana Costa")
+    await user.type(screen.getByLabelText("E-mail do administrador"), "ana@clube.com")
+    await user.type(screen.getByLabelText("Celular (com DDD)"), "11999999999")
+    await user.click(screen.getByRole("button", { name: "Próximo" }))
+    await user.click(screen.getByRole("button", { name: "Criar conta de teste" }))
+  }
+
+  const created = {
+    tenantId: "11111111-1111-4111-8111-111111111111",
+    headquartersUnitId: "22222222-2222-4222-8222-222222222222",
+    adminUserId: null,
+    superAdminRoleId: "33333333-3333-4333-8333-333333333333",
+    supabaseAuthId: null,
+    inviteId: "44444444-4444-4444-8444-444444444444",
+    subdomain: "club",
+  }
+
+  it("preselects the package from the query and sends utm_source and utm_campaign as lead fields", async () => {
+    const user = userEvent.setup()
+    createTenantMock.mockResolvedValue(created)
+    renderOnboarding("/onboarding?package=manutencao&plan=profissional&utm_source=google&utm_campaign=pmoc-2026")
+
+    expect(screen.getByRole("radio", { name: /Manutenção e PMOC/ })).toHaveAttribute("aria-checked", "true")
+    expect(screen.getByRole("radio", { name: /Reservas/ })).toHaveAttribute("aria-checked", "false")
+
+    await fillAndSubmit(user)
+
+    expect(createTenantMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        packageKey: "manutencao",
+        leadSource: "google",
+        leadCampaign: "pmoc-2026",
+      }),
+    )
+  })
+
+  it("uses ref as the lead source when there is no utm_source and drops invalid values", async () => {
+    const user = userEvent.setup()
+    createTenantMock.mockResolvedValue(created)
+    renderOnboarding("/onboarding?ref=amigo-ana&utm_campaign=<script>")
+
+    await fillAndSubmit(user)
+
+    const sent = createTenantMock.mock.calls[0]?.[0]
+    expect(sent?.leadSource).toBe("amigo-ana")
+    expect(sent?.leadCampaign).toBeNull()
+    expect(sent?.packageKey).toBeUndefined()
+  })
+
+  it("lets the visitor pick a package and ignores an unknown one in the query", async () => {
+    const user = userEvent.setup()
+    createTenantMock.mockResolvedValue(created)
+    renderOnboarding("/onboarding?package=enterprise")
+
+    expect(screen.getAllByRole("radio").every((radio) => radio.getAttribute("aria-checked") === "false")).toBe(true)
+    await user.click(screen.getByRole("radio", { name: /Locação/ }))
+    await fillAndSubmit(user)
+
+    expect(createTenantMock).toHaveBeenCalledWith(expect.objectContaining({ packageKey: "locacao" }))
   })
 })

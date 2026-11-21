@@ -1,5 +1,6 @@
 import { z } from "zod"
 
+import { PACKAGE_KEYS } from "@/features/billing/schemas/billingSchemas"
 import i18n from "@/lib/i18n"
 
 function translated(key: string) {
@@ -37,6 +38,11 @@ export const createTenantRequestSchema = z.object({
     .trim()
     .min(10, translated("trial.onboarding.validation.phoneInvalid")),
   isTrial: z.literal(true),
+  /** Package the trial starts on (reservas|manutencao|locacao); absent = the API default. */
+  packageKey: z.enum(PACKAGE_KEYS).optional(),
+  /** Funnel attribution, already sanitized by `toLeadAttribution` (the API validates again). */
+  leadSource: z.string().max(100).nullable().optional(),
+  leadCampaign: z.string().max(100).nullable().optional(),
 })
 
 export type CreateTenantRequest = z.infer<typeof createTenantRequestSchema>
@@ -53,11 +59,16 @@ export const publicOnboardingAdminStepSchema = createTenantRequestSchema.pick({
   adminPhone: true,
 })
 
+/** Steps: 0 package (always valid, optional), 1 company, 2 admin, 3 review. */
 export function isPublicOnboardingStepValid(
   step: number,
   values: CreateTenantRequest,
 ): boolean {
   if (step === 0) {
+    return true
+  }
+
+  if (step === 1) {
     return publicOnboardingCompanyStepSchema.safeParse({
       legalName: values.legalName,
       taxId: values.taxId,
@@ -65,7 +76,7 @@ export function isPublicOnboardingStepValid(
     }).success
   }
 
-  if (step === 1) {
+  if (step === 2) {
     return publicOnboardingAdminStepSchema.safeParse({
       adminFullName: values.adminFullName,
       adminEmail: values.adminEmail,
@@ -73,7 +84,7 @@ export function isPublicOnboardingStepValid(
     }).success
   }
 
-  if (step === 2) {
+  if (step === 3) {
     return createTenantRequestSchema.safeParse(values).success
   }
 
