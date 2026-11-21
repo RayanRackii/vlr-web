@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { useTenantTimeZone } from "@/contexts/TenantTimeZoneContext"
 import { deliveryErrorText } from "@/features/catalog/lib/deliveryErrorMessage"
+import { notificationChannelLabel } from "@/features/catalog/lib/notificationChannelLabel"
 import { formatCatalogDate, type NotificationChannel, type NotificationDeliveryStatus } from "@/features/catalog/schemas/catalogSchemas"
 import { DELIVERY_EVENT_KEYS, deliveryEventLabel } from "@/features/notifications/lib/deliveryEventLabel"
 import { NOTIFICATION_DELIVERY_PAGE_SIZE, type NotificationDelivery } from "@/features/notifications/schemas/notificationDeliverySchemas"
@@ -138,7 +139,7 @@ export function NotificationHistoryPanel() {
   const needle = search.trim().toLocaleLowerCase(i18n.language)
   const visible = deliveries.filter((item) => {
     if (!needle) return true
-    const haystack = [item.recipientName, deliveryEventLabel(item.eventKey, t), t(`catalog.channels.${item.channel}`), deliveryErrorText(item.errorMessage, t)]
+    const haystack = [item.recipientName, deliveryEventLabel(item.eventKey, t), notificationChannelLabel(t, item.channel), deliveryErrorText(item.errorMessage, t)]
       .filter(Boolean).join(" ").toLocaleLowerCase(i18n.language)
     return haystack.includes(needle)
   })
@@ -192,7 +193,7 @@ export function NotificationHistoryPanel() {
           </Button>
           <div id="notification-filters" className="notifications-filters" data-expanded={filtersOpen}>
             <ChoiceList label={t("notifications.page.status")} value={status} onChange={(value) => { setLoading(true); setStatus(value as NotificationDeliveryStatus | ""); setPage(1) }} options={[{ value: "", label: t("notifications.page.all") }, ...STATUSES.map((item) => ({ value: item, label: t(`catalog.deliveryStatus.${item}`) }))]} />
-            <ChoiceList label={t("notifications.page.channel")} value={channel} onChange={(value) => { setLoading(true); setChannel(value as NotificationChannel | ""); setPage(1) }} options={[{ value: "", label: t("notifications.page.all") }, ...CHANNELS.map((item) => ({ value: item, label: t(`catalog.channels.${item}`) }))]} />
+            <ChoiceList label={t("notifications.page.channel")} value={channel} onChange={(value) => { setLoading(true); setChannel(value as NotificationChannel | ""); setPage(1) }} options={[{ value: "", label: t("notifications.page.all") }, ...CHANNELS.map((item) => ({ value: item, label: notificationChannelLabel(t, item) }))]} />
             <ChoiceList label={t("notifications.page.event")} value={event} onChange={(value) => { setLoading(true); setEvent(value); setPage(1) }} options={[{ value: "", label: t("notifications.page.all") }, ...DELIVERY_EVENT_KEYS.map((item) => ({ value: item, label: deliveryEventLabel(item, t) }))]} />
             {narrow ? <fieldset className="min-w-0 space-y-1"><legend className="px-1 text-sm font-medium">{t("notifications.page.period")}</legend>{periodFields}</fieldset> : (
               <Popover>
@@ -223,7 +224,7 @@ export function NotificationHistoryPanel() {
                   <p className="text-sm font-medium">{eventLabel}</p>
                   <span className="notifications-badge" data-tone={toneFor(delivery.status)}>{t(`catalog.deliveryStatus.${delivery.status}`)}</span>
                 </div>
-                <p className="mt-1 text-xs text-muted-foreground">{[who, t(`catalog.channels.${delivery.channel}`), error].filter(Boolean).join(" · ")}</p>
+                <p className="mt-1 text-xs text-muted-foreground">{[who, notificationChannelLabel(t, delivery.channel), error].filter(Boolean).join(" · ")}</p>
               </div>
               <time className="notifications-when" dateTime={delivery.createdAt}>{formatCatalogDate(delivery.createdAt, i18n.language, timeZoneId)}</time>
               <div className="notifications-actions">

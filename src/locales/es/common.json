@@ -1075,7 +1075,9 @@
       "InApp": "En la app",
       "Email": "Correo",
       "WhatsApp": "WhatsApp",
-      "Sms": "SMS"
+      "Sms": "SMS",
+      "Push": "Push",
+      "unknown": "Otro canal"
     },
     "deliveryStatus": {
       "Queued": "En cola",

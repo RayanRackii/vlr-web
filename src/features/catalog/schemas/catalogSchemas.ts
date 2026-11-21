@@ -30,14 +30,23 @@ export const catalogActorTypeSchema = z.enum(["Customer", "B2BUser", "System"])
 
 export const productRequestStatusSchema = z.enum(["Submitted", "Cancelled"])
 
-export const notificationChannelSchema = z.enum([
+export const KNOWN_NOTIFICATION_CHANNELS = [
   "InApp",
   "Email",
   "WhatsApp",
   "Sms",
-])
+  "Push",
+] as const
 
-export type NotificationChannel = z.infer<typeof notificationChannelSchema>
+export type KnownNotificationChannel = (typeof KNOWN_NOTIFICATION_CHANNELS)[number]
+
+/**
+ * Tolerant reader: the API owns this enum, and a channel added there must never make a whole
+ * deliveries list fail to parse. Unknown values are rendered with a neutral label.
+ */
+export const notificationChannelSchema = z.string()
+
+export type NotificationChannel = KnownNotificationChannel | (string & {})
 
 export const notificationRecipientKindSchema = z.enum(["Customer", "B2BUser"])
 
@@ -381,7 +390,7 @@ export const catalogNotificationAttemptSchema = z.object({
   finishedAt: z.string().nullable(),
   outcome: notificationAttemptOutcomeSchema,
   errorMessage: z.string().nullable(),
-  channel: z.enum(["InApp", "Email", "WhatsApp", "Sms", "Push"]),
+  channel: notificationChannelSchema,
 })
 
 export type CatalogNotificationAttempt = z.infer<typeof catalogNotificationAttemptSchema>
