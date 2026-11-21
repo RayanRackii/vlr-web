@@ -2,6 +2,8 @@ import { Component, type ErrorInfo, type ReactNode } from "react"
 import { useTranslation } from "react-i18next"
 
 import { ErrorState } from "@/components/ErrorState"
+import { isChunkLoadError } from "@/lib/chunkLoadError"
+import { reloadPage } from "@/lib/reloadPage"
 
 function AppErrorFallback({ onRetry }: { onRetry: () => void }) {
   const { t } = useTranslation()
@@ -17,14 +19,14 @@ function AppErrorFallback({ onRetry }: { onRetry: () => void }) {
 }
 
 type Props = { children: ReactNode }
-type State = { failed: boolean }
+type State = { failed: boolean; chunkError: boolean }
 
 /** The only class component: React has no hook API for render-error boundaries. */
 export class AppErrorBoundary extends Component<Props, State> {
-  state: State = { failed: false }
+  state: State = { failed: false, chunkError: false }
 
-  static getDerivedStateFromError(): State {
-    return { failed: true }
+  static getDerivedStateFromError(error: unknown): State {
+    return { failed: true, chunkError: isChunkLoadError(error) }
   }
 
   componentDidCatch(error: Error, info: ErrorInfo): void {
@@ -33,7 +35,12 @@ export class AppErrorBoundary extends Component<Props, State> {
   }
 
   private reset = () => {
-    this.setState({ failed: false })
+    // React.lazy caches the rejected import: a stale chunk only recovers with a fresh page load.
+    if (this.state.chunkError) {
+      reloadPage()
+      return
+    }
+    this.setState({ failed: false, chunkError: false })
   }
 
   render() {
