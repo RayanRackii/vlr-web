@@ -59,6 +59,8 @@ import {
   getAssetById,
   updateAsset,
 } from "@/features/assets/services/assetsService"
+import { PlanLimitNotice } from "@/features/billing/components/PlanLimitNotice"
+import { isPlanLimitError } from "@/features/billing/lib/planLimitError"
 import {
   bulkApplyAssetPricings,
   getAssetPricings,
@@ -244,6 +246,7 @@ export function AssetWizard({
   const stepFieldsRef = useRef<HTMLDivElement>(null)
   const focusInvalidRef = useRef(false)
   const [missing, setMissing] = useState<string[]>([])
+  const [planLimitReached, setPlanLimitReached] = useState(false)
 
   useEffect(() => {
     if (focusInvalidRef.current) {
@@ -637,6 +640,7 @@ export function AssetWizard({
       onCompleted()
       onOpenChange(false)
     } catch (error: unknown) {
+      setPlanLimitReached(isPlanLimitError(error))
       const parsed = readApiValidation(error)
       const known = Object.keys(parsed.fields).filter((key): key is FieldErrorKey => key in {
         unitId: 1, categoryId: 1, familyId: 1, name: 1, tag: 1, pricing: 1, totalQuantity: 1, queueOpeningTime: 1,
@@ -702,6 +706,7 @@ export function AssetWizard({
           </div>
         ) : (
           <div ref={stepFieldsRef} className="min-h-0 flex-1 space-y-4 overflow-y-auto scroll-pb-24 pr-1 pb-6">
+            {planLimitReached ? <PlanLimitNotice /> : null}
             {missing.length > 0 ? (
               <div role="alert" className="rounded-md border border-destructive/40 bg-destructive/5 p-3 text-sm">
                 <p className="font-medium">{t("assets.wizard.missingTitle")}</p>

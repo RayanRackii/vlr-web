@@ -11,6 +11,7 @@ import {
 } from "lucide-react"
 import { useForm, useWatch } from "react-hook-form"
 import { useTranslation } from "react-i18next"
+import { useLocation } from "react-router-dom"
 
 import { AuthLayout } from "@/components/layout/AuthLayout"
 import { Button } from "@/components/ui/button"
@@ -26,6 +27,13 @@ import {
 import { InputWithIcon } from "@/components/ui/input-icon"
 import { WizardPanelsStepper } from "@/components/ui/wizard-panels"
 import { iconProps } from "@/lib/icon"
+import { cn } from "@/lib/utils"
+import {
+  readRequestedPackage,
+  resolvePassthroughParams,
+  toLeadAttribution,
+} from "@/features/billing/lib/leadAttribution"
+import { PACKAGE_KEYS } from "@/features/billing/schemas/billingSchemas"
 import { createTenant } from "@/features/onboarding/createTenant"
 import {
   createTenantRequestSchema,
@@ -35,6 +43,7 @@ import {
 
 export function OnboardingPage() {
   const { t } = useTranslation()
+  const { search } = useLocation()
   const [step, setStep] = useState(0)
   const [inviteEmail, setInviteEmail] = useState<string | null>(null)
 
@@ -52,6 +61,7 @@ export function OnboardingPage() {
       adminEmail: "",
       adminPhone: "",
       isTrial: true,
+      packageKey: readRequestedPackage(search) ?? undefined,
     },
     mode: "onTouched",
   })
@@ -67,6 +77,7 @@ export function OnboardingPage() {
     useWatch({ control: form.control, name: "adminFullName" }) ?? ""
   const adminEmail = useWatch({ control: form.control, name: "adminEmail" }) ?? ""
   const adminPhone = useWatch({ control: form.control, name: "adminPhone" }) ?? ""
+  const packageKey = useWatch({ control: form.control, name: "packageKey" })
   const stepValues: CreateTenantRequest = {
     legalName,
     taxId,
@@ -77,11 +88,13 @@ export function OnboardingPage() {
     adminEmail,
     adminPhone,
     isTrial: true,
+    packageKey,
   }
   const isCurrentStepValid = isPublicOnboardingStepValid(step, stepValues)
 
   const panelSteps = useMemo(
     () => [
+      { id: "package", label: t("trial.onboarding.steps.package") },
       { id: "company", label: t("trial.onboarding.steps.company") },
       { id: "admin", label: t("trial.onboarding.steps.admin") },
       { id: "review", label: t("trial.onboarding.steps.review") },
@@ -91,6 +104,11 @@ export function OnboardingPage() {
 
   async function goNext() {
     if (step === 0) {
+      setStep(1)
+      return
+    }
+
+    if (step === 1) {
       const ok = await form.trigger([
         "legalName",
         "taxId",
@@ -99,11 +117,11 @@ export function OnboardingPage() {
       if (!ok) {
         return
       }
-      setStep(1)
+      setStep(2)
       return
     }
 
-    if (step === 1) {
+    if (step === 2) {
       const ok = await form.trigger([
         "adminFullName",
         "adminEmail",
@@ -112,7 +130,7 @@ export function OnboardingPage() {
       if (!ok) {
         return
       }
-      setStep(2)
+      setStep(3)
     }
   }
 
@@ -120,6 +138,7 @@ export function OnboardingPage() {
     const parsed = createTenantRequestSchema.safeParse({
       ...form.getValues(),
       isTrial: true,
+      ...toLeadAttribution(resolvePassthroughParams(search)),
     })
     if (!parsed.success) {
       await form.trigger()
@@ -189,6 +208,50 @@ export function OnboardingPage() {
           <fieldset className="space-y-6">
             {step === 0 ? (
               <div className="space-y-4">
+                <p className="text-sm font-medium">{t("trial.onboarding.package.title")}</p>
+                <div
+                  role="radiogroup"
+                  aria-label={t("trial.onboarding.package.groupAria")}
+                  className="grid gap-3 sm:grid-cols-3"
+                >
+                  {PACKAGE_KEYS.map((key) => {
+                    const selected = packageKey === key
+                    return (
+                      <button
+                        key={key}
+                        type="button"
+                        role="radio"
+                        aria-checked={selected}
+                        onClick={() => {
+                          form.setValue("packageKey", selected ? undefined : key, {
+                            shouldDirty: true,
+                          })
+                        }}
+                        className={cn(
+                          "rounded-lg border p-4 text-left transition-colors",
+                          selected
+                            ? "border-primary bg-primary/5 ring-1 ring-primary"
+                            : "border-border hover:border-foreground/40",
+                        )}
+                      >
+                        <span className="block text-sm font-semibold">
+                          {t(`billing.packages.${key}.name`)}
+                        </span>
+                        <span className="mt-1 block text-xs text-muted-foreground">
+                          {t(`billing.packages.${key}.tagline`)}
+                        </span>
+                      </button>
+                    )
+                  })}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  {t("trial.onboarding.package.hint")}
+                </p>
+              </div>
+            ) : null}
+
+            {step === 1 ? (
+              <div className="space-y-4">
                 <FormField
                   control={form.control}
                   name="legalName"
@@ -246,7 +309,7 @@ export function OnboardingPage() {
               </div>
             ) : null}
 
-            {step === 1 ? (
+            {step === 2 ? (
               <div className="space-y-4">
                 <FormField
                   control={form.control}
@@ -308,7 +371,7 @@ export function OnboardingPage() {
               </div>
             ) : null}
 
-            {step === 2 ? (
+            {step === 3 ? (
               <div className="space-y-3 rounded-md border border-border p-4 text-sm">
                 <p>
                   <span className="text-muted-foreground">
@@ -334,6 +397,14 @@ export function OnboardingPage() {
                   </span>
                   {stepValues.adminPhone}
                 </p>
+                {stepValues.packageKey ? (
+                  <p>
+                    <span className="text-muted-foreground">
+                      {t("trial.onboarding.fields.package")}:{" "}
+                    </span>
+                    {t(`billing.packages.${stepValues.packageKey}.name`)}
+                  </p>
+                ) : null}
                 <p className="text-muted-foreground">
                   {t("trial.onboarding.reviewLimits")}
                 </p>
@@ -358,7 +429,7 @@ export function OnboardingPage() {
             >
               {t("common.back")}
             </Button>
-            {step < 2 ? (
+            {step < 3 ? (
               <FormPrimaryButton
                 type="button"
                 isValid={isCurrentStepValid}

@@ -21,9 +21,16 @@ import {
   type UpdateAssetRequest,
 } from "@/features/assets/schemas/assetSchemas"
 
+import { toPlanLimitError } from "@/features/billing/lib/planLimitError"
+
 const ASSETS_PATH = "/api/assets"
 
 function throwAssetsError(error: unknown, fallbackKey: string): never {
+  const planLimit = toPlanLimitError(error)
+  if (planLimit) {
+    throw planLimit
+  }
+
   console.error(fallbackKey, error)
   if (isAxiosError(error)) {
     console.error(`${fallbackKey} response data`, error.response?.data)
@@ -90,6 +97,11 @@ export async function createAsset(data: CreateAssetRequest): Promise<Asset> {
 
     return parsed.data
   } catch (error: unknown) {
+    const planLimit = toPlanLimitError(error)
+    if (planLimit) {
+      throw planLimit
+    }
+
     if (error instanceof Error && !isAxiosError(error)) {
       throw error
     }

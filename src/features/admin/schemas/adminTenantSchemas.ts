@@ -18,8 +18,6 @@ export const KNOWN_COMMERCIAL_MODULE_KEYS = [
 export type KnownCommercialModuleKey =
   (typeof KNOWN_COMMERCIAL_MODULE_KEYS)[number]
 
-export const PRICE_PER_MODULE_BRL = 199
-
 const SUBDOMAIN_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/
 const HEX_COLOR_PATTERN = /^#?[0-9A-Fa-f]{6}$/
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/

@@ -329,21 +329,23 @@
     "loadCatalogAgenda": "Could not load the agenda.",
     "timeout": "The connection took too long. Please try again.",
     "updateReservationNotes": "Could not save the note.",
-    "previewAdminAssetFamily": "Could not calculate the impact of the change."
+    "previewAdminAssetFamily": "Could not calculate the impact of the change.",
+    "planLimitReached": "Plan limit reached — see plans"
   },
   "trial": {
     "banner": {
-      "active": "Trial: {{days}} day(s) left. WhatsApp off; up to 10 assets and 20 users.",
+      "active": "Trial: {{days}} day(s) left. You are on the Professional plan limits of your package.",
       "readOnly": "Trial ended — read-only account. Data will be removed in {{days}} day(s). Subscribe to continue."
     },
     "readOnlyHint": "Account is read-only after the trial window ended.",
     "onboarding": {
       "title": "Start your free trial",
-      "description": "14 days full access, then read-only until day 30. No WhatsApp; up to 10 assets and 20 users.",
+      "description": "30 days of use, no credit card, with the Professional plan limits of the package you choose. Then read-only until day 90.",
       "steps": {
         "company": "Company",
         "admin": "Admin",
-        "review": "Review"
+        "review": "Review",
+        "package": "Package"
       },
       "stepsAria": "Progress",
       "fields": {
@@ -353,11 +355,12 @@
         "adminName": "Admin full name",
         "adminEmail": "Admin email",
         "adminPhone": "Mobile phone",
-        "phonePlaceholder": "11999999999"
+        "phonePlaceholder": "11999999999",
+        "package": "Package"
       },
       "subdomainHint": "Your portal subdomain is generated automatically from the company name (4 characters).",
       "subdomainPreview": "Expected subdomain",
-      "reviewLimits": "Trial limits: 10 assets, 20 users, email-only notifications.",
+      "reviewLimits": "30-day trial with the Professional plan limits of the chosen package; email notifications.",
       "inviteHint": "A password is not collected here. After you create the account, we email an invite to this address.",
       "finish": "Create trial account",
       "submitting": "Creating...",
@@ -380,6 +383,11 @@
         "emailRequired": "Email is required.",
         "emailInvalid": "Enter a valid email.",
         "phoneInvalid": "Enter a valid mobile number with area code."
+      },
+      "package": {
+        "title": "Choose a package",
+        "hint": "You can change package and plan later. The trial uses the Professional plan limits.",
+        "groupAria": "Package"
       }
     }
   },
@@ -2340,58 +2348,15 @@
     },
     "pricing": {
       "eyebrow": "Pricing",
-      "title": "Pick a plan. Start without drama.",
-      "subtitle": "Clear trial, easy exit, no fine print hiding in the middle of the path.",
-      "cta": "Start now",
-      "reassurance": "Cancel anytime. Your data is yours.",
-      "faqTitle": "Questions that stall the decision",
-      "plans": {
-        "starter": {
-          "name": "Starter",
-          "price": "Contact us",
-          "blurb": "Validate PMOC and work orders in one unit.",
-          "features": [
-            "1 unit",
-            "PMOC + Work Orders",
-            "Up to 5 users"
-          ]
-        },
-        "operations": {
-          "name": "Operations",
-          "price": "Contact us",
-          "blurb": "For teams that live on maintenance and compliance.",
-          "features": [
-            "Multiple units",
-            "Roles and permissions",
-            "History and report export",
-            "Priority support"
-          ]
-        },
-        "scale": {
-          "name": "Scale",
-          "price": "Contact us",
-          "blurb": "For networks that need central control.",
-          "features": [
-            "Unlimited units*",
-            "Guided onboarding",
-            "Dedicated SLA",
-            "Modules on demand"
-          ]
-        }
-      },
-      "faq": {
-        "card": {
-          "q": "Do I need a credit card to try it?",
-          "a": "No. You start the trial without a card and only decide later if it fits the operation."
-        },
-        "data": {
-          "q": "What happens to my data if I cancel?",
-          "a": "Your data stays yours. You can export what you need before closing — we do not hold your operation hostage to a spreadsheet."
-        },
-        "goLive": {
-          "q": "How long to go live?",
-          "a": "Lean operations go live in minutes. Larger networks get guided onboarding so history is not lost on the way."
-        }
+      "title": "A package for your kind of business",
+      "subtitle": "Three packages, three plans each. No setup fee, no lock-in and 30 days free to try.",
+      "cta": "See plans and pricing",
+      "reassurance": "30 days free, no credit card. We set it up with you.",
+      "learnMore": "Learn more",
+      "blurbs": {
+        "reservas": "Bookings paid by the customer, waitlist and a portal with your brand.",
+        "manutencao": "PMOC up to date, work orders on the phone and history per equipment.",
+        "locacao": "Know what is available and what is late, and let customers order from the portal."
       }
     },
     "closing": {
@@ -2402,6 +2367,141 @@
       "tagline": "Asset ops, PMOC, and work orders in one flow.",
       "rights": "All rights reserved.",
       "contactPrompt": "Still have questions?"
+    },
+    "pricingPage": {
+      "eyebrow": "Pricing",
+      "title": "Clear pricing, by package",
+      "subtitle": "Pick the package for your business and the plan for the size of your operation. 30 days free, no credit card.",
+      "packageSwitcher": "Package",
+      "cycleSwitcher": "Billing cycle",
+      "monthly": "Monthly",
+      "annual": "Annual",
+      "annualBadge": "2 months free",
+      "featured": "Most popular",
+      "perMonth": "/month",
+      "billedMonthly": "billed monthly",
+      "billedAnnually": "billed {{price}} per year",
+      "freeMonths": "{{count}} months free",
+      "includes": "Includes",
+      "cta": "Start free trial",
+      "trialNote": "30 days free. No credit card.",
+      "loading": "Loading plans...",
+      "error": "Could not load the plans right now.",
+      "retry": "Try again",
+      "empty": "No plans available for this package.",
+      "guarantees": {
+        "trial": "30 days free",
+        "noLockIn": "No lock-in",
+        "noSetupFee": "No setup fee",
+        "payment": "Pix, card or boleto"
+      },
+      "addOns": {
+        "title": "Add-ons",
+        "subtitle": "Need more? Add only what you use.",
+        "beyond": "Above the Complete plan, talk to us."
+      },
+      "faq": {
+        "title": "Frequently asked questions",
+        "lockIn": {
+          "q": "Is there a lock-in?",
+          "a": "No. Cancel whenever you want and your data stays yours."
+        },
+        "setupFee": {
+          "q": "Is there a setup fee?",
+          "a": "No. You only pay the plan fee (or the annual plan, with 2 months free)."
+        },
+        "payment": {
+          "q": "How do I pay?",
+          "a": "By Pix, credit card or boleto."
+        },
+        "trial": {
+          "q": "How does the free trial work?",
+          "a": "30 days of use, no credit card, with the Professional plan limits of the package you choose. Then you pick the plan that fits your operation."
+        },
+        "annual": {
+          "q": "What is the annual plan?",
+          "a": "You pay for 10 months and use it for 12: 2 months free."
+        },
+        "limit": {
+          "q": "What happens if I go over the plan limit?",
+          "a": "Rolvix tells you when you try to add more and you can change plans. Nothing that already exists is deleted."
+        }
+      }
+    },
+    "verticals": {
+      "common": {
+        "benefitsTitle": "What changes in your routine",
+        "proofsTitle": "What you get",
+        "screenshotsTitle": "See Rolvix in action",
+        "screenshotSoon": "Image coming soon",
+        "teaserTitle": "How much it costs",
+        "teaserFrom": "from {{price}}/month",
+        "teaserLink": "See all plans",
+        "teaserUnavailable": "See the up-to-date plans and pricing.",
+        "cta": "Start free trial",
+        "ctaNote": "30 days free, no card, no setup fee and no lock-in. We set it up with you.",
+        "secondaryCta": "See pricing"
+      },
+      "arenas": {
+        "eyebrow": "For arenas, courts and clubs",
+        "title": "Your court booked and paid by the customer, without you answering WhatsApp.",
+        "subtitle": "Online bookings with your arena's brand, deposit by Pix confirmed automatically and a waitlist for full time slots.",
+        "benefits": {
+          "booking": {
+            "title": "Booking without WhatsApp",
+            "body": "Customers pick court, day and time on your arena's link. No double bookings and no notebook."
+          },
+          "payment": {
+            "title": "Deposit by Pix",
+            "body": "The deposit is paid and confirmed automatically. Fewer no-shows and nothing checked by hand."
+          },
+          "waitlist": {
+            "title": "Waitlist and monthly members",
+            "body": "A full slot becomes a waitlist; monthly members and classes stay organized in the same place."
+          }
+        },
+        "proofs": [
+          "Booking link with your arena's brand",
+          "Pix deposit confirmed automatically",
+          "Waitlist for full time slots",
+          "No commission on payments"
+        ],
+        "screenshots": [
+          "Daily court schedule",
+          "Booking through the customer portal",
+          "Deposit paid by Pix"
+        ]
+      },
+      "pmoc": {
+        "eyebrow": "For HVAC and refrigeration companies",
+        "title": "PMOC up to date and the report ready at the end of the visit, even offline.",
+        "subtitle": "Maintenance plan per equipment, work orders on the phone and history by QR code. Your customer checks everything in the portal.",
+        "benefits": {
+          "plan": {
+            "title": "Maintenance plan per equipment",
+            "body": "Each equipment with its routine, history and next service. No more PMOC in Word and spreadsheets."
+          },
+          "offline": {
+            "title": "Work orders on the phone, offline",
+            "body": "The technician performs and records the visit without signal and syncs later. The report is ready at the end of the visit."
+          },
+          "portal": {
+            "title": "Portal for your customer",
+            "body": "A condominium, clinic or mall checks reports and history without calling you."
+          }
+        },
+        "proofs": [
+          "Maintenance plan per equipment",
+          "Work orders on the phone, also offline",
+          "Equipment history by QR code",
+          "Portal for the end customer to check"
+        ],
+        "screenshots": [
+          "Equipment maintenance plan",
+          "Work order on the phone",
+          "PMOC report ready for the customer"
+        ]
+      }
     }
   },
   "grupos": {
@@ -5061,7 +5161,9 @@
       "metrics": {
         "totalTenants": "Total companies",
         "activeTenants": "Active companies",
-        "estimatedRevenue": "Estimated monthly revenue"
+        "mrr": "MRR (monthly recurring revenue)",
+        "mrrBreakdown": "{{active}} active · {{trialing}} trialing · {{pastDue}} past due · {{readOnly}} read-only",
+        "mrrUnavailable": "Unavailable"
       },
       "actions": {
         "edit": "Edit company",
@@ -5105,7 +5207,8 @@
         "users": "Users",
         "registration": "Portal sign-up",
         "menu": "Portal menu",
-        "advanced": "Advanced settings"
+        "advanced": "Advanced settings",
+        "subscription": "Subscription"
       },
       "advanced": {
         "title": "Advanced settings",
@@ -5460,7 +5563,12 @@
         "admin": "Project admin",
         "total": "Estimated monthly total",
         "perMonth": "/mo",
-        "demoNote": "Illustrative UI pricing (R$ 199 per module)."
+        "demoNote": "The real plan and price are set in the company's Subscription tab.",
+        "planTitle": "Reference plan",
+        "planSuggested": "{{plan}} ({{package}}) — {{price}}/month",
+        "planNone": "No catalog plan covers the selected modules.",
+        "planLoading": "Loading plan prices...",
+        "planUnavailable": "Plan prices unavailable."
       },
       "actions": {
         "back": "Back",
@@ -5511,6 +5619,69 @@
       "exitFailed": "Could not return to the platform.",
       "enterErrorTitle": "Error",
       "enterFailed": "Could not open the company."
+    },
+    "subscription": {
+      "title": "Subscription",
+      "description": "Plan, cycle, status, discount and history of this company's subscription.",
+      "loading": "Loading subscription...",
+      "loadError": "Could not load the subscription.",
+      "retry": "Try again",
+      "none": "This company has no subscription yet. Pick a plan to create one.",
+      "fields": {
+        "plan": "Plan",
+        "cycle": "Cycle",
+        "status": "Status",
+        "billingMode": "Billing",
+        "limitsUnlimited": "Plan limits off (no blocking by limit)",
+        "discountPercent": "Discount (%)",
+        "discountUntil": "Discount valid until",
+        "coupon": "Coupon",
+        "couponHint": "Coupon \"fundador\": 40% off for 12 months."
+      },
+      "summary": {
+        "monthlyEquivalent": "Monthly equivalent",
+        "period": "Current period",
+        "pastDueSince": "Past due since",
+        "discount": "Current discount",
+        "provider": "Provider"
+      },
+      "statuses": {
+        "trialing": "Trialing",
+        "active": "Active",
+        "past_due": "Past due",
+        "read_only": "Read-only",
+        "canceled": "Canceled"
+      },
+      "cycles": {
+        "monthly": "Monthly",
+        "annual": "Annual"
+      },
+      "modes": {
+        "provider": "Automatic (Asaas)",
+        "manual": "Manual (outside the app)"
+      },
+      "planOption": "{{package}} · {{plan}} — {{price}}/month",
+      "unchanged": "Keep",
+      "save": "Save subscription",
+      "saving": "Saving...",
+      "saved": "Subscription updated.",
+      "errors": {
+        "saveFailed": "Could not save the subscription."
+      },
+      "events": {
+        "title": "History",
+        "empty": "No events recorded.",
+        "types": {
+          "created": "Subscription created",
+          "plan_changed": "Plan changed",
+          "payment_received": "Payment received",
+          "payment_overdue": "Payment overdue",
+          "read_only": "Account set to read-only",
+          "reactivated": "Account reactivated",
+          "canceled": "Subscription canceled",
+          "unknown": "Event"
+        }
+      }
     }
   },
   "rentals": {
@@ -7179,6 +7350,54 @@
       "kickerTooLong": "The kicker must be up to {{max}} characters.",
       "headlineTooLong": "The headline must be up to {{max}} characters.",
       "subtitleTooLong": "The subtitle must be up to {{max}} characters."
+    }
+  },
+  "billing": {
+    "planLimit": {
+      "title": "Plan limit reached",
+      "link": "see plans"
+    },
+    "packages": {
+      "reservas": {
+        "name": "Bookings",
+        "tagline": "Schedule, bookings and customer portal"
+      },
+      "manutencao": {
+        "name": "Maintenance and PMOC",
+        "tagline": "Equipment, PMOC and work orders"
+      },
+      "locacao": {
+        "name": "Rentals",
+        "tagline": "Items, availability and portal orders"
+      }
+    },
+    "limits": {
+      "assets": "Equipment and items: up to {{count}}",
+      "rentableResources": "Bookable resources: up to {{count}}",
+      "users": "Users: up to {{count}}",
+      "units": "Units: up to {{count}}",
+      "whatsappMessagesMonth": "WhatsApp: {{count}} messages per month"
+    },
+    "limitsUnlimited": {
+      "assets": "Equipment and items: unlimited",
+      "rentableResources": "Bookable resources: unlimited",
+      "users": "Users: unlimited",
+      "units": "Units: unlimited",
+      "whatsappMessagesMonth": "WhatsApp: unlimited messages"
+    },
+    "addOns": {
+      "module": {
+        "name": "Extra module",
+        "price": "{{price}}/month"
+      },
+      "unit": {
+        "name": "Extra unit",
+        "price": "{{price}}/month"
+      },
+      "whatsapp": {
+        "name": "Pack of 1,000 WhatsApp messages",
+        "price": "{{price}} per pack"
+      }
     }
   }
 }

@@ -23,9 +23,11 @@ import {
 } from "@/lib/brandColors"
 import { CommercialModulePicker } from "@/features/admin/components/CommercialModulePicker"
 import { useAdminModuleCatalog } from "@/features/admin/hooks/useAdminModuleCatalog"
+import { suggestReferencePlan } from "@/features/admin/lib/referencePlan"
 import { moduleNameI18nKey } from "@/features/admin/moduleCatalog"
+import { formatCents } from "@/features/billing/lib/planCatalog"
+import { usePublicPlans } from "@/features/billing/lib/usePublicPlans"
 import {
-  PRICE_PER_MODULE_BRL,
   createTenantOnboardingSchemas,
   tenantOnboardingMessagesFromT,
   isTenantOnboardingStepValid,
@@ -53,8 +55,6 @@ import {
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { WizardPanelsStepper } from "@/components/ui/wizard-panels"
-import i18n from "@/lib/i18n"
-import { formatLocaleCurrency } from "@/lib/localeFormat"
 import { cn } from "@/lib/utils"
 import { toast } from "sonner"
 
@@ -79,13 +79,6 @@ const STEP_TITLE_KEYS = [
   "admin.wizard.steps.admin",
   "admin.wizard.steps.summary",
 ] as const
-
-function formatCurrencyBRL(value: number): string {
-  return formatLocaleCurrency(value, "BRL", i18n.language, {
-    maximumFractionDigits: 0,
-    minimumFractionDigits: 0,
-  })
-}
 
 export function TenantOnboardingWizard() {
   const { t, i18n } = useTranslation()
@@ -135,7 +128,11 @@ export function TenantOnboardingWizard() {
 
   const isActionLocked = isFinishing || isSubmitSuccess
   const values = form.watch()
-  const monthlyTotal = values.activeModules.length * PRICE_PER_MODULE_BRL
+  const { status: plansStatus, plans: catalogPlans } = usePublicPlans()
+  const referencePlan = useMemo(
+    () => suggestReferencePlan(catalogPlans, values.activeModules),
+    [catalogPlans, values.activeModules],
+  )
   const familiesAvailable = families.length > 0
   const isCurrentStepValid = isTenantOnboardingStepValid(
     step,
@@ -817,10 +814,6 @@ export function TenantOnboardingWizard() {
                       className="flex items-center justify-between text-sm"
                     >
                       <span>{t(moduleNameI18nKey(moduleKey))}</span>
-                      <span className="text-muted-foreground">
-                        {formatCurrencyBRL(PRICE_PER_MODULE_BRL)}
-                        {t("admin.wizard.summary.perMonth")}
-                      </span>
                     </li>
                   ))}
                 </ul>
@@ -839,14 +832,29 @@ export function TenantOnboardingWizard() {
                 </ul>
               </div>
 
-              <div className="flex items-center justify-between border-t border-border pt-3">
-                <span className="text-sm font-medium">
-                  {t("admin.wizard.summary.total")}
-                </span>
-                <span className="text-base font-semibold">
-                  {formatCurrencyBRL(monthlyTotal)}
-                  {t("admin.wizard.summary.perMonth")}
-                </span>
+              <div className="border-t border-border pt-3">
+                <p className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                  {t("admin.wizard.summary.planTitle")}
+                </p>
+                <p className="text-sm font-medium" data-testid="wizard-reference-plan">
+                  {plansStatus === "loading"
+                    ? t("admin.wizard.summary.planLoading")
+                    : plansStatus === "error"
+                      ? t("admin.wizard.summary.planUnavailable")
+                      : referencePlan
+                        ? t("admin.wizard.summary.planSuggested", {
+                            plan: referencePlan.name,
+                            package: t(`billing.packages.${referencePlan.packageKey}.name`, {
+                              defaultValue: referencePlan.packageKey,
+                            }),
+                            price: formatCents(
+                              referencePlan.monthlyPriceCents,
+                              referencePlan.currency,
+                              i18n.language,
+                            ),
+                          })
+                        : t("admin.wizard.summary.planNone")}
+                </p>
               </div>
               <p className="text-xs text-muted-foreground">
                 {t("admin.wizard.summary.demoNote")}

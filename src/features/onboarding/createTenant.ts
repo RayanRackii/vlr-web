@@ -24,6 +24,9 @@ export async function createTenant(
       adminEmail: validatedPayload.adminEmail,
       adminPhone: validatedPayload.adminPhone,
       isTrial: true,
+      packageKey: validatedPayload.packageKey,
+      leadSource: validatedPayload.leadSource ?? undefined,
+      leadCampaign: validatedPayload.leadCampaign ?? undefined,
     })
 
     const parsedResponse = createTenantResponseSchema.safeParse(response.data)

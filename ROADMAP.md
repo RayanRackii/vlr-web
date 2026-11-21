@@ -20,6 +20,7 @@ Status neste roadmap: **código merged** = integrado; **validado em DEV** = flux
 - [x] `/register` dinâmico + UI admin de campos.
 - [x] QA R21 (WEB, local/DEV): convite de staff associa e-mail duplicado ao campo com copy pt-BR/en/es; cadastro B2C confirma CPF/e-mail via HTTP simulado, sem atribuir campo ao conflito genérico. Redirects staff (sem sessão, expiração e restauração do histórico) preservam `company` e retorno relativo seguro, incluindo query/hash; alias `/t/:subdomain` mantém o contexto existente.
 - [x] Confirmar migration + deploy FE/BE — `AddTenantRegistrationFields` + seed + `AddCatalogOrdersAndCustomerDocument` applied DEV and PROD; feature in API/WEB PROD SHAs; live public schema + `/register` 200. Authenticated admin/B2B PROD smoke not executed.
+- [x] Planos e preços B2 (WEB, código; branch `feat/billing-b2-pricing-pages`): `/precos`, `/arenas`, `/pmoc` públicas, pacote + `utm_*`/`ref` no onboarding, aba Assinatura e MRR no admin, erro `plan.limit_reached` com link. Spec em `vlr-api/docs/plans/active/2026-11-21-plans-pricing-billing.md`. Falta: DEV/PROD.
 
 ## 2. Shell B2C + menu multi-item — FEITO (código)
 

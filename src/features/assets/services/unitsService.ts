@@ -9,6 +9,8 @@ import {
   type Unit,
 } from "@/features/assets/schemas/unitSchemas"
 
+import { toPlanLimitError } from "@/features/billing/lib/planLimitError"
+
 const UNITS_PATH = "/api/units"
 
 export async function getUnits(): Promise<Unit[]> {
@@ -55,6 +57,11 @@ export async function createUnit(body: CreateUnitRequest): Promise<Unit> {
     }
     return parsed.data
   } catch (error: unknown) {
+    const planLimit = toPlanLimitError(error)
+    if (planLimit) {
+      throw planLimit
+    }
+
     if (isAxiosError(error) && error.response?.status === 409) {
       throw new Error(i18n.t("rentals.resources.inlineCreate.unitDuplicate"), {
         cause: error,

@@ -1,5 +1,5 @@
 import { useTranslation } from "react-i18next"
-import { Link } from "react-router-dom"
+import { Link, useLocation } from "react-router-dom"
 
 import {
   MASTER_CHAPTER,
@@ -9,6 +9,7 @@ import {
 export function LandingFooter() {
   const { t } = useTranslation()
   const year = new Date().getFullYear()
+  const isHome = useLocation().pathname === "/"
 
   return (
     <footer className="border-t border-border bg-background py-12">
@@ -23,36 +24,40 @@ export function LandingFooter() {
         </div>
 
         <div className="flex flex-wrap gap-x-8 gap-y-3 text-sm text-muted-foreground">
-          <button
-            type="button"
-            className="hover:text-foreground"
-            onClick={() => {
-              scrollToMasterChapter(MASTER_CHAPTER.features)
-            }}
-          >
-            {t("landing.header.nav.features")}
-          </button>
-          <button
-            type="button"
-            className="hover:text-foreground"
-            onClick={() => {
-              scrollToMasterChapter(MASTER_CHAPTER.solutions)
-            }}
-          >
-            {t("landing.header.nav.solutions")}
-          </button>
-          <button
-            type="button"
-            className="hover:text-foreground"
-            onClick={() => {
-              scrollToMasterChapter(MASTER_CHAPTER.platform)
-            }}
-          >
-            {t("landing.header.nav.platform")}
-          </button>
-          <a href="#pricing" className="hover:text-foreground">
+          {isHome ? (
+            <>
+            <button
+              type="button"
+              className="hover:text-foreground"
+              onClick={() => {
+                scrollToMasterChapter(MASTER_CHAPTER.features)
+              }}
+            >
+              {t("landing.header.nav.features")}
+            </button>
+            <button
+              type="button"
+              className="hover:text-foreground"
+              onClick={() => {
+                scrollToMasterChapter(MASTER_CHAPTER.solutions)
+              }}
+            >
+              {t("landing.header.nav.solutions")}
+            </button>
+            <button
+              type="button"
+              className="hover:text-foreground"
+              onClick={() => {
+                scrollToMasterChapter(MASTER_CHAPTER.platform)
+              }}
+            >
+              {t("landing.header.nav.platform")}
+            </button>
+            </>
+          ) : null}
+          <Link to="/precos" className="hover:text-foreground">
             {t("landing.header.nav.pricing")}
-          </a>
+          </Link>
           <Link to="/login" className="hover:text-foreground">
             {t("landing.header.login")}
           </Link>

@@ -1,32 +1,26 @@
 import { useTranslation } from "react-i18next"
-import { useNavigate } from "react-router-dom"
+import { Link, useLocation } from "react-router-dom"
 
 import { Button } from "@/components/ui/button"
-import { cn } from "@/lib/utils"
+import { resolvePassthroughParams } from "@/features/billing/lib/leadAttribution"
+import { PACKAGE_KEYS } from "@/features/billing/schemas/billingSchemas"
 
-const PLAN_IDS = ["starter", "operations", "scale"] as const
-const FAQ_IDS = ["card", "data", "goLive"] as const
+/** Where each package's "saiba mais" goes: its vertical landing when there is one, else the pricing page. */
+const PACKAGE_LINKS = {
+  reservas: "/arenas",
+  manutencao: "/pmoc",
+  locacao: "/precos",
+} as const
 
-type PlanId = (typeof PLAN_IDS)[number]
-
-function getPlanFeatures(
-  t: (key: string, options?: { returnObjects: true }) => unknown,
-  planId: PlanId,
-): string[] {
-  const value = t(`landing.pricing.plans.${planId}.features`, {
-    returnObjects: true,
-  })
-
-  if (!Array.isArray(value)) {
-    return []
-  }
-
-  return value.filter((item): item is string => typeof item === "string")
-}
-
+/** Home teaser: the three packages and a link to the real plans and prices on `/precos`. */
 export function PricingSection() {
   const { t } = useTranslation()
-  const navigate = useNavigate()
+  const { search } = useLocation()
+  const passthrough = resolvePassthroughParams(search)
+  const withParams = (path: string, extra?: Record<string, string>) => {
+    const query = new URLSearchParams({ ...extra, ...passthrough }).toString()
+    return query.length > 0 ? `${path}?${query}` : path
+  }
 
   return (
     <section
@@ -51,87 +45,34 @@ export function PricingSection() {
         </div>
 
         <div className="mt-14 grid gap-6 lg:grid-cols-3">
-          {PLAN_IDS.map((planId) => {
-            const featured = planId === "operations"
-
-            return (
-              <div
-                key={planId}
-                className={cn(
-                  "flex flex-col rounded-2xl border p-6 shadow-sm",
-                  featured
-                    ? "border-foreground bg-foreground text-background"
-                    : "border-border bg-background",
-                )}
+          {PACKAGE_KEYS.map((packageKey) => (
+            <div
+              key={packageKey}
+              className="flex flex-col rounded-2xl border border-border bg-background p-6 shadow-sm"
+            >
+              <p className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+                {t(`billing.packages.${packageKey}.name`)}
+              </p>
+              <p className="mt-4 flex-1 text-sm leading-relaxed text-muted-foreground">
+                {t(`landing.pricing.blurbs.${packageKey}`)}
+              </p>
+              <Link
+                to={withParams(PACKAGE_LINKS[packageKey], { package: packageKey })}
+                className="mt-6 text-sm font-medium text-primary underline underline-offset-2"
               >
-                <p
-                  className={cn(
-                    "text-sm font-semibold uppercase tracking-wide",
-                    featured ? "text-background/70" : "text-muted-foreground",
-                  )}
-                >
-                  {t(`landing.pricing.plans.${planId}.name`)}
-                </p>
-                <p className="mt-4 text-3xl font-bold tracking-tight">
-                  {t(`landing.pricing.plans.${planId}.price`)}
-                </p>
-                <p
-                  className={cn(
-                    "mt-2 text-sm",
-                    featured ? "text-background/75" : "text-muted-foreground",
-                  )}
-                >
-                  {t(`landing.pricing.plans.${planId}.blurb`)}
-                </p>
-                <ul
-                  className={cn(
-                    "mt-6 flex-1 space-y-3 text-sm",
-                    featured ? "text-background/85" : "text-muted-foreground",
-                  )}
-                >
-                  {getPlanFeatures(t, planId).map((feature) => (
-                    <li key={feature} className="flex gap-2">
-                      <span aria-hidden="true">✓</span>
-                      <span>{feature}</span>
-                    </li>
-                  ))}
-                </ul>
-                <Button
-                  type="button"
-                  size="lg"
-                  className="mt-8 w-full"
-                  variant={featured ? "secondary" : "default"}
-                  onClick={() => {
-                    void navigate("/onboarding")
-                  }}
-                >
-                  {t("landing.pricing.cta")}
-                </Button>
-              </div>
-            )
-          })}
+                {t("landing.pricing.learnMore")}
+              </Link>
+            </div>
+          ))}
         </div>
 
-        <p className="mt-8 text-center text-sm text-muted-foreground">
-          {t("landing.pricing.reassurance")}
-        </p>
-
-        <div className="mx-auto mt-16 max-w-3xl">
-          <h3 className="text-center text-xl font-semibold text-foreground">
-            {t("landing.pricing.faqTitle")}
-          </h3>
-          <dl className="mt-8 space-y-6">
-            {FAQ_IDS.map((faqId) => (
-              <div key={faqId} className="rounded-xl border border-border p-5">
-                <dt className="font-semibold text-foreground">
-                  {t(`landing.pricing.faq.${faqId}.q`)}
-                </dt>
-                <dd className="mt-2 text-sm leading-relaxed text-muted-foreground">
-                  {t(`landing.pricing.faq.${faqId}.a`)}
-                </dd>
-              </div>
-            ))}
-          </dl>
+        <div className="mt-10 flex flex-col items-center gap-3">
+          <Button size="lg" render={<Link to={withParams("/precos")} />}>
+            {t("landing.pricing.cta")}
+          </Button>
+          <p className="text-sm text-muted-foreground">
+            {t("landing.pricing.reassurance")}
+          </p>
         </div>
       </div>
     </section>

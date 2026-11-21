@@ -18,6 +18,7 @@ import { TenantCompanyTab } from "@/features/admin/components/TenantCompanyTab"
 import { TenantAdvancedSettings } from "@/features/admin/components/TenantAdvancedSettings"
 import { TenantModulesTab } from "@/features/admin/components/TenantModulesTab"
 import { TenantPortalTab } from "@/features/admin/components/TenantPortalTab"
+import { TenantSubscriptionPanel } from "@/features/admin/components/TenantSubscriptionPanel"
 import { TenantUsersManager } from "@/features/admin/components/TenantUsersManager"
 import { useAdminModuleCatalog } from "@/features/admin/hooks/useAdminModuleCatalog"
 import { useEnterTenantEnvironment } from "@/features/admin/hooks/useEnterTenantEnvironment"
@@ -40,6 +41,7 @@ const TENANT_EDIT_TABS = [
   "empresa",
   "portal",
   "modulos",
+  "assinatura",
   "usuarios",
   "cadastro",
   "menu",
@@ -52,6 +54,7 @@ const TAB_LABEL_KEYS: Record<TenantEditTab, string> = {
   empresa: "admin.edit.tabs.company",
   portal: "admin.edit.tabs.portal",
   modulos: "admin.edit.tabs.modules",
+  assinatura: "admin.edit.tabs.subscription",
   usuarios: "admin.edit.tabs.users",
   cadastro: "admin.edit.tabs.registration",
   menu: "admin.edit.tabs.menu",
@@ -331,6 +334,14 @@ export function TenantEditForm({
                 }}
               />
             </form>
+          </TabsContent>
+
+          <TabsContent value="assinatura">
+            <Card>
+              <CardContent className="pt-6">
+                <TenantSubscriptionPanel tenantId={tenantId} />
+              </CardContent>
+            </Card>
           </TabsContent>
 
           <TabsContent value="usuarios">

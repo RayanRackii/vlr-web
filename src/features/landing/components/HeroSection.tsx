@@ -4,6 +4,8 @@ import { useMemo } from "react"
 import { useTranslation } from "react-i18next"
 import { useNavigate } from "react-router-dom"
 
+import { useOnboardingHref } from "@/features/billing/lib/useOnboardingHref"
+
 import { Button } from "@/components/ui/button"
 import {
   ModuleMockupCard,
@@ -141,6 +143,7 @@ function FloatingModuleCard({
 export function HeroSection() {
   const { t } = useTranslation()
   const navigate = useNavigate()
+  const onboardingHref = useOnboardingHref()
 
   const marqueeModules = useMemo(
     () =>
@@ -205,7 +208,7 @@ export function HeroSection() {
                 type="button"
                 size="lg"
                 onClick={() => {
-                  void navigate("/onboarding")
+                  void navigate(onboardingHref)
                 }}
               >
               {t("landing.cta.primary")}

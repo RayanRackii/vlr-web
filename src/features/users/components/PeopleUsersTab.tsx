@@ -61,6 +61,8 @@ import {
   inviteTenantMember,
   listTenantMembers,
 } from "@/features/users/services/usersService"
+import { PlanLimitNotice } from "@/features/billing/components/PlanLimitNotice"
+import { isPlanLimitError } from "@/features/billing/lib/planLimitError"
 
 type PeopleUsersTabProps = {
   roles: readonly RoleResponse[]
@@ -74,6 +76,7 @@ export function PeopleUsersTab({ roles, inviteOpen, onInviteOpenChange }: People
   const learnMore = useModuleIntroLink("peoplePortal")
   const { currentUser, refresh, can } = usePermissions()
   const [members, setMembers] = useState<TenantMember[]>([])
+  const [invitePlanLimit, setInvitePlanLimit] = useState(false)
   const [total, setTotal] = useState(0)
   const [page, setPage] = useState(1)
   const [query, setQuery] = useState("")
@@ -157,11 +160,13 @@ export function PeopleUsersTab({ roles, inviteOpen, onInviteOpenChange }: People
   async function handleInvite(values: InviteMemberFormValues) {
     try {
       await inviteTenantMember(values)
+      setInvitePlanLimit(false)
       toast.success(t("peopleAccess.toasts.inviteSuccess"))
       onInviteOpenChange(false)
       inviteForm.reset({ fullName: "", email: "", roleIds: [] })
       await loadMembers()
     } catch (error: unknown) {
+      setInvitePlanLimit(isPlanLimitError(error))
       if (
         error instanceof Error &&
         error.message === "A user with this email already exists for the tenant."
@@ -374,6 +379,7 @@ export function PeopleUsersTab({ roles, inviteOpen, onInviteOpenChange }: People
               {t("peopleAccess.users.inviteDescription")}
             </DialogDescription>
           </DialogHeader>
+          {invitePlanLimit ? <PlanLimitNotice /> : null}
           <Form {...inviteForm}>
             <form
               className="space-y-4"

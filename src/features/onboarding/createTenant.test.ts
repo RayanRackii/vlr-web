@@ -81,6 +81,23 @@ describe("createTenant", () => {
     expect(body).not.toHaveProperty("adminPassword")
   })
 
+  it("sends the package and the lead attribution when present", async () => {
+    post.mockResolvedValue({ data: created })
+
+    await createTenant({
+      ...request,
+      packageKey: "reservas",
+      leadSource: "instagram",
+      leadCampaign: "arenas-2026",
+    })
+
+    expect(post.mock.calls[0]?.[1]).toMatchObject({
+      packageKey: "reservas",
+      leadSource: "instagram",
+      leadCampaign: "arenas-2026",
+    })
+  })
+
   it("maps trial and signup failures to friendly copy", async () => {
     const cases = [
       [429, "ANONYMOUS_TRIAL_RATE_LIMITED", "trial.onboarding.errors.rateLimited"],
