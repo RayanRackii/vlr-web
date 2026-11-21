@@ -114,7 +114,7 @@ describe("ModuleDataPurgeRow", () => {
     previewMock.mockResolvedValue(
       preview({
         blockers: [
-          { code: "fk.restrict", table: "catalog.orders", rows: 4 },
+          { code: "fk.restrict", table: "catalog.catalog_orders", rows: 4 },
           { code: "allocations.unreleased" },
         ],
       }),
