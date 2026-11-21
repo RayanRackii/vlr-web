@@ -20,6 +20,11 @@ import {
   type PortalProductRequestPage,
   type ProductRequest,
 } from "@/features/catalog/schemas/catalogSchemas"
+import {
+  idempotencyHeaders,
+  idempotencyKeyErrorMessage,
+  retryWhileInProgress,
+} from "@/lib/idempotency"
 import { taxonomyQueryParams, type TaxonomyQuery } from "@/features/taxonomy/lib/taxonomyQuery"
 
 function throwPortalError(error: unknown, fallbackKey: string): never {
@@ -91,14 +96,19 @@ export async function getPortalCatalogProduct(
 export async function createPortalCatalogOrder(body: {
   items: { productId: string; quantity: number }[]
   customerNote?: string
-}): Promise<CatalogOrder> {
+}, options?: { idempotencyKey?: string }): Promise<CatalogOrder> {
   try {
-    const response = await customerApi.post("/api/catalog/portal/orders", body)
+    const headers = idempotencyHeaders(options?.idempotencyKey)
+    const response = await retryWhileInProgress(() =>
+      headers ? customerApi.post("/api/catalog/portal/orders", body, { headers }) : customerApi.post("/api/catalog/portal/orders", body),
+    )
     return parseOrThrow(catalogOrderSchema.safeParse(response.data))
   } catch (error) {
     if (error instanceof Error && error.message === i18n.t("apiErrors.invalidPayload")) {
       throw error
     }
+    const keyMessage = idempotencyKeyErrorMessage(error)
+    if (keyMessage) throw new Error(keyMessage, { cause: error })
     throwPortalError(error, "apiErrors.submitPortalOrder")
   }
 }

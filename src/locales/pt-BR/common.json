@@ -316,6 +316,7 @@
     "loadPortalCatalog": "Não foi possível carregar o catálogo.",
     "loadPortalCatalogProduct": "Não foi possível carregar o produto.",
     "submitPortalOrder": "Não foi possível enviar o pedido.",
+    "idempotencyKey": "Não foi possível concluir a solicitação. Tente novamente.",
     "loadPortalOrders": "Não foi possível carregar seus pedidos.",
     "loadPortalOrder": "Não foi possível carregar o pedido.",
     "cancelPortalOrder": "Não foi possível cancelar o pedido.",

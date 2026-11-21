@@ -1,6 +1,7 @@
 import { bookingEndClock } from "@/lib/tenantTimeZone"
 import { PortalSessionExpiredError, notifyPortalSessionExpired } from "@/features/tenantPortal/lib/portalSessionError"
 import { CalendarIcon, Check, CheckCheck, Clock, Loader2, Minus, Plus } from "lucide-react"
+import { createAttemptKey } from "@/lib/idempotency"
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react"
 import { useTranslation } from "react-i18next"
 import {
@@ -331,6 +332,7 @@ export function TenantPortalAgendaPage() {
 
   const [assets, setAssets] = useState<PortalRentalAsset[]>([])
   const assetsRef = useRef<PortalRentalAsset[]>([])
+  const [reservationAttemptKey] = useState(createAttemptKey)
   const [mine, setMine] = useState<PortalReservation[]>(() =>
     recentPortalReservations(subdomain),
   )
@@ -1507,15 +1509,20 @@ export function TenantPortalAgendaPage() {
                 quantity,
                 expectedTotalAmount: quoteCurrent ? quote.amount : null,
               })
-            : createPortalReservation({
-                unitId: asset.unitId,
-                date: dayDate,
-                endDate,
-                startTime: slot.startTime.slice(0, 5),
-                endTime: bookingEndClock(slot.endTime),
-                items: [{ assetId: asset.assetId, quantity }],
-                expectedTotalAmount: quoteCurrent ? quote.amount : null,
-              }),
+            : (() => {
+                const reservationBody = {
+                  unitId: asset.unitId,
+                  date: dayDate,
+                  endDate,
+                  startTime: slot.startTime.slice(0, 5),
+                  endTime: bookingEndClock(slot.endTime),
+                  items: [{ assetId: asset.assetId, quantity }],
+                  expectedTotalAmount: quoteCurrent ? quote.amount : null,
+                }
+                return createPortalReservation(reservationBody, {
+                  idempotencyKey: reservationAttemptKey.keyFor(JSON.stringify(reservationBody)),
+                })
+              })(),
         { subdomain, dates: [dayDate], timeZoneId },
         {
           date: dayDate,
@@ -1526,6 +1533,7 @@ export function TenantPortalAgendaPage() {
       if (generation !== getAgendaSessionGeneration()) {
         return
       }
+      reservationAttemptKey.reset()
       applyReservationSuccess(created)
     } catch (error) {
       if (
