@@ -2179,7 +2179,7 @@
         "workOrder": "Work Orders",
         "rentals": "Rentals",
         "finance": "Finance",
-        "dashboardB2c": "B2C Dashboard",
+        "dashboardB2c": "Customer portal dashboard",
         "customerManagement": "Customer Management",
         "maintenance": "Maintenance",
         "documents": "Documents",
@@ -5527,7 +5527,7 @@
       "Rentals": "Rentals",
       "RentalsDescription": "Manage bookable resources and hours.",
       "Catalog": "Catalog & Orders",
-      "CatalogDescription": "Products, orders, and B2C notifications.",
+      "CatalogDescription": "Products, orders, and customer notifications.",
       "unknown": "Module",
       "ResourcePlanning": "Resource planning",
       "ResourcePlanningDescription": "Organizes resource availability and use.",
@@ -5764,7 +5764,8 @@
         "pmoc_plan_tasks": "Plan tasks",
         "planning_asset_allocations": "Resource allocations",
         "planning_asset_planning_profiles": "Planning profiles",
-        "planning_asset_working_hours": "Working hours"
+        "planning_asset_working_hours": "Working hours",
+        "rentals_resource_types": "Resource types"
       },
       "errors": {
         "loadFailed": "Could not load the module data.",

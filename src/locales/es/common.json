@@ -2179,7 +2179,7 @@
         "workOrder": "Orden de servicio",
         "rentals": "Alquileres",
         "finance": "Finanzas",
-        "dashboardB2c": "Dashboard B2C",
+        "dashboardB2c": "Dashboard del portal del cliente",
         "customerManagement": "Gestión de clientes",
         "maintenance": "Mantenimiento",
         "documents": "Documentos",
@@ -5527,7 +5527,7 @@
       "Rentals": "Alquileres",
       "RentalsDescription": "Gestione recursos reservables y horarios.",
       "Catalog": "Catálogo y pedidos",
-      "CatalogDescription": "Productos, pedidos y notificaciones B2C.",
+      "CatalogDescription": "Productos, pedidos y notificaciones a clientes.",
       "unknown": "Módulo",
       "ResourcePlanning": "Planificación de recursos",
       "ResourcePlanningDescription": "Organiza la disponibilidad y el uso de los recursos.",
@@ -5764,7 +5764,8 @@
         "pmoc_plan_tasks": "Tareas de los planes",
         "planning_asset_allocations": "Asignaciones de recursos",
         "planning_asset_planning_profiles": "Perfiles de planificación",
-        "planning_asset_working_hours": "Horarios de trabajo"
+        "planning_asset_working_hours": "Horarios de trabajo",
+        "rentals_resource_types": "Tipos de recurso"
       },
       "errors": {
         "loadFailed": "No se pudieron cargar los datos del módulo.",
