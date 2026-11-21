@@ -13,6 +13,7 @@ import { LandingFooter } from "@/features/landing/components/LandingFooter"
 import { LandingHeader } from "@/features/landing/components/LandingHeader"
 import { PackagePricingTeaser } from "@/features/landing/components/PackagePricingTeaser"
 import { VERTICALS, type VerticalDefinition } from "@/features/landing/verticals"
+import { usePublicDocumentTitle } from "@/hooks/usePublicDocumentTitle"
 
 function indexes(count: number): number[] {
   return Array.from({ length: count }, (_, index) => index)
@@ -24,6 +25,7 @@ export function VerticalLanding({ vertical }: { vertical: VerticalDefinition }) 
   const { search } = useLocation()
   const passthrough = useMemo(() => resolvePassthroughParams(search), [search])
   const base = `landing.verticals.${vertical.id}`
+  usePublicDocumentTitle(t(`landing.meta.${vertical.id}`))
   const ctaHref = buildOnboardingHref({
     packageKey: vertical.packageKey,
     passthrough,

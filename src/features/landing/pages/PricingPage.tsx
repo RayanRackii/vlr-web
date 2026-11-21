@@ -5,6 +5,7 @@ import { useLocation } from "react-router-dom"
 import { Page } from "@/components/layout/Page"
 import { LandingFooter } from "@/features/landing/components/LandingFooter"
 import { LandingHeader } from "@/features/landing/components/LandingHeader"
+import { usePublicDocumentTitle } from "@/hooks/usePublicDocumentTitle"
 import { PlanPicker } from "@/features/landing/components/PlanPicker"
 import { formatCents, PLAN_ADD_ONS } from "@/features/billing/lib/planCatalog"
 import {
@@ -19,6 +20,7 @@ const FAQ_KEYS = ["lockIn", "setupFee", "payment", "trial", "annual", "limit"] a
 /** Public pricing page: `/precos` (same page on `rolvix.com.br` and `www`). */
 export function PricingPage() {
   const { t, i18n } = useTranslation()
+  usePublicDocumentTitle(t("landing.meta.pricing"))
   const { search } = useLocation()
   const { status, plans, reload } = usePublicPlans()
   const passthrough = useMemo(() => resolvePassthroughParams(search), [search])

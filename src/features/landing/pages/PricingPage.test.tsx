@@ -103,7 +103,21 @@ describe("PricingPage", () => {
     expect(essencial).toHaveTextContent("Usuários: até 3")
     expect(screen.getByTestId("plan-card-profissional")).toHaveTextContent(/R\$\s?189/)
     expect(screen.getByTestId("plan-card-profissional")).toHaveTextContent("Mais escolhido")
-    expect(screen.getByTestId("plan-card-completo")).toHaveTextContent("WhatsApp: 2000 mensagens por mês")
+    expect(screen.getByTestId("plan-card-completo")).toHaveTextContent(
+      "WhatsApp (em breve): 2000 mensagens/mês",
+    )
+  })
+
+  it("shows no WhatsApp quota as not included, and sets the tab title", async () => {
+    vi.mocked(getPublicPlans).mockResolvedValue([
+      plan({ planKey: "essencial", limits: { rentableResources: 3, whatsappMessagesMonth: 0 } }),
+    ])
+    renderAt("/precos")
+
+    const card = await screen.findByTestId("plan-card-essencial")
+    expect(card).toHaveTextContent("WhatsApp não incluso")
+    expect(card).not.toHaveTextContent("0 mensagens")
+    expect(document.title).toBe("Preços · Rolvix")
   })
 
   it("switches package and shows that package's plans and limits", async () => {
@@ -205,10 +219,12 @@ describe("vertical landings", () => {
     expect(
       screen.getByRole("heading", {
         level: 1,
-        name: "Sua quadra reservada e paga pelo cliente, sem você responder WhatsApp.",
+        name: "Sua quadra reservada online, sem caderno e sem horário duplicado.",
       }),
     ).toBeInTheDocument()
-    expect(screen.getByText("Sinal por Pix")).toBeInTheDocument()
+    expect(document.title).toBe("Para arenas, quadras e clubes · Rolvix")
+    expect(screen.getByText("Agenda e mapa de reservas")).toBeInTheDocument()
+    expect(document.body).not.toHaveTextContent(/Pix|paga pelo cliente/)
     expect(screen.getByText("Fila de espera para horário cheio")).toBeInTheDocument()
     expect(await screen.findByText(/a partir de R\$\s?99\/mês/)).toBeInTheDocument()
 
@@ -230,6 +246,7 @@ describe("vertical landings", () => {
       }),
     ).toBeInTheDocument()
     expect(screen.getByText("Ordem de serviço no celular, offline")).toBeInTheDocument()
+    expect(document.title).toBe("Para empresas de climatização e refrigeração · Rolvix")
     expect(await screen.findByText(/a partir de R\$\s?99\/mês/)).toBeInTheDocument()
     expect(screen.getAllByRole("link", { name: "Começar teste grátis" })[0]).toHaveAttribute(
       "href",

@@ -23,7 +23,7 @@ export const VERTICALS = {
     id: "arenas",
     path: "/arenas",
     packageKey: "reservas",
-    benefitIds: ["booking", "payment", "waitlist"],
+    benefitIds: ["booking", "agenda", "waitlist"],
     proofCount: 4,
     screenshotCount: 3,
   },

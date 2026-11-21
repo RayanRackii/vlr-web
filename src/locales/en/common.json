@@ -2354,7 +2354,7 @@
       "reassurance": "30 days free, no credit card. We set it up with you.",
       "learnMore": "Learn more",
       "blurbs": {
-        "reservas": "Bookings paid by the customer, waitlist and a portal with your brand.",
+        "reservas": "Online bookings through the portal, waitlist and a schedule with your brand.",
         "manutencao": "PMOC up to date, work orders on the phone and history per equipment.",
         "locacao": "Know what is available and what is late, and let customers order from the portal."
       }
@@ -2444,16 +2444,16 @@
       },
       "arenas": {
         "eyebrow": "For arenas, courts and clubs",
-        "title": "Your court booked and paid by the customer, without you answering WhatsApp.",
-        "subtitle": "Online bookings with your arena's brand, deposit by Pix confirmed automatically and a waitlist for full time slots.",
+        "title": "Your court booked online, no notebook and no double bookings.",
+        "subtitle": "Customers book through your arena's portal with real-time availability. You follow everything on the schedule, with the booking map, waitlist and e-mail reminders.",
         "benefits": {
           "booking": {
-            "title": "Booking without WhatsApp",
-            "body": "Customers pick court, day and time on your arena's link. No double bookings and no notebook."
+            "title": "Online booking, any time",
+            "body": "Customers pick court, day and time on your arena's portal and see availability in real time. No double bookings."
           },
-          "payment": {
-            "title": "Deposit by Pix",
-            "body": "The deposit is paid and confirmed automatically. Fewer no-shows and nothing checked by hand."
+          "agenda": {
+            "title": "Schedule and booking map",
+            "body": "See every court's whole day on the booking map and get booking reminders by e-mail, with no notebook to keep."
           },
           "waitlist": {
             "title": "Waitlist and monthly members",
@@ -2461,15 +2461,15 @@
           }
         },
         "proofs": [
-          "Booking link with your arena's brand",
-          "Pix deposit confirmed automatically",
+          "Booking portal with your arena's brand",
+          "Real-time availability",
           "Waitlist for full time slots",
-          "No commission on payments"
+          "Booking reminders by e-mail"
         ],
         "screenshots": [
           "Daily court schedule",
           "Booking through the customer portal",
-          "Deposit paid by Pix"
+          "Booking map"
         ]
       },
       "pmoc": {
@@ -2502,6 +2502,13 @@
           "PMOC report ready for the customer"
         ]
       }
+    },
+    "meta": {
+      "home": "Bookings, maintenance and rentals",
+      "pricing": "Pricing",
+      "arenas": "For arenas, courts and clubs",
+      "pmoc": "For HVAC and refrigeration companies",
+      "onboarding": "Start your free trial"
     }
   },
   "grupos": {
@@ -7376,14 +7383,14 @@
       "rentableResources": "Bookable resources: up to {{count}}",
       "users": "Users: up to {{count}}",
       "units": "Units: up to {{count}}",
-      "whatsappMessagesMonth": "WhatsApp: {{count}} messages per month"
+      "whatsappMessagesMonth": "WhatsApp (coming soon): {{count}} messages/month"
     },
     "limitsUnlimited": {
       "assets": "Equipment and items: unlimited",
       "rentableResources": "Bookable resources: unlimited",
       "users": "Users: unlimited",
       "units": "Units: unlimited",
-      "whatsappMessagesMonth": "WhatsApp: unlimited messages"
+      "whatsappMessagesMonth": "WhatsApp (coming soon): unlimited messages"
     },
     "addOns": {
       "module": {
@@ -7398,6 +7405,9 @@
         "name": "Pack of 1,000 WhatsApp messages",
         "price": "{{price}} per pack"
       }
+    },
+    "limitsNone": {
+      "whatsappMessagesMonth": "WhatsApp not included"
     }
   }
 }
