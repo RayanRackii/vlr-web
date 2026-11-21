@@ -7,6 +7,8 @@ import { useTranslation } from "react-i18next"
 import { useNavigate } from "react-router-dom"
 import { toast } from "sonner"
 
+import { useTenantTimeZone } from "@/contexts/TenantTimeZoneContext"
+import { tenantTodayIsoDate } from "@/lib/tenantTimeZone"
 import { FormPage } from "@/components/layout/FormPage"
 import { EmptyState } from "@/components/ui/empty-state"
 import { FormGrid, FormRow, FormSection } from "@/components/ui/form-layout"
@@ -69,6 +71,7 @@ function orderedPlanTasks(plan: MaintenancePlan) {
 export function CreateWorkOrderPage({ maintenance = false, sourcePlan }: { maintenance?: boolean; sourcePlan?: MaintenancePlan }) {
   const { t, i18n } = useTranslation()
   const navigate = useNavigate()
+  const timeZone = useTenantTimeZone()
   const permissions = useOptionalPermissions()
   const canReadPlans = permissions === null || permissions.can("pmoc.plans.read")
   const redirectTimeoutRef = useRef<number | null>(null)
@@ -101,7 +104,7 @@ export function CreateWorkOrderPage({ maintenance = false, sourcePlan }: { maint
     defaultValues: {
       assetId: "",
       assignedUserId: undefined,
-      scheduledDate: new Date().toISOString().slice(0, 10),
+      scheduledDate: tenantTodayIsoDate(timeZone),
       notes: "",
     },
   })

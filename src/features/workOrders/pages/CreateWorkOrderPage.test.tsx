@@ -5,6 +5,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest"
 
 import { CreateWorkOrderPage } from "@/features/workOrders/pages/CreateWorkOrderPage"
 import { makeWorkOrder } from "@/features/workOrders/test/workOrderFixtures"
+import { TenantTimeZoneProvider } from "@/contexts/TenantTimeZoneProvider"
 import i18n from "@/lib/i18n"
 
 vi.mock("sonner", () => ({
@@ -136,6 +137,24 @@ describe("CreateWorkOrderPage validity gate", () => {
       </MemoryRouter>,
     )
   }
+
+  it("pre-fills today in the tenant time zone, not the UTC day", async () => {
+    // 02:30Z on 21 Nov is still 20 Nov at 23:30 in America/Sao_Paulo (UTC-3).
+    vi.useFakeTimers({ toFake: ["Date"], now: new Date("2026-11-21T02:30:00Z") })
+    try {
+      render(
+        <MemoryRouter>
+          <TenantTimeZoneProvider timeZoneId="America/Sao_Paulo">
+            <CreateWorkOrderPage />
+          </TenantTimeZoneProvider>
+        </MemoryRouter>,
+      )
+      expect(await screen.findByDisplayValue("20/11/2026")).toBeInTheDocument()
+      expect(screen.queryByDisplayValue("21/11/2026")).not.toBeInTheDocument()
+    } finally {
+      vi.useRealTimers()
+    }
+  })
 
   async function selectAsset(user: ReturnType<typeof userEvent.setup>) {
     await user.click(
