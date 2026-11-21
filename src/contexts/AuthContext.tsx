@@ -8,6 +8,7 @@ import {
 } from "react"
 import type { AuthChangeEvent, Session, User } from "@supabase/supabase-js"
 
+import { offlineSyncScopeFromUser, setOfflineSyncScope } from "@/lib/offlineSyncScope"
 import { syncCurrentUserCacheToAuthUser } from "@/features/users/services/currentUserCache"
 import { logAuthSessionEvent } from "@/lib/authSessionLog"
 import { isSigningOut } from "@/lib/signOutMarker"
@@ -66,6 +67,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
       if (session === null) {
         syncCurrentUserCacheToAuthUser(null)
+        setOfflineSyncScope(null)
         setSession(null)
         setUser(null)
         setIsLoading(false)
@@ -73,6 +75,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       }
 
       syncCurrentUserCacheToAuthUser(session.user ?? null)
+      setOfflineSyncScope(offlineSyncScopeFromUser(session.user))
       lastSession = session
       setSession(session)
       setUser(session.user ?? null)
@@ -104,6 +107,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         lastSession = null
         signedOut = true
         syncCurrentUserCacheToAuthUser(null)
+        setOfflineSyncScope(null)
         setSession(null)
         setUser(null)
         setIsLoading(false)
@@ -125,6 +129,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       }
 
       syncCurrentUserCacheToAuthUser(nextSession.user ?? null)
+      setOfflineSyncScope(offlineSyncScopeFromUser(nextSession.user))
       lastSession = nextSession
       setExpiredSession(null)
       setSession(nextSession)

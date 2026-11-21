@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react"
+import { fireEvent, render, screen, waitFor } from "@testing-library/react"
 import { MemoryRouter, Route, Routes } from "react-router-dom"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 
@@ -112,15 +112,40 @@ describe("PermissionRoute loading gate", () => {
     ).not.toBeInTheDocument()
   })
 
-  it("denies after /me failure instead of leaving an infinite skeleton", async () => {
-    getCurrentUserMock.mockRejectedValue(new Error("network"))
+  it("shows a retryable error, not access denied, after a network /me failure", async () => {
+    getCurrentUserMock.mockRejectedValueOnce(new Error("network"))
+    getCurrentUserMock.mockResolvedValueOnce(profile)
+
+    renderRoute()
+
+    expect(
+      await screen.findByRole("heading", { name: "Não foi possível carregar seu acesso" }),
+    ).toBeInTheDocument()
+    expect(screen.queryByRole("heading", { name: "Acesso negado" })).not.toBeInTheDocument()
+    expect(screen.queryByRole("status")).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole("heading", { name: "Notificações" }),
+    ).not.toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole("button", { name: "Tentar novamente" }))
+
+    expect(await screen.findByRole("heading", { name: "Notificações" })).toBeInTheDocument()
+    expect(
+      screen.queryByRole("heading", { name: "Não foi possível carregar seu acesso" }),
+    ).not.toBeInTheDocument()
+    expect(getCurrentUserMock).toHaveBeenLastCalledWith({ force: true })
+  })
+
+  it("keeps the deny flow when /me answers 401", async () => {
+    getCurrentUserMock.mockRejectedValue(
+      Object.assign(new Error("unauthorized"), { status: 401 }),
+    )
 
     renderRoute()
 
     expect(await screen.findByRole("heading", { name: "Acesso negado" })).toBeInTheDocument()
-    expect(screen.queryByRole("status")).not.toBeInTheDocument()
     expect(
-      screen.queryByRole("heading", { name: "Notificações" }),
+      screen.queryByRole("heading", { name: "Não foi possível carregar seu acesso" }),
     ).not.toBeInTheDocument()
   })
 })

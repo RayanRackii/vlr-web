@@ -1,6 +1,7 @@
 import { Navigate, Outlet } from "react-router-dom"
 
 import { AccessDeniedPage } from "@/components/layout/AccessDeniedPage"
+import { PermissionLoadErrorPage } from "@/components/layout/PermissionLoadErrorPage"
 import { firstPermittedProductPath } from "@/components/layout/navigation"
 import { staffHomeRedirectState } from "@/components/layout/staffHomeRedirect"
 import { PageContentSkeleton } from "@/components/loading/PageContentSkeleton"
@@ -11,7 +12,7 @@ import { usePermissions } from "@/features/users/permissions/PermissionContext"
 const DASHBOARD_PERMISSION = "core.dashboard.read"
 
 export function DashboardHomeRoute() {
-  const { can, isLoading, permissions, activeModules } = usePermissions()
+  const { can, isLoading, loadFailed, permissions, activeModules } = usePermissions()
   const { isPlatformAdmin, isInTenantEnvironment } = usePlatformTenantSession()
 
   const access = resolvePermissionRouteAccess({
@@ -23,6 +24,10 @@ export function DashboardHomeRoute() {
 
   if (access === "loading") {
     return <PageContentSkeleton />
+  }
+
+  if (loadFailed) {
+    return <PermissionLoadErrorPage />
   }
 
   if (access === "allow") {

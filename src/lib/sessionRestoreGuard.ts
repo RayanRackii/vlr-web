@@ -19,6 +19,7 @@ import { CUSTOMER_TOKEN_STORAGE_KEY } from "@/features/tenantPortal/lib/customer
 import { clearQueryCache } from "@/lib/queryClient"
 import { invalidateCurrentUserCache } from "@/features/users/services/currentUserCache"
 import { replaceBrowserLocation } from "@/lib/browserLocation"
+import { clearOfflineSyncScope } from "@/lib/offlineSyncScope"
 import { staffLoginPath } from "@/lib/safeStaffNextPath"
 import appI18n from "@/lib/i18n"
 import { supabase } from "@/lib/supabase"
@@ -374,6 +375,8 @@ function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T | "timeout">
 export async function signOutStaffPortal(): Promise<boolean> {
   rememberStaffSignOut()
   const accessToken = readStaffAccessToken()
+  // Pending offline edits belong to the person signing out; never flush them for the next user.
+  const offlineQueueCleared = clearOfflineSyncScope()
   writeActiveTenantLabel(null)
   clearAuthenticatedQueryCaches()
   removeSessionKeysAsSignedOut(staffStorageKeys())
@@ -398,7 +401,7 @@ export async function signOutStaffPortal(): Promise<boolean> {
       .catch(() => null),
     SERVER_SIGN_OUT_TIMEOUT_MS,
   ).catch(() => null)
-  await Promise.all([revoke, local])
+  await Promise.all([revoke, local, offlineQueueCleared])
 
   // A lock-held save inside the auth client can land after step 1; drop it again.
   removeStoredStaffSessions()

@@ -6,8 +6,13 @@ import { api, isAxiosError } from "@/lib/api"
 import { readApiErrorBody } from "@/lib/apiErrorText"
 import { noteTransportFailure, noteTransportSuccess, readBrowserOffline } from "@/lib/connectivity"
 
-const OS_SYNC_QUEUE_KEY = "os_sync_queue"
-const OS_SYNC_CONFLICTS_KEY = "os_sync_conflicts"
+import {
+  getOfflineSyncScope,
+  getOfflineSyncScopeEpoch,
+  offlineSyncScopeKeys,
+  sameOfflineSyncScope,
+  type OfflineSyncScope,
+} from "@/lib/offlineSyncScope"
 
 const syncQueueItemSchema = z.object({
   id: z.string().min(1),
@@ -43,6 +48,54 @@ const SYNC_QUEUE_LOCK = "rolvix-os-sync-queue"
 
 let queueLockChain: Promise<void> = Promise.resolve()
 let issuedClientSequence = 0
+let lockScope: OfflineSyncScope | null = null
+
+function activeScope(): OfflineSyncScope | null {
+  return lockScope ?? getOfflineSyncScope()
+}
+
+function requireScopeKeys(): { queue: string; conflicts: string } {
+  const scope = activeScope()
+  if (scope === null) {
+    throw new Error("Offline queue needs a signed-in user")
+  }
+  return offlineSyncScopeKeys(scope)
+}
+
+function scopeKeysOrNull(): { queue: string; conflicts: string } | null {
+  const scope = activeScope()
+  return scope === null ? null : offlineSyncScopeKeys(scope)
+}
+
+const BACKOFF_BASE_MS = 1_000
+const BACKOFF_MAX_MS = 60_000
+
+/** 1 s, 2 s, 4 s ... capped at 60 s. `attempts` counts failures so far (>= 1). */
+export function syncBackoffDelayMs(attempts: number): number {
+  const exponent = Math.max(0, Math.min(attempts, 16) - 1)
+  return Math.min(BACKOFF_BASE_MS * 2 ** exponent, BACKOFF_MAX_MS)
+}
+
+type BackoffEntry = { attempts: number; retryAt: number }
+
+const itemBackoff = new Map<string, BackoffEntry>()
+let authPause: BackoffEntry | null = null
+let backoffEpoch = -1
+
+/** Backoff belongs to one auth state; a new sign-in or token refresh starts fresh. */
+function syncBackoffEpoch(): void {
+  const epoch = getOfflineSyncScopeEpoch()
+  if (epoch !== backoffEpoch) {
+    backoffEpoch = epoch
+    itemBackoff.clear()
+    authPause = null
+  }
+}
+
+function bumpBackoff(previous: BackoffEntry | null | undefined): BackoffEntry {
+  const attempts = (previous?.attempts ?? 0) + 1
+  return { attempts, retryAt: Date.now() + syncBackoffDelayMs(attempts) }
+}
 
 function createQueueItemId(workOrderId: string, taskId: string): string {
   return `${workOrderId}:${taskId}`
@@ -65,12 +118,22 @@ function hasWebLocks(): boolean {
  * Callers already inside the lock must use the unlocked helpers below.
  */
 function withSyncQueueLock<T>(operation: () => Promise<T>): Promise<T> {
+  // The scope is fixed when the operation starts, so a sign-in change halfway
+  // through a flush cannot move its writes into another user's queue.
+  const scoped = async (): Promise<T> => {
+    lockScope = getOfflineSyncScope()
+    try {
+      return await operation()
+    } finally {
+      lockScope = null
+    }
+  }
   const run = (): Promise<T> => {
     if (!hasWebLocks()) {
-      return operation()
+      return scoped()
     }
 
-    return navigator.locks.request(SYNC_QUEUE_LOCK, () => operation())
+    return navigator.locks.request(SYNC_QUEUE_LOCK, () => scoped())
   }
 
   const scheduled = queueLockChain.then(run, run)
@@ -94,7 +157,11 @@ function takeClientSequence(queue: readonly OsSyncQueueItem[]): number {
 }
 
 async function readSyncQueue(): Promise<OsSyncQueueItem[]> {
-  const raw = await get<unknown>(OS_SYNC_QUEUE_KEY)
+  const keys = scopeKeysOrNull()
+  if (keys === null) {
+    return []
+  }
+  const raw = await get<unknown>(keys.queue)
 
   if (raw == null) {
     return []
@@ -114,7 +181,7 @@ async function readSyncQueue(): Promise<OsSyncQueueItem[]> {
 }
 
 async function writeSyncQueue(queue: OsSyncQueueItem[]): Promise<void> {
-  await set(OS_SYNC_QUEUE_KEY, queue)
+  await set(requireScopeKeys().queue, queue)
 }
 
 type TaskValuePatch = {
@@ -172,7 +239,11 @@ export async function listQueuedTaskIds(): Promise<string[]> {
 }
 
 async function readConflicts(): Promise<OsSyncConflict[]> {
-  const raw = await get<unknown>(OS_SYNC_CONFLICTS_KEY)
+  const keys = scopeKeysOrNull()
+  if (keys === null) {
+    return []
+  }
+  const raw = await get<unknown>(keys.conflicts)
   if (raw == null) {
     return []
   }
@@ -186,16 +257,17 @@ async function readConflicts(): Promise<OsSyncConflict[]> {
 }
 
 async function writeConflicts(conflicts: OsSyncConflict[]): Promise<void> {
-  await set(OS_SYNC_CONFLICTS_KEY, conflicts)
+  await set(requireScopeKeys().conflicts, conflicts)
 }
 
 async function writeQueueAndConflicts(
   queue: OsSyncQueueItem[],
   conflicts: OsSyncConflict[],
 ): Promise<void> {
+  const keys = requireScopeKeys()
   await setMany([
-    [OS_SYNC_QUEUE_KEY, queue],
-    [OS_SYNC_CONFLICTS_KEY, conflicts],
+    [keys.queue, queue],
+    [keys.conflicts, conflicts],
   ])
 }
 
@@ -353,7 +425,7 @@ export async function commitDirectTaskValuePatch<T>(
         await settleQueuedVersion(queued, null)
         return { status: "sent", value }
       } catch (error: unknown) {
-        if (isNetworkConnectivityError(error) || isServerHttpError(error) || isInterruptedPatch(error)) {
+        if (isNetworkConnectivityError(error) || isBackoffError(error) || isUnauthorizedError(error) || isInterruptedPatch(error)) {
           console.error("commitDirectTaskValuePatch kept queued", error)
           return { status: "queued" }
         }
@@ -374,21 +446,37 @@ export async function commitDirectTaskValuePatch<T>(
   }
 }
 
+function httpStatus(error: unknown): number | null {
+  return isAxiosError(error) && typeof error.response?.status === "number"
+    ? error.response.status
+    : null
+}
+
+function isRetryableClientStatus(status: number): boolean {
+  return status === 408 || status === 429
+}
+
+/** 4xx that is a final answer for this edit (403, 404, 409, 422 ...): shown as a conflict. */
 function isClientHttpError(error: unknown): boolean {
+  const status = httpStatus(error)
   return (
-    isAxiosError(error) &&
-    typeof error.response?.status === "number" &&
-    error.response.status >= 400 &&
-    error.response.status < 500
+    status !== null &&
+    status >= 400 &&
+    status < 500 &&
+    status !== 401 &&
+    !isRetryableClientStatus(status)
   )
 }
 
-function isServerHttpError(error: unknown): boolean {
-  return (
-    isAxiosError(error) &&
-    typeof error.response?.status === "number" &&
-    error.response.status >= 500
-  )
+/** 401: the session needs signing in again; the edit is fine and stays queued. */
+function isUnauthorizedError(error: unknown): boolean {
+  return httpStatus(error) === 401
+}
+
+/** Server-side trouble that may clear up: 5xx, 408, 429. Retried with backoff. */
+function isBackoffError(error: unknown): boolean {
+  const status = httpStatus(error)
+  return status !== null && (status >= 500 || isRetryableClientStatus(status))
 }
 
 export function isNetworkConnectivityError(error: unknown): boolean {
@@ -437,8 +525,9 @@ function notifySyncQueue(result?: ProcessSyncQueueResult): void {
 
 /**
  * Flushes pending PATCH operations to the API.
- * Network and 5xx failures stay queued. 4xx failures are kept as conflicts
- * so the user can see them instead of losing the edit. 4xx is not retried.
+ * Network failures stop the flush. 401 pauses it and keeps everything queued.
+ * 408, 429 and 5xx back off per item (1 s up to 60 s) without holding up other
+ * work orders. Other 4xx (403, 404, 409 ...) become visible conflicts.
  */
 async function processSyncQueueBody(): Promise<ProcessSyncQueueResult> {
   if (typeof navigator !== "undefined" && !navigator.onLine) {
@@ -454,12 +543,34 @@ async function processSyncQueueBody(): Promise<ProcessSyncQueueResult> {
     return { processed: 0, remaining: 0, conflicts }
   }
 
+  syncBackoffEpoch()
+  if (authPause !== null && authPause.retryAt > Date.now()) {
+    return { processed: 0, remaining: queue.length, conflicts }
+  }
+
+  const flushScope = activeScope()
   const processedKeys = new Set<string>()
   const removedConflictIds = new Set<string>()
   const upsertedConflicts = new Map<string, OsSyncConflict>()
+  // Work orders with a backed-off or failed item: their later items wait (order is
+  // kept per work order), while other work orders keep flowing.
+  const blockedWorkOrders = new Set<string>()
   let processed = 0
 
   for (const item of queue) {
+    // Sign-out or an account switch mid-flush: stop using the new session's token.
+    if (!sameOfflineSyncScope(flushScope, getOfflineSyncScope())) {
+      break
+    }
+    if (blockedWorkOrders.has(item.workOrderId)) {
+      continue
+    }
+    const versionKey = queueVersionKey(item)
+    const backoff = itemBackoff.get(versionKey)
+    if (backoff && backoff.retryAt > Date.now()) {
+      blockedWorkOrders.add(item.workOrderId)
+      continue
+    }
     try {
       await sendTaskPatch((signal) => api.patch(
         `/api/work-orders/${item.workOrderId}/tasks/${item.taskId}`,
@@ -467,8 +578,10 @@ async function processSyncQueueBody(): Promise<ProcessSyncQueueResult> {
         { signal },
       ))
       noteTransportSuccess()
+      authPause = null
+      itemBackoff.delete(versionKey)
       processed += 1
-      processedKeys.add(queueVersionKey(item))
+      processedKeys.add(versionKey)
       removedConflictIds.add(item.id)
       upsertedConflicts.delete(item.id)
     } catch (error: unknown) {
@@ -477,13 +590,26 @@ async function processSyncQueueBody(): Promise<ProcessSyncQueueResult> {
         error,
       })
 
-      if (isNetworkConnectivityError(error) || isServerHttpError(error) || isInterruptedPatch(error)) {
+      if (isNetworkConnectivityError(error) || isInterruptedPatch(error)) {
         break
+      }
+
+      if (isUnauthorizedError(error)) {
+        // Every remaining item would get the same 401: pause, keep them all queued.
+        authPause = bumpBackoff(authPause)
+        break
+      }
+
+      if (isBackoffError(error)) {
+        itemBackoff.set(versionKey, bumpBackoff(backoff))
+        blockedWorkOrders.add(item.workOrderId)
+        continue
       }
 
       if (isClientHttpError(error)) {
         const conflict = httpConflict(item, error)
-        processedKeys.add(queueVersionKey(item))
+        itemBackoff.delete(versionKey)
+        processedKeys.add(versionKey)
         upsertedConflicts.set(item.id, conflict)
         continue
       }

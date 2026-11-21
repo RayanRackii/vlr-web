@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest"
 
-import { api } from "@/lib/api"
+import { api, isAxiosError } from "@/lib/api"
 import { resetCurrentUserCacheForTests } from "@/features/users/services/currentUserCache"
 import { getCurrentUser } from "@/features/users/services/usersService"
 
@@ -55,5 +55,13 @@ describe("getCurrentUser HTTP dedup", () => {
     await getCurrentUser()
     await getCurrentUser({ force: true })
     expect(apiGet).toHaveBeenCalledTimes(2)
+  })
+
+  it("keeps the HTTP status on the error so the guard can tell 401 apart", async () => {
+    vi.mocked(isAxiosError).mockReturnValue(true)
+    apiGet.mockRejectedValue({ response: { status: 503, data: null } })
+
+    await expect(getCurrentUser()).rejects.toMatchObject({ status: 503 })
+    vi.mocked(isAxiosError).mockReturnValue(false)
   })
 })

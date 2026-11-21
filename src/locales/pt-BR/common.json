@@ -4626,6 +4626,11 @@
     "title": "Acesso negado",
     "description": "Você não tem permissão para ver esta página."
   },
+  "permissionLoadError": {
+    "title": "Não foi possível carregar seu acesso",
+    "description": "Não conseguimos carregar suas permissões. Verifique a conexão e tente novamente.",
+    "retry": "Tentar novamente"
+  },
   "notFound": {
     "staffDescription": "Não encontramos esta página. Use o link abaixo para continuar.",
     "dashboard": "Voltar ao painel",

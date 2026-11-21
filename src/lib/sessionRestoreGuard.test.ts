@@ -23,6 +23,8 @@ import {
 import type { CurrentUser } from "@/features/users/schemas/userSchemas"
 import { customerApi } from "@/lib/api"
 import { replaceBrowserLocation } from "@/lib/browserLocation"
+import { del } from "idb-keyval"
+import { getOfflineSyncScope, setOfflineSyncScope } from "@/lib/offlineSyncScope"
 import { supabase } from "@/lib/supabase"
 import {
   authenticatedSurface,
@@ -35,6 +37,13 @@ import {
   signOutStaffBeforeCustomerAuth,
   signOutStaffPortal,
 } from "@/lib/sessionRestoreGuard"
+
+vi.mock("idb-keyval", () => ({
+  get: vi.fn(),
+  set: vi.fn(),
+  setMany: vi.fn(),
+  del: vi.fn(async () => undefined),
+}))
 
 vi.mock("@/lib/browserLocation", () => ({
   assignBrowserLocation: vi.fn(),
@@ -348,6 +357,18 @@ describe("portal sign out", () => {
     resetCurrentUserCacheForTests()
     clearCustomerSession()
     window.localStorage.removeItem("sb-rolvix-auth-token")
+  })
+
+  it("clears the offline work-order queue of the signed-out user", async () => {
+    setOfflineSyncScope({ userId: "user-a", tenantId: "tenant-1" })
+    vi.mocked(del).mockClear()
+    storeStaffSession("old-token")
+
+    await signOutStaffPortal()
+
+    expect(del).toHaveBeenCalledWith("os_sync_queue:user-a|tenant-1")
+    expect(del).toHaveBeenCalledWith("os_sync_conflicts:user-a|tenant-1")
+    expect(getOfflineSyncScope()).toBeNull()
   })
 
   it("clears staff and agenda caches and ignores the signed-out token on Back", async () => {
