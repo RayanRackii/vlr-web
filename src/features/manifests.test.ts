@@ -190,7 +190,13 @@ describe("feature manifests", () => {
   })
 
   it("keeps public landing, onboarding, and auth routes in their manifests", () => {
-    expect(landingManifest.routes.public.map((route) => route.path)).toEqual(["/", "/landing"])
+    expect(landingManifest.routes.public.map((route) => route.path)).toEqual([
+      "/",
+      "/landing",
+      "/precos",
+      "/arenas",
+      "/pmoc",
+    ])
     expect(onboardingManifest.routes.public.map((route) => route.path)).toEqual(["/onboarding"])
     expect(authManifest.routes.public.map((route) => route.path)).toEqual([
       "/login",
