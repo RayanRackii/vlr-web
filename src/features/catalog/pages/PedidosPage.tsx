@@ -67,7 +67,7 @@ export function PedidosPage() {
       id: `request:${request.id}`, to: `/pedidos/solicitacoes/${request.id}`, title: request.description,
       status: `request:${request.status}`, statusLabel: t(`catalog.productRequestStatus.${request.status}`), tone: request.status === "Cancelled" ? "danger" : "info",
       date: request.createdAt, dateLabel: formatCatalogDate(request.createdAt, i18n.language, timeZone),
-      customer: DASH, total: DASH,
+      customer: request.customerName?.trim() || DASH, total: DASH,
       note: [t("pedidos.tabs.solicitacoes"), t("pedidos.quantity", { count: request.quantity }), request.note].filter(Boolean).join(" · "),
     })) : []),
   ].sort((a, b) => b.date.localeCompare(a.date))

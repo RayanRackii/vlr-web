@@ -132,6 +132,23 @@ describe("unified Pedidos", () => {
     await user.click(screen.getByRole("button", { name: i18n.t("pedidos.clear") }))
     expect(screen.getAllByText("PED-12").length).toBeGreaterThan(0)
   })
+  it("shows the customer name in the list and name plus e-mail in the request detail", async () => {
+    vi.mocked(listProductRequests).mockResolvedValue([{ ...request, customerName: "Beatriz", customerEmail: "bia@example.com" }])
+    mount()
+    const table = await screen.findByRole("table")
+    expect(within(table).getByText("Beatriz")).toBeInTheDocument()
+  })
+  it("request detail shows name and e-mail, only the name, or a dash, never the id", async () => {
+    vi.mocked(listProductRequests).mockResolvedValue([{ ...request, customerName: "Beatriz", customerEmail: "bia@example.com" }])
+    const view = mount(["catalog.products.read"], "/pedidos/solicitacoes/request-1")
+    expect(await screen.findByText(/Beatriz/)).toHaveTextContent("Beatriz · bia@example.com")
+    expect(screen.queryByText("customer-1")).not.toBeInTheDocument()
+    view.unmount()
+    vi.mocked(listProductRequests).mockResolvedValue([{ ...request, customerName: null, customerEmail: null }])
+    mount(["catalog.products.read"], "/pedidos/solicitacoes/request-1")
+    const label = await screen.findByText(i18n.t("pedidos.customer"))
+    expect(label.nextElementSibling).toHaveTextContent(/^—$/)
+  })
   it("request detail never shows the customer id", async () => {
     mount(["catalog.products.read"], "/pedidos/solicitacoes/request-1")
     expect((await screen.findAllByText("Personalizar caneca")).length).toBeGreaterThan(0)

@@ -295,6 +295,9 @@ export const productRequestFileSchema = z.object({
 export const productRequestSchema = z.object({
   id: z.string().uuid(),
   customerId: z.string().uuid(),
+  // Staff reads only; optional so an older API (or the POST response) still parses.
+  customerName: z.string().nullish(),
+  customerEmail: z.string().nullish(),
   description: z.string(),
   quantity: z.number(),
   note: z.string().nullable(),
