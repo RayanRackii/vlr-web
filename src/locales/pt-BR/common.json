@@ -885,6 +885,8 @@
       "empty": "Ainda não há produtos à venda",
       "searchEmpty": "Nenhum produto encontrado para \"{{term}}\"",
       "priceOnRequest": "Sob consulta",
+      "unknownProduct": "Produto indisponível",
+      "productsLoadFailed": "Não foi possível carregar os produtos. Os preços não estão disponíveis.",
       "quantity": "Quantidade",
       "quantityFor": "Quantidade de {{name}}",
       "quantityDecrease": "Diminuir quantidade",

@@ -1,3 +1,4 @@
+import { Button } from "@/components/ui/button"
 import { useTenantDocumentMeta } from "@/hooks/useTenantDocumentMeta"
 import "./portal/portal.css"
 
@@ -77,6 +78,7 @@ export function CustomerAppLayout() {
   const [error, setError] = useState<string | null>(null)
   const [notFound, setNotFound] = useState(false)
   const [loading, setLoading] = useState(true)
+  const [attempt, setAttempt] = useState(0)
 
   useEffect(() => {
     if (isAuthenticatedRestoreBlocked() || !subdomain || !signedIn) {
@@ -102,10 +104,17 @@ export function CustomerAppLayout() {
       })
       .catch((requestError: unknown) => {
         if (!cancelled && generation === getAgendaSessionGeneration()) {
-          setError(appI18n.t("tenantPortal.errors.tenantNotFound"))
-          setNotFound(
-            isAxiosError(requestError) && requestError.response?.status === 404,
+          // Only a 404 means the company does not exist; offline, 5xx and timeouts can be retried.
+          const missing =
+            isAxiosError(requestError) && requestError.response?.status === 404
+          setError(
+            appI18n.t(
+              missing
+                ? "tenantPortal.errors.tenantNotFound"
+                : "tenantPortal.errors.loadFailed",
+            ),
           )
+          setNotFound(missing)
           setBranding(null)
           setMenu([])
         }
@@ -119,7 +128,7 @@ export function CustomerAppLayout() {
     return () => {
       cancelled = true
     }
-  }, [subdomain, signedIn])
+  }, [subdomain, signedIn, attempt])
 
   useTenantDocumentMeta(
     branding && {
@@ -183,7 +192,19 @@ export function CustomerAppLayout() {
     }
     return (
       <main className="flex min-h-screen items-center justify-center p-6">
-        <p className="text-sm text-muted-foreground">{error}</p>
+        <div className="flex flex-col items-center gap-3 text-center">
+          <p className="text-sm text-muted-foreground">{error}</p>
+          {!notFound ? (
+            <Button
+              type="button"
+              variant="outline"
+              className="min-h-11"
+              onClick={() => setAttempt((value) => value + 1)}
+            >
+              {t("tenantPortal.errors.retry")}
+            </Button>
+          ) : null}
+        </div>
       </main>
     )
   }

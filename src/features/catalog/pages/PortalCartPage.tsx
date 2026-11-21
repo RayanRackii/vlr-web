@@ -63,6 +63,8 @@ export function PortalCartPage() {
   const cart = useCatalogCart(subdomain, getCustomerId())
   const [products, setProducts] = useState<PortalProduct[]>([])
   const [loading, setLoading] = useState(true)
+  const [productsFailed, setProductsFailed] = useState(false)
+  const [productsAttempt, setProductsAttempt] = useState(0)
   const [submitting, setSubmitting] = useState(false)
   const [submitBar, setSubmitBar] = useState<HTMLDivElement | null>(null)
   const [submitBarHeight, setSubmitBarHeight] = useState(144)
@@ -125,6 +127,7 @@ export function PortalCartPage() {
   useEffect(() => {
     let cancelled = false
     setLoading(true)
+    setProductsFailed(false)
     void listPortalCatalogProducts()
       .then((data) => {
         if (!cancelled) {
@@ -134,6 +137,7 @@ export function PortalCartPage() {
       .catch(() => {
         if (!cancelled) {
           setProducts([])
+          setProductsFailed(true)
         }
       })
       .finally(() => {
@@ -144,13 +148,15 @@ export function PortalCartPage() {
     return () => {
       cancelled = true
     }
-  }, [])
+  }, [productsAttempt])
 
   const productMap = useMemo(
     () => new Map(products.map((product) => [product.id, product])),
     [products],
   )
   const onRequestLabel = t("tenantPortal.catalog.priceOnRequest")
+  // Never show an internal id: a product missing from the list (load failure or deactivated) is neutral.
+  const unknownProductLabel = t("tenantPortal.catalog.unknownProduct")
   const cartLines = cart.items.map((item) => {
     const product = productMap.get(item.productId)
     return {
@@ -165,7 +171,7 @@ export function PortalCartPage() {
   })
 
   async function onSubmit(values: CheckoutFormValues) {
-    if (submitting) return
+    if (submitting || productsFailed) return
     if (cart.items.length === 0) {
       toast.error(t("tenantPortal.catalog.cartEmpty"))
       return
@@ -238,6 +244,23 @@ export function PortalCartPage() {
         />
       ) : null}
 
+      {productsFailed && cart.items.length > 0 ? (
+        <div
+          role="alert"
+          className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-destructive/40 bg-destructive/5 p-3 text-sm"
+        >
+          <p className="min-w-0 flex-1">{t("tenantPortal.catalog.productsLoadFailed")}</p>
+          <Button
+            type="button"
+            variant="outline"
+            className="h-11"
+            onClick={() => setProductsAttempt((value) => value + 1)}
+          >
+            {t("common.retry")}
+          </Button>
+        </div>
+      ) : null}
+
       {cart.items.length === 0 ? (
         <EmptyState
           icon={ShoppingCartIcon}
@@ -265,9 +288,9 @@ export function PortalCartPage() {
                 <div className="flex items-start justify-between gap-3">
                   <p
                     className="line-clamp-2 min-w-0 font-medium"
-                    title={product?.name ?? item.productId}
+                    title={product?.name ?? unknownProductLabel}
                   >
-                    {product?.name ?? item.productId}
+                    {product?.name ?? unknownProductLabel}
                   </p>
                   <Button
                     type="button"
@@ -275,7 +298,7 @@ export function PortalCartPage() {
                     size="sm"
                     className="portal-cart-remove h-11 shrink-0"
                     aria-label={t("tenantPortal.catalog.removeItem", {
-                      name: product?.name ?? item.productId,
+                      name: product?.name ?? unknownProductLabel,
                     })}
                     onClick={() => {
                       cart.remove(item.productId)
@@ -316,7 +339,7 @@ export function PortalCartPage() {
                     <CatalogQuantityField
                       className="h-11 w-16 px-1 text-center tabular-nums"
                       quantity={item.quantity}
-                      productName={product?.name ?? item.productId}
+                      productName={product?.name ?? unknownProductLabel}
                       onCommit={(next) => {
                         cart.update(item.productId, next)
                       }}
@@ -387,7 +410,7 @@ export function PortalCartPage() {
                 isValid={isCheckoutValid}
                 loading={submitting}
                 preserveLoadingLayout
-                disabled={cart.items.length === 0}
+                disabled={cart.items.length === 0 || productsFailed}
                 loadingLabel={t("tenantPortal.catalog.submitting")}
                 style={{ backgroundColor: primary }}
               >
