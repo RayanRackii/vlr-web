@@ -7626,5 +7626,40 @@
       "notConfigured": "Online billing is not available yet — contact Rolvix.",
       "inProgress": "Your previous request is still being processed. Wait a few seconds and try again."
     }
+  },
+  "assetFamilies": {
+    "spaces": {
+      "label": "Spaces",
+      "fields": {
+        "capacity": {
+          "label": "Capacity"
+        }
+      }
+    },
+    "electrical": {
+      "label": "Electrical equipment",
+      "fields": {
+        "manufacturer": {
+          "label": "Manufacturer"
+        },
+        "voltage": {
+          "label": "Voltage"
+        },
+        "model": {
+          "label": "Model"
+        }
+      }
+    },
+    "goods": {
+      "label": "Goods and items",
+      "fields": {
+        "quantity_hint": {
+          "label": "Typical quantity"
+        }
+      }
+    },
+    "generic": {
+      "label": "Generic"
+    }
   }
 }

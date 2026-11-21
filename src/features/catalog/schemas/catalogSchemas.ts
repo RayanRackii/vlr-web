@@ -247,8 +247,8 @@ export const catalogOrderHistorySchema = z.object({
   actorName: z.string().nullable().optional().default(null),
   reason: z.string().nullable(),
   /** Translation key of the entry (additive); absent on older API responses. */
-  messageKey: z.string().nullish().transform((value) => value ?? null),
-  messageParams: z.record(z.string(), z.string()).nullish().transform((value) => value ?? null),
+  messageKey: z.string().nullish(),
+  messageParams: z.record(z.string(), z.string()).nullish(),
   createdAt: z.string(),
 })
 

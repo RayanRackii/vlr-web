@@ -1,4 +1,5 @@
 import { CadastroHeader } from "@/features/assistant/CadastroShell"
+import { familyLabel } from "@/features/assets/lib/familyLabels"
 import type { PricingUnit } from "@/api/generated/rentalPricing"
 import { LiveFieldMessage } from "@/features/pmoc/components/FormValidationSummary"
 import { issueMessageAt } from "@/features/pmoc/lib/formIssues"
@@ -270,7 +271,7 @@ export function RentalResourceEditorForm({
   const selectedFamily = families.find((family) => family.id === watched.familyId)
   const familyItems = families.map((family) => ({
     value: family.id,
-    label: family.label,
+    label: familyLabel(t, family),
   }))
   const typeItems = [
     { value: "Location", label: t("rentals.resources.typeLocation") },
@@ -574,7 +575,7 @@ export function RentalResourceEditorForm({
                     <SelectContent showScrollButtons={false}>
                       {families.map((family) => (
                         <SelectItem key={family.id} value={family.id}>
-                          {family.label}
+                          {familyLabel(t, family)}
                         </SelectItem>
                       ))}
                     </SelectContent>

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react"
+import { familyLabel } from "@/features/assets/lib/familyLabels"
 import { CircleDot, Folder, LoaderCircle, MapPin, Shapes } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
@@ -663,7 +664,7 @@ export function AssetWizard({
   const categoryName =
     categories.find((category) => category.id === form.categoryId)?.name ??
     form.categoryId
-  const familyLabel = selectedFamily?.label ?? form.familyId
+  const selectedFamilyLabel = selectedFamily ? familyLabel(t, selectedFamily) : form.familyId
 
   const wizard = (
     <>
@@ -828,7 +829,7 @@ export function AssetWizard({
                       onValueChange={handleFamilyChange}
                       items={families.map((family) => ({
                         value: family.id,
-                        label: family.label,
+                        label: familyLabel(t, family),
                       }))}
                     >
                       <SelectTrigger icon={Shapes}
@@ -847,7 +848,7 @@ export function AssetWizard({
                       <SelectContent>
                         {families.map((family) => (
                           <SelectItem key={family.id} value={family.id}>
-                            {family.label}
+                            {familyLabel(t, family)}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -1480,7 +1481,7 @@ export function AssetWizard({
                   <span className="text-muted-foreground">
                     {t("assets.inventory.form.family")}:{" "}
                   </span>
-                  {familyLabel}
+                  {selectedFamilyLabel}
                 </p>
                 {mode === "bulk" ? (
                   <>

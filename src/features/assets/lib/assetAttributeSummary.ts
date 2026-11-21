@@ -45,13 +45,14 @@ export function listAttributeChips(
   fields: readonly AssetFamilyField[],
   attributes: Readonly<Record<string, AssetAttributeValue>>,
   locale: string,
+  labelOf?: (field: AssetFamilyField) => string,
 ): { chips: AssetAttributeChip[]; hidden: number } {
   const all: AssetAttributeChip[] = []
   for (const field of fields) {
     if (field.archived || !CHIP_TYPES.has(field.type)) continue
     const stored = attributes[field.key]
     if (isAbsentAttribute(stored)) continue
-    const label = field.label?.trim() || field.key
+    const label = labelOf?.(field) ?? (field.label?.trim() || field.key)
     if (field.type === "multiselect") {
       for (const item of toFormValue(field, stored) as string[]) {
         all.push({ id: `${field.key}:${item}`, text: item, title: `${label}: ${item}` })

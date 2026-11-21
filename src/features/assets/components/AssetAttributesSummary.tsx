@@ -1,4 +1,5 @@
 import { useState } from "react"
+import { familyFieldLabel } from "@/features/assets/lib/familyLabels"
 import { useTranslation } from "react-i18next"
 
 import { Badge } from "@/components/ui/badge"
@@ -147,7 +148,7 @@ export function AssetAttributesSummary({ fields, attributes, className }: AssetA
   const blocks = toBlocks(fields, attributes)
 
   const labelOf = (field: AssetFamilyField) =>
-    t(`assets.wizard.familyFields.${field.key}`, { defaultValue: field.label ?? field.key })
+    familyFieldLabel(t, field, t(`assets.wizard.familyFields.${field.key}`, { defaultValue: field.label ?? field.key }))
 
   const renderPair = (field: AssetFamilyField) => {
     const stored = attributes[field.key]

@@ -7626,5 +7626,40 @@
       "notConfigured": "Cobrança online ainda não disponível — fale com a Rolvix.",
       "inProgress": "Seu pedido anterior ainda está sendo processado. Aguarde alguns segundos e tente de novo."
     }
+  },
+  "assetFamilies": {
+    "spaces": {
+      "label": "Espaços",
+      "fields": {
+        "capacity": {
+          "label": "Capacidade"
+        }
+      }
+    },
+    "electrical": {
+      "label": "Equipamentos elétricos",
+      "fields": {
+        "manufacturer": {
+          "label": "Fabricante"
+        },
+        "voltage": {
+          "label": "Voltagem"
+        },
+        "model": {
+          "label": "Modelo"
+        }
+      }
+    },
+    "goods": {
+      "label": "Bens e itens",
+      "fields": {
+        "quantity_hint": {
+          "label": "Quantidade típica"
+        }
+      }
+    },
+    "generic": {
+      "label": "Genérico"
+    }
   }
 }

@@ -7626,5 +7626,40 @@
       "notConfigured": "La facturación en línea aún no está disponible — habla con Rolvix.",
       "inProgress": "Tu solicitud anterior aún se está procesando. Espera unos segundos e inténtalo de nuevo."
     }
+  },
+  "assetFamilies": {
+    "spaces": {
+      "label": "Espacios",
+      "fields": {
+        "capacity": {
+          "label": "Capacidad"
+        }
+      }
+    },
+    "electrical": {
+      "label": "Equipos eléctricos",
+      "fields": {
+        "manufacturer": {
+          "label": "Fabricante"
+        },
+        "voltage": {
+          "label": "Voltaje"
+        },
+        "model": {
+          "label": "Modelo"
+        }
+      }
+    },
+    "goods": {
+      "label": "Bienes y artículos",
+      "fields": {
+        "quantity_hint": {
+          "label": "Cantidad típica"
+        }
+      }
+    },
+    "generic": {
+      "label": "Genérico"
+    }
   }
 }

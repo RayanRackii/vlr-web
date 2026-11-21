@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react"
+import { familyLabel } from "@/features/assets/lib/familyLabels"
 import { zodResolver } from "@hookform/resolvers/zod"
 import {
   Building2,
@@ -382,10 +383,10 @@ export function TenantOnboardingWizard() {
   const familyLabelByKey = useMemo(() => {
     const map = new Map<string, string>()
     for (const family of families) {
-      map.set(family.key, family.label)
+      map.set(family.key, familyLabel(t, family))
     }
     return map
-  }, [families])
+  }, [families, t])
 
   const panelSteps = useMemo(
     () =>
@@ -704,7 +705,7 @@ export function TenantOnboardingWizard() {
                           ) : null}
                           <Icon className="size-5 text-foreground" />
                           <span className="text-sm font-medium">
-                            {family.label}
+                            {familyLabel(t, family)}
                           </span>
                           {description ? (
                             <span className="text-xs text-muted-foreground">
