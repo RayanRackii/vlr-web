@@ -885,6 +885,8 @@
       "empty": "There are no products for sale yet",
       "searchEmpty": "No products found for \"{{term}}\"",
       "priceOnRequest": "On request",
+      "unknownProduct": "Product unavailable",
+      "productsLoadFailed": "Could not load the products. Prices are not available.",
       "quantity": "Quantity",
       "quantityFor": "Quantity for {{name}}",
       "quantityDecrease": "Decrease quantity",
@@ -1075,7 +1077,9 @@
       "InApp": "In-app",
       "Email": "Email",
       "WhatsApp": "WhatsApp",
-      "Sms": "SMS"
+      "Sms": "SMS",
+      "Push": "Push",
+      "unknown": "Other channel"
     },
     "deliveryStatus": {
       "Queued": "Queued",
@@ -5100,7 +5104,21 @@
         "modules": "Modules and families",
         "users": "Users",
         "registration": "Portal sign-up",
-        "menu": "Portal menu"
+        "menu": "Portal menu",
+        "advanced": "Advanced settings"
+      },
+      "advanced": {
+        "title": "Advanced settings",
+        "description": "Options the platform allows to be adjusted per company.",
+        "saved": "Setting saved.",
+        "bookingUi": {
+          "label": "Booking map",
+          "hint": "Uses the visual map to book resources."
+        },
+        "errors": {
+          "loadFailed": "Could not load the setting.",
+          "saveFailed": "Could not save the setting."
+        }
       },
       "validation": {
         "contactEmailInvalid": "Enter a valid e-mail.",

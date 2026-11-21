@@ -78,12 +78,15 @@ const ASSET = {
   scheduledDeletionAt: null,
 }
 
-function renderPage(permissions: readonly string[]) {
+function renderPage(
+  permissions: readonly string[],
+  activeModules: readonly string[] = ["inventory"],
+) {
   return render(
     <MemoryRouter>
       <TestPermissionProvider
         permissions={permissions}
-        activeModules={["inventory"]}
+        activeModules={activeModules}
       >
         <AssetsPage />
       </TestPermissionProvider>
@@ -179,7 +182,10 @@ describe("AssetsPage permission-aware load", () => {
     getUnitsMock.mockResolvedValue([])
     listFamiliesMock.mockResolvedValue([])
 
-    renderPage(["inventory.assets.read", "inventory.categories.write"])
+    renderPage(["inventory.assets.read", "inventory.categories.write"], [
+      "inventory",
+      "rentals",
+    ])
 
     expect(
       (
@@ -188,5 +194,21 @@ describe("AssetsPage permission-aware load", () => {
         })
       ).length,
     ).toBeGreaterThan(0)
+  })
+
+  it("hides Criar tipos when the tenant has no rentals module", async () => {
+    getAssetsMock.mockResolvedValue([])
+    getCategoriesMock.mockResolvedValue([])
+    getUnitsMock.mockResolvedValue([])
+    listFamiliesMock.mockResolvedValue([])
+
+    renderPage(["inventory.assets.read", "inventory.categories.write"])
+
+    await screen.findByText(/defina os tipos/)
+    expect(
+      screen.queryByRole("button", {
+        name: i18n.t("assets.inventory.emptyNoTypesCta"),
+      }),
+    ).not.toBeInTheDocument()
   })
 })

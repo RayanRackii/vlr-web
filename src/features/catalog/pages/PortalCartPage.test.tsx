@@ -266,6 +266,31 @@ describe("PortalCartPage validity gate", () => {
     }
   })
 
+  it("shows a neutral name and a retry, never the product id, when the product list fails", async () => {
+    seedCart()
+    listProductsMock.mockRejectedValueOnce(new Error("network"))
+    renderCart()
+
+    expect(
+      await screen.findByText(i18n.t("tenantPortal.catalog.productsLoadFailed")),
+    ).toBeInTheDocument()
+    expect(screen.queryByText(PRODUCT_ID)).not.toBeInTheDocument()
+    expect(
+      screen.getByText(i18n.t("tenantPortal.catalog.unknownProduct")),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByRole("button", { name: i18n.t("tenantPortal.catalog.submitOrder") }),
+    ).toBeDisabled()
+
+    await userEvent.setup().click(screen.getByRole("button", { name: i18n.t("common.retry") }))
+
+    expect(await screen.findByText("Raquete")).toBeInTheDocument()
+    expect(
+      screen.queryByText(i18n.t("tenantPortal.catalog.productsLoadFailed")),
+    ).not.toBeInTheDocument()
+    expect(listProductsMock).toHaveBeenCalledTimes(2)
+  })
+
   it("hides checkout controls when the cart is empty", async () => {
     renderCart()
     expect(await screen.findByText(i18n.t("tenantPortal.catalog.cartEmpty"))).toBeInTheDocument()

@@ -14,6 +14,7 @@ import { usePlatformTenantSession } from "@/features/admin/hooks/usePlatformTena
 import { ClientDashboard } from "@/features/dashboard/components/ClientDashboard"
 import { SuperAdminDashboard } from "@/features/dashboard/components/SuperAdminDashboard"
 import { TechnicianDashboard } from "@/features/dashboard/components/TechnicianDashboard"
+import { selectStaffDashboard } from "@/features/dashboard/lib/selectStaffDashboard"
 import { openDueWorkOrders } from "@/features/dashboard/lib/openDueWorkOrders"
 import { DashboardHero, KpiCard, KpiSkeleton, SectionHeading } from "@/features/dashboard/components/DashboardOverview"
 import { DashboardCharts } from "@/features/dashboard/components/DashboardCharts"
@@ -121,14 +122,12 @@ export function DashboardPage() {
     )
   }
 
-  if (
-    currentUser.role === "TECHNICIAN" ||
-    currentUser.role === "USER"
-  ) {
+  const kind = selectStaffDashboard(currentUser)
+  if (kind === "workOrders") {
     return <TechnicianDashboard />
   }
 
-  if (currentUser.role === "CLIENT") {
+  if (kind === "client") {
     return <ClientDashboard />
   }
 

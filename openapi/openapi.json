@@ -5339,8 +5339,16 @@
             "format": "date-time",
             "type": "string"
           },
+          "customerEmail": {
+            "nullable": true,
+            "type": "string"
+          },
           "customerId": {
             "format": "uuid",
+            "type": "string"
+          },
+          "customerName": {
+            "nullable": true,
             "type": "string"
           },
           "description": {
@@ -5462,6 +5470,19 @@
             "type": "array"
           }
         },
+        "type": "object"
+      },
+      "PutTenantSettingRequestDto": {
+        "additionalProperties": false,
+        "properties": {
+          "value": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "value"
+        ],
         "type": "object"
       },
       "QueuePhase": {
@@ -7884,6 +7905,20 @@
             "type": "boolean"
           },
           "moduleName": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "TenantSettingDto": {
+        "additionalProperties": false,
+        "properties": {
+          "key": {
+            "nullable": true,
+            "type": "string"
+          },
+          "value": {
             "nullable": true,
             "type": "string"
           }
@@ -11076,6 +11111,119 @@
         },
         "tags": [
           "AdminTenantResourceSegments"
+        ]
+      }
+    },
+    "/api/admin/tenants/{tenantId}/settings/{key}": {
+      "get": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tenantId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "key",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TenantSettingDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TenantSettingDto"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/TenantSettingDto"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "AdminTenantSettings"
+        ]
+      },
+      "put": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tenantId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "key",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/*\u002Bjson": {
+              "schema": {
+                "$ref": "#/components/schemas/PutTenantSettingRequestDto"
+              }
+            },
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PutTenantSettingRequestDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PutTenantSettingRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TenantSettingDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TenantSettingDto"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/TenantSettingDto"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "AdminTenantSettings"
         ]
       }
     },
@@ -22743,6 +22891,9 @@
     },
     {
       "name": "AdminTenants"
+    },
+    {
+      "name": "AdminTenantSettings"
     },
     {
       "name": "AdminTenantUsers"

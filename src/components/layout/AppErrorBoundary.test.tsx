@@ -4,7 +4,10 @@ import { createMemoryRouter, Link, Outlet, RouterProvider, useLocation } from "r
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 import i18n from "@/lib/i18n"
+import { reloadPage } from "@/lib/reloadPage"
 import { AppErrorBoundary } from "./AppErrorBoundary"
+
+vi.mock("@/lib/reloadPage", () => ({ reloadPage: vi.fn() }))
 
 let shouldThrow = true
 function Bomb() {
@@ -30,6 +33,16 @@ describe("AppErrorBoundary", () => {
     shouldThrow = false
     await userEvent.setup().click(screen.getByRole("button", { name: i18n.t("common.retry") }))
     expect(screen.getByText("recovered")).toBeInTheDocument()
+  })
+
+  it("retry reloads the page when the error is a stale chunk", async () => {
+    vi.mocked(reloadPage).mockClear()
+    function StaleChunk(): never {
+      throw new TypeError("Failed to fetch dynamically imported module: /assets/Page-abc.js")
+    }
+    render(<AppErrorBoundary><StaleChunk /></AppErrorBoundary>)
+    await userEvent.setup().click(screen.getByRole("button", { name: i18n.t("common.retry") }))
+    expect(reloadPage).toHaveBeenCalledTimes(1)
   })
 
   it("resets when keyed by route change", async () => {

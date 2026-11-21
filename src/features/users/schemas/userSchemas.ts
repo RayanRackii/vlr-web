@@ -1,14 +1,18 @@
 import { z } from "zod"
 
-export const applicationRoleSchema = z.enum([
+/** Roles the web knows about. The API sends a plain string, so `/me` must accept any value. */
+export const KNOWN_APPLICATION_ROLES = [
   "SUPER_ADMIN",
   "ADMIN",
   "TECHNICIAN",
   "USER",
   "CLIENT",
-])
+] as const
 
-export type ApplicationRole = z.infer<typeof applicationRoleSchema>
+/** Tolerant reader: a new role value must never make `/me` fail and lock the user out. */
+export const applicationRoleSchema = z.string()
+
+export type ApplicationRole = (typeof KNOWN_APPLICATION_ROLES)[number] | (string & {})
 
 export const tenantRoleRefSchema = z.object({
   id: z.string().uuid(),

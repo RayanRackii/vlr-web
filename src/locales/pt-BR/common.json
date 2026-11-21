@@ -885,6 +885,8 @@
       "empty": "Ainda não há produtos à venda",
       "searchEmpty": "Nenhum produto encontrado para \"{{term}}\"",
       "priceOnRequest": "Sob consulta",
+      "unknownProduct": "Produto indisponível",
+      "productsLoadFailed": "Não foi possível carregar os produtos. Os preços não estão disponíveis.",
       "quantity": "Quantidade",
       "quantityFor": "Quantidade de {{name}}",
       "quantityDecrease": "Diminuir quantidade",
@@ -1075,7 +1077,9 @@
       "InApp": "No app",
       "Email": "E-mail",
       "WhatsApp": "WhatsApp",
-      "Sms": "SMS"
+      "Sms": "SMS",
+      "Push": "Push",
+      "unknown": "Outro canal"
     },
     "deliveryStatus": {
       "Queued": "Na fila",
@@ -5100,7 +5104,21 @@
         "modules": "Módulos e famílias",
         "users": "Usuários",
         "registration": "Cadastro do portal",
-        "menu": "Menu do portal"
+        "menu": "Menu do portal",
+        "advanced": "Configurações avançadas"
+      },
+      "advanced": {
+        "title": "Configurações avançadas",
+        "description": "Opções que a plataforma libera para ajuste por empresa.",
+        "saved": "Configuração salva.",
+        "bookingUi": {
+          "label": "Mapa de reservas",
+          "hint": "Usa o mapa visual para reservar recursos."
+        },
+        "errors": {
+          "loadFailed": "Não foi possível carregar a configuração.",
+          "saveFailed": "Não foi possível salvar a configuração."
+        }
       },
       "validation": {
         "contactEmailInvalid": "Informe um e-mail válido.",

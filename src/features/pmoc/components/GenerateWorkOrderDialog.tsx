@@ -7,6 +7,8 @@ import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
+import { useTenantTimeZone } from "@/contexts/TenantTimeZoneContext"
+import { tenantTodayIsoDate } from "@/lib/tenantTimeZone"
 import {
   Dialog,
   DialogContent,
@@ -49,13 +51,6 @@ import {
 
 const UNASSIGNED_VALUE = "unassigned"
 
-function todayDateInputValue(): string {
-  const now = new Date()
-  const month = String(now.getMonth() + 1).padStart(2, "0")
-  const day = String(now.getDate()).padStart(2, "0")
-  return `${now.getFullYear()}-${month}-${day}`
-}
-
 function eligibleAssetsForPlan(
   assets: WorkOrderRegistryAsset[],
   unitId: string,
@@ -92,6 +87,7 @@ export function GenerateWorkOrderDialog({
 }) {
   const { t, i18n } = useTranslation()
   const navigate = useNavigate()
+  const timeZone = useTenantTimeZone()
   const [assets, setAssets] = useState<WorkOrderRegistryAsset[]>([])
   const [technicians, setTechnicians] = useState<TechnicianUser[]>([])
   const [isLoadingLookups, setIsLoadingLookups] = useState(false)
@@ -116,7 +112,7 @@ export function GenerateWorkOrderDialog({
     defaultValues: {
       assetId: "",
       assignedUserId: undefined,
-      scheduledDate: todayDateInputValue(),
+      scheduledDate: tenantTodayIsoDate(timeZone),
     },
   })
 
@@ -169,10 +165,10 @@ export function GenerateWorkOrderDialog({
     form.reset({
       assetId: "",
       assignedUserId: undefined,
-      scheduledDate: todayDateInputValue(),
+      scheduledDate: tenantTodayIsoDate(timeZone),
     })
     void loadLookups()
-  }, [form, loadLookups, open])
+  }, [form, loadLookups, open, timeZone])
 
   const assetItems = useMemo(
     () =>

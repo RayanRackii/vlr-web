@@ -245,8 +245,15 @@ describe("CustomerAppLayout session tenant", () => {
       </ThemeProvider>,
     )
 
-    expect(await screen.findByText(i18n.t("tenantPortal.errors.tenantNotFound"))).toBeInTheDocument()
+    expect(await screen.findByText(i18n.t("tenantPortal.errors.loadFailed"))).toBeInTheDocument()
+    expect(screen.queryByText(i18n.t("tenantPortal.errors.tenantNotFound"))).not.toBeInTheDocument()
     expect(screen.queryByRole("heading", { name: i18n.t("notFound.title") })).not.toBeInTheDocument()
+
+    fetchMenu.mockResolvedValue([])
+    await userEvent.setup().click(screen.getByRole("button", { name: i18n.t("tenantPortal.errors.retry") }))
+    await waitFor(() =>
+      expect(screen.queryByText(i18n.t("tenantPortal.errors.loadFailed"))).not.toBeInTheDocument(),
+    )
   })
 
   it("does not treat a route containing catalogo as the catalog route", async () => {
