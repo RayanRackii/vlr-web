@@ -1,7 +1,7 @@
 import { isAxiosError } from "@/lib/api"
 import i18n from "@/lib/i18n"
 
-/** Where "ver planos" goes. `/configuracoes/plano` (B5) replaces this once it exists. */
+/** Public prices page: where "ver planos" goes for users without `core.settings.billing`. */
 export const PLAN_PAGE_PATH = "/precos"
 
 export const PLAN_LIMIT_CODE = "plan.limit_reached"

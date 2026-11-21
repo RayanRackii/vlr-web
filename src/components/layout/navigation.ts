@@ -100,6 +100,7 @@ export type AppNavigationItem = {
     | "nav.catalogNotifications"
     | "nav.company"
     | "nav.portalAppearance"
+    | "nav.billing"
   to: string
   tabs?: readonly NavigationTab[]
   icon: LucideIcon

@@ -1,7 +1,9 @@
 import { useTranslation } from "react-i18next"
 import { Info } from "lucide-react"
+import { Link } from "react-router-dom"
 
 import { Alert, AlertDescription } from "@/components/ui/alert"
+import { BILLING_PAGE_PATH, BILLING_PERMISSION } from "@/features/billing/lib/subscriptionView"
 import { usePermissions } from "@/features/users/permissions/PermissionContext"
 
 function daysUntil(iso: string | null | undefined): number | null {
@@ -18,11 +20,20 @@ function daysUntil(iso: string | null | undefined): number | null {
 
 export function TrialBanner({ informational = false }: { informational?: boolean }) {
   const { t } = useTranslation()
-  const { currentUser: profile } = usePermissions()
+  const { currentUser: profile, can } = usePermissions()
 
   if (!profile?.isTrial) {
     return null
   }
+
+  const planLink = can(BILLING_PERMISSION) ? (
+    <>
+      {" "}
+      <Link to={BILLING_PAGE_PATH} className="font-medium underline underline-offset-2">
+        {t("trial.banner.manage")}
+      </Link>
+    </>
+  ) : null
 
   if (profile.isTrialReadOnly) {
     const purgeDays = daysUntil(profile.trialPurgeAt)
@@ -32,6 +43,7 @@ export function TrialBanner({ informational = false }: { informational?: boolean
           <Info aria-hidden="true" />
           <AlertDescription>
             {t("dashboard.readOnlyNotice", { days: purgeDays ?? "—" })}
+            {planLink}
           </AlertDescription>
         </Alert>
       )
@@ -41,6 +53,7 @@ export function TrialBanner({ informational = false }: { informational?: boolean
         {t("trial.banner.readOnly", {
           days: purgeDays ?? "—",
         })}
+        {planLink}
       </div>
     )
   }
@@ -51,6 +64,7 @@ export function TrialBanner({ informational = false }: { informational?: boolean
       {t("trial.banner.active", {
         days: remaining ?? "—",
       })}
+      {planLink}
     </div>
   )
 }

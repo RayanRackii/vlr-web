@@ -222,7 +222,13 @@ function AppRoutesTree() {
             </Route>
           ))}
           {companyManifest.routes.staff.map((route) => (
-            <Route key={route.path} path={route.path} element={route.element} />
+            route.permission ? (
+              <Route key={route.path} element={<PermissionRoute permission={route.permission} />}>
+                <Route path={route.path} element={route.element} />
+              </Route>
+            ) : (
+              <Route key={route.path} path={route.path} element={route.element} />
+            )
           ))}
           {notificationsManifest.routes.staff.map((route) => (
             <Route key={route.path} element={<PermissionRoute permission={route.permission} anyOf={route.anyOf} />}>
