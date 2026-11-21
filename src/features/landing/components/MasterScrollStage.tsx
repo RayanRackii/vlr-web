@@ -11,6 +11,8 @@ import { useMemo, useRef, useState, type ReactNode } from "react"
 import { useTranslation } from "react-i18next"
 import { useNavigate } from "react-router-dom"
 
+import { useOnboardingHref } from "@/features/billing/lib/useOnboardingHref"
+
 import { Button } from "@/components/ui/button"
 import {
   MASTER_STAGE_ID,
@@ -360,6 +362,7 @@ function SegmentCards() {
 function TrustCards() {
   const { t } = useTranslation()
   const navigate = useNavigate()
+  const onboardingHref = useOnboardingHref()
   const pillars = [
     { id: "isolation", Icon: Lock },
     { id: "modular", Icon: Puzzle },
@@ -391,7 +394,7 @@ function TrustCards() {
         size="lg"
         className="w-full sm:w-auto sm:self-start"
         onClick={() => {
-          void navigate("/onboarding")
+          void navigate(onboardingHref)
         }}
       >
         {t("landing.cta.primary")}

@@ -2,11 +2,14 @@ import { ArrowRight } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { useNavigate } from "react-router-dom"
 
+import { useOnboardingHref } from "@/features/billing/lib/useOnboardingHref"
+
 import { Button } from "@/components/ui/button"
 
 export function ClosingSection() {
   const { t } = useTranslation()
   const navigate = useNavigate()
+  const onboardingHref = useOnboardingHref()
 
   return (
     <section
@@ -29,7 +32,7 @@ export function ClosingSection() {
             size="lg"
             variant="secondary"
             onClick={() => {
-              void navigate("/onboarding")
+              void navigate(onboardingHref)
             }}
           >
             {t("landing.cta.primary")}

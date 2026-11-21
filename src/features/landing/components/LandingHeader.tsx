@@ -1,10 +1,14 @@
 import { ArrowRight } from "lucide-react"
 import { useTranslation } from "react-i18next"
-import { Link, useNavigate } from "react-router-dom"
+import { Link, useLocation, useNavigate } from "react-router-dom"
 
 import { LanguageSwitcher } from "@/components/layout/LanguageSwitcher"
 import { ThemeToggle } from "@/components/layout/ThemeToggle"
 import { Button } from "@/components/ui/button"
+import {
+  buildOnboardingHref,
+  resolvePassthroughParams,
+} from "@/features/billing/lib/leadAttribution"
 import {
   MASTER_CHAPTER,
   scrollToMasterChapter,
@@ -32,14 +36,18 @@ const NAV_ITEMS = [
   {
     id: "pricing",
     labelKey: "landing.header.nav.pricing",
-    kind: "anchor" as const,
-    href: "#pricing",
+    kind: "link" as const,
+    to: "/precos",
   },
 ] as const
 
 export function LandingHeader() {
   const { t } = useTranslation()
   const navigate = useNavigate()
+  const { pathname, search } = useLocation()
+  // The scroll chapters only exist on the home page.
+  const navItems = NAV_ITEMS.filter((item) => item.kind !== "chapter" || pathname === "/")
+  const passthrough = resolvePassthroughParams(search)
 
   return (
     <header className="fixed top-0 z-50 w-full border-b border-border/50 bg-background/80 backdrop-blur-md">
@@ -59,7 +67,7 @@ export function LandingHeader() {
           className="hidden items-center gap-6 md:flex"
           aria-label={t("landing.header.navAria")}
         >
-          {NAV_ITEMS.map((item) =>
+          {navItems.map((item) =>
             item.kind === "chapter" ? (
               <button
                 key={item.id}
@@ -72,13 +80,13 @@ export function LandingHeader() {
                 {t(item.labelKey)}
               </button>
             ) : (
-              <a
+              <Link
                 key={item.id}
-                href={item.href}
+                to={item.to}
                 className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
               >
                 {t(item.labelKey)}
-              </a>
+              </Link>
             ),
           )}
         </nav>
@@ -106,7 +114,11 @@ export function LandingHeader() {
             >
               {t("landing.header.login")}
             </Button>
-            <Button type="button" size="sm" render={<a href="#pricing" />}>
+            <Button
+              type="button"
+              size="sm"
+              render={<Link to={buildOnboardingHref({ passthrough })} />}
+            >
               {t("landing.header.cta")}
               <ArrowRight data-icon="inline-end" />
             </Button>
