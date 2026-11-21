@@ -5689,6 +5689,79 @@
           "unknown": "Evento"
         }
       }
+    },
+    "modulePurge": {
+      "sectionTitle": "Datos de módulos desactivados",
+      "sectionDescription": "Elimine los datos guardados de módulos que esta empresa ya no usa. La eliminación se programa y se puede cancelar.",
+      "loading": "Cargando…",
+      "noData": "No hay datos guardados para este módulo.",
+      "storedData_one": "Datos guardados: {{count}} registro",
+      "storedData_other": "Datos guardados: {{count}} registros",
+      "storageObjects_one": "{{count}} archivo",
+      "storageObjects_other": "{{count}} archivos",
+      "deleteAction": "Eliminar datos…",
+      "cancelAction": "Cancelar eliminación",
+      "pendingChip": "Eliminación programada para {{date}}",
+      "scheduledToast": "Eliminación programada.",
+      "cancelledToast": "Eliminación cancelada.",
+      "dialog": {
+        "title": "Eliminar datos de {{module}}",
+        "grace": "Los datos se eliminarán en 30 días. Hasta entonces puede cancelar.",
+        "confirmLabel": "Escriba {{key}} para confirmar",
+        "back": "Volver",
+        "confirm": "Programar eliminación"
+      },
+      "cancelDialog": {
+        "title": "Cancelar eliminación de {{module}}",
+        "description": "Los datos del módulo se conservarán.",
+        "reasonLabel": "Motivo (opcional)",
+        "confirm": "Cancelar eliminación"
+      },
+      "blockers": {
+        "moduleActive": "{{module}} sigue activo. Desactive el módulo y guarde antes.",
+        "fkRestrictOwner": "{{table}} aún usan recursos de este módulo. Elimine primero los datos de {{owner}}.",
+        "fkRestrict": "Registros en {{table}} aún usan recursos de {{module}}. Elimínelos antes.",
+        "fkCascade": "La eliminación borraría datos de otro módulo ({{table}}). Elimine esos datos antes.",
+        "allocationsUnreleased": "Aún hay asignaciones de recursos sin liberar. Libérelas antes.",
+        "unknown": "No se puede eliminar ahora ({{code}})."
+      },
+      "tables": {
+        "rentals_reservations": "Reservas",
+        "rentals_reservation_items": "Ítems de reserva",
+        "rentals_rental_assets": "Recursos alquilables",
+        "rentals_slots": "Horarios",
+        "rentals_schedule_templates": "Plantillas de agenda",
+        "rentals_layouts": "Mapas",
+        "rentals_layout_items": "Ítems de los mapas",
+        "rentals_rental_pricings": "Precios de alquiler",
+        "rentals_reservation_queue_tickets": "Cola de espera",
+        "catalog_catalog_orders": "Pedidos",
+        "catalog_catalog_order_items": "Ítems de pedido",
+        "catalog_catalog_products": "Productos",
+        "catalog_product_requests": "Solicitudes de producto",
+        "catalog_customer_groups": "Grupos de clientes",
+        "catalog_order_item_resource_allocations": "Asignaciones de recursos de los pedidos",
+        "os_work_orders": "Órdenes de servicio",
+        "os_work_order_tasks": "Tareas de las órdenes de servicio",
+        "os_work_order_task_files": "Archivos de las tareas",
+        "pmoc_maintenance_plans": "Planes de mantenimiento",
+        "pmoc_plan_tasks": "Tareas de los planes",
+        "planning_asset_allocations": "Asignaciones de recursos",
+        "planning_asset_planning_profiles": "Perfiles de planificación",
+        "planning_asset_working_hours": "Horarios de trabajo"
+      },
+      "errors": {
+        "loadFailed": "No se pudieron cargar los datos del módulo.",
+        "scheduleFailed": "No se pudo programar la eliminación.",
+        "cancelFailed": "No se pudo cancelar la eliminación.",
+        "blocked": "No se puede programar la eliminación: hay bloqueos.",
+        "moduleUnknown": "Módulo desconocido.",
+        "notPurgeable": "Los datos de este módulo no se pueden eliminar.",
+        "alreadyPending": "Ya hay una eliminación programada para este módulo.",
+        "confirmMismatch": "La confirmación no coincide con el módulo.",
+        "reasonTooLong": "El motivo debe tener como máximo 500 caracteres.",
+        "notFound": "Empresa o eliminación programada no encontrada."
+      }
     }
   },
   "rentals": {

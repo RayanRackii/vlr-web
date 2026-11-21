@@ -319,6 +319,10 @@ export function TenantEditForm({
             >
               <TenantModulesTab
                 form={form}
+                tenantId={tenantId}
+                savedActiveModules={tenant.activeModules
+                  .filter((module) => module.isActive)
+                  .map((module) => module.moduleName)}
                 disabled={isSubmitting}
                 hasLegacyMaintenance={hasLegacyMaintenance}
                 commercialModules={commercialModules}

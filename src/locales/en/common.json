@@ -5689,6 +5689,79 @@
           "unknown": "Event"
         }
       }
+    },
+    "modulePurge": {
+      "sectionTitle": "Data of disabled modules",
+      "sectionDescription": "Delete the stored data of modules this company no longer uses. Deletion is scheduled and can be cancelled.",
+      "loading": "Loading…",
+      "noData": "No stored data for this module.",
+      "storedData_one": "Stored data: {{count}} record",
+      "storedData_other": "Stored data: {{count}} records",
+      "storageObjects_one": "{{count}} file",
+      "storageObjects_other": "{{count}} files",
+      "deleteAction": "Delete data…",
+      "cancelAction": "Cancel deletion",
+      "pendingChip": "Deletion scheduled for {{date}}",
+      "scheduledToast": "Deletion scheduled.",
+      "cancelledToast": "Deletion cancelled.",
+      "dialog": {
+        "title": "Delete {{module}} data",
+        "grace": "The data will be deleted in 30 days. Until then you can cancel.",
+        "confirmLabel": "Type {{key}} to confirm",
+        "back": "Back",
+        "confirm": "Schedule deletion"
+      },
+      "cancelDialog": {
+        "title": "Cancel {{module}} deletion",
+        "description": "The module data will be kept.",
+        "reasonLabel": "Reason (optional)",
+        "confirm": "Cancel deletion"
+      },
+      "blockers": {
+        "moduleActive": "{{module}} is still active. Turn the module off and save first.",
+        "fkRestrictOwner": "{{table}} still use resources of this module. Delete the {{owner}} data first.",
+        "fkRestrict": "Records in {{table}} still use resources of {{module}}. Delete them first.",
+        "fkCascade": "Deleting would remove data from another module ({{table}}). Delete that data first.",
+        "allocationsUnreleased": "Some resource allocations are still not released. Release them first.",
+        "unknown": "Cannot delete right now ({{code}})."
+      },
+      "tables": {
+        "rentals_reservations": "Reservations",
+        "rentals_reservation_items": "Reservation items",
+        "rentals_rental_assets": "Rental resources",
+        "rentals_slots": "Time slots",
+        "rentals_schedule_templates": "Schedule templates",
+        "rentals_layouts": "Layouts",
+        "rentals_layout_items": "Layout items",
+        "rentals_rental_pricings": "Rental prices",
+        "rentals_reservation_queue_tickets": "Waiting queue",
+        "catalog_catalog_orders": "Orders",
+        "catalog_catalog_order_items": "Order items",
+        "catalog_catalog_products": "Products",
+        "catalog_product_requests": "Product requests",
+        "catalog_customer_groups": "Customer groups",
+        "catalog_order_item_resource_allocations": "Order resource allocations",
+        "os_work_orders": "Work orders",
+        "os_work_order_tasks": "Work order tasks",
+        "os_work_order_task_files": "Task files",
+        "pmoc_maintenance_plans": "Maintenance plans",
+        "pmoc_plan_tasks": "Plan tasks",
+        "planning_asset_allocations": "Resource allocations",
+        "planning_asset_planning_profiles": "Planning profiles",
+        "planning_asset_working_hours": "Working hours"
+      },
+      "errors": {
+        "loadFailed": "Could not load the module data.",
+        "scheduleFailed": "Could not schedule the deletion.",
+        "cancelFailed": "Could not cancel the deletion.",
+        "blocked": "The deletion cannot be scheduled: there are blockers.",
+        "moduleUnknown": "Unknown module.",
+        "notPurgeable": "The data of this module cannot be deleted.",
+        "alreadyPending": "A deletion is already scheduled for this module.",
+        "confirmMismatch": "The confirmation does not match the module.",
+        "reasonTooLong": "The reason must be at most 500 characters.",
+        "notFound": "Company or scheduled deletion not found."
+      }
     }
   },
   "rentals": {
