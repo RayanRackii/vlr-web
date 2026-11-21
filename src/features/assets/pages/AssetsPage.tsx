@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
+import { familyFieldLabel } from "@/features/assets/lib/familyLabels"
 import { CircleCheck, Folder, Layers, MapPin, MoreHorizontal, Plus, Trash2, type LucideIcon } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
@@ -307,6 +308,7 @@ export function AssetsPage() {
         familyById.get(asset.familyId)?.fields ?? [],
         asset.attributes,
         i18n.language,
+        (field) => familyFieldLabel(t, field),
       )
       if (chips.length === 0) return null
       return (

@@ -210,7 +210,8 @@
       "saved": "Saved",
       "error": "Error saving"
     },
-    "remove": "Remove"
+    "remove": "Remove",
+    "cappedList": "Showing the {{shown}} most recent of {{total}}"
   },
   "fullPage": {
     "unsavedChanges_one": "{{count}} unsaved change",
@@ -2019,6 +2020,19 @@
         "Booking": "per booking",
         "Package": "per package"
       }
+    },
+    "order": {
+      "history": {
+        "requested": "Requested",
+        "approved": "Approved",
+        "preparing": "Preparing",
+        "ready": "Ready",
+        "completed": "Completed",
+        "rejected": "Rejected",
+        "cancelled": "Canceled",
+        "usageWorkFinished": "Work finished",
+        "usageReleased": "Resource released"
+      }
     }
   },
   "lateDuration": {
@@ -2165,7 +2179,7 @@
         "workOrder": "Work Orders",
         "rentals": "Rentals",
         "finance": "Finance",
-        "dashboardB2c": "B2C Dashboard",
+        "dashboardB2c": "Customer portal dashboard",
         "customerManagement": "Customer Management",
         "maintenance": "Maintenance",
         "documents": "Documents",
@@ -5513,7 +5527,7 @@
       "Rentals": "Rentals",
       "RentalsDescription": "Manage bookable resources and hours.",
       "Catalog": "Catalog & Orders",
-      "CatalogDescription": "Products, orders, and B2C notifications.",
+      "CatalogDescription": "Products, orders, and customer notifications.",
       "unknown": "Module",
       "ResourcePlanning": "Resource planning",
       "ResourcePlanningDescription": "Organizes resource availability and use.",
@@ -5750,7 +5764,8 @@
         "pmoc_plan_tasks": "Plan tasks",
         "planning_asset_allocations": "Resource allocations",
         "planning_asset_planning_profiles": "Planning profiles",
-        "planning_asset_working_hours": "Working hours"
+        "planning_asset_working_hours": "Working hours",
+        "rentals_resource_types": "Resource types"
       },
       "errors": {
         "loadFailed": "Could not load the module data.",
@@ -7612,6 +7627,46 @@
       "providerError": "The payment provider did not respond. Please try again shortly.",
       "notConfigured": "Online billing is not available yet — contact Rolvix.",
       "inProgress": "Your previous request is still being processed. Wait a few seconds and try again."
+    },
+    "statusBanner": {
+      "pastDue": "Payment overdue — settle it in",
+      "readOnly": "Account is read-only due to missing payment — settle it in",
+      "link": "Plan and billing"
+    }
+  },
+  "assetFamilies": {
+    "spaces": {
+      "label": "Spaces",
+      "fields": {
+        "capacity": {
+          "label": "Capacity"
+        }
+      }
+    },
+    "electrical": {
+      "label": "Electrical equipment",
+      "fields": {
+        "manufacturer": {
+          "label": "Manufacturer"
+        },
+        "voltage": {
+          "label": "Voltage"
+        },
+        "model": {
+          "label": "Model"
+        }
+      }
+    },
+    "goods": {
+      "label": "Goods and items",
+      "fields": {
+        "quantity_hint": {
+          "label": "Typical quantity"
+        }
+      }
+    },
+    "generic": {
+      "label": "Generic"
     }
   }
 }

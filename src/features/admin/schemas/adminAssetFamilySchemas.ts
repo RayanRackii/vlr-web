@@ -39,6 +39,7 @@ export const adminAssetFamilyFieldSchema = z.object({
   type: assetFamilyFieldTypeSchema.or(z.string()),
   required: z.boolean(),
   label: z.string().nullish(),
+  labelKey: z.string().nullish(),
   help: z.string().nullish(),
   unit: z.string().nullish(),
   min: z.number().nullish(),
@@ -56,6 +57,7 @@ export const adminAssetFamilySchema = z.object({
   id: guidLikeIdSchema,
   key: z.string().min(1),
   label: z.string().min(1),
+  labelKey: z.string().nullish(),
   fields: z.array(adminAssetFamilyFieldSchema).default([]),
   sortOrder: z.number().int(),
   isActive: z.boolean(),
@@ -441,19 +443,26 @@ function numberOrNull(value: string): number | null {
   return value.trim() === "" ? null : parseNumberText(value)
 }
 
+/** `labelKey` is response-only (seeded translation); it never goes back to the API. */
+function withoutLabelKey(field: AdminAssetFamilyField): AdminAssetFamilyFieldInput {
+  const rest: AdminAssetFamilyFieldInput = { ...field }
+  delete (rest as { labelKey?: unknown }).labelKey
+  return rest
+}
+
 /** Properties that do not apply to the type are sent as null so a type switch leaves nothing behind. */
 export function toFieldInput(
   field: AdminAssetFamilyFormField,
 ): AdminAssetFamilyFieldInput {
   if (field.original) {
     if (isUntouched(field)) {
-      return { ...field.original }
+      return withoutLabelKey(field.original)
     }
 
     // A type the editor does not know is never rewritten; only archiving applies.
     if (!isKnownAssetFamilyFieldType(field.original.type)) {
       return {
-        ...field.original,
+        ...withoutLabelKey(field.original),
         archived: field.archived,
         required: field.archived ? false : field.original.required,
       }

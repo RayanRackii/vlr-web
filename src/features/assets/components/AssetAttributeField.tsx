@@ -1,5 +1,6 @@
 import { useTranslation } from "react-i18next"
 
+import { familyFieldLabel } from "@/features/assets/lib/familyLabels"
 import { badgeVariants } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -247,7 +248,7 @@ export function AssetAttributeField({
   const { t } = useTranslation()
   const id = controlProps.id
   const invalidClass = errorMessage ? "border-destructive focus-visible:border-destructive" : ""
-  const label = t(`assets.wizard.familyFields.${field.key}`, { defaultValue: field.label ?? field.key })
+  const label = familyFieldLabel(t, field, t(`assets.wizard.familyFields.${field.key}`, { defaultValue: field.label ?? field.key }))
   const help = field.help ?? (field.key === "voltage" || field.key === "volts" ? t("assets.wizard.help.voltage") : null)
   const rangeHint = field.type === "number" ? numberHint(field, t as Translate) : null
 

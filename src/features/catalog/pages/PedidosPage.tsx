@@ -1,4 +1,5 @@
 import { useState } from "react"
+import { CappedListNote } from "@/components/ui/CappedListNote"
 import { Link, useSearchParams } from "react-router-dom"
 import { useTranslation } from "react-i18next"
 import { DataList, type DataListColumn } from "@/components/data-table/DataList"
@@ -111,6 +112,8 @@ export function PedidosPage() {
         {...(data.loading ? {} : { allCount: sourceCount })}
         className="border-b border-border"
       />
+      {!data.loading && (tab !== "solicitacoes" ? <CappedListNote rows={data.orders} /> : null)}
+      {!data.loading && (tab !== "pedidos" ? <CappedListNote rows={data.requests} /> : null)}
       {data.errors.length > 0 && !failedWithoutData && !data.loading && <div role="alert" className="space-y-2 rounded-lg border border-destructive/30 bg-destructive/5 p-4 text-sm text-destructive">
         {data.errors.map((error, index) => <p key={index}>{error}</p>)}
         <Button variant="outline" onClick={data.retry}>{t("catalog.retry")}</Button>

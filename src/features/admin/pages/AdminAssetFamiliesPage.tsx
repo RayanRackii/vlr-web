@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
+import { familyLabel } from "@/features/assets/lib/familyLabels"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Plus } from "lucide-react"
 import { useFieldArray, useForm, useWatch } from "react-hook-form"
@@ -256,9 +257,10 @@ export function AdminAssetFamiliesPage() {
           family.isActive === (statusFilter === "active")) &&
         (needle === "" ||
           family.key.toLowerCase().includes(needle) ||
-          family.label.toLowerCase().includes(needle)),
+          family.label.toLowerCase().includes(needle) ||
+          familyLabel(t, family).toLowerCase().includes(needle)),
     )
-  }, [families, search, statusFilter])
+  }, [families, search, statusFilter, t])
 
   const keyCell = (family: AdminAssetFamily) => (
     <div className="flex min-w-0 flex-wrap items-center gap-2">
@@ -299,7 +301,7 @@ export function AdminAssetFamiliesPage() {
             size="sm"
             className={buttonClass}
             aria-label={t("admin.assetFamilies.actions.deleteNamed", {
-              label: family.label,
+              label: familyLabel(t, family),
             })}
             onClick={() => {
               setDeleteError(null)
@@ -323,7 +325,7 @@ export function AdminAssetFamiliesPage() {
       id: "label",
       header: t("admin.assetFamilies.columns.label"),
       cell: (family) => (
-        <span className="[overflow-wrap:anywhere]">{family.label}</span>
+        <span className="[overflow-wrap:anywhere]">{familyLabel(t, family)}</span>
       ),
     },
     {
@@ -623,7 +625,7 @@ export function AdminAssetFamiliesPage() {
               <div className="min-w-0">
                 {keyCell(family)}
                 <p className="text-sm text-muted-foreground [overflow-wrap:anywhere]">
-                  {family.label}
+                  {familyLabel(t, family)}
                 </p>
               </div>
               {statusBadge(family)}

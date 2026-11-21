@@ -71,6 +71,7 @@ import {
   rejectCatalogOrder,
   startPreparingCatalogOrder,
 } from "@/features/catalog/services/catalogService"
+import { describeOrderHistoryEntry } from "@/features/catalog/lib/orderHistoryText"
 import { listCatalogResourceNames } from "@/features/catalog/lib/resourceNames"
 
 
@@ -649,7 +650,7 @@ export function CatalogOrderDetailPage({ unified = false }: { unified?: boolean 
               className="rounded-lg border border-border px-4 py-2 text-sm"
             >
               <p className="font-medium">
-                {usageLabelKey ? t(usageLabelKey) : t(`catalog.status.${entry.status}`)}
+                {describeOrderHistoryEntry(entry, t, usageLabelKey ? t(usageLabelKey) : t(`catalog.status.${entry.status}`))}
               </p>
               <p className="tabular-nums text-muted-foreground">
                 {actorLabel} ·{" "}

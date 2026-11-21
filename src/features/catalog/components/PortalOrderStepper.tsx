@@ -1,6 +1,7 @@
 import { useTenantTimeZone } from "@/contexts/TenantTimeZoneContext"
 import { Check, X } from "lucide-react"
 import { useTranslation } from "react-i18next"
+import { describeOrderHistoryEntry } from "@/features/catalog/lib/orderHistoryText"
 import { formatCatalogDate, type CatalogOrder, type CatalogOrderStatus } from "@/features/catalog/schemas/catalogSchemas"
 
 const steps = ["Requested", "Approved", "Preparing", "Ready", "Completed"] as const
@@ -51,7 +52,7 @@ export function PortalOrderStepper({ order }: { order: CatalogOrder }) {
                   <span className="portal-timeline-dot" /><span className="portal-timeline-line" />
                 </span>
                 <div className="portal-timeline-body">
-                  <p className="portal-timeline-status">{t(`catalog.status.${entry.status}`)}</p>
+                  <p className="portal-timeline-status">{describeOrderHistoryEntry(entry, t, t(`catalog.status.${entry.status}`))}</p>
                   <p className="portal-timeline-when">{formatCatalogDate(entry.createdAt, i18n.language, timeZoneId)}</p>
                   {entry.reason ? <p className="portal-timeline-reason">{t("tenantPortal.catalog.purchase.reason", { reason: entry.reason })}</p> : null}
                 </div>

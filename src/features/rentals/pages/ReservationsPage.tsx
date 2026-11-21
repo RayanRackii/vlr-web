@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
+import { CappedListNote } from "@/components/ui/CappedListNote"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
 import { useSearchParams } from "react-router-dom"
@@ -310,6 +311,7 @@ export function ReservationsPage({ showHeader = true, onDateChange }: Reservatio
             }}
           />
       </div>
+          <CappedListNote rows={rows} />
           <StatusChips
             label={t("rentals.reservations.status")}
             allLabel={t("rentals.reservations.statusAll")}

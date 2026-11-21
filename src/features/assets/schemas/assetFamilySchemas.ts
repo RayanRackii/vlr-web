@@ -36,6 +36,7 @@ export const assetFamilyFieldSchema = z.object({
   type: z.enum(ASSET_FAMILY_FIELD_TYPES).or(z.string()),
   required: z.boolean().default(false),
   label: z.string().nullish(),
+  labelKey: z.string().nullish(),
   help: z.string().nullish(),
   unit: z.string().nullish(),
   min: z.number().nullish(),
@@ -53,6 +54,7 @@ export const assetFamilySchema = z.object({
   id: guidLikeIdSchema,
   key: z.string().min(1),
   label: z.string().min(1),
+  labelKey: z.string().nullish(),
   fields: z
     .array(assetFamilyFieldSchema)
     .default([])

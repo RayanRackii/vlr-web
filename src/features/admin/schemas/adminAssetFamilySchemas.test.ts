@@ -482,3 +482,30 @@ describe("schema preview", () => {
     expect(preview([row({ incompatibleSamples: null })]).fields[0]?.incompatibleSamples).toEqual([])
   })
 })
+
+describe("seeded label keys", () => {
+  it("reads labelKey but never sends it back", () => {
+    const parsed = adminAssetFamilyListSchema.parse([
+      {
+        id: "11111111-1111-1111-1111-111111111103",
+        key: "goods",
+        label: "Bens e itens",
+        labelKey: "assetFamilies.goods.label",
+        sortOrder: 30,
+        isActive: true,
+        fields: [{ key: "quantity_hint", type: "number", required: false, label: "Quantidade", labelKey: "assetFamilies.goods.fields.quantity_hint.label" }],
+      },
+    ])[0]!
+    expect(parsed.labelKey).toBe("assetFamilies.goods.label")
+    const sent = toUpdateAdminAssetFamilyRequest(adminAssetFamilyToFormValues(parsed), 1).fields[0]!
+    expect(sent).not.toHaveProperty("labelKey")
+    expect(sent.label).toBe("Quantidade")
+  })
+
+  it("tolerates responses without labelKey", () => {
+    const parsed = adminAssetFamilyListSchema.parse([
+      { id: "11111111-1111-1111-1111-111111111104", key: "generic", label: "Genérico", sortOrder: 100, isActive: true },
+    ])[0]!
+    expect(parsed.labelKey).toBeUndefined()
+  })
+})

@@ -1,5 +1,6 @@
 import type { AxiosProgressEvent } from "axios"
 
+import { withListTotal } from "@/lib/listTotal"
 import { API_UPLOAD_TIMEOUT_MS } from "@/lib/apiTimeouts"
 import i18n from "@/lib/i18n"
 import { localizeMaintenancePlanApiError } from "@/features/pmoc/lib/localizeMaintenancePlanError"
@@ -151,7 +152,7 @@ export async function getWorkOrders(filters?: {
       throw new Error(i18n.t("workOrders.errors.invalidResponse"))
     }
 
-    return parsed.data
+    return withListTotal(parsed.data, response.headers)
   } catch (error: unknown) {
     console.error("getWorkOrders failed", error)
     if (isAxiosError(error)) {

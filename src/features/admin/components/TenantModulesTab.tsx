@@ -1,4 +1,5 @@
 import { Check, Layers, Package, Tent, Zap, type LucideIcon } from "lucide-react"
+import { familyLabel } from "@/features/assets/lib/familyLabels"
 import { useTranslation } from "react-i18next"
 import type { UseFormReturn } from "react-hook-form"
 
@@ -172,7 +173,7 @@ export function TenantModulesTab({
                           </span>
                         ) : null}
                         <Icon className="size-5 text-foreground" />
-                        <span className="text-sm font-medium">{family.label}</span>
+                        <span className="text-sm font-medium">{familyLabel(t, family)}</span>
                         {description ? (
                           <span className="text-xs text-muted-foreground">
                             {description}

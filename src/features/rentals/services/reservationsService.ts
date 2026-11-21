@@ -1,5 +1,6 @@
 import { z } from "zod"
 
+import { withListTotal } from "@/lib/listTotal"
 import { api, getAxiosErrorPayload, isAxiosError, parseApiError } from "@/lib/api"
 import {
   formatLocaleCurrency,
@@ -85,7 +86,7 @@ export async function listAdminReservations(
     if (!parsed.success) {
       throw new Error(i18n.t("apiErrors.invalidPayload"))
     }
-    return parsed.data
+    return withListTotal(parsed.data, response.headers)
   } catch (error) {
     throw new Error(
       parseApiError(getAxiosErrorPayload(error), i18n.t("apiErrors.loadReservations")),

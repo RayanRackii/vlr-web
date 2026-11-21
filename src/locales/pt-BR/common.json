@@ -210,7 +210,8 @@
       "saved": "Salvo",
       "error": "Erro ao salvar"
     },
-    "remove": "Remover"
+    "remove": "Remover",
+    "cappedList": "Mostrando os {{shown}} mais recentes de {{total}}"
   },
   "fullPage": {
     "unsavedChanges_one": "{{count}} alteração não salva",
@@ -2019,6 +2020,19 @@
         "Booking": "por reserva",
         "Package": "por pacote"
       }
+    },
+    "order": {
+      "history": {
+        "requested": "Solicitado",
+        "approved": "Aprovado",
+        "preparing": "Em preparação",
+        "ready": "Pronto",
+        "completed": "Concluído",
+        "rejected": "Recusado",
+        "cancelled": "Cancelado",
+        "usageWorkFinished": "Trabalho concluído",
+        "usageReleased": "Recurso liberado"
+      }
     }
   },
   "lateDuration": {
@@ -2166,7 +2180,7 @@
         "workOrder": "Ordem de Serviço",
         "rentals": "Aluguel",
         "finance": "Financeiro",
-        "dashboardB2c": "Dashboard B2C",
+        "dashboardB2c": "Dashboard do portal do cliente",
         "customerManagement": "Gestão de Clientes",
         "maintenance": "Manutenção",
         "documents": "Documentos",
@@ -5513,7 +5527,7 @@
       "Rentals": "Aluguéis",
       "RentalsDescription": "Gerencie recursos reserváveis e horários.",
       "Catalog": "Catálogo & Pedidos",
-      "CatalogDescription": "Produtos, pedidos e notificações B2C.",
+      "CatalogDescription": "Produtos, pedidos e notificações aos clientes.",
       "unknown": "Módulo",
       "ResourcePlanning": "Planejamento de recursos",
       "ResourcePlanningDescription": "Organiza a disponibilidade e o uso dos recursos.",
@@ -5750,7 +5764,8 @@
         "pmoc_plan_tasks": "Tarefas dos planos",
         "planning_asset_allocations": "Alocações de recursos",
         "planning_asset_planning_profiles": "Perfis de planejamento",
-        "planning_asset_working_hours": "Horários de trabalho"
+        "planning_asset_working_hours": "Horários de trabalho",
+        "rentals_resource_types": "Tipos de recurso"
       },
       "errors": {
         "loadFailed": "Não foi possível carregar os dados do módulo.",
@@ -7612,6 +7627,46 @@
       "providerError": "O provedor de pagamento não respondeu. Tente novamente em instantes.",
       "notConfigured": "Cobrança online ainda não disponível — fale com a Rolvix.",
       "inProgress": "Seu pedido anterior ainda está sendo processado. Aguarde alguns segundos e tente de novo."
+    },
+    "statusBanner": {
+      "pastDue": "Pagamento em atraso — regularize em",
+      "readOnly": "Conta em modo somente leitura por falta de pagamento — regularize em",
+      "link": "Plano e cobrança"
+    }
+  },
+  "assetFamilies": {
+    "spaces": {
+      "label": "Espaços",
+      "fields": {
+        "capacity": {
+          "label": "Capacidade"
+        }
+      }
+    },
+    "electrical": {
+      "label": "Equipamentos elétricos",
+      "fields": {
+        "manufacturer": {
+          "label": "Fabricante"
+        },
+        "voltage": {
+          "label": "Voltagem"
+        },
+        "model": {
+          "label": "Modelo"
+        }
+      }
+    },
+    "goods": {
+      "label": "Bens e itens",
+      "fields": {
+        "quantity_hint": {
+          "label": "Quantidade típica"
+        }
+      }
+    },
+    "generic": {
+      "label": "Genérico"
     }
   }
 }
