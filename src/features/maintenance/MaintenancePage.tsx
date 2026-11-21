@@ -1,4 +1,5 @@
 import { useMemo, useState, type ReactNode } from "react"
+import { CappedListNote } from "@/components/ui/CappedListNote"
 import { Link, useNavigate, useSearchParams } from "react-router-dom"
 import { useTranslation } from "react-i18next"
 import { toast } from "sonner"
@@ -189,6 +190,7 @@ export function MaintenancePage() {
     </Tabs>
     <div id="maintenance-list" role="tabpanel" aria-labelledby={`maintenance-tab-${tab}`} aria-busy={data.loading} className="space-y-3">
       <FilterBar label={t("maintenance.filters")} search={{ value: search, onChange: setSearch, placeholder: t("maintenance.search"), label: t("maintenance.search") }} filters={chipsGroup} />
+      {!data.loading && <CappedListNote rows={data.orders} />}
       {data.errors.length > 0 && <div role="alert" className="space-y-2 rounded-xl border border-destructive/30 bg-destructive/5 p-4 text-sm text-destructive">{data.errors.map((error, index) => <p key={index}>{error}</p>)}<Button variant="outline" onClick={data.retry}>{t("catalog.retry")}</Button></div>}
       {tab === "agenda" && data.coverageFailed > 0 && <p role="status" className="text-sm text-muted-foreground">{t("maintenance.coverageFailed", { count: data.coverageFailed })}</p>}
       {body}

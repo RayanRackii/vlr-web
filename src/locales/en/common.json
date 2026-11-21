@@ -210,7 +210,8 @@
       "saved": "Saved",
       "error": "Error saving"
     },
-    "remove": "Remove"
+    "remove": "Remove",
+    "cappedList": "Showing the {{shown}} most recent of {{total}}"
   },
   "fullPage": {
     "unsavedChanges_one": "{{count}} unsaved change",

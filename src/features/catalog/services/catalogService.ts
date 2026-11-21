@@ -1,4 +1,5 @@
 import { catalogPolicySchema, type CatalogPolicy } from "@/features/catalog/schemas/catalogPolicySchemas"
+import { withListTotal } from "@/lib/listTotal"
 import { API_UPLOAD_TIMEOUT_MS } from "@/lib/apiTimeouts"
 import i18n from "@/lib/i18n"
 import { api, getAxiosErrorPayload, isAxiosError } from "@/lib/api"
@@ -383,7 +384,7 @@ export async function replaceCatalogProductResourceRequirements(
 export async function listProductRequests(options?: { signal?: AbortSignal }): Promise<ProductRequest[]> {
   try {
     const response = await api.get("/api/catalog/product-requests", options?.signal ? { signal: options.signal } : undefined)
-    return parseOrThrow(productRequestListSchema.safeParse(response.data))
+    return withListTotal(parseOrThrow(productRequestListSchema.safeParse(response.data)), response.headers)
   } catch (error) {
     if (error instanceof Error && error.message === i18n.t("apiErrors.invalidPayload")) {
       throw error
@@ -401,7 +402,7 @@ export async function listCatalogOrders(query?: {
 }, { signal }: { signal?: AbortSignal } = {}): Promise<CatalogOrder[]> {
   try {
     const response = await api.get("/api/catalog/orders", { params: query, ...(signal ? { signal } : {}) })
-    return parseOrThrow(catalogOrderListSchema.safeParse(response.data))
+    return withListTotal(parseOrThrow(catalogOrderListSchema.safeParse(response.data)), response.headers)
   } catch (error) {
     if (error instanceof Error && error.message === i18n.t("apiErrors.invalidPayload")) {
       throw error

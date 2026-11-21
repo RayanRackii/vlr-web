@@ -210,7 +210,8 @@
       "saved": "Guardado",
       "error": "Error al guardar"
     },
-    "remove": "Eliminar"
+    "remove": "Eliminar",
+    "cappedList": "Mostrando los {{shown}} más recientes de {{total}}"
   },
   "fullPage": {
     "unsavedChanges_one": "{{count}} cambio sin guardar",
