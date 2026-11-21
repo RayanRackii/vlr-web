@@ -2019,6 +2019,19 @@
         "Booking": "per booking",
         "Package": "per package"
       }
+    },
+    "order": {
+      "history": {
+        "requested": "Requested",
+        "approved": "Approved",
+        "preparing": "Preparing",
+        "ready": "Ready",
+        "completed": "Completed",
+        "rejected": "Rejected",
+        "cancelled": "Canceled",
+        "usageWorkFinished": "Work finished",
+        "usageReleased": "Resource released"
+      }
     }
   },
   "lateDuration": {

@@ -2019,6 +2019,19 @@
         "Booking": "por reserva",
         "Package": "por pacote"
       }
+    },
+    "order": {
+      "history": {
+        "requested": "Solicitado",
+        "approved": "Aprovado",
+        "preparing": "Em preparação",
+        "ready": "Pronto",
+        "completed": "Concluído",
+        "rejected": "Recusado",
+        "cancelled": "Cancelado",
+        "usageWorkFinished": "Trabalho concluído",
+        "usageReleased": "Recurso liberado"
+      }
     }
   },
   "lateDuration": {
