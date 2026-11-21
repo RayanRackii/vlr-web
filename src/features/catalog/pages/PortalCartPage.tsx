@@ -67,7 +67,7 @@ export function PortalCartPage() {
   const [submitBar, setSubmitBar] = useState<HTMLDivElement | null>(null)
   const [submitBarHeight, setSubmitBarHeight] = useState(144)
   const noteGroupRef = useRef<HTMLDivElement>(null)
-  const attemptKey = useRef(createAttemptKey()).current
+  const [attemptKey] = useState(createAttemptKey)
 
   useEffect(() => {
     if (!submitBar) return

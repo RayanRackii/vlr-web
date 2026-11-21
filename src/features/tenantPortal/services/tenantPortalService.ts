@@ -1119,7 +1119,7 @@ export async function createPortalReservation(body: {
     return parsed.data
   } catch (error) {
     const keyMessage = idempotencyKeyErrorMessage(error)
-    if (keyMessage) throw new Error(keyMessage)
+    if (keyMessage) throw new Error(keyMessage, { cause: error })
     throwPortalBookingFailure(error, "apiErrors.createReservation")
   }
 }

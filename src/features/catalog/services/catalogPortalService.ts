@@ -108,7 +108,7 @@ export async function createPortalCatalogOrder(body: {
       throw error
     }
     const keyMessage = idempotencyKeyErrorMessage(error)
-    if (keyMessage) throw new Error(keyMessage)
+    if (keyMessage) throw new Error(keyMessage, { cause: error })
     throwPortalError(error, "apiErrors.submitPortalOrder")
   }
 }

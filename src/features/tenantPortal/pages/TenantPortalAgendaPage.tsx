@@ -332,7 +332,7 @@ export function TenantPortalAgendaPage() {
 
   const [assets, setAssets] = useState<PortalRentalAsset[]>([])
   const assetsRef = useRef<PortalRentalAsset[]>([])
-  const reservationAttemptKey = useRef(createAttemptKey()).current
+  const [reservationAttemptKey] = useState(createAttemptKey)
   const [mine, setMine] = useState<PortalReservation[]>(() =>
     recentPortalReservations(subdomain),
   )

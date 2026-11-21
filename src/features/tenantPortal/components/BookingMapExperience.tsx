@@ -57,7 +57,7 @@ export function BookingMapExperience({ subdomain, locale, onUnavailable, scopedA
   const [requoteLoading, setRequoteLoading] = useState(false)
   const [now, setNow] = useState(() => Date.now())
   const triggerRef = useRef<HTMLButtonElement | null>(null)
-  const reservationAttemptKey = useRef(createAttemptKey()).current
+  const [reservationAttemptKey] = useState(createAttemptKey)
   const unavailableRef = useRef(onUnavailable)
 
   useEffect(() => { unavailableRef.current = onUnavailable }, [onUnavailable])
