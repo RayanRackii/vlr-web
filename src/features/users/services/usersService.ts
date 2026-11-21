@@ -24,6 +24,8 @@ import {
   type TenantMemberPage,
 } from "@/features/users/schemas/userSchemas"
 
+import { toPlanLimitError } from "@/features/billing/lib/planLimitError"
+
 const USERS_PATH = "/api/users"
 
 function parseOrThrow<T>(
@@ -166,6 +168,10 @@ export async function inviteTenantMember(
       "users.errors.invalidResponse",
     )
   } catch (error: unknown) {
+    const planLimit = toPlanLimitError(error)
+    if (planLimit) {
+      throw planLimit
+    }
     throwRbacServiceError(error, "peopleAccess.errors.invite")
   }
 }
