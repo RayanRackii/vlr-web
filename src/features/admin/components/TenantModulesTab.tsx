@@ -11,6 +11,9 @@ import {
 } from "@/components/ui/card"
 import { FormField, FormItem, FormMessage } from "@/components/ui/form"
 import { CommercialModulePicker } from "@/features/admin/components/CommercialModulePicker"
+import { ModuleDataPurgeRow } from "@/features/admin/components/ModuleDataPurgeRow"
+import { PURGEABLE_MODULE_KEYS } from "@/features/admin/schemas/moduleDataPurgeSchemas"
+import { toCanonicalModuleName } from "@/features/catalog/customerNav"
 import type { AdminModuleCatalogItem } from "@/features/admin/schemas/adminModuleCatalogSchemas"
 import type { TenantEditFormValues } from "@/features/admin/schemas/adminTenantSchemas"
 import type { AssetFamily } from "@/features/assets/schemas/assetFamilySchemas"
@@ -29,6 +32,10 @@ function familyIcon(key: string): LucideIcon {
 
 type TenantModulesTabProps = {
   form: UseFormReturn<TenantEditFormValues>
+  /** Tenant being edited (data purge calls). Omit to hide the purge section. */
+  tenantId?: string
+  /** Modules active as SAVED on the server (not the unsaved form state). */
+  savedActiveModules?: readonly string[]
   disabled: boolean
   hasLegacyMaintenance: boolean
   commercialModules: readonly AdminModuleCatalogItem[]
@@ -43,6 +50,8 @@ type TenantModulesTabProps = {
 /** "Módulos e famílias" tab: commercial modules and resource families. */
 export function TenantModulesTab({
   form,
+  tenantId,
+  savedActiveModules,
   disabled,
   hasLegacyMaintenance,
   commercialModules,
@@ -56,6 +65,11 @@ export function TenantModulesTab({
   const { t, i18n } = useTranslation()
   const activeModules = form.watch("activeModules")
   const assetFamilyKeys = form.watch("assetFamilyKeys")
+  const savedActive = new Set((savedActiveModules ?? []).map(toCanonicalModuleName))
+  const purgeableDisabled =
+    tenantId && savedActiveModules
+      ? PURGEABLE_MODULE_KEYS.filter((key) => !savedActive.has(key))
+      : []
 
   return (
     <div className="space-y-6">
@@ -94,6 +108,22 @@ export function TenantModulesTab({
           />
         </CardContent>
       </Card>
+
+      {tenantId && purgeableDisabled.length > 0 ? (
+        <Card id="tenant-module-data">
+          <CardHeader>
+            <CardTitle className="text-base text-foreground">
+              {t("admin.modulePurge.sectionTitle")}
+            </CardTitle>
+            <CardDescription>{t("admin.modulePurge.sectionDescription")}</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            {purgeableDisabled.map((key) => (
+              <ModuleDataPurgeRow key={key} tenantId={tenantId} moduleKey={key} />
+            ))}
+          </CardContent>
+        </Card>
+      ) : null}
 
       <Card>
         <CardHeader>

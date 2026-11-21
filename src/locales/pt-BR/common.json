@@ -5682,6 +5682,58 @@
           "unknown": "Evento"
         }
       }
+    },
+    "modulePurge": {
+      "sectionTitle": "Dados de módulos desativados",
+      "sectionDescription": "Exclua os dados guardados de módulos que esta empresa não usa mais. A exclusão é agendada e pode ser cancelada.",
+      "loading": "Carregando…",
+      "noData": "Nenhum dado guardado para este módulo.",
+      "storedData_one": "Dados guardados: {{count}} registro",
+      "storedData_other": "Dados guardados: {{count}} registros",
+      "storageObjects_one": "{{count}} arquivo",
+      "storageObjects_other": "{{count}} arquivos",
+      "deleteAction": "Excluir dados…",
+      "cancelAction": "Cancelar exclusão",
+      "pendingChip": "Exclusão agendada para {{date}}",
+      "scheduledToast": "Exclusão agendada.",
+      "cancelledToast": "Exclusão cancelada.",
+      "dialog": {
+        "title": "Excluir dados de {{module}}",
+        "grace": "Os dados serão excluídos em 30 dias. Até lá você pode cancelar.",
+        "confirmLabel": "Digite {{key}} para confirmar",
+        "back": "Voltar",
+        "confirm": "Agendar exclusão"
+      },
+      "cancelDialog": {
+        "title": "Cancelar exclusão de {{module}}",
+        "description": "Os dados do módulo serão mantidos.",
+        "reasonLabel": "Motivo (opcional)",
+        "confirm": "Cancelar exclusão"
+      },
+      "blockers": {
+        "moduleActive": "{{module}} ainda está ativo. Desative o módulo e salve antes.",
+        "fkRestrictOwner": "{{table}} ainda usam recursos deste módulo. Exclua os dados de {{owner}} antes.",
+        "fkRestrict": "Registros em {{table}} ainda usam recursos de {{module}}. Exclua-os antes.",
+        "fkCascade": "A exclusão apagaria dados de outro módulo ({{table}}). Exclua esses dados antes.",
+        "allocationsUnreleased": "Ainda há alocações de recursos não liberadas. Libere-as antes.",
+        "unknown": "Não é possível excluir agora ({{code}})."
+      },
+      "tables": {
+        "rentals_reservations": "Reservas",
+        "catalog_orders": "Pedidos"
+      },
+      "errors": {
+        "loadFailed": "Não foi possível carregar os dados do módulo.",
+        "scheduleFailed": "Não foi possível agendar a exclusão.",
+        "cancelFailed": "Não foi possível cancelar a exclusão.",
+        "blocked": "A exclusão não pode ser agendada: há bloqueios.",
+        "moduleUnknown": "Módulo desconhecido.",
+        "notPurgeable": "Os dados deste módulo não podem ser excluídos.",
+        "alreadyPending": "Já existe uma exclusão agendada para este módulo.",
+        "confirmMismatch": "A confirmação não confere com o módulo.",
+        "reasonTooLong": "O motivo deve ter no máximo 500 caracteres.",
+        "notFound": "Empresa ou exclusão agendada não encontrada."
+      }
     }
   },
   "rentals": {

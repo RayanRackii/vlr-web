@@ -125,7 +125,9 @@ function renderEditPage(search = "?tab=modulos") {
 }
 
 function moduleButton(label: string) {
-  return screen.getByRole("button", { name: new RegExp(label) })
+  return screen.getAllByRole("button", { name: new RegExp(label) }).filter((button) =>
+    button.hasAttribute("aria-pressed"),
+  )[0]
 }
 
 describe("EditTenantPage Super-Admin edit without PermissionProvider", () => {

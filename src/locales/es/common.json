@@ -5682,6 +5682,58 @@
           "unknown": "Evento"
         }
       }
+    },
+    "modulePurge": {
+      "sectionTitle": "Datos de módulos desactivados",
+      "sectionDescription": "Elimine los datos guardados de módulos que esta empresa ya no usa. La eliminación se programa y se puede cancelar.",
+      "loading": "Cargando…",
+      "noData": "No hay datos guardados para este módulo.",
+      "storedData_one": "Datos guardados: {{count}} registro",
+      "storedData_other": "Datos guardados: {{count}} registros",
+      "storageObjects_one": "{{count}} archivo",
+      "storageObjects_other": "{{count}} archivos",
+      "deleteAction": "Eliminar datos…",
+      "cancelAction": "Cancelar eliminación",
+      "pendingChip": "Eliminación programada para {{date}}",
+      "scheduledToast": "Eliminación programada.",
+      "cancelledToast": "Eliminación cancelada.",
+      "dialog": {
+        "title": "Eliminar datos de {{module}}",
+        "grace": "Los datos se eliminarán en 30 días. Hasta entonces puede cancelar.",
+        "confirmLabel": "Escriba {{key}} para confirmar",
+        "back": "Volver",
+        "confirm": "Programar eliminación"
+      },
+      "cancelDialog": {
+        "title": "Cancelar eliminación de {{module}}",
+        "description": "Los datos del módulo se conservarán.",
+        "reasonLabel": "Motivo (opcional)",
+        "confirm": "Cancelar eliminación"
+      },
+      "blockers": {
+        "moduleActive": "{{module}} sigue activo. Desactive el módulo y guarde antes.",
+        "fkRestrictOwner": "{{table}} aún usan recursos de este módulo. Elimine primero los datos de {{owner}}.",
+        "fkRestrict": "Registros en {{table}} aún usan recursos de {{module}}. Elimínelos antes.",
+        "fkCascade": "La eliminación borraría datos de otro módulo ({{table}}). Elimine esos datos antes.",
+        "allocationsUnreleased": "Aún hay asignaciones de recursos sin liberar. Libérelas antes.",
+        "unknown": "No se puede eliminar ahora ({{code}})."
+      },
+      "tables": {
+        "rentals_reservations": "Reservas",
+        "catalog_orders": "Pedidos"
+      },
+      "errors": {
+        "loadFailed": "No se pudieron cargar los datos del módulo.",
+        "scheduleFailed": "No se pudo programar la eliminación.",
+        "cancelFailed": "No se pudo cancelar la eliminación.",
+        "blocked": "No se puede programar la eliminación: hay bloqueos.",
+        "moduleUnknown": "Módulo desconocido.",
+        "notPurgeable": "Los datos de este módulo no se pueden eliminar.",
+        "alreadyPending": "Ya hay una eliminación programada para este módulo.",
+        "confirmMismatch": "La confirmación no coincide con el módulo.",
+        "reasonTooLong": "El motivo debe tener como máximo 500 caracteres.",
+        "notFound": "Empresa o eliminación programada no encontrada."
+      }
     }
   },
   "rentals": {

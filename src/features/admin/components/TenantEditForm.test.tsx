@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react"
+import { render, screen, waitFor, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { MemoryRouter, useLocation } from "react-router-dom"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
@@ -6,6 +6,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { TenantEditForm } from "@/features/admin/components/TenantEditForm"
 import type { TenantAdmin } from "@/features/admin/schemas/adminTenantSchemas"
 import { listAdminModules } from "@/features/admin/services/adminModulesService"
+import { getModuleDataPurgePreview } from "@/features/admin/services/moduleDataPurgeService"
 import { updateAdminTenant } from "@/features/admin/services/adminTenantsService"
 import { listAdminAssetFamilyCatalog } from "@/features/assets/services/assetFamiliesService"
 import i18n from "@/lib/i18n"
@@ -22,6 +23,13 @@ vi.mock("@/features/admin/services/adminModulesService", async () => {
     ...actual,
     listAdminModules: vi.fn(),
   }
+})
+
+vi.mock("@/features/admin/services/moduleDataPurgeService", async () => {
+  const actual = await vi.importActual<
+    typeof import("@/features/admin/services/moduleDataPurgeService")
+  >("@/features/admin/services/moduleDataPurgeService")
+  return { ...actual, getModuleDataPurgePreview: vi.fn(() => new Promise(() => undefined)) }
 })
 
 vi.mock("@/features/admin/services/adminTenantsService", () => ({
@@ -127,6 +135,7 @@ const tenant: TenantAdmin = {
 
 const listFamiliesMock = vi.mocked(listAdminAssetFamilyCatalog)
 const listModulesMock = vi.mocked(listAdminModules)
+const previewMock = vi.mocked(getModuleDataPurgePreview)
 const updateAdminTenantMock = vi.mocked(updateAdminTenant)
 
 function LocationProbe() {
@@ -463,6 +472,7 @@ describe("TenantEditForm modules catalog", () => {
     await user.click(
       screen.getByRole("button", {
         name: new RegExp(i18n.t("admin.modules.Catalog")),
+        pressed: false,
       }),
     )
     await user.click(await screen.findByRole("button", { name: saveName() }))
@@ -502,5 +512,34 @@ describe("TenantEditForm modules catalog", () => {
         name: new RegExp(i18n.t("admin.modules.Rentals")),
       }),
     ).toBeInTheDocument()
+  })
+})
+
+describe("TenantEditForm module data purge section", () => {
+  beforeEach(() => {
+    listFamiliesMock.mockReset()
+    listFamiliesMock.mockResolvedValue([])
+    listModulesMock.mockReset()
+    listModulesMock.mockResolvedValue(FIVE_COMMERCIAL_MODULES)
+  })
+
+  it("lists only disabled purgeable modules and never fetches before expanding", async () => {
+    const user = userEvent.setup()
+    renderEdit({ entry: `/admin/tenants/${TENANT_ID}/edit?tab=modulos` })
+
+    await screen.findByText(i18n.t("admin.modulePurge.sectionTitle"))
+    expect(screen.queryByTestId("module-purge-rentals")).not.toBeInTheDocument()
+    for (const key of ["catalog", "os", "pmoc", "resource-planning"]) {
+      expect(screen.getByTestId(`module-purge-${key}`)).toBeInTheDocument()
+    }
+    expect(screen.queryByTestId("module-purge-inventory")).not.toBeInTheDocument()
+    expect(previewMock).not.toHaveBeenCalled()
+
+    await user.click(
+      within(screen.getByTestId("module-purge-catalog")).getByRole("button"),
+    )
+    await waitFor(() => {
+      expect(previewMock).toHaveBeenCalledWith(TENANT_ID, "catalog")
+    })
   })
 })
