@@ -15,6 +15,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { ModuleMenuItemsManager } from "@/features/admin/components/ModuleMenuItemsManager"
 import { RegistrationFieldsManager } from "@/features/admin/components/RegistrationFieldsManager"
 import { TenantCompanyTab } from "@/features/admin/components/TenantCompanyTab"
+import { TenantAdvancedSettings } from "@/features/admin/components/TenantAdvancedSettings"
 import { TenantModulesTab } from "@/features/admin/components/TenantModulesTab"
 import { TenantPortalTab } from "@/features/admin/components/TenantPortalTab"
 import { TenantUsersManager } from "@/features/admin/components/TenantUsersManager"
@@ -42,6 +43,7 @@ const TENANT_EDIT_TABS = [
   "usuarios",
   "cadastro",
   "menu",
+  "avancado",
 ] as const
 
 type TenantEditTab = (typeof TENANT_EDIT_TABS)[number]
@@ -53,6 +55,7 @@ const TAB_LABEL_KEYS: Record<TenantEditTab, string> = {
   usuarios: "admin.edit.tabs.users",
   cadastro: "admin.edit.tabs.registration",
   menu: "admin.edit.tabs.menu",
+  avancado: "admin.edit.tabs.advanced",
 }
 
 const TAB_BY_FIELD: Partial<Record<keyof TenantEditFormValues, TenantEditTab>> = {
@@ -129,6 +132,13 @@ export function TenantEditForm({
   const portalValues = form.watch(["subdomain", "activeModules"])
   const subdomain = portalValues[0]
   const activeModules = portalValues[1]
+  // The advanced settings (booking map) only exist for rentals.
+  const showAdvancedTab = activeModules.some(
+    (module) => toCanonicalModuleName(module) === "rentals",
+  )
+  const visibleTabs = TENANT_EDIT_TABS.filter(
+    (tab) => tab !== "avancado" || showAdvancedTab,
+  )
 
   useEffect(() => {
     let cancelled = false
@@ -252,7 +262,7 @@ export function TenantEditForm({
       <Form {...form}>
         <Tabs value={activeTab} onValueChange={selectTab} className="gap-4">
           <TabsList variant="line" aria-label={t("admin.edit.tabs.label")}>
-            {TENANT_EDIT_TABS.map((tab) => (
+            {visibleTabs.map((tab) => (
               <TabsTrigger key={tab} value={tab}>
                 {t(TAB_LABEL_KEYS[tab])}
               </TabsTrigger>
@@ -351,6 +361,16 @@ export function TenantEditForm({
               </CardContent>
             </Card>
           </TabsContent>
+
+          {showAdvancedTab ? (
+            <TabsContent value="avancado">
+              <Card>
+                <CardContent className="pt-6">
+                  <TenantAdvancedSettings tenantId={tenantId} />
+                </CardContent>
+              </Card>
+            </TabsContent>
+          ) : null}
         </Tabs>
       </Form>
 

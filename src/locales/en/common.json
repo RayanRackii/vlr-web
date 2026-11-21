@@ -5100,7 +5100,21 @@
         "modules": "Modules and families",
         "users": "Users",
         "registration": "Portal sign-up",
-        "menu": "Portal menu"
+        "menu": "Portal menu",
+        "advanced": "Advanced settings"
+      },
+      "advanced": {
+        "title": "Advanced settings",
+        "description": "Options the platform allows to be adjusted per company.",
+        "saved": "Setting saved.",
+        "bookingUi": {
+          "label": "Booking map",
+          "hint": "Uses the visual map to book resources."
+        },
+        "errors": {
+          "loadFailed": "Could not load the setting.",
+          "saveFailed": "Could not save the setting."
+        }
       },
       "validation": {
         "contactEmailInvalid": "Enter a valid e-mail.",

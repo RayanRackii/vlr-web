@@ -5100,7 +5100,21 @@
         "modules": "Módulos y familias",
         "users": "Usuarios",
         "registration": "Registro del portal",
-        "menu": "Menú del portal"
+        "menu": "Menú del portal",
+        "advanced": "Configuración avanzada"
+      },
+      "advanced": {
+        "title": "Configuración avanzada",
+        "description": "Opciones que la plataforma permite ajustar por empresa.",
+        "saved": "Configuración guardada.",
+        "bookingUi": {
+          "label": "Mapa de reservas",
+          "hint": "Usa el mapa visual para reservar recursos."
+        },
+        "errors": {
+          "loadFailed": "No se pudo cargar la configuración.",
+          "saveFailed": "No se pudo guardar la configuración."
+        }
       },
       "validation": {
         "contactEmailInvalid": "Ingresa un correo válido.",

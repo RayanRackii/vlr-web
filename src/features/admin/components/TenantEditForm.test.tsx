@@ -171,7 +171,7 @@ describe("TenantEditForm tabs and save bar", () => {
     vi.restoreAllMocks()
   })
 
-  it("renders the six tabs with the company tab selected by default", async () => {
+  it("renders the seven tabs with the company tab selected by default", async () => {
     renderEdit()
 
     const tabs = await screen.findAllByRole("tab")
@@ -182,6 +182,7 @@ describe("TenantEditForm tabs and save bar", () => {
       i18n.t("admin.edit.tabs.users"),
       i18n.t("admin.edit.tabs.registration"),
       i18n.t("admin.edit.tabs.menu"),
+      i18n.t("admin.edit.tabs.advanced"),
     ])
     expect(tabs[0]).toHaveAttribute("aria-selected", "true")
     expect(
@@ -190,6 +191,17 @@ describe("TenantEditForm tabs and save bar", () => {
     expect(
       screen.getByLabelText(i18n.t("admin.edit.company.tradeName")),
     ).toHaveValue("Acme Quadras")
+  })
+
+  it("hides the advanced settings tab when the tenant has no rentals module", async () => {
+    renderEdit({
+      tenant: { ...tenant, activeModules: [{ moduleName: "catalog", isActive: true }] },
+    })
+
+    const tabs = await screen.findAllByRole("tab")
+    expect(tabs.map((tab) => tab.textContent)).not.toContain(
+      i18n.t("admin.edit.tabs.advanced"),
+    )
   })
 
   it("relies on the shell breadcrumb and renders no back link above the title", async () => {
