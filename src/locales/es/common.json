@@ -2354,7 +2354,7 @@
       "reassurance": "30 días gratis, sin tarjeta de crédito. Lo configuramos con usted.",
       "learnMore": "Saber más",
       "blurbs": {
-        "reservas": "Reservas pagadas por el cliente, lista de espera y portal con su marca.",
+        "reservas": "Reservas en línea por el portal, lista de espera y agenda con su marca.",
         "manutencao": "PMOC al día, órdenes de servicio en el celular e historial por equipo.",
         "locacao": "Sepa qué está disponible y qué está atrasado, y deje que el cliente pida por el portal."
       }
@@ -2444,16 +2444,16 @@
       },
       "arenas": {
         "eyebrow": "Para arenas, canchas y clubes",
-        "title": "Su cancha reservada y pagada por el cliente, sin que usted responda WhatsApp.",
-        "subtitle": "Reservas en línea con la marca de su arena, seña por Pix confirmada sola y lista de espera para horarios llenos.",
+        "title": "Su cancha reservada en línea, sin cuaderno y sin horarios duplicados.",
+        "subtitle": "El cliente reserva en el portal de su arena con disponibilidad en tiempo real. Usted sigue todo en la agenda, con mapa de reservas, lista de espera y recordatorios por correo.",
         "benefits": {
           "booking": {
-            "title": "Reserva sin WhatsApp",
-            "body": "El cliente elige cancha, día y horario en el enlace de su arena. Sin horarios duplicados ni cuaderno."
+            "title": "Reserva en línea, a toda hora",
+            "body": "El cliente elige cancha, día y horario en el portal de su arena y ve la disponibilidad en tiempo real. Sin horarios duplicados."
           },
-          "payment": {
-            "title": "Seña por Pix",
-            "body": "La seña se paga y se confirma sola. Menos ausencias y nada revisado a mano."
+          "agenda": {
+            "title": "Agenda y mapa de reservas",
+            "body": "Vea el día completo de todas las canchas en el mapa de reservas y reciba recordatorios por correo, sin llevar un cuaderno."
           },
           "waitlist": {
             "title": "Lista de espera y mensualistas",
@@ -2461,15 +2461,15 @@
           }
         },
         "proofs": [
-          "Enlace de reserva con la marca de su arena",
-          "Seña por Pix confirmada automáticamente",
+          "Portal de reservas con la marca de su arena",
+          "Disponibilidad en tiempo real",
           "Lista de espera para horarios llenos",
-          "Sin comisión sobre los pagos"
+          "Recordatorios de reserva por correo"
         ],
         "screenshots": [
           "Agenda de canchas del día",
           "Reserva por el portal del cliente",
-          "Seña pagada por Pix"
+          "Mapa de reservas"
         ]
       },
       "pmoc": {
@@ -2502,6 +2502,13 @@
           "Informe PMOC listo para el cliente"
         ]
       }
+    },
+    "meta": {
+      "home": "Reservas, mantenimiento y alquiler",
+      "pricing": "Precios",
+      "arenas": "Para arenas, canchas y clubes",
+      "pmoc": "Para empresas de climatización y refrigeración",
+      "onboarding": "Comience su prueba gratis"
     }
   },
   "grupos": {
@@ -7376,14 +7383,14 @@
       "rentableResources": "Recursos reservables: hasta {{count}}",
       "users": "Usuarios: hasta {{count}}",
       "units": "Unidades: hasta {{count}}",
-      "whatsappMessagesMonth": "WhatsApp: {{count}} mensajes por mes"
+      "whatsappMessagesMonth": "WhatsApp (próximamente): {{count}} mensajes/mes"
     },
     "limitsUnlimited": {
       "assets": "Equipos e ítems: ilimitados",
       "rentableResources": "Recursos reservables: ilimitados",
       "users": "Usuarios: ilimitados",
       "units": "Unidades: ilimitadas",
-      "whatsappMessagesMonth": "WhatsApp: mensajes ilimitados"
+      "whatsappMessagesMonth": "WhatsApp (próximamente): mensajes ilimitados"
     },
     "addOns": {
       "module": {
@@ -7398,6 +7405,9 @@
         "name": "Paquete de 1.000 mensajes de WhatsApp",
         "price": "{{price}} por paquete"
       }
+    },
+    "limitsNone": {
+      "whatsappMessagesMonth": "WhatsApp no incluido"
     }
   }
 }

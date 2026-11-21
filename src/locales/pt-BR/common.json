@@ -2354,7 +2354,7 @@
       "reassurance": "30 dias grátis, sem cartão de crédito. A gente configura com você.",
       "learnMore": "Saiba mais",
       "blurbs": {
-        "reservas": "Reservas pagas pelo cliente, fila de espera e portal com a sua marca.",
+        "reservas": "Reservas online pelo portal, fila de espera e agenda com a sua marca.",
         "manutencao": "PMOC em dia, ordens de serviço no celular e histórico por equipamento.",
         "locacao": "Saiba o que está disponível e o que está atrasado, e deixe o cliente pedir pelo portal."
       }
@@ -2444,16 +2444,16 @@
       },
       "arenas": {
         "eyebrow": "Para arenas, quadras e clubes",
-        "title": "Sua quadra reservada e paga pelo cliente, sem você responder WhatsApp.",
-        "subtitle": "Reservas online com a marca da sua arena, sinal por Pix confirmado sozinho e fila de espera para horário cheio.",
+        "title": "Sua quadra reservada online, sem caderno e sem horário duplicado.",
+        "subtitle": "O cliente reserva pelo portal da sua arena com disponibilidade em tempo real. Você acompanha tudo na agenda, com mapa de reservas, fila de espera e lembretes por e-mail.",
         "benefits": {
           "booking": {
-            "title": "Reserva sem WhatsApp",
-            "body": "O cliente escolhe quadra, dia e horário no link da sua arena. Nada de horário duplicado nem caderno."
+            "title": "Reserva online, a qualquer hora",
+            "body": "O cliente escolhe quadra, dia e horário no portal da sua arena e vê a disponibilidade em tempo real. Nada de horário duplicado."
           },
-          "payment": {
-            "title": "Sinal por Pix",
-            "body": "O sinal é pago e confirmado sozinho. Menos no-show e nada conferido à mão."
+          "agenda": {
+            "title": "Agenda e mapa de reservas",
+            "body": "Veja o dia inteiro de todas as quadras no mapa de reservas e receba os lembretes por e-mail, sem controlar por caderno."
           },
           "waitlist": {
             "title": "Fila de espera e mensalistas",
@@ -2461,15 +2461,15 @@
           }
         },
         "proofs": [
-          "Link de reserva com a marca da sua arena",
-          "Sinal por Pix confirmado automaticamente",
+          "Portal de reservas com a marca da sua arena",
+          "Disponibilidade em tempo real",
           "Fila de espera para horário cheio",
-          "Sem comissão sobre os pagamentos"
+          "Lembretes de reserva por e-mail"
         ],
         "screenshots": [
           "Agenda de quadras do dia",
           "Reserva pelo portal do cliente",
-          "Pix do sinal confirmado"
+          "Mapa de reservas"
         ]
       },
       "pmoc": {
@@ -2502,6 +2502,13 @@
           "Laudo PMOC pronto para o cliente"
         ]
       }
+    },
+    "meta": {
+      "home": "Reservas, manutenção e locação",
+      "pricing": "Preços",
+      "arenas": "Para arenas, quadras e clubes",
+      "pmoc": "Para empresas de climatização e refrigeração",
+      "onboarding": "Comece seu teste grátis"
     }
   },
   "grupos": {
@@ -7376,14 +7383,14 @@
       "rentableResources": "Recursos reserváveis: até {{count}}",
       "users": "Usuários: até {{count}}",
       "units": "Unidades: até {{count}}",
-      "whatsappMessagesMonth": "WhatsApp: {{count}} mensagens por mês"
+      "whatsappMessagesMonth": "WhatsApp (em breve): {{count}} mensagens/mês"
     },
     "limitsUnlimited": {
       "assets": "Equipamentos e itens: ilimitados",
       "rentableResources": "Recursos reserváveis: ilimitados",
       "users": "Usuários: ilimitados",
       "units": "Unidades: ilimitadas",
-      "whatsappMessagesMonth": "WhatsApp: mensagens ilimitadas"
+      "whatsappMessagesMonth": "WhatsApp (em breve): mensagens ilimitadas"
     },
     "addOns": {
       "module": {
@@ -7398,6 +7405,9 @@
         "name": "Pacote de 1.000 mensagens de WhatsApp",
         "price": "{{price}} por pacote"
       }
+    },
+    "limitsNone": {
+      "whatsappMessagesMonth": "WhatsApp não incluso"
     }
   }
 }

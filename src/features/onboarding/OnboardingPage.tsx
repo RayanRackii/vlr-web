@@ -28,6 +28,7 @@ import { InputWithIcon } from "@/components/ui/input-icon"
 import { WizardPanelsStepper } from "@/components/ui/wizard-panels"
 import { iconProps } from "@/lib/icon"
 import { cn } from "@/lib/utils"
+import { usePublicDocumentTitle } from "@/hooks/usePublicDocumentTitle"
 import {
   readRequestedPackage,
   resolvePassthroughParams,
@@ -43,6 +44,7 @@ import {
 
 export function OnboardingPage() {
   const { t } = useTranslation()
+  usePublicDocumentTitle(t("landing.meta.onboarding"))
   const { search } = useLocation()
   const [step, setStep] = useState(0)
   const [inviteEmail, setInviteEmail] = useState<string | null>(null)

@@ -197,7 +197,9 @@ export function PlanPicker({
                       <span>
                         {value === null
                           ? t(`billing.limitsUnlimited.${key}`)
-                          : t(`billing.limits.${key}`, { count: value })}
+                          : value === 0 && key === "whatsappMessagesMonth"
+                            ? t(`billing.limitsNone.${key}`)
+                            : t(`billing.limits.${key}`, { count: value })}
                       </span>
                     </li>
                   ))}
