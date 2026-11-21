@@ -335,7 +335,8 @@
   "trial": {
     "banner": {
       "active": "Prueba: {{days}} día(s) restante(s). Usa los límites del plan Profesional de su paquete.",
-      "readOnly": "Prueba finalizada — solo lectura. Los datos se eliminarán en {{days}} día(s). Suscríbase para continuar."
+      "readOnly": "Prueba finalizada — solo lectura. Los datos se eliminarán en {{days}} día(s). Suscríbase para continuar.",
+      "manage": "Ver plan y suscribirse"
     },
     "readOnlyHint": "Cuenta en solo lectura tras el fin de la prueba.",
     "onboarding": {
@@ -2638,7 +2639,8 @@
     "agendasPlanning": "Planificación",
     "pedidos": "Pedidos",
     "company": "Datos de la empresa",
-    "portalAppearance": "Apariencia del portal"
+    "portalAppearance": "Apariencia del portal",
+    "billing": "Plan y facturación"
   },
   "moduleIntro": {
     "title": "Presentación",
@@ -7481,6 +7483,135 @@
     },
     "limitsNone": {
       "whatsappMessagesMonth": "WhatsApp no incluido"
+    },
+    "page": {
+      "title": "Plan y facturación",
+      "description": "Tu plan, uso, próximos cobros e historial de pagos.",
+      "loadError": "No se pudo cargar el plan y la facturación."
+    },
+    "status": {
+      "trialing": "En prueba",
+      "active": "Activa",
+      "past_due": "Pago atrasado",
+      "read_only": "Solo lectura",
+      "canceled": "Cancelada",
+      "unknown": "Desconocido"
+    },
+    "current": {
+      "title": "Plan actual",
+      "none": "Tu empresa aún no tiene una suscripción. Elige un plan para empezar.",
+      "cycleAnnual": "Cobro anual",
+      "cycleMonthly": "Cobro mensual",
+      "charge": "Importe del cobro",
+      "monthlyEquivalent": "({{price}}/mes)",
+      "trialEnds": "Fin del período de prueba",
+      "nextCharge": "Próximo cobro",
+      "periodEnd": "Fin del período actual",
+      "discount": "Descuento",
+      "discountUntil": "{{percent}}% hasta {{date}}",
+      "discountForever": "{{percent}}%"
+    },
+    "notices": {
+      "cancelAtPeriodEnd": "Suscripción cancelada: el acceso completo continúa hasta {{date}}. Después la cuenta queda en solo lectura y tus datos se conservan.",
+      "cancelAtPeriodEndNoDate": "Suscripción cancelada: al final del período actual la cuenta queda en solo lectura y tus datos se conservan.",
+      "pendingPlan": "Cambio de plan programado: {{plan}} desde {{date}}.",
+      "pendingPlanUnknown": "nuevo plan",
+      "pastDue": "Hay un pago atrasado. Regularízalo para evitar que la cuenta quede en solo lectura.",
+      "readOnly": "La cuenta está en solo lectura. Suscríbete para volver a editar.",
+      "manual": "El cobro de esta cuenta lo hace Rolvix manualmente. Para cambiar de plan o cancelar, habla con Rolvix."
+    },
+    "actions": {
+      "subscribe": "Suscribirse",
+      "changePlan": "Cambiar plan",
+      "cancel": "Cancelar suscripción"
+    },
+    "usage": {
+      "title": "Uso del plan",
+      "names": {
+        "assets": "Equipos y artículos",
+        "rentableResources": "Recursos reservables",
+        "users": "Usuarios",
+        "units": "Unidades"
+      },
+      "ofLimit": "{{used}} de {{limit}}",
+      "ofUnlimited": "{{used}} · ilimitado"
+    },
+    "history": {
+      "title": "Historial de pagos",
+      "empty": "Aún no hay eventos de facturación.",
+      "due": "vence el {{date}}",
+      "types": {
+        "created": "Suscripción creada",
+        "plan_changed": "Plan cambiado",
+        "payment_received": "Pago recibido",
+        "payment_overdue": "Pago atrasado",
+        "read_only": "Cuenta en solo lectura",
+        "reactivated": "Cuenta reactivada",
+        "canceled": "Suscripción cancelada"
+      }
+    },
+    "checkout": {
+      "title": "Suscribirse a Rolvix",
+      "description": "Elige el plan, el ciclo y la forma de pago. Sin permanencia.",
+      "payDescription": "Completa el pago. La confirmación es automática.",
+      "planGroup": "Planes",
+      "currentTag": "Actual",
+      "methodLabel": "Forma de pago",
+      "methods": {
+        "pix": "Pix",
+        "credit_card": "Tarjeta de crédito",
+        "boleto": "Boleto"
+      },
+      "confirm": "Continuar al pago",
+      "paidToast": "Pago confirmado. ¡Gracias!",
+      "copied": "Código Pix copiado.",
+      "copyFailed": "No se pudo copiar. Selecciona el código y cópialo manualmente.",
+      "waiting": "Esperando el pago. Esta ventana se confirma sola cuando entre el pago.",
+      "waitingTimeout": "Aún esperando el pago. Después de pagar, cierra esta ventana y actualiza la página.",
+      "pixQrAlt": "Código QR de Pix",
+      "pixHint": "Apunta la cámara de la app de tu banco al código QR.",
+      "pixCopyLabel": "Pix copia y pega",
+      "copy": "Copiar",
+      "openInvoice": "Abrir factura"
+    },
+    "change": {
+      "title": "Cambiar plan",
+      "description": "Las mejoras se aplican de inmediato; las reducciones, al final del período actual.",
+      "confirm": "Cambiar plan",
+      "success": "Plan actualizado."
+    },
+    "cancel": {
+      "title": "¿Cancelar la suscripción?",
+      "description": "El acceso completo continúa hasta {{date}}. Después la cuenta queda en solo lectura y tus datos se conservan.",
+      "descriptionNoDate": "El acceso completo continúa hasta el final del período actual. Después la cuenta queda en solo lectura y tus datos se conservan.",
+      "confirm": "Cancelar suscripción",
+      "success": "La suscripción se cancelará al final del período."
+    },
+    "limitNames": {
+      "assets": "equipos y artículos",
+      "rentableResources": "recursos reservables",
+      "users": "usuarios",
+      "units": "unidades",
+      "whatsappMessagesMonth": "mensajes"
+    },
+    "errors": {
+      "generic": "No se pudo completar la operación. Inténtalo de nuevo.",
+      "invalidCycle": "Ciclo de cobro inválido.",
+      "invalidMethod": "Forma de pago inválida.",
+      "planNotFound": "Plan no encontrado o no disponible.",
+      "contactEmailRequired": "Indica un e-mail de contacto de la empresa en Datos de la empresa antes de suscribirte.",
+      "taxIdInvalid": "El identificador fiscal de la empresa no es válido. Corrígelo en Datos de la empresa.",
+      "currencyMismatch": "La moneda del plan no es compatible con tu suscripción.",
+      "noSubscription": "Tu empresa aún no tiene una suscripción.",
+      "noActiveSubscription": "No hay una suscripción activa para esta operación.",
+      "alreadySubscribed": "Tu empresa ya tiene una suscripción activa. Usa Cambiar plan.",
+      "noOpenInvoice": "No hay ninguna factura abierta.",
+      "nothingToCharge": "No hay nada que cobrar en este plan.",
+      "concurrentChange": "La suscripción se modificó en otra pantalla. Actualiza la página e inténtalo de nuevo.",
+      "usageAboveLimit": "El uso actual ({{current}} {{limit}}) supera el límite del plan elegido ({{max}}). Reduce el uso o elige un plan mayor.",
+      "providerError": "El proveedor de pagos no respondió. Inténtalo de nuevo en unos instantes.",
+      "notConfigured": "La facturación en línea aún no está disponible — habla con Rolvix.",
+      "inProgress": "Tu solicitud anterior aún se está procesando. Espera unos segundos e inténtalo de nuevo."
     }
   }
 }

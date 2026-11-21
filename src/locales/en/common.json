@@ -335,7 +335,8 @@
   "trial": {
     "banner": {
       "active": "Trial: {{days}} day(s) left. You are on the Professional plan limits of your package.",
-      "readOnly": "Trial ended — read-only account. Data will be removed in {{days}} day(s). Subscribe to continue."
+      "readOnly": "Trial ended — read-only account. Data will be removed in {{days}} day(s). Subscribe to continue.",
+      "manage": "View plan and subscribe"
     },
     "readOnlyHint": "Account is read-only after the trial window ended.",
     "onboarding": {
@@ -2638,7 +2639,8 @@
     "agendasPlanning": "Planning",
     "pedidos": "Orders",
     "company": "Company details",
-    "portalAppearance": "Portal appearance"
+    "portalAppearance": "Portal appearance",
+    "billing": "Plan and billing"
   },
   "moduleIntro": {
     "title": "Introduction",
@@ -7481,6 +7483,135 @@
     },
     "limitsNone": {
       "whatsappMessagesMonth": "WhatsApp not included"
+    },
+    "page": {
+      "title": "Plan and billing",
+      "description": "Your plan, usage, upcoming charges and payment history.",
+      "loadError": "Could not load the plan and billing."
+    },
+    "status": {
+      "trialing": "Trial",
+      "active": "Active",
+      "past_due": "Payment overdue",
+      "read_only": "Read-only",
+      "canceled": "Canceled",
+      "unknown": "Unknown"
+    },
+    "current": {
+      "title": "Current plan",
+      "none": "Your company has no subscription yet. Pick a plan to get started.",
+      "cycleAnnual": "Billed annually",
+      "cycleMonthly": "Billed monthly",
+      "charge": "Charge amount",
+      "monthlyEquivalent": "({{price}}/month)",
+      "trialEnds": "Trial ends",
+      "nextCharge": "Next charge",
+      "periodEnd": "Current period ends",
+      "discount": "Discount",
+      "discountUntil": "{{percent}}% until {{date}}",
+      "discountForever": "{{percent}}%"
+    },
+    "notices": {
+      "cancelAtPeriodEnd": "Subscription canceled: full access continues until {{date}}. After that the account becomes read-only and your data is kept.",
+      "cancelAtPeriodEndNoDate": "Subscription canceled: at the end of the current period the account becomes read-only and your data is kept.",
+      "pendingPlan": "Plan change scheduled: {{plan}} from {{date}}.",
+      "pendingPlanUnknown": "new plan",
+      "pastDue": "A payment is overdue. Settle it to keep the account from becoming read-only.",
+      "readOnly": "The account is read-only. Subscribe to edit again.",
+      "manual": "This account is billed manually by Rolvix. To change plan or cancel, contact Rolvix."
+    },
+    "actions": {
+      "subscribe": "Subscribe",
+      "changePlan": "Change plan",
+      "cancel": "Cancel subscription"
+    },
+    "usage": {
+      "title": "Plan usage",
+      "names": {
+        "assets": "Equipment and items",
+        "rentableResources": "Bookable resources",
+        "users": "Users",
+        "units": "Units"
+      },
+      "ofLimit": "{{used}} of {{limit}}",
+      "ofUnlimited": "{{used}} · unlimited"
+    },
+    "history": {
+      "title": "Payment history",
+      "empty": "No billing events yet.",
+      "due": "due {{date}}",
+      "types": {
+        "created": "Subscription created",
+        "plan_changed": "Plan changed",
+        "payment_received": "Payment received",
+        "payment_overdue": "Payment overdue",
+        "read_only": "Account set to read-only",
+        "reactivated": "Account reactivated",
+        "canceled": "Subscription canceled"
+      }
+    },
+    "checkout": {
+      "title": "Subscribe to Rolvix",
+      "description": "Choose the plan, cycle and payment method. No lock-in.",
+      "payDescription": "Complete the payment. Confirmation is automatic.",
+      "planGroup": "Plans",
+      "currentTag": "Current",
+      "methodLabel": "Payment method",
+      "methods": {
+        "pix": "Pix",
+        "credit_card": "Credit card",
+        "boleto": "Boleto"
+      },
+      "confirm": "Continue to payment",
+      "paidToast": "Payment confirmed. Thank you!",
+      "copied": "Pix code copied.",
+      "copyFailed": "Could not copy. Select the code and copy it manually.",
+      "waiting": "Waiting for payment. This window confirms by itself when the payment arrives.",
+      "waitingTimeout": "Still waiting for the payment. After paying, close this window and refresh the page.",
+      "pixQrAlt": "Pix QR code",
+      "pixHint": "Point your banking app camera at the QR code.",
+      "pixCopyLabel": "Pix copy and paste",
+      "copy": "Copy",
+      "openInvoice": "Open invoice"
+    },
+    "change": {
+      "title": "Change plan",
+      "description": "Upgrades apply immediately; downgrades apply at the end of the current period.",
+      "confirm": "Change plan",
+      "success": "Plan updated."
+    },
+    "cancel": {
+      "title": "Cancel subscription?",
+      "description": "Full access continues until {{date}}. After that the account becomes read-only and your data is kept.",
+      "descriptionNoDate": "Full access continues until the end of the current period. After that the account becomes read-only and your data is kept.",
+      "confirm": "Cancel subscription",
+      "success": "Subscription will be canceled at the end of the period."
+    },
+    "limitNames": {
+      "assets": "equipment and items",
+      "rentableResources": "bookable resources",
+      "users": "users",
+      "units": "units",
+      "whatsappMessagesMonth": "messages"
+    },
+    "errors": {
+      "generic": "Could not complete the operation. Please try again.",
+      "invalidCycle": "Invalid billing cycle.",
+      "invalidMethod": "Invalid payment method.",
+      "planNotFound": "Plan not found or unavailable.",
+      "contactEmailRequired": "Add a company contact e-mail in Company data before subscribing.",
+      "taxIdInvalid": "The company tax ID is invalid. Fix it in Company data.",
+      "currencyMismatch": "The plan currency does not match your subscription.",
+      "noSubscription": "Your company has no subscription yet.",
+      "noActiveSubscription": "There is no active subscription for this operation.",
+      "alreadySubscribed": "Your company already has an active subscription. Use Change plan.",
+      "noOpenInvoice": "There is no open invoice.",
+      "nothingToCharge": "There is nothing to charge on this plan.",
+      "concurrentChange": "The subscription was changed on another screen. Refresh the page and try again.",
+      "usageAboveLimit": "Current usage ({{current}} {{limit}}) is above the chosen plan limit ({{max}}). Reduce usage or choose a larger plan.",
+      "providerError": "The payment provider did not respond. Please try again shortly.",
+      "notConfigured": "Online billing is not available yet — contact Rolvix.",
+      "inProgress": "Your previous request is still being processed. Wait a few seconds and try again."
     }
   }
 }

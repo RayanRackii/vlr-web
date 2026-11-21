@@ -2,10 +2,15 @@ import { useTranslation } from "react-i18next"
 import { Link } from "react-router-dom"
 
 import { PLAN_PAGE_PATH } from "@/features/billing/lib/planLimitError"
+import { BILLING_PAGE_PATH, BILLING_PERMISSION } from "@/features/billing/lib/subscriptionView"
+import { useOptionalPermissions } from "@/features/users/permissions/PermissionContext"
 
-/** Inline "Limite do plano atingido — ver planos" with a link to the plans page. */
+/** Inline "Limite do plano atingido — ver planos"; links to Plano e cobrança when the user may manage billing, else to /precos. */
 export function PlanLimitNotice({ className }: { className?: string }) {
   const { t } = useTranslation()
+  // Staff who may manage billing go to their plan page; everyone else sees the public prices.
+  const permissions = useOptionalPermissions()
+  const target = permissions?.can(BILLING_PERMISSION) ? BILLING_PAGE_PATH : PLAN_PAGE_PATH
 
   return (
     <div
@@ -17,7 +22,7 @@ export function PlanLimitNotice({ className }: { className?: string }) {
     >
       <span>{t("billing.planLimit.title")}</span>
       {" — "}
-      <Link to={PLAN_PAGE_PATH} className="font-medium underline underline-offset-2">
+      <Link to={target} className="font-medium underline underline-offset-2">
         {t("billing.planLimit.link")}
       </Link>
     </div>
