@@ -8,6 +8,8 @@ import { TenantOnboardingWizard } from "@/features/admin/components/TenantOnboar
 import { listAdminModules } from "@/features/admin/services/adminModulesService"
 import { createAdminTenant } from "@/features/admin/services/adminTenantsService"
 import { listAdminAssetFamilyCatalog } from "@/features/assets/services/assetFamiliesService"
+import type { PublicPlan } from "@/features/billing/schemas/billingSchemas"
+import { getPublicPlans } from "@/features/billing/services/billingService"
 import i18n from "@/lib/i18n"
 
 vi.mock("@/features/assets/services/assetFamiliesService", () => ({
@@ -26,6 +28,10 @@ vi.mock("@/features/admin/services/adminModulesService", async () => {
 
 vi.mock("@/features/admin/services/adminTenantsService", () => ({
   createAdminTenant: vi.fn(),
+}))
+
+vi.mock("@/features/billing/services/billingService", () => ({
+  getPublicPlans: vi.fn(),
 }))
 
 vi.mock("sonner", () => ({
@@ -76,6 +82,22 @@ const FIVE_COMMERCIAL_MODULES = [
 const listFamiliesMock = vi.mocked(listAdminAssetFamilyCatalog)
 const listModulesMock = vi.mocked(listAdminModules)
 const createAdminTenantMock = vi.mocked(createAdminTenant)
+
+function catalogPlan(overrides: Partial<PublicPlan>): PublicPlan {
+  return {
+    id: "p",
+    packageKey: "reservas",
+    planKey: "essencial",
+    name: "Essencial",
+    monthlyPriceCents: 9900,
+    annualPriceCents: 99000,
+    currency: "BRL",
+    modules: ["rentals"],
+    limits: {},
+    sortOrder: 1,
+    ...overrides,
+  }
+}
 
 function renderWizard() {
   return render(
@@ -161,6 +183,17 @@ describe("TenantOnboardingWizard", () => {
     listModulesMock.mockReset()
     listModulesMock.mockResolvedValue(FIVE_COMMERCIAL_MODULES)
     createAdminTenantMock.mockReset()
+    vi.mocked(getPublicPlans).mockReset().mockResolvedValue([
+      catalogPlan({ id: "a", name: "Completo", monthlyPriceCents: 29900, sortOrder: 3 }),
+      catalogPlan({ id: "b", name: "Essencial", monthlyPriceCents: 9900, sortOrder: 1 }),
+      catalogPlan({
+        id: "c",
+        packageKey: "manutencao",
+        name: "Essencial PMOC",
+        monthlyPriceCents: 9900,
+        modules: ["inventory", "pmoc", "os"],
+      }),
+    ])
     vi.mocked(toast.success).mockReset()
     vi.mocked(toast.error).mockReset()
   })
@@ -337,6 +370,21 @@ describe("TenantOnboardingWizard", () => {
     expect(nextButton()).toBeEnabled()
     await user.click(nextButton())
     expect(await screen.findByRole("alert")).toHaveTextContent(i18n.t("admin.wizard.errors.familiesLoadFailed"))
+  })
+
+  it("shows the catalog plan price on the summary instead of a per-module price", async () => {
+    const user = userEvent.setup()
+    renderWizard()
+
+    await fillThroughAdminInvite(user)
+    await continueWhenEnabled(user)
+
+    const reference = await screen.findByTestId("wizard-reference-plan")
+    await waitFor(() => {
+      expect(reference).toHaveTextContent("Essencial (Reservas)")
+    })
+    expect(reference).toHaveTextContent(/R\$\s?99\/mês/)
+    expect(screen.queryByText(/199/)).not.toBeInTheDocument()
   })
 
   it("disables Finalizar while the create request is in flight", async () => {

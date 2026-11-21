@@ -1,4 +1,4 @@
-import { render, screen, within } from "@testing-library/react"
+import { render, screen, waitFor, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { MemoryRouter } from "react-router-dom"
 import { beforeEach, describe, expect, it, vi } from "vitest"
@@ -10,6 +10,7 @@ import {
   enterTenantEnvironment,
   listAdminTenants,
 } from "@/features/admin/services/adminTenantsService"
+import { getBillingSummary } from "@/features/billing/services/billingService"
 import i18n from "@/lib/i18n"
 
 const navigateMock = vi.hoisted(() => vi.fn())
@@ -25,6 +26,9 @@ vi.mock("react-router-dom", async (importOriginal) => ({
 }))
 vi.mock("@/features/admin/hooks/usePlatformTenantSession", () => sessionMocks)
 vi.mock("sonner", () => ({ toast: { success: vi.fn(), error: vi.fn() } }))
+vi.mock("@/features/billing/services/billingService", () => ({
+  getBillingSummary: vi.fn(),
+}))
 vi.mock("@/features/admin/services/adminTenantsService", () => ({
   listAdminTenants: vi.fn(),
   deleteAdminTenant: vi.fn(),
@@ -87,6 +91,15 @@ describe("AdminDashboardPage", () => {
   beforeEach(() => {
     vi.mocked(listAdminTenants).mockReset().mockResolvedValue(tenants)
     vi.mocked(deleteAdminTenant).mockReset().mockResolvedValue(undefined)
+    vi.mocked(getBillingSummary).mockReset().mockResolvedValue({
+      currency: "BRL",
+      mrrCents: 123400,
+      trialingCount: 3,
+      activeCount: 5,
+      pastDueCount: 1,
+      readOnlyCount: 2,
+      byPackage: [],
+    })
     vi.mocked(enterTenantEnvironment)
       .mockReset()
       .mockResolvedValue({ legalName: "Estúdio Aurora" } as never)
@@ -121,6 +134,37 @@ describe("AdminDashboardPage", () => {
     expect(tableRow("Espaço Horizonte")).toBeInTheDocument()
     expect(tableRow("Consultoria Central")).toBeInTheDocument()
     expect(listAdminTenants).toHaveBeenCalledTimes(1)
+  })
+
+  it("shows the MRR from the billing summary, not an estimate from active modules", async () => {
+    renderPage()
+    await screen.findByRole("table")
+
+    await waitFor(() => {
+      expect(screen.getByTestId("admin-mrr")).toHaveTextContent(/R\$\s?1\.234/)
+    })
+    expect(screen.getByText(i18n.t("admin.dashboard.metrics.mrr"))).toBeInTheDocument()
+    expect(
+      screen.getByText(
+        i18n.t("admin.dashboard.metrics.mrrBreakdown", {
+          active: 5,
+          trialing: 3,
+          pastDue: 1,
+          readOnly: 2,
+        }),
+      ),
+    ).toBeInTheDocument()
+    // 5 modules x R$ 199 would have been the old estimate.
+    expect(screen.queryByText(/995/)).not.toBeInTheDocument()
+  })
+
+  it("keeps the page working when the billing summary fails", async () => {
+    vi.mocked(getBillingSummary).mockRejectedValue(new Error("boom"))
+    renderPage()
+    await screen.findByRole("table")
+
+    expect(await screen.findByText(i18n.t("admin.dashboard.metrics.mrrUnavailable"))).toBeInTheDocument()
+    expect(tableRow("Estúdio Aurora")).toBeInTheDocument()
   })
 
   it("recovers from a network failure using retry", async () => {

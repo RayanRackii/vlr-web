@@ -29,6 +29,12 @@ vi.mock("@/features/admin/services/adminTenantsService", () => ({
   enterTenantEnvironment: vi.fn(),
 }))
 
+vi.mock("@/features/billing/services/billingService", () => ({
+  getPublicPlans: vi.fn().mockResolvedValue([]),
+  getTenantSubscription: vi.fn(() => new Promise(() => undefined)),
+  putTenantSubscription: vi.fn(),
+}))
+
 vi.mock("sonner", () => ({
   toast: {
     success: vi.fn(),
@@ -171,7 +177,7 @@ describe("TenantEditForm tabs and save bar", () => {
     vi.restoreAllMocks()
   })
 
-  it("renders the seven tabs with the company tab selected by default", async () => {
+  it("renders the eight tabs with the company tab selected by default", async () => {
     renderEdit()
 
     const tabs = await screen.findAllByRole("tab")
@@ -179,6 +185,7 @@ describe("TenantEditForm tabs and save bar", () => {
       i18n.t("admin.edit.tabs.company"),
       i18n.t("admin.edit.tabs.portal"),
       i18n.t("admin.edit.tabs.modules"),
+      i18n.t("admin.edit.tabs.subscription"),
       i18n.t("admin.edit.tabs.users"),
       i18n.t("admin.edit.tabs.registration"),
       i18n.t("admin.edit.tabs.menu"),

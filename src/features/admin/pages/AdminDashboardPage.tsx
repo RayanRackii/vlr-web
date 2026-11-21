@@ -42,14 +42,13 @@ import {
 import { StatusBadge } from "@/components/ui/status"
 import { useEnterTenantEnvironment } from "@/features/admin/hooks/useEnterTenantEnvironment"
 import { moduleNameI18nKey } from "@/features/admin/moduleCatalog"
-import {
-  PRICE_PER_MODULE_BRL,
-  type TenantAdmin,
-} from "@/features/admin/schemas/adminTenantSchemas"
+import type { TenantAdmin } from "@/features/admin/schemas/adminTenantSchemas"
 import {
   deleteAdminTenant,
   listAdminTenants,
 } from "@/features/admin/services/adminTenantsService"
+import type { BillingSummary } from "@/features/billing/schemas/billingSchemas"
+import { getBillingSummary } from "@/features/billing/services/billingService"
 import { tenantPortalHref } from "@/features/tenantPortal/services/tenantPortalService"
 import { isAxiosError } from "@/lib/api"
 import { formatLocaleCurrency } from "@/lib/localeFormat"
@@ -101,6 +100,27 @@ export function AdminDashboardPage() {
   const [deleteError, setDeleteError] = useState<string | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
   const { enteringId, enter: handleOpenEnvironment } = useEnterTenantEnvironment()
+  // MRR comes from the billing summary. A failure only blanks that card, not the page.
+  const [billingSummary, setBillingSummary] = useState<BillingSummary | null>(null)
+  const [billingSummaryFailed, setBillingSummaryFailed] = useState(false)
+
+  useEffect(() => {
+    let cancelled = false
+    void getBillingSummary()
+      .then((summary) => {
+        if (!cancelled) {
+          setBillingSummary(summary)
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setBillingSummaryFailed(true)
+        }
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   const normalizedSearch = searchQuery.trim().toLowerCase()
   const filteredTenants = useMemo(
@@ -121,15 +141,6 @@ export function AdminDashboardPage() {
 
   const activeTenantCount = tenants.filter((tenant) => tenant.isActive).length
   const inactiveTenantCount = tenants.length - activeTenantCount
-  const estimatedMonthlyRevenue = tenants.reduce(
-    (total, tenant) =>
-      total +
-      (tenant.isActive
-        ? tenant.activeModules.filter((module) => module.isActive).length *
-          PRICE_PER_MODULE_BRL
-        : 0),
-    0,
-  )
 
   const loadTenants = useCallback(async () => {
     setIsLoading(true)
@@ -480,19 +491,33 @@ export function AdminDashboardPage() {
           <Card className="col-span-2 gap-2 py-3 sm:gap-5 sm:py-5 lg:col-span-1">
             <CardHeader className="flex-row items-center justify-between px-3 sm:px-5">
               <CardTitle className="text-sm">
-                {t("admin.dashboard.metrics.estimatedRevenue")}
+                {t("admin.dashboard.metrics.mrr")}
               </CardTitle>
               <CircleDollarSign className="size-4 text-muted-foreground" />
             </CardHeader>
             <CardContent className="px-3 sm:px-5">
-              <p className="text-3xl font-semibold">
-                {formatLocaleCurrency(
-                  estimatedMonthlyRevenue,
-                  "BRL",
-                  i18n.language,
-                  { maximumFractionDigits: 0, minimumFractionDigits: 0 },
-                )}
+              <p className="text-3xl font-semibold" data-testid="admin-mrr">
+                {billingSummary !== null
+                  ? formatLocaleCurrency(
+                      billingSummary.mrrCents / 100,
+                      billingSummary.currency,
+                      i18n.language,
+                      { maximumFractionDigits: 0, minimumFractionDigits: 0 },
+                    )
+                  : billingSummaryFailed
+                    ? t("admin.dashboard.metrics.mrrUnavailable")
+                    : "…"}
               </p>
+              {billingSummary !== null ? (
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {t("admin.dashboard.metrics.mrrBreakdown", {
+                    active: billingSummary.activeCount,
+                    trialing: billingSummary.trialingCount,
+                    pastDue: billingSummary.pastDueCount,
+                    readOnly: billingSummary.readOnlyCount,
+                  })}
+                </p>
+              ) : null}
             </CardContent>
           </Card>
         </div>
