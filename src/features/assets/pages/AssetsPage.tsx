@@ -113,11 +113,15 @@ export function AssetsPage() {
   const { t, i18n } = useTranslation()
   const { tTone } = useAssetCopyTone()
   const { session } = useAuth()
-  const { can } = usePermissions()
+  const { can, activeModules } = usePermissions()
   const navigate = useNavigate()
   const learnMore = useModuleIntroLink("maintenance")
   const { isTrialReadOnly } = useTrialStatus()
   const canWriteAssets = can("inventory.assets.write")
+  // The resource type wizard route is gated by the rentals module; do not link to it otherwise.
+  const hasRentalsModule = activeModules.some(
+    (module) => module.trim().toLowerCase() === "rentals",
+  )
   const canWriteCategories = can("inventory.categories.write")
 
   const [assets, setAssets] = useState<Asset[]>([])
@@ -809,7 +813,7 @@ export function AssetsPage() {
         example: canWriteAssets ? t("emptyStates.examples.assets") : undefined,
         learnMore,
         action:
-          categories.length === 0 && !categoriesDenied && canWriteCategories ? (
+          categories.length === 0 && !categoriesDenied && canWriteCategories && hasRentalsModule ? (
             <Button onClick={() => { void navigate("/ativos/tipos") }}>{t("assets.inventory.emptyNoTypesCta")}</Button>
           ) : categories.length > 0 && canWriteAssets ? (
             <Button disabled={!canOpenWizard} onClick={() => { void navigate("/ativos/novo") }}>{t("assets.inventory.emptyWithTypesCta")}</Button>
