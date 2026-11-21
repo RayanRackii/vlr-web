@@ -7626,6 +7626,11 @@
       "providerError": "O provedor de pagamento não respondeu. Tente novamente em instantes.",
       "notConfigured": "Cobrança online ainda não disponível — fale com a Rolvix.",
       "inProgress": "Seu pedido anterior ainda está sendo processado. Aguarde alguns segundos e tente de novo."
+    },
+    "statusBanner": {
+      "pastDue": "Pagamento em atraso — regularize em",
+      "readOnly": "Conta em modo somente leitura por falta de pagamento — regularize em",
+      "link": "Plano e cobrança"
     }
   },
   "assetFamilies": {

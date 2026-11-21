@@ -7626,6 +7626,11 @@
       "providerError": "El proveedor de pagos no respondió. Inténtalo de nuevo en unos instantes.",
       "notConfigured": "La facturación en línea aún no está disponible — habla con Rolvix.",
       "inProgress": "Tu solicitud anterior aún se está procesando. Espera unos segundos e inténtalo de nuevo."
+    },
+    "statusBanner": {
+      "pastDue": "Pago atrasado — regularícelo en",
+      "readOnly": "Cuenta en modo solo lectura por falta de pago — regularícela en",
+      "link": "Plan y facturación"
     }
   },
   "assetFamilies": {

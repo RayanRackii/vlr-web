@@ -7626,6 +7626,11 @@
       "providerError": "The payment provider did not respond. Please try again shortly.",
       "notConfigured": "Online billing is not available yet — contact Rolvix.",
       "inProgress": "Your previous request is still being processed. Wait a few seconds and try again."
+    },
+    "statusBanner": {
+      "pastDue": "Payment overdue — settle it in",
+      "readOnly": "Account is read-only due to missing payment — settle it in",
+      "link": "Plan and billing"
     }
   },
   "assetFamilies": {

@@ -14,6 +14,7 @@ import { Breadcrumb } from "@/components/layout/Breadcrumb"
 import { BreadcrumbTitleProvider } from "@/components/layout/BreadcrumbTitleProvider"
 import { staffHeaderContextLabel } from "@/components/layout/staffHeaderContextLabel"
 import { StaffHomeRedirectNotice } from "@/components/layout/StaffHomeRedirectNotice"
+import { BillingStatusBanner } from "@/components/layout/BillingStatusBanner"
 import { TrialBanner } from "@/components/layout/TrialBanner"
 import { PageContentSkeleton } from "@/components/loading/PageContentSkeleton"
 import {
@@ -223,6 +224,7 @@ function MainLayoutShell({ children }: { children?: ReactNode }) {
         <>
           <StaffHomeRedirectNotice />
           <TrialBanner informational={!isPlatformAdmin && location.pathname === "/dashboard"} />
+          <BillingStatusBanner />
           {onPlatformPanel || isInTenantEnvironment ? (
             <div
               data-testid="super-admin-banner"
